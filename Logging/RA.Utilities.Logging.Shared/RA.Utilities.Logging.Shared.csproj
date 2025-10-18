@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+		<Version>1.0.0-preview.6.3</Version>
+		<Title>Utilities Logging</Title>
+		<PackageId>RA.Utilities.Logging.Shared</PackageId>
+		<Description>Provides shared components and abstractions for logging HTTP requests and responses within the RA.Utilities ecosystem. This package contains core models and helpers used by other logging libraries, such as RA.Utilities.Api.Middlewares, to ensure a consistent approach to capturing and structuring diagnostic information for HTTP calls.</Description>
+		<PackageTags>RA;Utilities;Logging;Shared;HTTP;Diagnostics;API;Models;Abstractions</PackageTags>
+		<PackageIcon>log.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReleaseNotesFile>releasenotes.md</PackageReleaseNotesFile>
+	</PropertyGroup>
+
+  <ItemGroup>
+		<None Include="../../Assets/Images/log.png" Pack="true" PackagePath="\" />
+		<None Include="README.md" Pack="true" PackagePath="\" />
+		<None Include="releasenotes.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
+
+</Project>

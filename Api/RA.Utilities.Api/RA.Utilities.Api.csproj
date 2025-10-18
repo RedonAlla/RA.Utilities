@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+		<Version>1.0.0-preview.6.31</Version>
+		<Title>Api Utilities</Title>
+		<Description>Provides a collection of essential utilities for building robust and consistent ASP.NET Core APIs. This package includes endpoint registration helpers, standardized response models, and exception handling middleware to streamline development and promote best practices.</Description>
+		<PackageTags>RA;Utilities;API;Web;AspNetCore;Endpoints;Helpers;Middleware;Exceptions;Responses;Standardization</PackageTags>
+		<PackageIcon>api.png</PackageIcon>
+		<PackageId>RA.Utilities.Api</PackageId>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageReleaseNotesFile>releasenotes.md</PackageReleaseNotesFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="../../Assets/Images/api.png" Pack="true" PackagePath="\" />
+		<None Include="README.md" Pack="true" PackagePath="\" />
+		<None Include="releasenotes.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="../../Core/RA.Utilities.Core.Exceptions/RA.Utilities.Core.Exceptions.csproj" />
+	  <ProjectReference Include="../RA.Utilities.Api.Results/RA.Utilities.Api.Results.csproj" />
+	</ItemGroup>
+
+</Project>

@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+		<Version>1.0.0-preview.6.3</Version>
+		<Title>RA Middlewares</Title>
+		<Description>RA.Utilities.Api.Middlewares provides a simple and efficient ASP.NET Core middleware for logging HTTP request and response details. It's designed to be easy to integrate, configurable, and performant, using Microsoft.IO.RecyclableMemoryStream to minimize memory allocations and improve application performance.</Description>
+		<Summary>An efficient and configurable ASP.NET Core middleware for logging HTTP requests and responses with structured data.</Summary>
+		<PackageTags>RA;middleware;logging;http;api;diagnostics;performance</PackageTags>
+		<PackageIcon>middleware.png</PackageIcon>
+		<PackageId>RA.Utilities.Api.Middlewares</PackageId>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageReleaseNotesFile>releasenotes.md</PackageReleaseNotesFile>
+	</PropertyGroup>
+
+  <ItemGroup>
+		<PackageReference Include="Microsoft.IO.RecyclableMemoryStream" />
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="../../Assets/Images/middleware.png" Pack="true" PackagePath="\" />
+		<None Include="README.md" Pack="true" PackagePath="\" />
+		<None Include="releasenotes.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="../../Core/RA.Utilities.Core.Constants/RA.Utilities.Core.Constants.csproj" />
+	  <ProjectReference Include="../../Logging/RA.Utilities.Logging.Shared/RA.Utilities.Logging.Shared.csproj" />
+	  <ProjectReference Include="../RA.Utilities.Api.Results/RA.Utilities.Api.Results.csproj" />
+	</ItemGroup>
+
+</Project>

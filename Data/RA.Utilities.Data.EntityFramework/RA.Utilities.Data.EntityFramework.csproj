@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+		<Version>1.0.0-preview.6.321</Version>
+		<Title>Data Entity Framework</Title>
+		<Description>Provides generic repository base classes for implementing the Repository and Unit of Work patterns with Entity Framework Core.</Description>
+		<PackageTags>RA;Utilities;Data;EntityFramework;Repository;UnitOfWork</PackageTags>
+		<PackageIcon>entity_framework_core.png</PackageIcon>
+		<PackageId>RA.Utilities.Data.EntityFramework</PackageId>
+		<PackageReleaseNotesFile>releasenotes.md</PackageReleaseNotesFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="../../Assets/Images/entity_framework_core.png" Pack="true" PackagePath="\" />
+		<None Include="README.md" Pack="true" PackagePath="\" />
+		<None Include="releasenotes.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../RA.Utilities.Data.Abstractions/RA.Utilities.Data.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+  </ItemGroup>
+
+</Project>

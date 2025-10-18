@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+		<Version>1.0.0-preview.6.3</Version>
+		<Title>HTTP Client Integrations</Title>
+		<Description>A utility library to simplify and standardize HTTP client calls in .NET applications. It builds upon `IHttpClientFactory` to provide a structured way to configure and use typed HTTP clients for various integrations.</Description>
+		<PackageTags>RA;Core;Integrations;Http Client</PackageTags>
+		<PackageIcon>http.png</PackageIcon>
+		<PackageId>RA.Utilities.Integrations</PackageId>
+    <AssemblyTitle>RA.Utilities.Integrations</AssemblyTitle>
+	</PropertyGroup>
+
+  <ItemGroup>
+		<None Include="README.md" Pack="true" PackagePath="\" />
+		<None Include="../../Assets/Images/http.png" Pack="true" PackagePath="\" />
+	</ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Http" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../Core/RA.Utilities.Core.Constants/RA.Utilities.Core.Constants.csproj" />
+    <ProjectReference Include="../../Logging/RA.Utilities.Logging.Shared/RA.Utilities.Logging.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

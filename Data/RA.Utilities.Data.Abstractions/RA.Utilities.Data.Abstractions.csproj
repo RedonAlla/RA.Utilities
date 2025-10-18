@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+		<Version>1.0.0-preview.6.3</Version>
+		<Title>Data Core</Title>
+		<Description>Provides a collection of essential data access abstractions, including the Repository and Unit of Work patterns. This library helps create a decoupled and testable data access layer in .NET applications.</Description>
+		<PackageTags>Data, Repository, UnitOfWork, Abstractions, Data access</PackageTags>
+		<PackageIcon>data-outline.png</PackageIcon>
+		<PackageId>RA.Utilities.Data.Abstractions</PackageId>
+		<PackageReleaseNotesFile>releasenotes.md</PackageReleaseNotesFile>
+	</PropertyGroup>
+
+
+	<ItemGroup>
+		<None Include="../../Assets/Images/data-outline.png" Pack="true" PackagePath="\" />
+		<None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" />
+		<None Include="releasenotes.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="../RA.Utilities.Data.Entities/RA.Utilities.Data.Entities.csproj" />
+	</ItemGroup>
+
+</Project>
