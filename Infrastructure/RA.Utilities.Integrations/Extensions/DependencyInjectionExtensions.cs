@@ -128,7 +128,7 @@ public static class DependencyInjectionExtensions
         // The handler needs to be registered so DI can create it when the pipeline is built.
         // It's registered as transient because HttpMessageHandler instances are created and managed
         // by the IHttpClientFactory, which creates a new pipeline for each client instance.
-        httpClientBuilder.Services.AddTransient<ApiKeyAuthenticationHandler<TSettings>>();
+        _ = httpClientBuilder.Services.AddTransient<ApiKeyAuthenticationHandler<TSettings>>();
         return httpClientBuilder.AddHttpMessageHandler<ApiKeyAuthenticationHandler<TSettings>>();
     }
 

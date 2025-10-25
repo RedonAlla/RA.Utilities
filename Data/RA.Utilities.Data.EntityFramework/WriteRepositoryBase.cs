@@ -59,16 +59,16 @@ public class WriteRepositoryBase<T> : IWriteRepositoryBase<T>
     }
 
     /// <inheritdoc />
-    public virtual async Task DeleteAsync<TId>(TId entity, CancellationToken cancellationToken = default) where TId : notnull
+    public virtual async Task DeleteAsync<TId>(TId id, CancellationToken cancellationToken = default) where TId : notnull
     {
-        await _dbSet.Where(e => e.Id.Equals(entity)).ExecuteDeleteAsync(cancellationToken);
+        _ = await _dbSet.Where(e => e.Id.Equals(id)).ExecuteDeleteAsync(cancellationToken);
     }
 
     /// <inheritdoc />
-    public virtual async Task<int> DeleteRangeAsync(List<Guid> entities, CancellationToken cancellationToken = default)
+    public virtual async Task<int> DeleteRangeAsync(List<Guid> ids, CancellationToken cancellationToken = default)
     {
-        await _dbSet.Where(e => entities.Contains(e.Id)).ExecuteDeleteAsync(cancellationToken);
-        return entities.Count;
+        _ = await _dbSet.Where(e => ids.Contains(e.Id)).ExecuteDeleteAsync(cancellationToken);
+        return ids.Count;
     }
 
     /// <inheritdoc />

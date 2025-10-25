@@ -1,12 +1,12 @@
-using RA.Utilities.Logging.Core.Enrichers;
+using System;
 using Destructurama;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using RA.Utilities.Logging.Core.Enrichers;
 using Serilog;
 using Serilog.Configuration;
 using Serilog.Exceptions;
-using System;
 
 namespace RA.Utilities.Logging.Core.Extensions;
 

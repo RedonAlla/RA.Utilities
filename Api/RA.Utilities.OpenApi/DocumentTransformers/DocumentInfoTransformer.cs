@@ -1,9 +1,9 @@
 using System.Threading;
 using System.Threading.Tasks;
-using RA.Utilities.OpenApi.Settings;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
+using RA.Utilities.OpenApi.Settings;
 
 namespace RA.Utilities.OpenApi.DocumentTransformers;
 

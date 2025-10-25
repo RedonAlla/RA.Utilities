@@ -48,12 +48,12 @@ public class RepositoryBase<T> : ReadRepositoryBase<T>, IRepositoryBase<T>
         => _writeRepository.UpdateRangeAsync(entities, cancellationToken);
 
     /// <inheritdoc/>
-    public virtual Task DeleteAsync<TId>(TId entity, CancellationToken cancellationToken = default) where TId : notnull
-        => _writeRepository.DeleteAsync(entity, cancellationToken);
+    public virtual Task DeleteAsync<TId>(TId id, CancellationToken cancellationToken = default) where TId : notnull
+        => _writeRepository.DeleteAsync(id, cancellationToken);
 
     /// <inheritdoc/>
-    public virtual Task<int> DeleteRangeAsync(List<Guid> entities, CancellationToken cancellationToken = default)
-        => _writeRepository.DeleteRangeAsync(entities, cancellationToken);
+    public virtual Task<int> DeleteRangeAsync(List<Guid> ids, CancellationToken cancellationToken = default)
+        => _writeRepository.DeleteRangeAsync(ids, cancellationToken);
 
     /// <inheritdoc/>
     public virtual Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

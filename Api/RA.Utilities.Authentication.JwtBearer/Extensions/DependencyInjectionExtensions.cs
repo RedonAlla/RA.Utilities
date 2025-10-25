@@ -1,11 +1,11 @@
 using System;
-using RA.Utilities.Authentication.JwtBearer.Configurations;
-using RA.Utilities.Authentication.JwtBearer.Constants;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using RA.Utilities.Authentication.JwtBearer.Configurations;
+using RA.Utilities.Authentication.JwtBearer.Constants;
 
 namespace RA.Utilities.Authentication.JwtBearer.Extensions;
 

@@ -1,7 +1,7 @@
 using System;
-using RA.Utilities.Api.Middlewares.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IO;
+using RA.Utilities.Api.Middlewares.Options;
 
 namespace RA.Utilities.Api.Middlewares.Extensions;
 

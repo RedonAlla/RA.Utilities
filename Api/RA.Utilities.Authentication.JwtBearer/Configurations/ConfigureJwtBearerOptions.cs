@@ -1,10 +1,10 @@
 using System;
 using System.Text;
-using RA.Utilities.Authentication.JwtBearer.Constants;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using RA.Utilities.Authentication.JwtBearer.Constants;
 
 namespace RA.Utilities.Authentication.JwtBearer.Configurations;
 

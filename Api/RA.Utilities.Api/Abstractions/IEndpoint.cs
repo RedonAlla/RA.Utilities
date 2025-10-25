@@ -1,4 +1,3 @@
-using System;
 using Microsoft.AspNetCore.Routing;
 
 namespace RA.Utilities.Api.Abstractions;

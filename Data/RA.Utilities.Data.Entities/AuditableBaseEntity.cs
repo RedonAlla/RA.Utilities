@@ -9,10 +9,10 @@ public abstract class AuditableBaseEntity : BaseEntity
     /// <summary>
     /// Gets or sets the identifier of the user who created the entity.
     /// </summary>
-    public string CreatedBy { get; set; }
+    public string? CreatedBy { get; set; }
 
     /// <summary>
     /// Gets or sets the identifier of the user who last modified the entity.
     /// </summary>
-    public string LastModifiedBy { get; set; }
+    public string? LastModifiedBy { get; set; }
 }

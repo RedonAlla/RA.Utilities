@@ -1,8 +1,8 @@
-using RA.Utilities.Logging.Core.Extensions;
+using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
+using RA.Utilities.Logging.Core.Extensions;
 using Serilog.Core;
 using Serilog.Events;
-using System.Diagnostics;
 
 namespace RA.Utilities.Logging.Core.Enrichers;
 

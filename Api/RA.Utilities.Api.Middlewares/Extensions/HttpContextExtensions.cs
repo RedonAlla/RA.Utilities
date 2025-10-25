@@ -1,7 +1,6 @@
-using System;
 using System.Linq;
-using RA.Utilities.Core.Constants;
 using Microsoft.AspNetCore.Http;
+using RA.Utilities.Core.Constants;
 
 namespace RA.Utilities.Api.Middlewares.Extensions;
 

@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using RA.Utilities.Api.Abstractions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using RA.Utilities.Api.Abstractions;
 
 namespace RA.Utilities.Api.Extensions;
 

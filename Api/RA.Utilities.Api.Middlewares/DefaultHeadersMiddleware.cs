@@ -1,13 +1,13 @@
 using System;
+using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options; // Add this using directive for JsonSerializer.
+using RA.Utilities.Api.Middlewares.Extensions;
+using RA.Utilities.Api.Middlewares.Options;
+using RA.Utilities.Api.Middlewares.Utilities;
 using RA.Utilities.Api.Results;
 using RA.Utilities.Core.Constants;
-using Microsoft.AspNetCore.Http;
-using System.Text.Json;
-using RA.Utilities.Api.Middlewares.Extensions;
-using RA.Utilities.Api.Middlewares.Utilities;
-using RA.Utilities.Api.Middlewares.Options;
-using Microsoft.Extensions.Options; // Add this using directive for JsonSerializer.
 
 namespace RA.Utilities.Api.Middlewares;
 
