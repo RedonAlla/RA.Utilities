@@ -47,7 +47,7 @@ jobs:
         working-directory: ./documentation
 
       - name: Build
-        run: npm build
+        run: npm run build
         working-directory: ./documentation
 
       - name: Setup Pages
