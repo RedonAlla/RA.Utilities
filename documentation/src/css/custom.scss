@@ -36,6 +36,10 @@
   --ifm-menu-color-background-active: #e50d003b;
 }
 
+.cardContainer_fWXF {
+  box-shadow: none !important;
+}
+
 .navbar__item.navbar__link.menu_item_icon {
   display: flex;
 }
@@ -284,5 +288,24 @@ li {
 
 /* -------------- END Side Bar -----------------*/
 
-/* -------------- Search -----------------*/
-/* -------------- END Side Bar -----------------*/
+/* ------------------- START Announcement Bar ---------------------- */
+div[class^=announcementBar_] {
+  --site-announcement-bar-stripe-color1: #ff6358;
+  --site-announcement-bar-stripe-color2: rgba(255, 99, 88, 0.2);
+  z-index: 100;
+  color: var(--ifm-heading-color);
+  letter-spacing: 2px;
+  background: repeating-linear-gradient(
+    35deg,
+    var(--site-announcement-bar-stripe-color1),
+    var(--site-announcement-bar-stripe-color1) 20px,
+    var(--site-announcement-bar-stripe-color2) 10px,
+    var(--site-announcement-bar-stripe-color2) 40px
+  );
+  font-weight: 700;
+}
+
+.closeButton_node_modules-\@docusaurus-theme-classic-lib-theme-AnnouncementBar-CloseButton-styles-module {
+  color: var(--ifm-font-color-base);
+}
+/* ------------------- END Announcement Bar ---------------------- */

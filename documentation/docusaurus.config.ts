@@ -4,6 +4,8 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
+const defaultLocale = 'en';
+
 const config: Config = {
   title: 'RA.Utilities',
   tagline: 'RA.Utilities is a "batteries-included" framework for building modern .NET APIs. It provides the foundation for a clean architecture so you can focus more on writing business logic and less on setting up infrastructure.',
@@ -15,15 +17,16 @@ const config: Config = {
   },
 
   // Set the production url of your site here
-  url: 'https://your-docusaurus-site.example.com',
+  url: 'https://redonalla.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/',
+  baseUrl: '/RA.Utilities/',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'Redon Alla', // Usually your GitHub org/user name.
+  organizationName: 'redonalla.github.io', // Usually your GitHub org/user name.
   projectName: 'RA.Utilities', // Usually your repo name.
+  deploymentBranch: "gh-pages",
 
   onBrokenLinks: 'throw',
 
@@ -46,8 +49,13 @@ const config: Config = {
           sidebarPath: './sidebars.ts',
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+          editUrl: ({locale, versionDocsDirPath, docPath}) => {
+            if (locale !== defaultLocale) {
+              return `https://crowdin.com/project/docusaurus-v2/${locale}`;
+            }
+            return `https://github.com/RedonAlla/RA.Utilities/tree/main/documentation/${docPath}`;
+          },
+
         },
         blog: {
           showReadingTime: true,
@@ -55,10 +63,6 @@ const config: Config = {
             type: ['rss', 'atom'],
             xslt: true,
           },
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
           // Useful options to enforce blogging best practices
           onInlineTags: 'warn',
           onInlineAuthors: 'warn',
@@ -143,6 +147,10 @@ const config: Config = {
   themeConfig: {
     // Replace with your project's social card
     image: 'img/docusaurus-social-card.jpg',
+    announcementBar: {
+      id: 'work_in_progress',
+      content: '⭐️ If you like RA.Utilities, give it a star on <a target="_blank" rel="noopener noreferrer" href="https://github.com/RedonAlla/RA.Utilities">GitHub</a>! ⭐️',
+    },
     colorMode: {
       respectPrefersColorScheme: true,
     },
@@ -185,7 +193,7 @@ const config: Config = {
       ],
     },
     footer: {
-      style: 'dark',
+      style: 'light',
       links: [
         {
           title: 'Docs',
