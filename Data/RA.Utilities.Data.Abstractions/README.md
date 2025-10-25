@@ -27,7 +27,7 @@ This package is a core component of the `RA.Utilities` ecosystem and is designed
 - **Async Support**: All data operations are asynchronous, promoting scalable and responsive applications.
 - **Decoupling**: Enforces a clean separation between your domain/application layers and the data access/infrastructure layer.
 
-## 📦 Installation
+## 🛠️ Installation
 
 Install the package via the .NET CLI:
 

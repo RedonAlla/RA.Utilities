@@ -6,16 +6,17 @@
 
 [![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Api.Middlewares.svg)](https://www.nuget.org/packages/RA.Utilities.Api.Middlewares/)
 
-`RA.Utilities.Api.Middlewares` provides a collection of useful ASP.NET Core middlewares designed to improve diagnostics and enforce API best practices. This package includes middlewares for efficient HTTP request/response logging and for ensuring the presence of default required headers.
+`RA.Utilities.Api.Middlewares` provides a collection of useful ASP.NET Core middlewares designed to improve diagnostics and enforce API best practices.
+This package includes middlewares for efficient HTTP request/response logging and for ensuring the presence of default required headers.
 
-## Purpose
+## 🎯 Purpose
 
 This package aims to solve common cross-cutting concerns in API development:
 
 1.  **HTTP Request/Response Logging**: Provides a highly performant middleware to log detailed information about incoming requests and their corresponding responses. It uses `Microsoft.IO.RecyclableMemoryStream` to minimize memory allocations, making it suitable for high-throughput applications.
 2.  **Header Enforcement**: Includes a middleware to validate the presence of essential headers, such as `X-Request-Id`, to ensure traceability and consistency across your services.
 
-## Installation
+## 🛠️ Installation
 
 You can install the package via the .NET CLI:
 
@@ -80,7 +81,10 @@ The `DefaultHeadersMiddleware` enforces the presence of the `X-Request-Id` heade
 
 #### Usage
 
-**Step 1: Register the middleware service in `Program.cs`**
+**Step 1: Register the middleware services in `Program.cs`**
+
+Call `AddDefaultHeadersMiddleware()` in your service configuration.
+You can also provide options to customize its behavior, such as excluding certain paths from header validation.
 
 ```csharp
 // Program.cs
@@ -88,7 +92,11 @@ using RA.Utilities.Api.Middlewares.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDefaultHeadersMiddleware();
+builder.Services.AddDefaultHeadersMiddleware(options =>
+{
+    options.PathsToIgnore.Add("/swagger");
+    options.PathsToIgnore.Add("/health");
+});
 
 var app = builder.Build();
 ```

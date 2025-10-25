@@ -1,5 +1,3 @@
-using System;
-
 namespace RA.Utilities.Integrations.Abstractions;
 
 /// <summary>
@@ -10,5 +8,5 @@ public interface IApiKeySettings
     /// <summary>
     /// Gets or sets the API key.
     /// </summary>
-    string ApiKey { get; set; }
+    string? ApiKey { get; set; }
 }

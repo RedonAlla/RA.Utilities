@@ -19,7 +19,7 @@ This package is designed to solve two common challenges in API development:
 
 By using this package, you can significantly reduce boilerplate code and enforce consistency across all your API endpoints.
 
-## Installation
+## 🛠️ Installation
 
 You can install the package via the .NET CLI:
 
@@ -33,32 +33,38 @@ Or through the NuGet Package Manager in Visual Studio.
 
 ## ✨ Features
 
-### 1. Exception Handling Middleware
+### 1. Global Exception Handling
 
-The `GlobalExceptionHandler()` middleware intercepts exceptions thrown within your application and generates appropriate, structured error responses.
+The `GlobalExceptionHandler` intercepts any unhandled exceptions thrown within your application and generates appropriate, structured error responses. This is the modern .NET 8 approach, replacing older custom middleware.
 
 **How it works:**
 
 - It catches `NotFoundException`, `ConflictException`, and `BadRequestException` from the `RA.Utilities.Core.Exceptions` package.
 - It maps them to `NotFoundResponse`, `ConflictResponse`, and `BadRequestResponse` from the `RA.Utilities.Api.Results` package.
 - For any other unhandled exception, it returns a generic `ErrorResponse` (HTTP 500) to avoid leaking sensitive information.
+- It logs every exception for debugging purposes.
 
 #### Usage
 
-Register the middleware in your `Program.cs` file. It should be placed early in the pipeline to catch exceptions from subsequent middleware and endpoints.
+Register the exception handler in your `Program.cs` file.
 
 ```csharp
 // Program.cs
 
 var builder = WebApplication.CreateBuilder(args);
+
+// 1. Add the exception handler service.
+builder.Services.AddRaExceptionHandling();
+
 var app = builder.Build();
 
-// Add the exception handling middleware
+// 2. Add the exception handler to the pipeline.
+// This should be placed early to catch exceptions from subsequent middleware and endpoints.
 app.UseRaExceptionHandling();
 
 app.MapGet("/products/{id}", (int id) =>
 {
-    if (id == 0)
+    if (id <= 0)
     {
         // This will be caught and transformed into a 404 NotFoundResponse
         throw new NotFoundException("Product", id);
@@ -91,8 +97,9 @@ As your API grows, defining all routes in `Program.cs` can become messy. This pa
 **How it works:**
 
 1.  **Create an Endpoint Class**: Create a class that implements the `IEndpoint` interface.
-2.  **Define Routes**: Inside the `MapEndpoints` method, define your routes just as you would in `Program.cs`.
-3.  **Register Endpoints**: Use the `MapEndpoints()` extension method in `Program.cs` to automatically scan your assembly and register all `IEndpoint` implementations.
+2.  **Define Routes**: Inside the `MapEndpoint` method, define your routes just as you would in `Program.cs`.
+3.  **Register Services**: In `Program.cs`, use the `AddEndpoints()` extension method to scan your assembly and register all `IEndpoint` implementations with the DI container.
+4.  **Map Endpoints**: After building the app, use the `MapEndpoints()` extension method to execute the route mapping for all registered endpoints.
 
 #### Usage
 
@@ -105,9 +112,9 @@ using RA.Utilities.Api.Abstractions;
 
 public class ProductEndpoints : IEndpoint
 {
-    public void MapEndpoints(IEndpointRouteBuilder app)
+    public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        app.MapGet("/products", () => 
+        app.MapGet("/products", () =>
         {
             // Logic to get all products
             return Results.Ok("All products");
@@ -142,28 +149,47 @@ This keeps your `Program.cs` clean and your endpoint definitions organized by fe
 
 ### 3. Standardized Success Response Helpers
 
-To complement the standardized error responses, this package provides the `SuccessResponse` static class. It offers a set of convenient helper methods for creating consistent success `IResult` objects (like `200 OK` and `201 Created`) that are automatically wrapped in the `SuccessResponse<T>` model from `RA.Utilities.Api.Results`.
+To complement the standardized error responses, this package provides the `SuccessResponse` static class. It offers convenient helper methods for creating consistent success `IResult` objects (like `200 OK` and `201 Created`) that are automatically wrapped in the `SuccessResponse<T>` model from `RA.Utilities.Api.Results`.
 
 This ensures that your successful API responses follow the same structured format as your error responses, providing a predictable contract for your API consumers.
 
-**Available Helpers:**
+#### Available Helpers
+The SuccessResponse class provides helpers for the most common success status codes:
 
--   `SuccessResponse.Ok<T>(T result)`: Creates a 200 OK response with a payload.
--   `SuccessResponse.Ok()`: Creates a 200 OK response without a payload.
--   `SuccessResponse.Created<T>(string uri, T result)`: Creates a 201 Created response with a location header and payload.
--   `SuccessResponse.Accepted<T>(...)`: Creates a 202 Accepted response.
--   `SuccessResponse.NoContent()`: Creates a 204 No Content response.
+* `Ok()`: Creates a `200 OK` response.
+* `Ok<T>(T result)`: Creates a `200 OK` response with a payload.
+* `Created()`: Creates a `201 Created` response.
+* `Created<T>(T result)`: Creates a `201 Created` response with a payload.
+* `Created<T>(string uri, T result)`: Creates a `201 Created` response with a `Location` header and a payload.
+* `Accepted()`: Creates a `202 Accepted` response.
+* `Accepted<T>(string uri, T result)`: Creates a `202 Accepted` response with a `Location` header and a payload.
+* `NoContent()`: Creates a `204 No Content` response.
 
 #### Usage
 
-You can use these helpers directly in your endpoints to simplify response creation.
+You can use these helpers directly in your endpoints to simplify response creation and ensure consistency.
 
 ```csharp
-// Instead of this:
-return Results.Ok(new SuccessResponse<Product>(product));
+// In an IEndpoint implementation or Minimal API
+app.MapGet("/products/{id}", (int id) => 
+{
+    var product = new Product { Id = id, Name = "Sample Product" };
 
-// You can write this:
-return SuccessResponse.Ok(product);
+    // Instead of this:
+    // return Results.Ok(new SuccessResponse<Product>(product));
+
+    // You can write this:
+    return SuccessResponse.Ok(product);
+});
+
+app.MapPost("/products", (Product product) => 
+{
+    // Logic to save the product...
+    var newProduct = new Product { Id = 123, Name = product.Name };
+
+    // Creates a 201 Created response with a Location header and a structured body
+    return SuccessResponse.Created($"/products/{newProduct.Id}", newProduct);
+});
 ```
 
 A request that returns a product would yield the following JSON body, wrapped in the standard response structure:

@@ -40,7 +40,7 @@ public class BaseHttpClient
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="httpClient"/> is null.</exception>
     public BaseHttpClient(HttpClient httpClient, IOptions<IIntegrationSettings> settings)
     {
-        _settings = settings.Value ?? throw new ArgumentNullException(nameof(settings));
+        _settings = settings?.Value ?? throw new ArgumentNullException(nameof(settings));
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
 
         _httpClient.BaseAddress = _settings.BaseUrl;

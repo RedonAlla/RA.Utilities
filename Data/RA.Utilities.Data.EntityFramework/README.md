@@ -6,7 +6,8 @@
 
 [![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Data.EntityFramework.svg)](https://www.nuget.org/packages/RA.Utilities.Data.EntityFramework/)
 
-Provides generic base classes for implementing the Repository and Unit of Work patterns with Entity Framework Core. This package is the concrete implementation layer for the abstractions defined in `RA.Utilities.Data.Abstractions`.
+Provides generic base classes for implementing the Repository and Unit of Work patterns with Entity Framework Core.
+This package is the concrete implementation layer for the abstractions defined in `RA.Utilities.Data.Abstractions`.
 
 ## 🎯 Purpose
 
@@ -18,12 +19,11 @@ This library accelerates the setup of a data access layer by providing ready-to-
 
 ## ✨ Core Components
 
--   **`RepositoryBase<T, TContext>`**: A complete generic repository that implements both `IReadRepositoryBase<T>` and `IWriteRepositoryBase<T>`. It provides full CRUD functionality.
--   **`ReadRepositoryBase<T, TContext>`**: A read-only generic repository implementation, perfect for query-side operations in a CQS architecture. It uses `AsNoTracking()` by default for performance.
--   **`WriteRepositoryBase<T, TContext>`**: A write-only generic repository for command-side operations (Add, Update, Delete).
--   **`UnitOfWork<TContext>`**: An implementation of `IUnitOfWork` that coordinates transactions across multiple repositories using a shared `DbContext` instance.
+-   **`RepositoryBase<T>`**: A complete generic repository that implements both `IReadRepositoryBase<T>` and `IWriteRepositoryBase<T>`. It provides full CRUD functionality.
+-   **`ReadRepositoryBase<T>`**: A read-only generic repository implementation, perfect for query-side operations in a CQS architecture. It uses `AsNoTracking()` by default for performance.
+-   **`WriteRepositoryBase<T>`**: A write-only generic repository for command-side operations (Add, Update, Delete).
 
-## 📦 Installation
+## 🛠️ Installation
 
 Install the package via the .NET CLI:
 

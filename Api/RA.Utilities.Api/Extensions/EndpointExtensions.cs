@@ -10,13 +10,14 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 namespace RA.Utilities.Api.Extensions;
 
 /// <summary>
-/// Provides extension methods for registering API endpoints.
+/// Provides extension methods for discovering and registering API endpoints that implement the <see cref="IEndpoint"/> interface.
 /// </summary>
 public static class EndpointExtensions
 {
     /// <summary>
     /// Scans the specified assembly for types that implement the <see cref="IEndpoint"/> interface
-    /// and registers them as transient services in the <see cref="IServiceCollection"/>.
+    /// and registers them as transient services in the <see cref="IServiceCollection"/>. This method is the first step
+    /// in the endpoint registration process, making the endpoint definitions available for dependency injection.
     /// </summary>
     /// <remarks>
     /// <strong>
@@ -25,7 +26,7 @@ public static class EndpointExtensions
     /// </strong>
     /// </remarks>
     /// <param name="services">The <see cref="IServiceCollection"/> to add the services to.</param>
-    /// <param name="assembly">The assembly to scan for endpoints.</param>
+    /// <param name="assembly">The assembly to scan for endpoint definitions.</param>
     /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
     public static IServiceCollection AddEndpoints(this IServiceCollection services, Assembly assembly)
     {
@@ -42,7 +43,9 @@ public static class EndpointExtensions
     }
 
     /// <summary>
-    /// Discovers and maps all registered <see cref="IEndpoint"/> services to the application's routes.
+    /// Discovers and maps all registered <see cref="IEndpoint"/> services to the application's routes. This method
+    /// retrieves all services registered via <see cref="AddEndpoints(IServiceCollection, Assembly)"/> and executes
+    /// their <see cref="IEndpoint.MapEndpoint(IEndpointRouteBuilder)"/> method.
     /// </summary>
     /// <remarks>
     /// <strong>
@@ -51,7 +54,7 @@ public static class EndpointExtensions
     /// </strong>
     /// </remarks>
     /// <param name="app">The <see cref="WebApplication"/> to map the endpoints to.</param>
-    /// <param name="routeGroupBuilder">An optional <see cref="RouteGroupBuilder"/> to group the endpoints under a common prefix.</param>
+    /// <param name="routeGroupBuilder">An optional <see cref="RouteGroupBuilder"/> to group the discovered endpoints under a common prefix and/or with shared configuration.</param>
     /// <returns>The <see cref="IApplicationBuilder"/> to allow for fluent chaining.</returns>
     public static IApplicationBuilder MapEndpoints(this WebApplication app, RouteGroupBuilder? routeGroupBuilder = null)
     {

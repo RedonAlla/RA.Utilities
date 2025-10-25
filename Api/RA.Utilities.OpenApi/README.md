@@ -8,7 +8,7 @@
 
 A utility library to enhance and customize OpenAPI (Swagger) documentation in ASP.NET Core applications.
 
-## Purpose
+## 🎯 Purpose
 
 This package provides a collection of `IOpenApiDocumentTransformer` implementations to automate common modifications to your generated OpenAPI specification.
 Instead of manually annotating every endpoint with attributes for common headers or security schemes, you can apply these transformations globally.
@@ -20,7 +20,7 @@ The primary goals are to:
 
 This package is designed to work with the standard `Microsoft.AspNetCore.OpenApi` tooling in ASP.NET Core.
 
-## Installation
+## 🛠️ Installation
 
 You can install the package via the .NET CLI:
 
@@ -89,29 +89,29 @@ Used by `DocumentInfoTransformer` to populate the document's `info` object.
 
 **`appsettings.json` Section:** `OpenApi:Info`
 
-| Property         | Type                               | Description                                                                  |
-| ---------------- | ---------------------------------- | ---------------------------------------------------------------------------- |
-| Title            | `string`                           | The title of the API.                                                        |
-| Version          | `string`                           | The version of the API.                                                      |
-| Description      | `string`                           | A short description of the API.                                              |
-| TermsOfService   | `string` (URI)                     | A URL to the Terms of Service for the API.                                   |
-| Contact          | `OpenApiContactSettings` (object)  | The contact information for the exposed API. See details below.              |
-| License          | `OpenApiLicenseSettings` (object)  | The license information for the exposed API. See details below.              |
+| Property           | Type                               | Description                                                      |
+| ------------------ | ---------------------------------- | ---------------------------------------------------------------- |
+| **Title**          | `string`                           | The title of the API.                                            |
+| **Version**        | `string`                           | The version of the API.                                          |
+| **Description**    | `string`                           | A short description of the API.                                  |
+| **TermsOfService** | `string` (URI)                     | A URL to the Terms of Service for the API.                       |
+| **Contact**        | `OpenApiContactSettings` (object)  | The contact information for the exposed API. See details below.  |
+| **License**        | `OpenApiLicenseSettings` (object)  | The license information for the exposed API. See details below.  |
 
 #### `OpenApiContactSettings`
 
-| Property | Type           | Description                               |
-| -------- | -------------- | ----------------------------------------- |
-| Name     | `string`       | The identifying name of the contact person/organization. |
-| Email    | `string`       | The email address of the contact person/organization. |
-| Url      | `string` (URI) | The URL pointing to the contact information. |
+| Property  | Type           | Description                               |
+| --------- | -------------- | ----------------------------------------- |
+| **Name**  | `string`       | The identifying name of the contact person/organization. |
+| **Email** | `string`       | The email address of the contact person/organization. |
+| **Url**   | `string` (URI) | The URL pointing to the contact information. |
 
 #### `OpenApiLicenseSettings`
 
-| Property | Type           | Description                               |
-| -------- | -------------- | ----------------------------------------- |
-| Name     | `string`       | The license name used for the API.        |
-| Url      | `string` (URI) | A URL to the license used for the API.    |
+| Property | Type           | Description                            |
+| -------- | -------------- | -------------------------------------- |
+| Name     | `string`       | The license name used for the API.     |
+| Url      | `string` (URI) | A URL to the license used for the API. |
 
 ### `HeadersParameterSettings`
 
@@ -141,20 +141,23 @@ Represents a single header to be added to the OpenAPI specification.
 
 ```json
 {
-  "OpenApi": {
+  "OpenApiInfoSettings": {
     "Info": {
       "Title": "My Awesome API",
-      "Version": "v1.0",
-      "Description": "An API to demonstrate OpenAPI transformers."
-    }
-  },
-  "OpenApiHeaders": {
-    "RequestHeaders": [
-      {
-        "Name": "x-request-id",
-        "Description": "A unique identifier for the API call."
+      "Version": "v1.0.0",
+      "Summary": "A brief and catchy summary of the API.",
+      "Description": "This is a more detailed description of the API. It can include **Markdown** for rich text formatting, explaining what the API does, its main features, and how to get started.",
+      "TermsOfService": "https://example.com/terms",
+      "Contact": {
+        "Name": "API Support Team",
+        "Url": "https://example.com/support",
+        "Email": "support@example.com"
+      },
+      "License": {
+        "Name": "MIT License",
+        "Url": "https://opensource.org/licenses/MIT"
       }
-    ]
+    }
   }
 }
 ```

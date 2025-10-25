@@ -20,7 +20,7 @@ The main benefits are:
 - **Testable**: Easily mock `ICurrentUser` in your unit tests to simulate different authenticated users and scenarios.
 - **Reduced Boilerplate**: Drastically cuts down on repetitive code for accessing user claims.
 
-## Installation
+## 🛠️ Installation
 
 You can install the package via the .NET CLI:
 

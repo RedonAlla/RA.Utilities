@@ -34,6 +34,19 @@ public class ConflictException : RaBaseException
     }
 
     /// <summary>
+    /// Initializes a new instance of the <see cref="ConflictException"/> class with a custom message.
+    /// </summary>
+    /// <param name="message">The message that describes the error.</param>
+    /// <param name="entityName">The name of the entity type that caused the conflict.</param>
+    /// <param name="entityValue">The value or identifier of the conflicting entity.</param>
+    public ConflictException(string message, string entityName, object entityValue)
+        : base(BaseResponseCode.Conflict, message)
+    {
+        EntityName = entityName;
+        EntityValue = entityValue;
+    }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="ConflictException"/> class with serialized data.
     /// </summary>
     /// <param name="info">The <see cref="SerializationInfo"/> that holds the serialized object data about the exception being thrown.</param>

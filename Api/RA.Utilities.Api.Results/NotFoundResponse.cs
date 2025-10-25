@@ -35,12 +35,12 @@ public sealed class NotFoundResponse : Response<NotFoundResult>
 public class NotFoundResult(string name, object value)
 {
     /// <summary>
-    /// Entity name.
+    /// The type of resource that was being looked for (e.g., "Product", "User")
     /// </summary>
     public string EntityName { get; set; } = name;
 
     /// <summary>
-    /// Entity value.
+    /// The identifier that was used in the search (e.g., `123`, `"john.doe@example.com"`).
     /// </summary>
     public object EntityValue { get; set; } = value;
 }

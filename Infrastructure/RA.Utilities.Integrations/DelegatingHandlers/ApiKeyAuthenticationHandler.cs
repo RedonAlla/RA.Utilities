@@ -1,4 +1,3 @@
-using System;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,7 +14,7 @@ namespace RA.Utilities.Integrations.DelegatingHandlers;
 public class ApiKeyAuthenticationHandler<TSettings> : DelegatingHandler
     where TSettings : class, IApiKeySettings
 {
-    private readonly TSettings _settings;
+    private readonly TSettings? _settings;
     private const string xApiKeyHeader = "X-Api-Key";
 
     /// <summary>
@@ -24,7 +23,7 @@ public class ApiKeyAuthenticationHandler<TSettings> : DelegatingHandler
     /// <param name="options">The options accessor to retrieve the settings containing the API key.</param>
     public ApiKeyAuthenticationHandler(IOptions<TSettings> options)
     {
-        _settings = options.Value;
+        _settings = options?.Value;
     }
 
     /// <summary>
@@ -32,11 +31,11 @@ public class ApiKeyAuthenticationHandler<TSettings> : DelegatingHandler
     /// </summary>
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        if (!string.IsNullOrWhiteSpace(_settings.ApiKey))
+        if (!string.IsNullOrWhiteSpace(_settings?.ApiKey))
         {
-            request.Headers.TryAddWithoutValidation(xApiKeyHeader, _settings.ApiKey);
+            request?.Headers.TryAddWithoutValidation(xApiKeyHeader, _settings.ApiKey);
         }
 
-        return base.SendAsync(request, cancellationToken);
+        return base.SendAsync(request!, cancellationToken);
     }
 }

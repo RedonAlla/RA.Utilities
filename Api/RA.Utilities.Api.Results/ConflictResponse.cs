@@ -1,4 +1,3 @@
-using System;
 using RA.Utilities.Core.Constants;
 
 namespace RA.Utilities.Api.Results;
@@ -35,12 +34,12 @@ public sealed class ConflictResponse : Response<ConflictResult>
 public class ConflictResult(string name, object value)
 {
     /// <summary>
-    /// Entity name.
+    /// The type of resource causing the conflict (e.g., "User").
     /// </summary>
     public string Entity { get; set; } = name;
 
     /// <summary>
-    /// Entity value.
+    /// The specific value that caused the conflict (e.g., "test@example.com").
     /// </summary>
     public object Value { get; set; } = value;
 }

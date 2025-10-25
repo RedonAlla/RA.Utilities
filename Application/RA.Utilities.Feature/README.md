@@ -8,11 +8,13 @@
 
 `RA.Utilities.Feature` provides a foundational toolkit for implementing the **Vertical Slice Architecture** pattern using CQRS (Command Query Responsibility Segregation). It offers base handlers, validation behaviors, and exception handling mechanisms to streamline feature development and promote clean, maintainable code.
 
-This package is designed to work with a mediator library (like MediatR) to create self-contained "features" or "slices," where all the logic for a single use case—from request to response—is located together.
+This package is designed to work like a mediator library to create self-contained "features" or "slices," where all the logic for a single use case—from request to response—is located together.
 
 ## Purpose
 
-Building applications with a traditional layered architecture can lead to wide, coupled classes and scattered logic. The Vertical Slice pattern, combined with CQRS, addresses this by organizing code around features. This package provides the essential building blocks to support that pattern:
+Building applications with a traditional layered architecture can lead to wide, coupled classes and scattered logic.
+The Vertical Slice pattern, combined with CQRS, addresses this by organizing code around features.
+This package provides the essential building blocks to support that pattern:
 
 1.  **Consistent Handler Logic**: It offers generic base handlers that encapsulate common logic like logging, exception handling, and performance monitoring. This reduces boilerplate and ensures every feature behaves consistently.
 2.  **Automatic Validation**: It includes a pipeline behavior that automatically validates incoming CQRS requests (commands/queries) using `FluentValidation`, returning a structured error response on failure.
@@ -20,7 +22,7 @@ Building applications with a traditional layered architecture can lead to wide, 
 
 By using `RA.Utilities.Feature`, you can build features faster, with more confidence, and with less repetitive code.
 
-## Installation
+## 🛠️ Installation
 
 You will need to install this package along with a mediator implementation (like MediatR) and FluentValidation.
 
@@ -35,12 +37,13 @@ dotnet add package FluentValidation.DependencyInjectionExtensions
 
 ### 1. Base Handlers
 
-The package provides several base classes for your CQRS handlers to inherit from. These classes provide a consistent structure and automatically handle cross-cutting concerns.
+The package provides abstract base classes that implement the `IRequestHandler` interfaces. Inheriting from these base classes gives your handlers a consistent structure and automatically handles cross-cutting concerns.
 
--   `IRequestHandler<TRequest>`: For handlers that process a request but do not return a value (e.g., a fire-and-forget command).
--   `IRequestHandler<TRequest, TResponse>`: The most common handler, for requests that return a value. It is designed to work with the `Result<T>` type from `RA.Utilities.Core`.
+The primary base classes are:
+-   **`RequestHandler<TRequest>`**: For handlers that process a request but do not return a value. It implements `IRequestHandler<TRequest>`.
+-   **`RequestHandler<TRequest, TResponse>`**: The most common handler, for requests that return a value. It implements `IRequestHandler<TRequest, TResponse>` and is designed to work with the `Result<T>` type from `RA.Utilities.Core`.
 
-These handlers include built-in logging for the start and end of a request, automatic exception catching (which wraps exceptions in a `Result.Failure`), and a clear `HandleAsync` method for you to implement your business logic.
+These base classes include built-in logging for the start and end of a request, automatic exception catching (which wraps exceptions in a `Result.Failure`), and a clear `HandleAsync` method for you to override with your business logic.
 
 ### 2. Validation Pipeline Behavior
 
@@ -87,20 +90,21 @@ Next, create the handler by inheriting from `IRequestHandler<TRequest, TResponse
 // Features/Products/CreateProduct.cs (continued)
 
 using RA.Utilities.Feature.Abstractions;
+using Microsoft.Extensions.Logging;
 using RA.Utilities.Core;
 
-public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result<int>>
+public class CreateProductHandler : RequestHandler<CreateProductCommand, Result<int>>
 {
     private readonly IProductRepository _productRepository;
-
+ 
     // Inject dependencies and the base logger
-    public CreateProductHandler(IProductRepository productRepository, ILogger<CreateProductHandler> logger) 
+    public CreateProductHandler(IProductRepository productRepository, ILogger<CreateProductHandler> logger)
         : base(logger)
     {
         _productRepository = productRepository;
     }
 
-    // Implement the core business logic
+    // Override the base HandleAsync to implement the core business logic
     public override async Task<Result<int>> HandleAsync(CreateProductCommand command, CancellationToken cancellationToken)
     {
         // Check if a product with the same name already exists
@@ -126,9 +130,6 @@ Finally, wire up MediatR, the validation behavior, and your validators in your a
 
 ```csharp
 // Program.cs
-
-using System.Reflection;
-using FluentValidation;
 using RA.Utilities.Feature.Behaviors;
 
 var builder = WebApplication.CreateBuilder(args);

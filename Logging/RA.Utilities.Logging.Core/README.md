@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../../Assets/Images/log.svg" alt="RA.Utilities.Logging.Core Logo" width="128">
+  <img src="../../Assets/Images/logging.svg" alt="RA.Utilities.Logging.Core Logo" width="128">
 </p>
 
 # RA.Utilities.Logging.Core
@@ -25,7 +25,7 @@ Setting up a comprehensive logging solution from scratch can be repetitive. This
   - `WithSensitiveDataMasking`: Automatically finds and masks sensitive data in log messages based on property names (e.g., "Password", "CreditCard").
 - **Configuration-Driven**: Reads settings from `appsettings.json`, allowing you to easily adjust log levels and other parameters without changing code.
 
-## Installation
+## 🛠️ Installation
 
 You can install the package via the .NET CLI:
 

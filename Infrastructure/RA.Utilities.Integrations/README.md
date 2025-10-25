@@ -26,7 +26,7 @@ Integrating with external APIs is a common requirement. This package provides a 
     -   Configures the `HttpClient`'s `BaseAddress`, `Timeout`, and default headers.
     -   Adds a default transient error handling policy (retry with exponential backoff).
 
-## 📦 Installation
+## 🛠️ Installation
 
 Install the package via the .NET CLI:
 

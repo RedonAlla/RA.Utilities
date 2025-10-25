@@ -1,8 +1,8 @@
-using System;
 using Microsoft.AspNetCore.Http;
 using RA.Utilities.Api.Results;
 
 namespace RA.Utilities.Api.Mapper;
+
 /// <summary>
 /// Provides static methods for creating API results.
 /// </summary>

@@ -17,7 +17,7 @@ These models ensure that every response—whether it's a success, a generic erro
 
 This library is designed to work seamlessly with the other `RA.Utilities` packages, such as `RA.Utilities.Core.Constants` for status codes and messages.
 
-## Installation
+## 🛠️ Installation
 
 You can install the package via the .NET CLI:
 

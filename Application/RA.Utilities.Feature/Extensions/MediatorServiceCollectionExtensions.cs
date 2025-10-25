@@ -1,4 +1,3 @@
-using System;
 using Microsoft.Extensions.DependencyInjection;
 using RA.Utilities.Feature.Abstractions;
 
@@ -10,11 +9,11 @@ namespace RA.Utilities.Feature.Extensions;
 public static class MediatorServiceCollectionExtensions
 {
     /// <summary>
-    /// Adds custom Mediator services to the specified <see cref="IServiceCollection"/>.
+    /// Adds Mediator services to the specified <see cref="IServiceCollection"/>.
     /// </summary>
     /// <param name="services">The <see cref="IServiceCollection"/> to add the services to.</param>
     /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
-    public static IServiceCollection AddCustomMediator(this IServiceCollection services)
+    public static IServiceCollection AddMediator(this IServiceCollection services)
     {
         services.AddScoped<IMediator, Mediator>();
         return services;

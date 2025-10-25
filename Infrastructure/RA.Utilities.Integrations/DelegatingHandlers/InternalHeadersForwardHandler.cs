@@ -64,6 +64,8 @@ public class InternalHeadersForwardHandler : DelegatingHandler
     /// </returns>
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(request);
+        
         request.Headers.AddSafe(HeaderParameters.Authorization, _token);
         request.Headers.AddSafe(HeaderParameters.XRequestId, RequestId);
 

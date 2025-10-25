@@ -33,6 +33,7 @@ public class NotificationMetricsBehavior<TNotification> : INotificationBehavior<
     {
         _logger.LogDebug("MetricsBehavior..");
 
+        _timer.Reset();
         _timer.Start();
         await next();
         _timer.Stop();
@@ -41,7 +42,7 @@ public class NotificationMetricsBehavior<TNotification> : INotificationBehavior<
 
         if (elapsedMilliseconds > 500)
         {
-            _logger.LogWarning("Long running request: {RequestName} ({ElapsedMilliseconds}ms)",
+            _logger.LogWarning("Long running notification: {NotificationName} ({ElapsedMilliseconds}ms)",
                 typeof(TNotification).Name, elapsedMilliseconds);
         }
     }

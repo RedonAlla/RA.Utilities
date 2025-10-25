@@ -1,5 +1,3 @@
-using System;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using RA.Utilities.Data.Abstractions;
 
@@ -11,10 +9,9 @@ namespace RA.Utilities.Data.EntityFramework.Extensions;
 public static class DependencyInjectionExtensions
 {
     /// <summary>
-    /// Adds the <see cref="IReadRepositoryBase{TEntity}"/> and its implementation <see cref="ReadRepositoryBase{TEntity}"/>
-    /// for the specified DbContext to the <see cref="IServiceCollection"/> as a scoped service.
-    /// 
-    /// The DI container will automatically resolve the correct 'T' at runtime.
+    /// Adds the generic <see cref="IReadRepositoryBase{T}"/> and its implementation <see cref="ReadRepositoryBase{T}"/>
+    /// to the <see cref="IServiceCollection"/> as a scoped service. This allows for the injection of
+    /// `IReadRepositoryBase&lt;TEntity&gt;` for any entity `TEntity` that inherits from `BaseEntity`.
     /// </summary>
     /// <param name="services">The <see cref="IServiceCollection"/> to add the services to.</param>
     /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
@@ -24,10 +21,9 @@ public static class DependencyInjectionExtensions
     }
 
     /// <summary>
-    /// Adds the <see cref="IWriteRepositoryBase{TEntity}"/> and its implementation <see cref="WriteRepositoryBase{TEntity}"/>
-    /// for the specified DContext to the <see cref="IServiceCollection"/> as a scoped service.
-    /// 
-    /// The DI container will automatically resolve the correct 'T' at runtime.
+    /// Adds the generic <see cref="IWriteRepositoryBase{T}"/> and its implementation <see cref="WriteRepositoryBase{T}"/>
+    /// to the <see cref="IServiceCollection"/> as a scoped service. This allows for the injection of
+    /// `IWriteRepositoryBase&lt;TEntity&gt;` for any entity `TEntity` that inherits from `BaseEntity`.
     /// </summary>
     /// <param name="services">The <see cref="IServiceCollection"/> to add the services to.</param>
     /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
@@ -37,10 +33,9 @@ public static class DependencyInjectionExtensions
     }
 
     /// <summary>
-    /// Adds the <see cref="IRepositoryBase{TEntity}"/> and its implementation <see cref="RepositoryBase{TEntity}"/>
-    /// for the specified DContext to the <see cref="IServiceCollection"/> as a scoped service.
-    /// 
-    /// The DI container will automatically resolve the correct 'T' at runtime.
+    /// Adds the generic <see cref="IRepositoryBase{T}"/> and its implementation <see cref="RepositoryBase{T}"/>
+    /// to the <see cref="IServiceCollection"/> as a scoped service. This allows for the injection of
+    /// `IRepositoryBase&lt;TEntity&gt;` for any entity `TEntity` that inherits from `BaseEntity`.
     /// </summary>
     /// <param name="services">The <see cref="IServiceCollection"/> to add the services to.</param>
     /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>

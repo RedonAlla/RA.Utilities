@@ -1,8 +1,5 @@
 using RA.Utilities.OpenApi.DocumentTransformers;
-using RA.Utilities.OpenApi.Settings;
 using Microsoft.AspNetCore.OpenApi;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 
 
 namespace RA.Utilities.OpenApi.Extensions;
@@ -34,9 +31,9 @@ public static class DependencyInjectionExtensions
     /// <returns>The <see cref="OpenApiOptions"/> for chaining.</returns>
     public static OpenApiOptions AddDefaultsDocumentTransformer(this OpenApiOptions options)
     {
-        options.AddDocumentTransformer<DocumentInfoTransformer>();
-        options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
-        options.AddDocumentTransformer<HeadersParameterTransformer>();
-        return options;
+        options?.AddDocumentTransformer<DocumentInfoTransformer>();
+        options?.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
+        options?.AddDocumentTransformer<HeadersParameterTransformer>();
+        return options!;
     }
 }

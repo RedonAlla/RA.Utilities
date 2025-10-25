@@ -8,6 +8,4 @@ This is the initial release of `RA.Utilities.Data.Entities`, a library providing
 
 #### Features
 
-*   **`IEntity<T>`**: A generic interface defining a contract for entities with a strongly-typed primary key.
-*   **`BaseEntity<T>`**: An abstract base class implementing `IEntity<T>` with common auditing properties (`Id`, `CreatedDate`, `UpdatedDate`).
-*   **`BaseEntity`**: A non-generic convenience base class that defaults the primary key to type `long`.
+*   **`BaseEntity`**: An abstract base class with common auditing properties (`Id`, `CreatedDate`, `UpdatedDate`).

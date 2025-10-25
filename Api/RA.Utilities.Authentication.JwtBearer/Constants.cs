@@ -1,5 +1,3 @@
-using System;
-
 namespace RA.Utilities.Authentication.JwtBearer.Constants;
 
 /// <summary>

@@ -28,8 +28,8 @@ public class NotificationLoggingBehavior<TNotification> : INotificationBehavior<
     /// <inheritdoc/>
     public async Task HandleAsync(TNotification notification, NotificationHandlerDelegate next, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("[Notification Logging] Handling {NotificationType}", typeof(TNotification).Name);
+        _logger.LogInformation("[Notification Logging] Start. Notification: {@Notification}", notification);
         await next();
-        _logger.LogInformation("[Notification Logging] Finished {NotificationType}", typeof(TNotification).Name);
+        _logger.LogInformation("[Notification Logging] Finished. Notification: {@Notification}", notification);
     }
 }

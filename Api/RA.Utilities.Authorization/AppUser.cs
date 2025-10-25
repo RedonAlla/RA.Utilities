@@ -20,7 +20,7 @@ public class AppUser
     /// <param name="httpContextAccessor">The HTTP context accessor, injected by the DI container.</param>
     public AppUser(IHttpContextAccessor httpContextAccessor)
     {
-        User = httpContextAccessor.HttpContext?.User;
+        User = httpContextAccessor?.HttpContext?.User;
     }
 
     /// <summary>
@@ -54,27 +54,27 @@ public class AppUser
     public bool IsInRole(string roleName) => User?.IsInRole(roleName) ?? false;
 
     /// <summary>
-    /// Checks if the current user has a specific claim with a given type and value.
+    /// Checks if the current user has a claim with the type 'claim' and the specified value.
     /// </summary>
     /// <param name="claimValue">The value of the claim to check for.</param>
-    /// <returns><c>true</c> if the current user has the specified claim; otherwise, <c>false</c>.</returns>
+    /// <returns><c>true</c> if the user has a claim with type 'claim' and the given value; otherwise, <c>false</c>.</returns>
     public bool HasClaim(string claimValue) =>
         User?.HasClaim(c => c.Type == "claim" && c.Value == claimValue) ?? false;
 
     /// <summary>
-    /// Checks if the current user has a specific scope value.
+    /// Checks if the current user has a claim with the type 'scope' and the specified value.
     /// </summary>
     /// <param name="scopeValue">The scope value to check for.</param>
-    /// <returns><c>true</c> if the current user has the specified scope; otherwise, <c>false</c>.</returns>
+    /// <returns><c>true</c> if the user has a claim with type 'scope' and the given value; otherwise, <c>false</c>.</returns>
     public bool HasScope(string scopeValue) =>
         User?.HasClaim(c => c.Type == "scope" && c.Value == scopeValue) ?? false;
 
     /// <summary>
-    /// Checks if the current user has a specific claim.
+    /// Gets the value of the first claim with the specified type.
     /// </summary>
-    /// <param name="claimValue">The claim value to check for.</param>
+    /// <param name="claimType">The type of the claim to retrieve.</param>
     /// <returns>The value of the first claim of the specified type, or null if not found.</returns>
-    public string? GetClaimValue(string claimValue) => User?.FindFirst(claimValue)?.Value;
+    public string? GetClaimValue(string claimType) => User?.FindFirst(claimType)?.Value;
 
     /// <summary>
     /// Gets all values for a specific claim type.

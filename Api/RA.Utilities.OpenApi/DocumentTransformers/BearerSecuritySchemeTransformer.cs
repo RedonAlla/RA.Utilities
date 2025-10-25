@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -28,7 +27,8 @@ public sealed class BearerSecuritySchemeTransformer : IOpenApiDocumentTransforme
     /// <returns>A <see cref="Task"/> that completes when the transformation is finished.</returns>
     public async Task TransformAsync(OpenApiDocument document, OpenApiDocumentTransformerContext context, CancellationToken cancellationToken)
     {
-        IAuthenticationSchemeProvider? authenticationSchemeProvider = context.ApplicationServices.GetService<IAuthenticationSchemeProvider>();
+        IAuthenticationSchemeProvider? authenticationSchemeProvider =
+            context?.ApplicationServices.GetService<IAuthenticationSchemeProvider>();
 
         if (authenticationSchemeProvider is null)
         {

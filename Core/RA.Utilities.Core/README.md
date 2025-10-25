@@ -22,7 +22,7 @@ The `Result` type solves this by providing a wrapper that explicitly represents 
 
 This pattern encourages you to handle failures as part of your normal code flow, leading to more readable and resilient applications.
 
-## Installation
+## 🛠️ Installation
 
 You can install the package via the .NET CLI:
 

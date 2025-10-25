@@ -46,7 +46,7 @@ public class LoggingBehavior<TRequest> : IPipelineBehavior<TRequest>
     private readonly ILogger<LoggingBehavior<TRequest>> _logger;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="LoggingBehavior{TRequest, TResponse}"/> class.
+    /// Initializes a new instance of the <see cref="LoggingBehavior{TRequest}"/> class.
     /// </summary>
     public LoggingBehavior(ILogger<LoggingBehavior<TRequest>> logger)
     {

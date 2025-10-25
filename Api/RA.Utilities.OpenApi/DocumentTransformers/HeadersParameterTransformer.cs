@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
@@ -25,7 +24,7 @@ public sealed class HeadersParameterTransformer : IOpenApiDocumentTransformer
     /// <param name="settings">The configuration settings for headers, injected via IOptions.</param>
     public HeadersParameterTransformer(IOptions<HeadersParameterSettings> settings)
     {
-        _settings = settings.Value ?? new HeadersParameterSettings();
+        _settings = settings?.Value ?? new HeadersParameterSettings();
     }
 
     /// <summary>

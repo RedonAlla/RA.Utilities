@@ -5,14 +5,14 @@
 		<Title>RA Utilities Logging</Title>
 		<Description>Provides a set of opinionated helpers and configurations for setting up structured logging with Serilog in .NET applications. This package simplifies the integration of common sinks (Console, File), enrichers (Exceptions, Sensitive Data), and performance features like asynchronous logging, enabling a robust and consistent logging strategy out of the box.</Description>
 		<PackageTags>RA;Utilities;Core;Logging;Serilog;StructuredLogging;Diagnostics;AspNetCore;Configuration</PackageTags>
-		<PackageIcon>log.png</PackageIcon>
+		<PackageIcon>logging.png</PackageIcon>
 		<PackageId>RA.Utilities.Logging.Core</PackageId>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageReleaseNotesFile>releasenotes.md</PackageReleaseNotesFile>
   </PropertyGroup>
 
   <ItemGroup>
-		<None Include="../../Assets/Images/log.png" Pack="true" PackagePath="\" />
+		<None Include="../../Assets/Images/logging.png" Pack="true" PackagePath="\" />
 		<None Include="README.md" Pack="true" PackagePath="\" />
 		<None Include="releasenotes.md" Pack="true" PackagePath="\" />
 	</ItemGroup>

@@ -46,7 +46,7 @@ public abstract class BaseApiSettings<T> : IIntegrationSettings
     /// The value must be between 1 and 600 seconds. Defaults to 200.
     /// </summary>
     /// <value>
-    /// The number of seconds to wait for a response. The default is 200.
+    /// The timespan to wait for a response. The default is 200 seconds.
     /// </value>
     /// <remarks>
     /// For more information, see the <see href="https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient.timeout?view=net-8.0">HttpClient.Timeout documentation</see>.

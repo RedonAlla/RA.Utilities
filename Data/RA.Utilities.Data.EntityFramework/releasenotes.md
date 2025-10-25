@@ -8,11 +8,10 @@ This is the initial preview release of the `RA.Utilities.Data.EntityFramework` p
 
 *   **Initial Release**: Provides a set of generic base classes to quickly build a data access layer with EF Core.
 *   **Generic Repository Implementations**:
-    *   `RepositoryBase<T, TContext>`: A full implementation of `IRepository<T>` for complete CRUD functionality.
-    *   `ReadRepositoryBase<T, TContext>`: A read-only repository that uses `AsNoTracking()` for efficient querying, ideal for CQS patterns.
-    *   `WriteRepositoryBase<T, TContext>`: A write-only repository for command operations (Add, Update, Delete).
+    *   `RepositoryBase<T>`: A full implementation of `IRepository<T>` for complete CRUD functionality.
+    *   `ReadRepositoryBase<T>`: A read-only repository that uses `AsNoTracking()` for efficient querying, ideal for CQS patterns.
+    *   `WriteRepositoryBase<T>`: A write-only repository for command operations (Add, Update, Delete).
 *   **Unit of Work Implementation**:
-    *   `UnitOfWork<TContext>`: A concrete implementation of `IUnitOfWork` that manages the `DbContext` lifecycle and transaction commits via `SaveChangesAsync`.
 
 ### 💥 Breaking Changes
 

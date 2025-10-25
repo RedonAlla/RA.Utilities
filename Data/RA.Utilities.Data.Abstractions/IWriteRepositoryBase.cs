@@ -47,19 +47,19 @@ public interface IWriteRepositoryBase<T> where T : BaseEntity
     /// <summary>
     /// Deletes an entity by its ID asynchronously.
     /// </summary>
-    /// <param name="entity">The ID of the entity to delete.</param>
+    /// <param name="id">The ID of the entity to delete.</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
     /// <returns>A <see cref="Task"/> that represents the asynchronous operation.</returns>
-    Task DeleteAsync<TId>(TId entity, CancellationToken cancellationToken = default) where TId : notnull;
+    Task DeleteAsync<TId>(TId id, CancellationToken cancellationToken = default) where TId : notnull;
 
     //TODO Generic Id
     /// <summary>
     /// Deletes a range of entities by their IDs asynchronously.
     /// </summary>
-    /// <param name="entities">The list of IDs of the entities to delete.</param>
+    /// <param name="ids">The list of IDs of the entities to delete.</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
     /// <returns>A <see cref="Task"/> that represents the asynchronous operation. The task result contains the number of entities deleted.</returns>
-    Task<int> DeleteRangeAsync(List<Guid> entities, CancellationToken cancellationToken = default);
+    Task<int> DeleteRangeAsync(List<Guid> ids, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Saves all changes made in this context to the underlying database asynchronously.

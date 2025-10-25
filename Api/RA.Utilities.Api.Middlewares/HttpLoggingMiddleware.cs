@@ -1,11 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using RA.Utilities.Api.Middlewares.Extensions;
 using RA.Utilities.Api.Middlewares.Json;
 using RA.Utilities.Api.Middlewares.Options;
 using RA.Utilities.Logging.Shared.Models.HttpLog;
@@ -42,7 +40,7 @@ public class HttpLoggingMiddleware : IMiddleware
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _recyclableMemoryStreamManager = recyclableMemoryStreamManager ?? throw new ArgumentNullException(nameof(recyclableMemoryStreamManager));
-        _options = options.Value ?? throw new ArgumentNullException(nameof(options));
+        _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
     }
 
     /// <summary>

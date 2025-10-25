@@ -1,7 +1,6 @@
 using System;
 using System.Runtime.Serialization;
 using RA.Utilities.Core.Constants;
-using RA.Utilities.Core.Exceptions;
 
 namespace RA.Utilities.Core.Exceptions;
 
@@ -29,6 +28,19 @@ public class NotFoundException : RaBaseException
     /// <param name="code">The HTTP status code. Defaults to 404 (Not Found).</param>
     public NotFoundException(string entityName, object entityValue, int code = BaseResponseCode.NotFound)
         : base(code, $"{entityName} with value '{entityValue}' was not found.")
+    {
+        EntityName = entityName;
+        EntityValue = entityValue;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="NotFoundException"/> class with a custom message.
+    /// </summary>
+    /// <param name="message">The message that describes the error.</param>
+    /// <param name="entityName">The name of the entity type that was not found.</param>
+    /// <param name="entityValue">The value or identifier used to search for the entity.</param>
+    public NotFoundException(string message, string entityName, object entityValue)
+        : base(BaseResponseCode.NotFound, message)
     {
         EntityName = entityName;
         EntityValue = entityValue;

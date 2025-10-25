@@ -1,6 +1,5 @@
 using System;
 using System.Runtime.Serialization;
-using RA.Utilities;
 using RA.Utilities.Core.Constants;
 
 namespace RA.Utilities.Core.Exceptions;

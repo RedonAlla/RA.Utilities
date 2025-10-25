@@ -4,10 +4,8 @@ using RA.Utilities.Api.Results;
 using RA.Utilities.Core.Constants;
 using Microsoft.AspNetCore.Http;
 using System.Text.Json;
-using Microsoft.Extensions.Primitives;
 using RA.Utilities.Api.Middlewares.Extensions;
 using RA.Utilities.Api.Middlewares.Utilities;
-using Microsoft.AspNetCore.HttpLogging;
 using RA.Utilities.Api.Middlewares.Options;
 using Microsoft.Extensions.Options; // Add this using directive for JsonSerializer.
 
@@ -27,7 +25,7 @@ public class DefaultHeadersMiddleware : IMiddleware
     /// <param name="options">The options for the default headers middleware.</param>
     public DefaultHeadersMiddleware(IOptions<DefaultHeadersOptions> options)
     {
-        _options = options.Value ?? throw new ArgumentNullException(nameof(options));
+        _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
     }
 
     /// <inheritdoc/>

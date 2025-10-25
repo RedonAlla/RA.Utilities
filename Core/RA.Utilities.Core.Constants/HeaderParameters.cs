@@ -1,5 +1,3 @@
-using System;
-
 namespace RA.Utilities.Core.Constants;
 
 /// <summary>

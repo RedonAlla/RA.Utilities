@@ -2,28 +2,24 @@
 
 ## Version 1.0.0-preview.6.3
 
-This is the initial release of `RA.Utilities.Core.Constants`, a foundational package designed to eliminate "magic strings" and "magic numbers" by providing a centralized source of truth for common application values.
+This release focuses on enhancing the clarity, consistency, and completeness of the constants provided by the package. The changes make the constants more intuitive to use and align the code with the documentation.
 
 ### ✨ Key Features
 
-This package introduces two primary sets of constants to improve code quality and consistency:
+*   **Expanded `BaseResponseMessages`**:
+    *   Added new constants for `Created`, `Updated`, `Deleted`, `Forbidden`, and `Conflict` to provide a more comprehensive set of standard messages.
+    *   Improved the wording of existing messages for better clarity (e.g., `Success`, `BadRequest`, `NotFound`).
+*   **Refined `ResponseType` Enum**:
+    *   Removed the `Database` member to abstract away implementation details from the API contract, promoting a cleaner separation of concerns.
+    *   Removed the redundant `Unknown` member, as `Error` serves as a better general-purpose error type.
+*   **Improved Documentation**:
+    *   The `README.md` has been significantly updated to accurately reflect all available constants in `BaseResponseCode`, `BaseResponseMessages`, `HeaderParameters`, and the `ResponseType` enum.
+    *   Added clear tables and usage examples to improve the developer experience.
 
-*   **`HttpStatusCodes`**:
-    *   Provides static integer constants for common HTTP status codes (e.g., `Ok`, `NotFound`, `InternalServerError`).
-    *   Improves code readability by replacing numeric codes with descriptive, self-documenting names.
+### 📝 Notes
 
-*   **`ResponseMessages`**:
-    *   Provides default string messages for common API responses (e.g., success, not found, unauthorized).
-    *   Helps maintain a consistent tone and messaging across all API endpoints, improving the consumer experience.
+The goal of this update is to make the `RA.Utilities.Core.Constants` package a more robust and self-documenting source of truth for your application's core values. These changes ensure that developers have a consistent and predictable set of constants for building API responses and handling HTTP headers.
 
-### 🚀 Getting Started
+---
 
-Simply add the package to your project and import the `RA.Utilities.Core.Constants` namespace to start using the predefined constants in your controllers, services, and other application components.
-
-```csharp
-using RA.Utilities.Core.Constants;
-
-return StatusCode(HttpStatusCodes.NotFound, ResponseMessages.NotFound);
-```
-
-This release aims to improve code quality, readability, and maintainability by establishing a consistent set of core values for the RA Utilities ecosystem.
+Thank you for using RA.Utilities!

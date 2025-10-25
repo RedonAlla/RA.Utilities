@@ -11,9 +11,6 @@ This release focuses on significant documentation improvements, code example cor
 *   **Standardized DI Registration**: The dependency injection example has been updated to use the standard and widely recognized registration methods (`AddMediatR`, `AddValidatorsFromAssembly`), making it easier for developers to integrate the package into their projects.
 *   **Updated Installation Guide**: The installation instructions now correctly include the necessary peer dependencies: `MediatR` and `FluentValidation.DependencyInjectionExtensions`.
 
-### 🐛 Bug Fixes
-
-*   **Corrected Logo Image**: Fixed a broken image link in the `README.md` to ensure the package logo displays correctly on NuGet and GitHub.
 
 ### 📝 Notes
 

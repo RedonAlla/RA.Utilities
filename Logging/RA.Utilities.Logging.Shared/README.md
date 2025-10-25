@@ -16,7 +16,7 @@ Its primary role is to provide a common set of data structures (models) that oth
 
 By centralizing these models, we ensure that any middleware or service that logs HTTP requests and responses does so in a consistent, structured format.
 
-## Installation
+## 🛠️ Installation
 
 While you typically won't need to install this package directly, it is available on NuGet.
 It will be included automatically when you install a dependent package like `RA.Utilities.Api.Middlewares`.
