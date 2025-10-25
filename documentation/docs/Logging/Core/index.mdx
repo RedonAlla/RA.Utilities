@@ -1,0 +1,62 @@
+---
+title: RA.Utilities.Logging.Core
+sidebar_position: 2
+sidebar_class_name: nav_session ra_utilities_logging_core
+---
+
+import DocCardList from '@theme/DocCardList';
+import LogoSvg from '../../../../Assets/Images/logging.svg';
+
+<p align="center">
+<LogoSvg width={'15rem'} height={'15rem'} />
+</p>
+
+# RA.Utilities.Logging.Core
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Logging.Core.svg)](https://www.nuget.org/packages/RA.Utilities.Logging.Core/)
+
+The `RA.Utilities.Logging.Core` package provides a **one-line, opinionated setup for production-ready structured logging using Serilog**.
+
+Its primary purpose is to abstract away the repetitive boilerplate code required to configure a robust logging
+solution in a modern .NET application.
+Instead of manually configuring sinks, enrichers, and performance settings,
+developers can call a single extension method to get a "batteries-included" logger.
+
+## 🔑 Here are the key features it provides out of the box:
+
+  * **Structured Logging**:
+  It configures Serilog to write logs in a structured format (like JSON),
+  which is essential for effective querying and analysis in log management systems.
+  * **Pre-configured Sinks**:
+  It sets up common logging destinations:
+    * **A Console sink** for easy viewing during development.
+    * **A rolling File** sink for persistent log storage.
+  * **Asynchronous Performance**:
+  It wraps the sinks in `Serilog.Sinks.Async` to minimize the performance impact of logging on your application's main threads.
+  * **Rich Enrichment**: It automatically includes valuable context in every log message:
+    * **Exception Details**: Destructures exceptions to include full stack traces.
+    * **Sensitive Data Masking**:
+    Automatically finds and masks sensitive data (like passwords or credit card numbers) before they are written to the logs.
+  * **Configuration-Driven**: It reads settings from the `Serilog` section of `appsettings.json`, allowing log levels to be adjusted without code changes.
+
+## 🧠 Summary
+In short, `RA.Utilities.Logging.Core` is the implementation engine that makes logging easy.
+It works hand-in-hand with `RA.Utilities.Logging.Shared` (which defines what the logs look like) to provide a complete and consistent logging strategy for your entire ecosystem.
+
+## 🛠️ Installation
+
+You can install the package via the .NET CLI:
+
+```bash
+dotnet add package RA.Utilities.Logging.Core
+```
+
+Or through the NuGet Package Manager console:
+
+```powershell
+Install-Package RA.Utilities.Logging.Core
+```
+
+<br />
+<br />
+
+<DocCardList />

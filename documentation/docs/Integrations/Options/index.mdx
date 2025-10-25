@@ -1,0 +1,51 @@
+---
+title: RA.Utilities.Integrations.Options
+---
+
+```bash
+Namespace: RA.Utilities.Integrations.Options
+```
+
+The `RA.Utilities.Integrations.Options` namespace serve a critical role in standardizing and simplifying the
+configuration of [`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient) instances used for external API integrations.
+
+Their primary purpose is to act as **strongly-typed configuration models**. 
+Instead of scattering settings like URLs, timeouts, and API keys throughout your code, you define them in these dedicated "options" classes.
+This approach is central to the .NET configuration pattern, where these classes are typically populated from `appsettings.json`.
+
+Let's break down the purpose by looking at the key classes you've provided:
+
+## 1. [`BaseApiSettings<T>`](./ProxySettings.md)
+This abstract class is the cornerstone of the namespace.
+Its purpose is to provide a standardized, reusable foundation for any API integration's settings.
+
+  * **Enforces Consistency**:
+  It ensures that every integration setting will have a common set of essential properties like `BaseUrl`, `Timeout`, and `MediaType`.
+  This is enforced by its implementation of the [`IIntegrationSettings`](../Abstractions/IIntegrationSettings.md) interface.
+  * **Strongly-Typed Endpoints**:
+  The generic parameter `T` for the `Actions` property is a clever design choice.
+  It allows you to define a class that holds the specific endpoint paths for an API, preventing "magic strings" in your code and enabling autocompletion.
+  * **Validation**:
+  It uses Data Annotations (`[Required]`, `[Url]`, `[Range]`) to ensure that the configuration provided is valid at application startup, preventing runtime errors due to misconfiguration.
+
+## 2. [`ProxySettings`](./ProxySettings.md)
+This class is a perfect example of a focused options model.
+Its sole purpose is to hold all the configuration details required to set up an HTTP proxy.
+
+  * **Decoupling**:
+  By having a dedicated `ProxySettings` class, the logic for handling proxies is separated from the API-specific settings.
+  An integration can simply include these settings if it needs proxy support.
+  * **Clarity**:
+  It makes the configuration explicit.
+  A developer looking at `appsettings.json` can immediately understand what values are needed to configure the proxy.
+
+## 🧠 Summary
+In short, the classes in the `RA.Utilities.Integrations.Options` namespace are the "control panel" for your external API integrations.
+They provide a structured, validated, and reusable way to define *how* your application connects to the outside world, promoting clean architecture and making your configuration easy to manage.
+
+<br />
+<br />
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />

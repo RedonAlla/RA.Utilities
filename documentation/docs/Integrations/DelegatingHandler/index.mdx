@@ -1,0 +1,56 @@
+---
+title: DelegatingHandler
+sidebar_position: 2
+---
+
+The `RA.Utilities.Integrations.DelegatingHandlers` namespace contains classes that act as middleware for
+[`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient) instances.
+These handlers intercept outgoing HTTP requests to add functionality like authentication, header propagation, and logging before the request is sent.
+
+Here is a breakdown of the purpose of each class in that namespace:
+
+### `ApiKeyAuthenticationHandler<TSettings>`
+* **Purpose**:
+This is a `DelegatingHandler` designed to automate API key authentication.
+It retrieves an API key from a configured settings object (any class that implements [`IApiKeySettings`](../Abstractions/IApiKeySettings.md))
+and automatically adds it to the `X-Api-Key` header of every outgoing request.
+* **Use Case**:
+This is ideal for integrations with external APIs that require a static API key for authentication.
+By adding this handler to the [`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient) pipeline,
+you don't need to manually add the key to every request you make.
+
+### `InternalHeadersForwardHandler`
+* **Purpose**:
+This handler is designed for internal, service-to-service communication within a microservices architecture.
+It accesses the current incoming request's context via [`IHttpContextAccessor`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.ihttpcontextaccessor?view=aspnetcore-9.0)
+and forwards critical headers to the outgoing request.
+Specifically, it propagates:
+  * The `Authorization` header, to maintain the user's authentication context across services.
+  * The `x-request-id` header (or the `TraceIdentifier` as a fallback), to ensure end-to-end traceability of a request as it travels through multiple services.
+* **Use Case**:
+When Service A receives a request from a user and needs to call Service B to fulfill it,
+this handler ensures that Service B receives the original user's credentials and the same tracing ID, making security and logging consistent.
+
+### `ProxyMessageHandler`
+* **Purpose**:
+This is a factory class, not a delegating handler.
+Its sole responsibility is to create and configure the primary
+[`HttpClientHandler`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclienthandler) with proxy settings.
+An [`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient)'s
+proxy must be set on its innermost handler, which is why this logic is separated from the chain of delegating handlers.
+* **How it Works**: It takes an [`IProxySettings`](../Abstractions/IProxySettings.md) object and,
+if a proxy address is specified, it constructs an
+[`HttpClientHandler`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclienthandler) with a `WebProxy` instance,
+including credentials if they are provided.
+If no proxy is configured, it returns a default handler.
+* **Use Case**:
+This factory is used by the dependency injection extensions when setting up an [`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient).
+It allows integrations to transparently route traffic through a corporate or development proxy based on configuration,
+without the application code needing to be aware of it.
+
+<br />
+<br />
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />

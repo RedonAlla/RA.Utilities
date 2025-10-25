@@ -1,0 +1,103 @@
+---
+title: RA.Utilities.Core.Constants
+sidebar_position: 2
+sidebar_class_name: nav_session ra_utilities_core_constants
+---
+
+import DocCardList from '@theme/DocCardList';
+import LogoSvg from '../../../../Assets/Images/constant.svg';
+
+<p align="center">
+<LogoSvg width={'12rem'} height={'12rem'} />
+</p>
+
+# RA.Utilities.Core.Constants
+
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Core.Constants.svg)](https://www.nuget.org/packages/RA.Utilities.Core.Constants/)
+
+A centralized and consistent set of core constants for the RA Utilities ecosystem.
+This package helps streamline development, improve code readability, and reduce "magic strings" and "magic numbers" by providing a single source of truth for common values.
+
+## 🎯 Purpose
+
+The primary goal of this package is to ensure consistency across different projects and services. By using these predefined constants, you can:
+
+- **Avoid Typos**: Prevent hard-to-find bugs caused by typos in strings or numbers.
+- **Improve Readability**: Make your code more self-documenting (e.g., `HttpStatusCodes.NotFound` is clearer than `404`).
+- **Simplify Maintenance**: Update a constant in one place, and the change propagates everywhere it's used.
+
+## 🛠️ Installation
+
+You can install the package via the .NET CLI:
+
+```bash
+dotnet add package RA.Utilities.Core.Constants
+```
+
+Or through the NuGet Package Manager console:
+
+```powershell
+Install-Package RA.Utilities.Core.Constants
+```
+
+Or through the NuGet Package Manager in Visual Studio.
+
+---
+
+## ✨ Available Constants
+
+* [`BaseResponseCode`](./BaseResponseCode)
+* [`BaseResponseMessages`](./BaseResponseMessages)
+* [`HeaderParameters`](./HeaderParameters)
+* [`ResponseType`](./ResponseType)
+
+
+## 🚀 Usage Examples
+
+Here’s how you can use these constants within an ASP.NET Core controller to create clean and consistent API endpoints.
+
+```csharp showLineNumbers
+using Microsoft.AspNetCore.Mvc;
+// highlight-next-line
+using RA.Utilities.Core.Constants; // Import the constants namespace
+
+[ApiController]
+[Route("api/[controller]")]
+public class ProductsController : ControllerBase
+{
+    [HttpGet("{id}")]
+    public IActionResult GetProduct(int id)
+    {
+        var product = _productService.GetById(id);
+
+        if (product == null)
+        {
+            // Use constants for both the status code and the response message
+            // highlight-next-line
+            return NotFound(ResponseMessages.NotFound);
+        }
+
+        return Ok(product);
+    }
+
+    [HttpPost]
+    public IActionResult CreateProduct([FromBody] Product newProduct)
+    {
+        if (!ModelState.IsValid)
+        {
+            // Use constants for a bad request
+            return BadRequest(ResponseMessages.BadRequest);
+        }
+
+        var createdProduct = _productService.Create(newProduct);
+
+        // Use constants for a 'Created' response
+        return StatusCode(HttpStatusCodes.Created, createdProduct);
+    }
+}
+```
+
+<br />
+<br />
+
+<DocCardList />

@@ -1,0 +1,64 @@
+---
+title: RA.Utilities.Logging.Shared
+sidebar_position: 1
+sidebar_class_name: nav_session ra_utilities_logging_shared
+---
+
+import DocCardList from '@theme/DocCardList';
+import LogoSvg from '../../../../Assets/Images/log.svg';
+
+<p align="center">
+<LogoSvg width={'15rem'} height={'15rem'} />
+</p>
+
+# RA.Utilities.Logging.Shared
+
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Logging.Shared.svg)](https://www.nuget.org/packages/RA.Utilities.Logging.Shared/)
+
+The `RA.Utilities.Logging.Shared` package serves as a **foundational library that provides common,
+shared data models for logging HTTP interactions**.
+
+Its primary purpose is to define the "shape" or "schema" for your structured logs.
+By providing a consistent set of C# classes (`BaseHttpLogTemplate`, `HttpRequestLogTemplate`, `HttpResponseLogTemplate`),
+it ensures that any component in your ecosystem that logs an HTTP request or response does so in a standardized format.
+
+## 🔑 Here’s a breakdown of its key roles:
+
+### 1. Defines the Contract for Logs:
+It contains the POCO (Plain Old C# Object) classes that represent the data you want to capture for an HTTP interaction,
+such as the path, headers, status code, and body.
+
+### 2. Ensures Consistency:
+It's a shared dependency for other packages like `RA.Utilities.Api.Middlewares` (for logging incoming API requests) and
+`RA.Utilities.Integrations` (for logging outgoing HttpClient requests).
+This guarantees that a log entry for an incoming request has the same structure as a log entry for an outgoing one,
+making logs much easier to query and correlate.
+
+### 3. Decouples Data from Implementation:
+This package only defines what the log data looks like.
+It has no dependency on a specific logging provider (like Serilog or NLog).
+The actual work of writing the log is handled by other packages (like `RA.Utilities.Logging.Core`), which consume these shared models.
+
+
+## 🧠 Summary
+In short, `RA.Utilities.Logging.Shared` is the "blueprint" for your HTTP logs,
+promoting consistency and clean architecture by separating the data model from the logging implementation.
+
+## 🛠️ Installation
+
+You can install the package via the .NET CLI:
+
+```bash
+dotnet add package RA.Utilities.Logging.Shared
+```
+
+Or through the NuGet Package Manager console:
+
+```powershell
+Install-Package RA.Utilities.Logging.Shared
+```
+
+<br />
+<br />
+
+<DocCardList />

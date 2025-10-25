@@ -1,0 +1,45 @@
+---
+title: RA.Utilities.Integrations.Extensions
+---
+
+The primary "glue" for your entire `RA.Utilities.Integrations` package.
+Their purpose is to provide a rich set of **extension methods** that simplify and standardize the process of configuring, extending,
+and using [`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient) and its related components.
+
+They follow the popular "fluent API" pattern, allowing developers to chain method calls together in a readable and discoverable way.
+
+## Let's break down the purpose of each class:
+
+### 1. `DependencyInjectionExtensions`
+This is the most critical class in the namespace.
+It is the main entry point for setting up [`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient)
+integrations within the .NET dependency injection container.
+
+  * **`AddHttpClientIntegration(...)`**:
+  This is the star of the show. It masterfully encapsulates the entire process of registering a typed
+  [`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient).
+  It binds configuration, validates it on startup, and sets up the client's base address and timeout, all in a single line of code.
+  * **`With...` Methods**:
+  It provides a suite of fluent methods ([`WithHttpLoggingHandler`](./DependencyInjectionExtensions.md#withhttplogginghandler),
+  [`WithApiKeyFromSettingsHandler`](./DependencyInjectionExtensions.md#withapikeyfromsettingshandlertsettings), [`WithProxyFromSettings`](#), etc.)
+  that allow you to easily attach [`HttpClientHandler`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclienthandler)
+  and other configurations to the [`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient) pipeline.
+  This makes it trivial to add features like logging, authentication, and proxy support.
+
+### 2. `HttpRequestMessageExtensions`
+This class provides utility methods for working with [`HttpRequestMessage`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httprequestmessage)
+and its headers, which are typically used inside a [`DelegatingHandler`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.delegatinghandler).
+
+  * **`AddSafe(...)`**:
+  A convenient helper to safely add or update an HTTP header, preventing exceptions if the header already exists.
+  * **`GetClientIpAddress(...)`**:
+  A useful utility for extracting the client's IP address from the request context, which is invaluable for logging and auditing purposes within a handler.
+  * **`ToDictionary(...)`**:
+  A simple method to convert HTTP headers into a dictionary, making them easier to log or process.
+
+<br />
+<br />
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />

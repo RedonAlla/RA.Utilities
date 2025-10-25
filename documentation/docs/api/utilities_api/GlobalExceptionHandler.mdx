@@ -1,0 +1,42 @@
+---
+title: GlobalExceptionHandler
+sidebar_position: 3
+---
+
+```bash
+Namespace: RA.Utilities.Api.ExceptionHandlers
+```
+
+The `GlobalExceptionHandler` is a crucial component in your API's architecture.
+It acts as a centralized, last-resort safety net for your entire application.
+Its primary purpose is to catch any unhandled exceptions that occur during the processing of an HTTP request, ensuring that your API never crashes and always returns a predictable, structured error response to the client.
+
+It performs three key actions:
+
+* **1. Logs the Error**: It uses the standard `ILogger` to log the full exception details.
+This is critical for developers to diagnose and fix bugs.
+* **2. Maps the Exception**: It calls `ErrorResultResponse.Result(exception)`.
+This is a smart mapper that inspects the type of exception. If it's a known, semantic exception from your `RA.Utilities.Core.Exceptions` library (like `NotFoundException` or `BadRequestException`), it creates a specific, structured JSON response with the appropriate HTTP status code (e.g., 404 or 400).
+For any other unexpected exception, it generates a generic "Internal Server Error" (500) response to avoid leaking sensitive implementation details.
+* **3. Writes the Response**: It takes the generated error response and writes it to the HTTP response stream, completing the request gracefully from the client's perspective.
+
+By implementing the IExceptionHandler interface (a feature introduced in .NET 8), this class integrates cleanly into the ASP.NET Core request pipeline, replacing older, more complex custom middleware solutions.
+
+## 🚀 Usage Guide
+
+```csharp
+// highlight-next-line
+using RA.Utilities.Api.ExceptionHandlers;
+
+WebApplicationBuilder builder =
+  WebApplication.CreateBuilder(args);
+
+// highlight-start
+builder.Services
+  .AddExceptionHandler<GlobalExceptionHandler>();
+// highlight-end
+
+WebApplication app = builder.Build();
+app.UseExceptionHandler();
+
+```

@@ -1,0 +1,48 @@
+---
+title: RA.Utilities.Api.Middlewares
+sidebar_position: 2
+sidebar_class_name: nav_session ra_utilities_middlewares
+---
+
+import DocCardList from '@theme/DocCardList';
+import LogoSvg from '../../../../Assets/Images/middleware.svg';
+
+<p align="center">
+<LogoSvg width={'15rem'} height={'15rem'} />
+</p>
+
+# RA.Utilities.Api
+
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Api.Middlewares.svg)](https://www.nuget.org/packages/RA.Utilities.Api.Middlewares/)
+
+`RA.Utilities.Api.Middlewares` provides a collection of useful ASP.NET Core middlewares designed to improve diagnostics and enforce API best practices.
+This package includes middlewares for efficient HTTP request/response logging and for ensuring the presence of default required headers.
+
+## 🎯 Purpose
+
+This package aims to solve common cross-cutting concerns in API development:
+
+1.  **HTTP Request/Response Logging**: Provides a highly performant middleware to log detailed information about incoming requests and their corresponding responses.
+It uses `Microsoft.IO.RecyclableMemoryStream` to minimize memory allocations, making it suitable for high-throughput applications.
+2.  **Header Enforcement**: Includes a middleware to validate the presence of essential headers, such as `X-Request-Id`, to ensure traceability and consistency across your services.
+
+## 🛠️ Installation
+
+You can install the package via the .NET CLI:
+
+```bash
+dotnet add package RA.Utilities.Api.Middlewares
+```
+
+Or through the NuGet Package Manager console:
+
+```powershell
+Install-Package RA.Utilities.Api.Middlewares
+```
+
+Or through the NuGet Package Manager in Visual Studio.
+
+<br />
+<br />
+
+<DocCardList />

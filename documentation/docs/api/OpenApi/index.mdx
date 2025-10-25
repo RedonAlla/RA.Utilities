@@ -1,0 +1,51 @@
+---
+title: RA.Utilities.OpenApi
+sidebar_position: 4
+sidebar_class_name: nav_session ra_utilities_open_api
+---
+
+import DocCardList from '@theme/DocCardList';
+import LogoSvg from '../../../../Assets/Images/openapi.svg';
+
+<p align="center">
+<LogoSvg width={'15rem'} height={'15rem'} />
+</p>
+
+# RA.Utilities.OpenApi
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.OpenApi.svg)](https://www.nuget.org/packages/RA.Utilities.OpenApi/)
+
+A utility library to enhance and customize OpenAPI (Swagger) documentation in ASP.NET Core applications.
+
+## 🎯 Purpose
+
+This package provides a collection of `IOpenApiDocumentTransformer` implementations to automate common modifications to your generated OpenAPI specification.
+Instead of manually annotating every endpoint with attributes for common headers or security schemes, you can apply these transformations globally.
+
+The primary goals are to:
+- **Reduce Boilerplate**: Automatically add common parameters (like correlation IDs) to all API operations.
+- **Enforce Consistency**: Ensure that all endpoints consistently document required headers and responses.
+- **Simplify Configuration**: Keep your endpoint definitions clean by centralizing OpenAPI modifications.
+
+This package is designed to work with the standard `Microsoft.AspNetCore.OpenApi` tooling in ASP.NET Core.
+
+## 🛠️ Installation
+
+You can install the package via the .NET CLI:
+
+```bash
+dotnet add package RA.Utilities.OpenApi
+```
+
+Or through the NuGet Package Manager console:
+
+```powershell
+Install-Package RA.Utilities.OpenApi
+```
+
+Or through the NuGet Package Manager in Visual Studio.
+
+<br />
+<br />
+
+<DocCardList />
+

@@ -1,0 +1,50 @@
+---
+title: Document Transformers
+sidebar_position: 1
+---
+
+```powershell
+Namespace: RA.Utilities.OpenApi.DocumentTransformers
+```
+
+Some hook provided that allows you to programmatically modify the generated OpenAPI (Swagger) document.
+
+*Document Transformers* offers a clean, powerful, and maintainable way to handle cross-cutting API documentation concerns. 
+It helps you keep your endpoint definitions focused on their primary logic while ensuring your OpenAPI specification is complete, consistent, and accurate.
+
+Your library provides several concrete implementations that solve common problems:
+
+### 1. [`BearerSecuritySchemeTransformer`](./BearerSecuritySchemeTransformer):
+
+  * **Problem**: Manually configuring every protected endpoint to show the "Authorize" lock icon and JWT Bearer security scheme in Swagger UI is repetitive.
+  * **Solution**: This transformer automatically inspects your application's registered authentication schemes.
+  If it finds a "Bearer" scheme, it programmatically adds the correct security definition and security requirement to the OpenAPI document.
+  The result is that the "Authorize" button appears automatically in Swagger UI, allowing developers to easily test protected endpoints.
+
+### 2. [`HeadersParameterTransformer`](./HeadersParameterTransformer):
+
+  * **Problem**: Your API requires certain headers on every request for traceability (like `x-request-id`).
+  Documenting this on every single endpoint is tedious and error-prone.
+  * **Solution**: This transformer iterates through every operation in the OpenAPI document and automatically adds the configured request and response headers (like `x-request-id`).
+  This ensures your API contract is consistently and accurately documented everywhere without cluttering your endpoint code.
+
+### 3. [`ResponsesDocumentTransformer`](./ResponsesDocumentTransformer):
+
+  * **Problem**: Your API uses standardized error responses from RA.Utilities.Api.Results for common status codes (`400`, `404`, `409`, `500`).
+  You want your Swagger documentation to reflect these exact response structures for all endpoints.
+  * **Solution**: This transformer automatically adds these common error responses to every operation in the document, using the correct schemas from your results library.
+  This saves you from adding multiple `[ProducesResponseType]` attributes to every action.
+
+### 4. `DocumentInfoTransformer`:
+
+  * **Problem**: API metadata like the title, version, and description are hard-coded in `Program.cs`.
+  * **Solution**: This transformer pulls that information directly from your `appsettings.json` configuration.
+  This allows you to change your API's documented title or version without recompiling the code.
+
+
+<br />
+<br />
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />

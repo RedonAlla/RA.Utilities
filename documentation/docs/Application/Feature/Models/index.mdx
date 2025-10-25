@@ -1,0 +1,50 @@
+---
+title: RA.Utilities.Feature.Models
+sidebar_position: 1
+---
+
+```powershell
+Namespace: RA.Utilities.Feature.Models
+```
+
+The `RA.Utilities.Feature.Models` namespace primarily defines delegates that are fundamental to implementing the pipeline behaviors within the `RA.Utilities.Feature` library.
+
+## ✨ Here's a breakdown of their purpose:
+
+### 1. `NotificationHandlerDelegate`:
+
+* **Purpose**:
+This delegate represents an asynchronous callback that invokes the next [`INotificationHandler`](../Abstractions/INotificationHandler.md)(s)
+in the notification processing pipeline.
+* **Usage**:
+It's used within [`INotificationBehavior`](../Abstractions/INotificationBehavior.md) implementations
+(like [`NotificationLoggingBehavior`](../Behaviors/NotificationLoggingBehavior.md)) as the next parameter.
+When a behavior calls await next(), it's essentially telling the pipeline to proceed with the execution of the actual notification handlers or the next behavior in the chain.
+This allows behaviors to execute logic both before and after the core notification handling.
+
+### 2. `RequestHandlerDelegate` and `RequestHandlerDelegate<TResponse>`:
+
+* **Purpose**:
+These delegates represent asynchronous callbacks for invoking the next `IRequestHandler`(s) in the request processing pipeline.
+They are designed to work seamlessly with the `Result` pattern from `RA.Utilities.Core`.
+* **`RequestHandlerDelegate()`**:
+Used for requests that do not return a specific data type, but still need to indicate success or failure using `Result`.
+* **`RequestHandlerDelegate<TResponse>()`**:
+Used for requests that are expected to return a specific data type (`TResponse`), wrapped in a `Result<TResponse>` to indicate success or failure.
+* **Usage**:
+They are used within [`IPipelineBehavior`](../Abstractions/IPipelineBehavior.md) implementations
+(like [`ValidationBehavior`](../Behaviors//ValidationBehavior.md)) as the next parameter.
+Similar to `NotificationHandlerDelegate`, calling `await next()` allows the pipeline behavior to pass control to the subsequent handlers or behaviors, enabling the application of cross-cutting concerns (e.g., validation) before and after the main request handling logic.
+
+## 🧠 Summary
+
+In essence, the classes (which are delegates in this case) in `RA.Utilities.Feature.Models` provide
+the necessary contractual types for building flexible and extensible processing pipelines for both notifications and requests,
+enabling the "middleware" pattern for CQRS and event-driven architectures.
+
+<br />
+<br />
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />

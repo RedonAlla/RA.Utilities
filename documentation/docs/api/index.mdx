@@ -1,0 +1,51 @@
+---
+title: Api
+sidebar_position: 3
+---
+
+Provides a collection of essential utilities for building robust and consistent ASP.NET Core APIs.
+This package includes endpoint registration helpers, standardized response models, and exception handling middleware to streamline development and promote best practices.
+
+Here is a breakdown of the purpose of each package in the `Api` utilities:
+
+## `RA.Utilities.Api`
+This is the central package for the API layer. It acts as the glue, providing:
+
+* **Global Exception Handling**: A middleware that catches specific exceptions (like `NotFoundException`) and automatically converts them into standardized, structured JSON error responses.
+* **Endpoint Registration**: An `IEndpoint` interface and extension methods to help you organize your API routes into separate files, keeping `Program.cs` clean.
+* **Standardized Success Responses**: Helper methods (`SuccessResponse.Ok()`, `SuccessResponse.Created()`) to easily create consistent success responses that match the structure of the error responses.
+
+## `RA.Utilities.Api.Results`
+This package contains the C# models for the standardized API responses.
+It defines the structure for both success (`SuccessResponse<T>`) and various error responses (`BadRequestResponse`, `NotFoundResponse`, `ConflictResponse`). Its purpose is to ensure every response from your API has a predictable and consistent format.
+
+## `RA.Utilities.Api.Middlewares`
+As the name suggests, this project holds reusable ASP.NET Core middleware.
+Based on your documentation, this is where you would place middleware for cross-cutting concerns like request logging or validating the presence of specific headers (e.g., a correlation ID).
+
+## `RA.Utilities.Authentication.JwtBearer`
+This package simplifies setting up and using JWT (JSON Web Token) Bearer authentication.
+It likely contains extension methods and services to configure the authentication handler and provide easy, typed access to the authenticated user's claims and properties within your application.
+
+## RA.Utilities.Authorization
+Working alongside the authentication package, this project provides helpers for authorization. This could include custom authorization policy providers or requirement handlers that make it easier to implement complex, reusable authorization rules beyond simple role checks.
+
+## RA.Utilities.OpenApi
+This package is all about automating and enhancing your OpenAPI (Swagger) documentation.
+It provides a set of "document transformers" that can:
+
+* Automatically add a `"Bearer"` security scheme to the Swagger UI.
+* Add common headers (like `x-request-id`) to every endpoint.
+* Populate API info (title, version, description) from `appsettings.json`.
+* Document the standardized error responses for all endpoints without requiring attributes on every method.
+
+
+In summary, these packages work together to create a robust, "batteries-included" foundation for your API, handling everything from routing and responses to security and documentation in a clean, consistent, and reusable way.
+
+
+<br />
+<br />
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />
