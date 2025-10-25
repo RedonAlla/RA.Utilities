@@ -27,6 +27,7 @@ jobs:
         working-directory: ./documentation
       - name: Build website
         run: npm run build
+        working-directory: ./documentation
 
       - name: Upload Build Artifact
         uses: actions/upload-pages-artifact@v3
