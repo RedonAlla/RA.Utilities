@@ -26,39 +26,41 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  # Build job
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
+          # Find Node.js version in the documentation's package.json
           node-version-file: 'documentation/package.json'
           cache: 'yarn'
+          # Cache dependencies based on the documentation's lock file
           cache-dependency-path: 'documentation/yarn.lock'
-
       - name: Install dependencies
         run: yarn install --frozen-lockfile
         working-directory: ./documentation
-
-      - name: Build
+      - name: Build website
         run: yarn build
         working-directory: ./documentation
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           # Upload the build output from the documentation folder
           path: './documentation/build'
 
+  # Deployment job
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    # This job needs the build job to succeed
+    needs: build
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
