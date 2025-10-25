@@ -24,7 +24,7 @@ const config: Config = {
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'redonalla.github.io', // Usually your GitHub org/user name.
+  organizationName: 'RedonAlla', // Usually your GitHub org/user name.
   projectName: 'RA.Utilities', // Usually your repo name.
   deploymentBranch: "gh-pages",
 
@@ -42,7 +42,7 @@ const config: Config = {
     [
       'classic',
       {
-        debug: true,
+        debug: process.env.NODE_ENV === 'development',
         docs: {
           path: 'docs',
           routeBasePath: '/nuget-packages',
@@ -50,9 +50,6 @@ const config: Config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl: ({locale, versionDocsDirPath, docPath}) => {
-            if (locale !== defaultLocale) {
-              return `https://crowdin.com/project/docusaurus-v2/${locale}`;
-            }
             return `https://github.com/RedonAlla/RA.Utilities/tree/main/documentation/${docPath}`;
           },
 
