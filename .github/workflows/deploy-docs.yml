@@ -1,11 +1,13 @@
 name: Deploy documentation to GitHub Pages
 
 on:
+  # Runs on pushes targeting the main branch
   push:
     branches:
       - main
-    # Review gh actions docs if you want to further define triggers, paths, etc
-    # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#on
+    # Only run if changes are made in the documentation directory
+    paths:
+      - 'documentation/**'
 
 jobs:
   build:
@@ -22,6 +24,7 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+        working-directory: ./documentation
       - name: Build website
         run: npm run build
 
