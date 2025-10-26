@@ -15,7 +15,6 @@
     <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <PackageReadmeFile>README.md</PackageReadmeFile> 
-    <PackageLicenseFile></PackageLicenseFile> <!-- Explicitly clear the legacy license file property -->
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
