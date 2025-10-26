@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-		<Version>1.0.0-preview.6.3</Version>
+		<Version>10.0.100-rc.2</Version>
     <Title>RA Core</Title>
 		<Description>RA.Utilities.Core is a lightweight .NET library designed to enhance error handling by providing a functional `Result` type. It helps you write cleaner, more predictable, and more robust code by avoiding exceptions for expected operational failures. This approach allows for a clear and explicit representation of success or failure, making your application's control flow easier to follow and maintain.</Description>
 		<PackageTags>RA;Utilities;Core;Result;ErrorHandling;Functional</PackageTags>
