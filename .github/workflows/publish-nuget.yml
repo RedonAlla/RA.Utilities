@@ -22,16 +22,16 @@ jobs:
 
       - name: Parse Tag and Set Environment Variables
         run: |
-          # The tag is in the format "PACKAGE_NAME VVERSION"
-          # GITHUB_REF_NAME contains the tag name, e.g., "RA.Utilities.OpenApi V1.0.0"
+          # The tag is in the format "PACKAGE_NAME-VVERSION"
+          # GITHUB_REF_NAME contains the tag name, e.g., "RA.Utilities.OpenApi-V1.0.0-preview.6.3"
           TAG_NAME="${{ github.ref_name }}"
           
-          # Extract the package name (everything before " V")
-          PACKAGE_NAME=$(echo "$TAG_NAME" | cut -d' ' -f1)
+          # Extract the package name (everything before the last "-V")
+          PACKAGE_NAME=$(echo "$TAG_NAME" | sed -E 's/(.*)-V.*/\1/')
           echo "PACKAGE_NAME=${PACKAGE_NAME}" >> $GITHUB_ENV
 
-          # Extract the version (everything after " V")
-          PACKAGE_VERSION=$(echo "$TAG_NAME" | cut -d' ' -f2 | sed 's/^V//')
+          # Extract the version (everything after the last "-V")
+          PACKAGE_VERSION=$(echo "$TAG_NAME" | sed -E 's/.*-V(.*)/\1/')
           echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> $GITHUB_ENV
 
           # Find the project file path based on the package name
