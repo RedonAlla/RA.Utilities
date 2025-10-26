@@ -16,7 +16,8 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.x'
+          # Use .NET 8.0 which is stable, or if you need 10.0, use a specific version
+          dotnet-version: 10.0.100-preview.7.8.x
 
       - name: Parse Tag and Set Environment Variables
         run: |
@@ -31,20 +32,26 @@ jobs:
           PROJECT_FILE_PATH=$(find . -type f -name "${PACKAGE_NAME}.csproj")
           echo "PROJECT_FILE_PATH=${PROJECT_FILE_PATH}" >> $GITHUB_ENV
 
+      - name: Show project info
+        run: |
+          echo "Project file: ${{ env.PROJECT_FILE_PATH }}"
+          echo "Target framework from project:"
+          grep -oP '<TargetFramework>[^<]+' "${{ env.PROJECT_FILE_PATH }}" || echo "No TargetFramework found"
+
       - name: Restore dependencies
         run: dotnet restore "${{ env.PROJECT_FILE_PATH }}"
 
-      - name: Build and Pack with MSBuild
+      - name: Build and Pack
         run: |
-          dotnet msbuild "${{ env.PROJECT_FILE_PATH }}" \
-            /t:Pack \
-            /p:Configuration=Release \
-            /p:Version=${{ env.PACKAGE_VERSION }} \
-            /p:PackageVersion=${{ env.PACKAGE_VERSION }} \
-            /p:PackageOutputPath=./nuget-packages \
-            /p:IncludeSymbols=true \
-            /p:SymbolPackageFormat=snupkg \
-            /p:RestorePackages=false
+          # Build and pack in one step without --no-build
+          dotnet pack "${{ env.PROJECT_FILE_PATH }}" \
+            --configuration Release \
+            --no-restore \
+            --output ./nuget-packages \
+            -p:Version=${{ env.PACKAGE_VERSION }} \
+            -p:PackageVersion=${{ env.PACKAGE_VERSION }} \
+            -p:IncludeSymbols=true \
+            -p:SymbolPackageFormat=snupkg
 
       - name: List generated packages
         run: ls -la ./nuget-packages/
