@@ -41,15 +41,10 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore "${{ env.PROJECT_FILE_PATH }}"
 
-      - name: Build project
+      - name: Build and Pack project
         run: |
-          # Build the project, but disable the automatic packing from Directory.Build.props for this step.
-          dotnet build "${{ env.PROJECT_FILE_PATH }}" --configuration Release --no-restore /p:GeneratePackageOnBuild=false
-
-      - name: Pack project
-        run: |
-          # Now, pack the already-built project, passing in the version from the tag.
-          dotnet pack "${{ env.PROJECT_FILE_PATH }}" --configuration Release --no-build --output ./nuget-packages /p:PackageVersion=${{ env.PACKAGE_VERSION }}
+          # Let pack handle the build. We pass GeneratePackageOnBuild=true to be explicit, which is the default for pack.
+          dotnet pack "${{ env.PROJECT_FILE_PATH }}" --configuration Release --no-restore --output ./nuget-packages /p:PackageVersion=${{ env.PACKAGE_VERSION }} /p:GeneratePackageOnBuild=true
 
       - name: Publish to NuGet.org
         run: |
