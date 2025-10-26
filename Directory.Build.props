@@ -16,7 +16,7 @@
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <PackageReadmeFile>README.md</PackageReadmeFile> 
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
-
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
