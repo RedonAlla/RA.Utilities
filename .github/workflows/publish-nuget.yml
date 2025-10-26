@@ -29,16 +29,18 @@ jobs:
           # Extract the package name (everything before the last "-V")
           PACKAGE_NAME=$(echo "$TAG_NAME" | sed -E 's/(.*)-V.*/\1/')
           echo "PACKAGE_NAME=${PACKAGE_NAME}" >> $GITHUB_ENV
-          echo "$PACKAGE_NAME"
 
           # Extract the version (everything after the last "-V")
           PACKAGE_VERSION=$(echo "$TAG_NAME" | sed -E 's/.*-V(.*)/\1/')
           echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> $GITHUB_ENV
-          echo "$PACKAGE_VERSION"
 
           # Find the project file path based on the package name
           PROJECT_FILE_PATH=$(find . -type f -name "${PACKAGE_NAME}.csproj")
           echo "PROJECT_FILE_PATH=${PROJECT_FILE_PATH}" >> $GITHUB_ENV
+
+          # Read the version directly from the .csproj file using MSBuild
+          PACKAGE_VERSION=$(dotnet msbuild -t:GetProperty -p:Property=Version "${PROJECT_FILE_PATH}" | tail -n 1)
+          echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> $GITHUB_ENV
 
       - name: Restore dependencies
         run: dotnet restore "${{ env.PROJECT_FILE_PATH }}"
@@ -47,7 +49,8 @@ jobs:
         run: |
           # Pack the target project. The version is set via the PACKAGE_VERSION environment variable,
           # which is read by Directory.Build.props.
-          dotnet pack "${{ env.PROJECT_FILE_PATH }}" --configuration Release --no-restore -o ./nuget-packages
+          # The --no-build flag prevents dependency build issues. The version is already set from the .csproj file.
+          dotnet pack "${{ env.PROJECT_FILE_PATH }}" --configuration Release --no-build -o ./nuget-packages
 
       - name: Publish to NuGet.org
         run: |
