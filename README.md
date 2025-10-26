@@ -82,5 +82,4 @@ The solution is broken down into several NuGet packages, each addressing a speci
 | **Core Building Blocks** | `RA.Utilities.Core.Constants`, `RA.Utilities.Core.Exceptions` | Offers shared constants (like HTTP status codes) and a set of standardized exceptions (`NotFoundException`, `ConflictException`) to create clear, semantic error handling. |
 | **Logging** | `RA.Utilities.Logging.Core`, `RA.Utilities.Logging.Shared` | Provides a one-line setup for production-ready structured logging with Serilog. |
 
-
 In short, **RA.Utilities** is a "batteries-included" framework for building modern .NET APIs. It provides the foundation for a clean architecture so you can focus more on writing business logic and less on setting up infrastructure.
