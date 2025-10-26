@@ -44,8 +44,8 @@ jobs:
       - name: Build and Pack the NuGet Package
         run: |
           # Pack the target project, explicitly passing the version from the tag.
-          # The --no-build flag ensures we only pack, using the results from the previous restore/build.
-          dotnet pack "${{ env.PROJECT_FILE_PATH }}" --configuration Release --no-build --output ./nuget-packages /p:PackageVersion=${{ env.PACKAGE_VERSION }}
+          # The pack command will automatically build the project first.
+          dotnet pack "${{ env.PROJECT_FILE_PATH }}" --configuration Release --output ./nuget-packages /p:PackageVersion=${{ env.PACKAGE_VERSION }}
 
       - name: Publish to NuGet.org
         run: |
