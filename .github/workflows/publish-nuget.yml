@@ -1,8 +1,8 @@
 # .github/workflows/publish-nuget.yml
 name: Publish NuGet Package on Tag
 
-# This workflow is triggered when a new tag is pushed that matches the pattern "* V*.*.*"
-# For example: RA.Utilities.OpenApi V1.0.0 or RA.Utilities.Authorization V2.1.0-beta
+# This workflow is triggered when a new tag is pushed that matches the pattern "*-V*.*.*"
+# For example: RA.Utilities.OpenApi-V1.0.0 or RA.Utilities.Authorization-V2.1.0-beta
 on:
   push:
     tags:
@@ -22,16 +22,16 @@ jobs:
 
       - name: Parse Tag and Set Environment Variables
         run: |
-          # The tag is in the format "PACKAGE_NAME VVERSION"
-          # GITHUB_REF_NAME contains the tag name, e.g., "RA.Utilities.OpenApi V1.0.0"
+          # The tag is in the format "PACKAGE_NAME-VVERSION"
+          # GITHUB_REF_NAME contains the tag name, e.g., "RA.Utilities.OpenApi-V1.0.0-preview.6.3"
           TAG_NAME="${{ github.ref_name }}"
           
-          # Extract the package name (everything before " V")
-          PACKAGE_NAME=$(echo "$TAG_NAME" | cut -d' ' -f1)
+          # Extract the package name (everything before the last "-V")
+          PACKAGE_NAME=$(echo "$TAG_NAME" | sed -E 's/(.*)-V.*/\1/')
           echo "PACKAGE_NAME=${PACKAGE_NAME}" >> $GITHUB_ENV
 
-          # Extract the version (everything after " V")
-          PACKAGE_VERSION=$(echo "$TAG_NAME" | cut -d' ' -f2 | sed 's/^V//')
+          # Extract the version (everything after the last "-V")
+          PACKAGE_VERSION=$(echo "$TAG_NAME" | sed -E 's/.*-V(.*)/\1/')
           echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> $GITHUB_ENV
 
           # Find the project file path based on the package name
@@ -43,12 +43,9 @@ jobs:
 
       - name: Build and Pack the NuGet Package
         run: |
-          dotnet pack "${{ env.PROJECT_FILE_PATH }}" \
-            --configuration Release \
-            --no-restore \
-            -p:Version=${{ env.PACKAGE_VERSION }} \
-            -p:PackageVersion=${{ env.PACKAGE_VERSION }} \
-            -o ./nuget-packages
+          dotnet pack "${{ env.PROJECT_FILE_PATH }}" --configuration Release --no-restore -o ./nuget-packages
+        env:
+          PACKAGE_VERSION: ${{ env.PACKAGE_VERSION }}
 
       - name: Publish to NuGet.org
         run: |
