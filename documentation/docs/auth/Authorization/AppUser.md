@@ -13,20 +13,20 @@ The `AppUser` class is a strongly-typed service that simplifies access to the cl
 
 The `AppUser` class is a strongly-typed service designed to simplify accessing the claims of the currently authenticated user in an ASP.NET Core application.
 
-In a typical application, retrieving user information involves injecting `IHttpContextAccessor` into your controllers or services and manually parsing the `ClaimsPrincipal`.
+In a typical application, retrieving user information involves injecting [`IHttpContextAccessor`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.ihttpcontextaccessor) into your controllers or services and manually parsing the [`ClaimsPrincipal`](https://learn.microsoft.com/en-us/dotnet/api/system.security.claims.claimsprincipal).
 This can be repetitive and makes unit testing difficult.
 
 The `AppUser` class solves these problems by:
 
-1. **Abstracting `HttpContext`**: It acts as a wrapper around the user's `ClaimsPrincipal`, providing a clean, injectable service (`ICurrentUser` which is implemented by `AppUser`) that doesn't require a direct dependency on `HttpContext`.
+1. **Abstracting [`HttpContext`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.httpcontext)**: It acts as a wrapper around the user's [`ClaimsPrincipal`](https://learn.microsoft.com/en-us/dotnet/api/system.security.claims.claimsprincipal), providing a clean, injectable service (`ICurrentUser` which is implemented by `AppUser`) that doesn't require a direct dependency on [`HttpContext`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.httpcontext).
 2. **Simplifying Claim Access**: It offers simple properties and methods to get common claims like `Id`, `Name`, and `Email` without needing to know the underlying claim type strings (e.g., `ClaimTypes.NameIdentifier`).
-4. **Enhancing Testability**: Because it's an injectable service, you can easily mock `AppUser` in your unit tests to simulate various user scenarios (e.g., an authenticated user, an admin, an unauthenticated user) without needing to construct a complex `HttpContext`.
+4. **Enhancing Testability**: Because it's an injectable service, you can easily mock `AppUser` in your unit tests to simulate various user scenarios (e.g., an authenticated user, an admin, an unauthenticated user) without needing to construct a complex [`HttpContext`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.httpcontext).
 
 In short, `AppUser` provides a clean, reusable, and testable way to work with user identity, reducing boilerplate and improving the overall quality of your application's authorization logic.
 
 ### ✨ Key Benefits:
 
-1.  **Simplified Access**: Inject `AppUser` instead of `IHttpContextAccessor` to get user data.
+1.  **Simplified Access**: Inject `AppUser` instead of [`IHttpContextAccessor`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.ihttpcontextaccessor) to get user data.
 2.  **Strongly-Typed**: Provides convenient methods to get the user's ID, name, and email without manual parsing.
 3.  **Testability**: Easily mock `AppUser` in unit tests to simulate different user scenarios.
 4.  **Reduced Boilerplate**: Eliminates repetitive code for accessing user claims.

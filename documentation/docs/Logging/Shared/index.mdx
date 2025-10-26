@@ -19,7 +19,8 @@ The `RA.Utilities.Logging.Shared` package serves as a **foundational library tha
 shared data models for logging HTTP interactions**.
 
 Its primary purpose is to define the "shape" or "schema" for your structured logs.
-By providing a consistent set of C# classes (`BaseHttpLogTemplate`, `HttpRequestLogTemplate`, `HttpResponseLogTemplate`),
+By providing a consistent set of C# classes (
+[`BaseHttpLogTemplate`](./BaseHttpLogTemplate.md), [`HttpRequestLogTemplate`](./HttpRequestLogTemplate.md), [`HttpResponseLogTemplate`](./HttpResponseLogTemplate.md)),
 it ensures that any component in your ecosystem that logs an HTTP request or response does so in a standardized format.
 
 ## 🔑 Here’s a breakdown of its key roles:
@@ -29,15 +30,15 @@ It contains the POCO (Plain Old C# Object) classes that represent the data you w
 such as the path, headers, status code, and body.
 
 ### 2. Ensures Consistency:
-It's a shared dependency for other packages like `RA.Utilities.Api.Middlewares` (for logging incoming API requests) and
-`RA.Utilities.Integrations` (for logging outgoing HttpClient requests).
+It's a shared dependency for other packages like [`RA.Utilities.Api.Middlewares`](../../api/ApiMiddlewares/index.mdx) (for logging incoming API requests) and
+[`RA.Utilities.Integrations`](../../Integrations/index.mdx) (for logging outgoing [HttpClient](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient) requests).
 This guarantees that a log entry for an incoming request has the same structure as a log entry for an outgoing one,
 making logs much easier to query and correlate.
 
 ### 3. Decouples Data from Implementation:
 This package only defines what the log data looks like.
 It has no dependency on a specific logging provider (like Serilog or NLog).
-The actual work of writing the log is handled by other packages (like `RA.Utilities.Logging.Core`), which consume these shared models.
+The actual work of writing the log is handled by other packages (like [`RA.Utilities.Logging.Core`](../Core/index.mdx)), which consume these shared models.
 
 
 ## 🧠 Summary

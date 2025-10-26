@@ -23,8 +23,8 @@ It abstracts away all the complex boilerplate needed to configure Serilog correc
   * Reads configuration from `appsettings.json`.
   * Adds the custom `RequestIdEnricher` for request correlation.
   * Adds the `WithExceptionDetails` enricher to log detailed exception information.
-  * Enables destructuring of `System.Text.Json` objects for better structured logs.
-  * Ensures the necessary `IHttpContextAccessor` is registered in the DI container.
+  * Enables destructuring of [`System.Text.Json`](https://learn.microsoft.com/en-us/dotnet/api/system.text.json) objects for better structured logs.
+  * Ensures the necessary [[`IHttpContextAccessor`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.ihttpcontextaccessor)](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.ihttpcontextaccessor) is registered in the DI container.
   * WithRequestIdEnricher(this `LoggerEnrichmentConfiguration` enrich): This is a small helper that creates a clean, fluent syntax for adding your custom RequestIdEnricher to the Serilog pipeline, improving readability in the main setup method.
 
 

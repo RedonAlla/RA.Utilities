@@ -6,16 +6,16 @@
 
 [![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Authorization.svg)](https://www.nuget.org/packages/RA.Utilities.Authorization/)
 
-`RA.Utilities.Authorization` offers a streamlined approach to handling user authentication and authorization in ASP.NET Core applications. It provides a strongly-typed, injectable service to easily access the current user's claims, such as user ID, name, and roles, directly from the `HttpContext`. This utility simplifies the process of retrieving authenticated user data, reducing boilerplate code and improving the readability and maintainability of your authorization logic.
+`RA.Utilities.Authorization` offers a streamlined approach to handling user authentication and authorization in ASP.NET Core applications. It provides a strongly-typed, injectable service to easily access the current user's claims, such as user ID, name, and roles, directly from the [`HttpContext`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.httpcontext). This utility simplifies the process of retrieving authenticated user data, reducing boilerplate code and improving the readability and maintainability of your authorization logic.
 
 ## Purpose
 
-In any ASP.NET Core application that requires authentication, you often need to access information about the currently logged-in user. This typically involves injecting `IHttpContextAccessor` and manually parsing claims from `HttpContext.User`.
+In any ASP.NET Core application that requires authentication, you often need to access information about the currently logged-in user. This typically involves injecting [`IHttpContextAccessor`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.ihttpcontextaccessor) and manually parsing claims from `HttpContext.User`.
 
 This package abstracts that logic away into a clean, reusable, and testable service, `ICurrentUser`.
 
 The main benefits are:
-- **Simplified Access**: No more `IHttpContextAccessor` in your controllers and services. Just inject `ICurrentUser`.
+- **Simplified Access**: No more [`IHttpContextAccessor`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.ihttpcontextaccessor) in your controllers and services. Just inject `ICurrentUser`.
 - **Strongly-Typed**: Get the user's ID as a `Guid` or `int` without manual parsing and type conversion.
 - **Testable**: Easily mock `ICurrentUser` in your unit tests to simulate different authenticated users and scenarios.
 - **Reduced Boilerplate**: Drastically cuts down on repetitive code for accessing user claims.
