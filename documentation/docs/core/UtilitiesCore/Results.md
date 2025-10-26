@@ -34,9 +34,9 @@ Used for `void`-like methods where you only need to know if the operation succee
 
 | Property | Type | Description |
 |---|---|---|
-| `IsSuccess` | `bool` | Returns `true` if the operation was successful. |
-| `IsFailure` | `bool` | Returns `true` if the operation failed. |
-| `Exception` | `Exception?` | Contains the exception if the operation failed; otherwise, it's `null`. |
+| `IsSuccess` | `bool` | Gets a value indicating if the operation failed. It's `true` when `Exception`is not null. |
+| `IsFailure` | `bool` | Gets a value indicating if the operation succeeded. It's `true` when `Exception` is null. |
+| `Exception` | [`Exception?`](https://learn.microsoft.com/en-us/dotnet/api/system.exception) | Gets the exception associated with a failed operation. It is `null` for a successful result. |
 
 ### Example: Deleting a Resource
 
@@ -81,13 +81,14 @@ public IResult Delete(int id)
 A generic version of `Result` that holds a value of type `TResult` on success.
 
 ### Properties
+This class inherits from `Result` and is used for operations that return a value upon success.
 
 | Property | Type | Description |
 |---|---|---|
 | `Value` | `TResult?` | Contains the result value if the operation was successful; otherwise, it's `default`. |
-| `IsSuccess` | `bool` | (Inherited) Returns `true` if the operation was successful. |
-| `IsFailure` | `bool` | (Inherited) Returns `true` if the operation failed. |
-| `Exception` | `Exception?` | (Inherited) Contains the exception if the operation failed; otherwise, it's `null`. |
+| `IsSuccess` | `bool` | (Inherited) Gets a value indicating if the operation succeeded. When `true`, the compiler knows `Value` is not `null`. |
+| `IsFailure` | `bool` | (Inherited) Gets a value indicating if the operation failed. |
+| `Exception` | [`Exception?`](https://learn.microsoft.com/en-us/dotnet/api/system.exception) | (Inherited) Contains the exception if the operation failed; otherwise, it's `null`. |
 
 ### `Match` Method
 

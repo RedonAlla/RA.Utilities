@@ -14,7 +14,7 @@ This standardization is crucial for:
 It guarantees that every integration, regardless of its specific API, will expose common configuration elements like a base URL, timeout, and media type.
 
 #### 2. Reusability:
-Components and extension methods (like `AddHttpClientIntegration`) can operate on any object implementing `IIntegrationSettings`,
+Components and extension methods (like [`AddHttpClientIntegration`](../Extensions/DependencyInjectionExtensions.md#addhttpclientintegration)) can operate on any object implementing `IIntegrationSettings`,
 making them generic and reusable across different integrations.
 
 #### 3. Decoupling:

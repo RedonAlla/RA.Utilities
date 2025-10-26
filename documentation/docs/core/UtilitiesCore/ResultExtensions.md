@@ -2,27 +2,28 @@
 Namespace: RA.Utilities.Core.Results
 ```
 
-The `ResultExtensions` class provides a set of powerful extension methods for the `Result` and `Result<T>` types.
+The `ResultExtensions` class provides a set of powerful extension methods for the
+[`Result`](./Results.md#result-class) and [`Result<T>`](./Results.md#resulttresult-class) types.
 These methods enable a fluent, functional style for chaining operations, often called **Railway-Oriented Programming**.
 
 ## 🎯 Purpose
 
-The `ResultExtensions` class is a static class that adds a powerful set of extension methods to the `Result` and `Result<T>` types.
+The `ResultExtensions` class is a static class that adds a powerful set of extension methods to the [`Result`](./Results.md#result-class) and [`Result<T>`](./Results.md#resulttresult-class) types.
 Its primary purpose is to enable a fluent, functional programming style often referred to as **Railway-Oriented Programming**.
 
 Imagine your code has two parallel tracks: a "success track" and a "failure track."
 
 * When an operation is successful, it stays on the success track, and you can continue to chain more operations.
-* As soon as an operation fails, the `Result` is switched to the failure track. All subsequent operations in the chain are automatically skipped, and the original failure is carried through to the end.
+* As soon as an operation fails, the [`Result`](./Results.md) is switched to the failure track. All subsequent operations in the chain are automatically skipped, and the original failure is carried through to the end.
 
 This pattern allows you to write clean, linear, and highly readable code for complex workflows without nested `if` statements or `try-catch` blocks for predictable failures.
 You can compose a sequence of steps, and the extensions will handle the flow control for you.
 
 The key methods that enable this are:
 
-* **`Map`**: Transforms the value inside a successful `Result` into a new value.
-* **`Bind`**: Chains together multiple operations that each return a `Result`.
-* **`OnSuccess`/ `OnFailure`** : Executes side-effects (like logging) without changing the `Result`.
+* **`Map`**: Transforms the value inside a successful [`Result`](./Results.md) into a new value.
+* **`Bind`**: Chains together multiple operations that each return a [`Result`](./Results.md).
+* **`OnSuccess`/ `OnFailure`** : Executes side-effects (like logging) without changing the [`Result`](./Results.md).
 * **`Match`**: Provides a final, explicit way to handle both the success and failure outcomes.
 
 The class also provides `async` versions of these methods (`MapAsync`, `BindAsync`, etc.) to work seamlessly with asynchronous code.
@@ -33,8 +34,9 @@ The class also provides `async` versions of these methods (`MapAsync`, `BindAsyn
 
 ### `Map` - Transforming a Success Value
 
-Use `Map` when you want to transform the value inside a successful `Result<T>` into a new value.
-The operation should be one that cannot fail. If the `Result` is already a failure, the mapping function is ignored, and the failure is passed through.
+Use `Map` when you want to transform the value inside a successful [`Result<T>`](./Results.md#resulttresult-class) into a new value.
+The operation should be one that cannot fail. If the [`Result`](./Results.md) is already a failure,
+the mapping function is ignored, and the failure is passed through.
 
 `Map` is the equivalent of `Select` in LINQ.
 

@@ -22,13 +22,13 @@ This approach allows for a clear and explicit representation of success or failu
 
 ## 🎯 Purpose
 
-In many applications, exceptions are used for both unexpected system faults (e.g., `NullReferenceException`) and predictable business-level failures (e.g., "user not found").
+In many applications, exceptions are used for both unexpected system faults (e.g., [`NullReferenceException`](https://learn.microsoft.com/en-us/dotnet/api/system.nullreferenceexception)) and predictable business-level failures (e.g., "user not found").
 This can lead to complex `try-catch` blocks and makes it difficult to distinguish between recoverable errors and true exceptions.
 
-The `Result` type solves this by providing a wrapper that explicitly represents one of two outcomes:
+The [`Result`](./Results.md) type solves this by providing a wrapper that explicitly represents one of two outcomes:
 
 - **Success**: The operation completed successfully, and may contain a value.
-- **Failure**: The operation failed, and contains an `Exception` detailing the error.
+- **Failure**: The operation failed, and contains an [`Exception`](https://learn.microsoft.com/en-us/dotnet/api/system.exception) detailing the error.
 
 This pattern encourages you to handle failures as part of your normal code flow, leading to more readable and resilient applications.
 
