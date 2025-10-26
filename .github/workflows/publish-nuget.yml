@@ -41,11 +41,15 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore "${{ env.PROJECT_FILE_PATH }}"
 
+      - name: Build project
+        run: dotnet build "${{ env.PROJECT_FILE_PATH }}" --configuration Release --no-restore
+
       - name: Build and Pack
         run: |
-          # Build and pack in one step without --no-build
+          # Pack the project, but do not build again
           dotnet pack "${{ env.PROJECT_FILE_PATH }}" \
             --configuration Release \
+            --no-build \
             --no-restore \
             --output ./nuget-packages \
             -p:Version=${{ env.PACKAGE_VERSION }} \
