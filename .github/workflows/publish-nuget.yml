@@ -43,9 +43,9 @@ jobs:
 
       - name: Build and Pack the NuGet Package
         run: |
-          dotnet pack "${{ env.PROJECT_FILE_PATH }}" --configuration Release --no-restore -o ./nuget-packages
-        env:
-          PACKAGE_VERSION: ${{ env.PACKAGE_VERSION }}
+          # Pack only the target project, overriding its version.
+          # We set GeneratePackageOnBuild=false for the restore/build of dependencies to prevent them from being packed.
+          dotnet pack "${{ env.PROJECT_FILE_PATH }}" --configuration Release --no-restore -p:GeneratePackageOnBuild=false -p:PackageVersion=${{ env.PACKAGE_VERSION }} -o ./nuget-packages
 
       - name: Publish to NuGet.org
         run: |
