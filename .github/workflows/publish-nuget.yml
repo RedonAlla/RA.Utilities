@@ -1,0 +1,58 @@
+# .github/workflows/publish-nuget.yml
+name: Publish NuGet Package on Tag
+
+# This workflow is triggered when a new tag is pushed that matches the pattern "* V*.*.*"
+# For example: RA.Utilities.OpenApi V1.0.0 or RA.Utilities.Authorization V2.1.0-beta
+on:
+  push:
+    tags:
+      - '* V*.*.*'
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x' # Use the .NET version your project targets
+
+      - name: Parse Tag and Set Environment Variables
+        run: |
+          # The tag is in the format "PACKAGE_NAME VVERSION"
+          # GITHUB_REF_NAME contains the tag name, e.g., "RA.Utilities.OpenApi V1.0.0"
+          TAG_NAME="${{ github.ref_name }}"
+          
+          # Extract the package name (everything before " V")
+          PACKAGE_NAME=$(echo "$TAG_NAME" | cut -d' ' -f1)
+          echo "PACKAGE_NAME=${PACKAGE_NAME}" >> $GITHUB_ENV
+
+          # Extract the version (everything after " V")
+          PACKAGE_VERSION=$(echo "$TAG_NAME" | cut -d' ' -f2 | sed 's/^V//')
+          echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> $GITHUB_ENV
+
+          # Find the project file path based on the package name
+          PROJECT_FILE_PATH=$(find . -type f -name "${PACKAGE_NAME}.csproj")
+          echo "PROJECT_FILE_PATH=${PROJECT_FILE_PATH}" >> $GITHUB_ENV
+
+      - name: Restore dependencies
+        run: dotnet restore "${{ env.PROJECT_FILE_PATH }}"
+
+      - name: Build and Pack the NuGet Package
+        run: |
+          dotnet pack "${{ env.PROJECT_FILE_PATH }}" \
+            --configuration Release \
+            --no-restore \
+            -p:Version=${{ env.PACKAGE_VERSION }} \
+            -p:PackageVersion=${{ env.PACKAGE_VERSION }} \
+            -o ./nuget-packages
+
+      - name: Publish to NuGet.org
+        run: |
+          dotnet nuget push "./nuget-packages/*.nupkg" \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source "https://api.nuget.org/v3/index.json" \
+            --skip-duplicate
