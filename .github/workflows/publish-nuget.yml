@@ -22,36 +22,30 @@ jobs:
 
       - name: Parse Tag and Set Environment Variables
         run: |
+          # The tag is in the format "PACKAGE_NAME-VVERSION"
+          # GITHUB_REF_NAME contains the tag name, e.g., "RA.Utilities.OpenApi-V1.0.0-preview.6.3"
           TAG_NAME="${{ github.ref_name }}"
-          echo "TAG_NAME=${TAG_NAME}" >> $GITHUB_ENV
-
-          # Extract the version: everything after "-V" (or "-v") that starts with a digit
-          PACKAGE_VERSION=$(echo "$TAG_NAME" | sed -E 's/.*-[Vv]([0-9].*)/\1/')
-          echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> $GITHUB_ENV
-
-          # Extract the package name: everything before "-V" (or "-v") followed by a digit
-          PACKAGE_NAME=$(echo "$TAG_NAME" | sed -E 's/-[Vv][0-9].*$//')
+          
+          # Extract the package name (everything before the last "-V")
+          PACKAGE_NAME=$(echo "$TAG_NAME" | sed -E 's/(.*)-V.*/\1/')
           echo "PACKAGE_NAME=${PACKAGE_NAME}" >> $GITHUB_ENV
 
-          # Find the project file path for the package (stop at first match)
-          PROJECT_FILE_PATH=$(find . -type f -name "${PACKAGE_NAME}.csproj" -print -quit || true)
-          echo "PROJECT_FILE_PATH=${PROJECT_FILE_PATH}" >> $GITHUB_ENV
+          # Extract the version (everything after the last "-V")
+          PACKAGE_VERSION=$(echo "$TAG_NAME" | sed -E 's/.*-V(.*)/\1/')
+          echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> $GITHUB_ENV
 
-          # Validate PACKAGE_VERSION looks like semver (basic check)
-          if ! echo "${PACKAGE_VERSION}" | grep -E -q '^[0-9]+\.[0-9]+\.[0-9]+'; then
-            echo "ERROR: PACKAGE_VERSION='${PACKAGE_VERSION}' does not look like a semantic version."
-            echo "Tag was: ${TAG_NAME}"
-            exit 1
-          fi
+          # Find the project file path based on the package name
+          PROJECT_FILE_PATH=$(find . -type f -name "${PACKAGE_NAME}.csproj")
+          echo "PROJECT_FILE_PATH=${PROJECT_FILE_PATH}" >> $GITHUB_ENV
 
       - name: Restore dependencies
         run: dotnet restore "${{ env.PROJECT_FILE_PATH }}"
 
       - name: Build and Pack the NuGet Package
         run: |
-          # Pack only the target project, overriding its version.
-          # We set GeneratePackageOnBuild=false for the restore/build of dependencies to prevent them from being packed.
-          dotnet pack "${{ env.PROJECT_FILE_PATH }}" --configuration Release --no-restore -p:GeneratePackageOnBuild=false -p:PackageVersion=${{ env.PACKAGE_VERSION }} -o ./nuget-packages
+          # Pack the target project. The version is set via the PACKAGE_VERSION environment variable,
+          # which is read by Directory.Build.props.
+          dotnet pack "${{ env.PROJECT_FILE_PATH }}" --configuration Release --no-restore -o ./nuget-packages
 
       - name: Publish to NuGet.org
         run: |
