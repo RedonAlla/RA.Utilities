@@ -37,10 +37,10 @@ jobs:
           echo "PROJECT_FILE_PATH=${PROJECT_FILE_PATH}" >> $GITHUB_ENV
 
       - name: Show project info
-        run: "
+        run: |
           echo "Project file: ${{ env.PROJECT_FILE_PATH }}"
           echo "Target framework from project:"
-          grep -oP '<TargetFramework>[^<]+' \"${{ env.PROJECT_FILE_PATH }}\" || echo \"No TargetFramework found\""
+          grep -oP '<TargetFramework>[^<]+' "${{ env.PROJECT_FILE_PATH }}" || echo "No TargetFramework found"
 
       - name: Restore dependencies
         run: dotnet restore "${{ env.PROJECT_FILE_PATH }}"
