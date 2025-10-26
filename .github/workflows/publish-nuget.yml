@@ -37,14 +37,16 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore "${{ env.PROJECT_FILE_PATH }}"
 
-      - name: Build the project
+      - name: Build and Pack project
         run: |
-          dotnet build "${{ env.PROJECT_FILE_PATH }}" --configuration Release --no-restore -p:Version=${{ env.PACKAGE_VERSION }}
-
-      - name: Pack the NuGet Package
-        run: |
-          dotnet pack "${{ env.PROJECT_FILE_PATH }}" --configuration Release --no-build --output ./nuget-packages -p:PackageVersion=${{ env.PACKAGE_VERSION }}
-
+          # Let pack handle both building and packing in one operation
+          dotnet pack "${{ env.PROJECT_FILE_PATH }}" \
+            --configuration Release \
+            --no-restore \
+            --output ./nuget-packages \
+            -p:Version=${{ env.PACKAGE_VERSION }} \
+            -p:PackageVersion=${{ env.PACKAGE_VERSION }}
+            
       - name: List generated packages (for debugging)
         run: ls -la ./nuget-packages/
 
