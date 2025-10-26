@@ -6,10 +6,6 @@ on:
     tags:
       - '*-V*.*.*'
 
-permissions:
-  # This permission is required for the softprops/action-gh-release action to create a GitHub release.
-  contents: write
-
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
@@ -35,36 +31,6 @@ jobs:
 
           PROJECT_FILE_PATH=$(find . -type f -name "${PACKAGE_NAME}.csproj" | head -n 1)
           echo "PROJECT_FILE_PATH=${PROJECT_FILE_PATH}" >> $GITHUB_ENV
-
-          # Check for pre-release identifiers and set release body
-          if [[ "${PACKAGE_VERSION}" == *"-rc"* || "${PACKAGE_VERSION}" == *"-alpha"* || "${PACKAGE_VERSION}" == *"-beta"* || "${PACKAGE_VERSION}" == *"-preview"* ]]; then
-            echo "IS_PRERELEASE=true" >> $GITHUB_ENV
-            RELEASE_BODY=$(cat <<EOF
-          ## Version ${PACKAGE_VERSION}
-
-          This is a **pre-release** of the **${PACKAGE_NAME}** package.
-
-          - **View on NuGet.org:** [${PACKAGE_NAME} ${PACKAGE_VERSION}](https://www.nuget.org/packages/${PACKAGE_NAME}/${PACKAGE_VERSION})
-            *(You may need to enable "Include prerelease" to see it.)*
-          EOF
-                      )
-                    else
-                      echo "IS_PRERELEASE=false" >> $GITHUB_ENV
-                      RELEASE_BODY=$(cat <<EOF
-          ## Version ${PACKAGE_VERSION}
-
-          This is a stable release of the **${PACKAGE_NAME}** package.
-
-          - **View on NuGet.org:** [${PACKAGE_NAME} ${PACKAGE_VERSION}](https://www.nuget.org/packages/${PACKAGE_NAME}/${PACKAGE_VERSION})
-          EOF
-            )
-          fi
-
-          # Use a unique delimiter for multiline environment variables
-          DELIMITER=$(openssl rand -hex 8)
-          echo "RELEASE_BODY<<${DELIMITER}" >> $GITHUB_ENV
-          echo "${RELEASE_BODY}" >> $GITHUB_ENV
-          echo "${DELIMITER}" >> $GITHUB_ENV
 
       - name: Show project info
         run: |
@@ -96,6 +62,7 @@ jobs:
 
       - name: Publish to NuGet.org
         run: |
+          # dotnet nuget push "./nuget-packages/${{ env.PACKAGE_NAME }}.${{ env.PACKAGE_VERSION }}.nupkg" \
           # Push both the main package and the symbols package
           dotnet nuget push "./nuget-packages/*.nupkg" \
             --api-key ${{ secrets.RA_UTILITIES_NUGET_KEY }} \
@@ -106,6 +73,10 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Release ${{ env.PACKAGE_NAME }} v${{ env.PACKAGE_VERSION }}
-          body: ${{ env.RELEASE_BODY }}
+          body: |
+            ## Version ${{ env.PACKAGE_VERSION }}
+
+            This is a pre-release of the **${{ env.PACKAGE_NAME }}** package.
+
+            - **View on NuGet.org:** [${{ env.PACKAGE_NAME }} ${{ env.PACKAGE_VERSION }}](https://www.nuget.org/packages/${{ env.PACKAGE_NAME }}/${{ env.PACKAGE_VERSION }})
           files: ./nuget-packages/*
-          prerelease: ${{ env.IS_PRERELEASE }}
