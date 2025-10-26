@@ -36,10 +36,6 @@
     <PackageVersion>$(PACKAGE_VERSION)</PackageVersion>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)LICENSE.md" Pack="true" PackagePath="\"/>
-  </ItemGroup>
-
   <ItemGroup Condition="'$(MSBuildProjectExtension)' != '.dcproj'">
     <PackageReference Include="SonarAnalyzer.CSharp">
       <PrivateAssets>all</PrivateAssets>
