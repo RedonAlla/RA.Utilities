@@ -144,8 +144,9 @@ const config: Config = {
   themeConfig: {
     // Replace with your project's social card
     image: 'img/docusaurus-social-card.jpg',
-metadatas: [
-      {name: 'theme-color', content: '#1bb566'}
+    metadata: [
+      //{name: 'theme-color', content: '#e50d00'},
+      {name: 'keywords', content: '.NET, API, framework, clean architecture, utilities, error handling, Result type'},
     ],
     announcementBar: {
       id: 'work_in_progress',
