@@ -56,3 +56,15 @@ jobs:
             --api-key ${{ secrets.RA_UTILITIES_NUGET_KEY }} \
             --source "https://api.nuget.org/v3/index.json" \
             --skip-duplicate
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          # The name of the release. This will be the same as the tag, e.g., "RA.Utilities.OpenApi V1.0.0"
+          name: ${{ github.ref_name }}
+          # The body of the release. You can customize this.
+          body: |
+            Release for version ${{ env.PACKAGE_VERSION }} of the ${{ env.PACKAGE_NAME }} package.
+            View on [NuGet.org](https://www.nuget.org/packages/${{ env.PACKAGE_NAME }}/${{ env.PACKAGE_VERSION }})
+          # Upload all .nupkg and .snupkg files from the nuget-packages directory as release assets.
+          files: ./nuget-packages/*
