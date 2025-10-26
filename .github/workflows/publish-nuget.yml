@@ -36,6 +36,35 @@ jobs:
           PROJECT_FILE_PATH=$(find . -type f -name "${PACKAGE_NAME}.csproj" | head -n 1)
           echo "PROJECT_FILE_PATH=${PROJECT_FILE_PATH}" >> $GITHUB_ENV
 
+          # Check for pre-release identifiers and set release body
+          if [[ "${PACKAGE_VERSION}" == *"-rc"* || "${PACKAGE_VERSION}" == *"-alpha"* || "${PACKAGE_VERSION}" == *"-beta"* || "${PACKAGE_VERSION}" == *"-preview"* ]]; then
+            echo "IS_PRERELEASE=true" >> $GITHUB_ENV
+            RELEASE_BODY=$(cat <<EOF
+## Version ${PACKAGE_VERSION}
+
+This is a **pre-release** of the **${PACKAGE_NAME}** package.
+
+- **View on NuGet.org:** [${PACKAGE_NAME} ${PACKAGE_VERSION}](https://www.nuget.org/packages/${PACKAGE_NAME}/${PACKAGE_VERSION})
+  *(You may need to enable "Include prerelease" to see it.)*
+EOF
+            )
+          else
+            echo "IS_PRERELEASE=false" >> $GITHUB_ENV
+            RELEASE_BODY=$(cat <<EOF
+## Version ${PACKAGE_VERSION}
+
+This is a stable release of the **${PACKAGE_NAME}** package.
+
+- **View on NuGet.org:** [${PACKAGE_NAME} ${PACKAGE_VERSION}](https://www.nuget.org/packages/${PACKAGE_NAME}/${PACKAGE_VERSION})
+EOF
+            )
+          fi
+
+          # Use a heredoc to handle multiline body content
+          echo 'RELEASE_BODY<<EOF' >> $GITHUB_ENV
+          echo "$RELEASE_BODY" >> $GITHUB_ENV
+          echo 'EOF' >> $GITHUB_ENV
+
       - name: Show project info
         run: |
           echo "Project file: ${{ env.PROJECT_FILE_PATH }}"
@@ -76,12 +105,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Release ${{ env.PACKAGE_NAME }} v${{ env.PACKAGE_VERSION }}
-          body: |
-            ## Version ${{ env.PACKAGE_VERSION }}
-
-            This is a pre-release of the **${{ env.PACKAGE_NAME }}** package.
-
-            - **View on NuGet.org:** [${{ env.PACKAGE_NAME }} ${{ env.PACKAGE_VERSION }}](https://www.nuget.org/packages/${{ env.PACKAGE_NAME }}/${{ env.PACKAGE_VERSION }})
-              *(You may need to enable "Include prerelease" to see it.)*
+          body: ${{ env.RELEASE_BODY }}
           files: ./nuget-packages/*
-          prerelease: true
+          prerelease: ${{ env.IS_PRERELEASE }}
