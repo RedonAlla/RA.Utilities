@@ -147,7 +147,6 @@ const config: Config = {
 metadatas: [
       {name: 'theme-color', content: '#1bb566'}
     ],
-  },
     announcementBar: {
       id: 'work_in_progress',
       content: '⭐️ If you like RA.Utilities, give it a star on <a target="_blank" rel="noopener noreferrer" href="https://github.com/RedonAlla/RA.Utilities">GitHub</a>! ⭐️',
