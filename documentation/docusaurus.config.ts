@@ -146,6 +146,7 @@ const config: Config = {
     image: 'img/docusaurus-social-card.jpg',
     metadata: [
       {name: 'theme-color', content: '#e50d00'},
+      {name: 'color-scheme', content: 'light dark'},
       {name: 'keywords', content: '.NET, API, framework, clean architecture, utilities, error handling, Result type'},
     ],
     announcementBar: {
