@@ -30,6 +30,12 @@
 
   </PropertyGroup>
 
+  <!-- This block will override the version if the PACKAGE_VERSION environment variable is set by the CI/CD pipeline -->
+  <PropertyGroup Condition="'$(PACKAGE_VERSION)' != ''">
+    <Version>$(PACKAGE_VERSION)</Version>
+    <PackageVersion>$(PACKAGE_VERSION)</PackageVersion>
+  </PropertyGroup>
+
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)LICENSE.md" Pack="true" PackagePath="\"/>
   </ItemGroup>
