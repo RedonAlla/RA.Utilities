@@ -29,10 +29,12 @@ jobs:
           # Extract the package name (everything before the last "-V")
           PACKAGE_NAME=$(echo "$TAG_NAME" | sed -E 's/(.*)-V.*/\1/')
           echo "PACKAGE_NAME=${PACKAGE_NAME}" >> $GITHUB_ENV
+          echo "$PACKAGE_NAME"
 
           # Extract the version (everything after the last "-V")
           PACKAGE_VERSION=$(echo "$TAG_NAME" | sed -E 's/.*-V(.*)/\1/')
           echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> $GITHUB_ENV
+          echo "$PACKAGE_VERSION"
 
           # Find the project file path based on the package name
           PROJECT_FILE_PATH=$(find . -type f -name "${PACKAGE_NAME}.csproj")
