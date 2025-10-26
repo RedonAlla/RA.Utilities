@@ -17,7 +17,7 @@ The main benefits are:
 - **Reduced Boilerplate**: Eliminates the need to repeatedly define common properties in every entity class.
 - **Generic Repository Support**: The common `IEntity` interface makes it easier to implement generic repository patterns.
 
-## Installation
+## 🛠️ Installation
 
 You can install the package from NuGet.
 
