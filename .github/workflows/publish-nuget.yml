@@ -42,13 +42,12 @@ jobs:
         run: dotnet restore "${{ env.PROJECT_FILE_PATH }}"
 
       - name: Build project
-        run: dotnet build "${{ env.PROJECT_FILE_PATH}}" --configuration Release --no-restore
-
-
-      - name: Build and Pack project
         run: |
-          # Let pack handle the build. We pass GeneratePackageOnBuild=true to be explicit, which is the default for pack.
-          dotnet pack "${{ env.PROJECT_FILE_PATH }}" --configuration Release --no-restore --output ./nuget-packages /p:PackageVersion=${{ env.PACKAGE_VERSION }} /p:GeneratePackageOnBuild=true
+          dotnet build "${{ env.PROJECT_FILE_PATH }}" --configuration Release --no-restore -p:Version=${{ env.PACKAGE_VERSION }}
+
+      - name: Pack project
+        run: |
+          dotnet pack "${{ env.PROJECT_FILE_PATH }}" --configuration Release --no-build --output ./nuget-packages -p:PackageVersion=${{ env.PACKAGE_VERSION }}
 
       - name: Publish to NuGet.org
         run: |
