@@ -41,21 +41,37 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore "${{ env.PROJECT_FILE_PATH }}"
 
-      - name: Build project
-        run: |
-          dotnet build "${{ env.PROJECT_FILE_PATH }}" --configuration Release --no-restore -p:Version=${{ env.PACKAGE_VERSION }}
+      - name: Clean project
+        run: dotnet clean "${{ env.PROJECT_FILE_PATH }}" --configuration Release
 
-      - name: Pack project
+      - name: Build and Pack project
         run: |
-          dotnet pack "${{ env.PROJECT_FILE_PATH }}" --configuration Release --no-build --output ./nuget-packages -p:PackageVersion=${{ env.PACKAGE_VERSION }}
+          # Use a single command to build and pack with explicit output directory
+          dotnet pack "${{ env.PROJECT_FILE_PATH }}" \
+            --configuration Release \
+            --no-restore \
+            --output ./nuget-packages \
+            --verbosity normal \
+            -p:Version=${{ env.PACKAGE_VERSION }} \
+            -p:PackageVersion=${{ env.PACKAGE_VERSION }} \
+            -p:IncludeSymbols=true \
+            -p:SymbolPackageFormat=snupkg
+
+      - name: List generated packages (for debugging)
+        run: ls -la ./nuget-packages/
 
       - name: Publish to NuGet.org
         run: |
-          # Push both the main package and the symbol package. The command automatically finds the .snupkg.
-          dotnet nuget push "./nuget-packages/${{ env.PACKAGE_NAME }}.${{ env.PACKAGE_VERSION }}.nupkg" \
-            --api-key ${{ secrets.RA_UTILITIES_NUGET_KEY }} \
-            --source "https://api.nuget.org/v3/index.json" \
-            --skip-duplicate
+          # Push all packages in the nuget-packages directory
+          for package in ./nuget-packages/*.nupkg; do
+            if [[ $package != *.symbols.* ]]; then
+              echo "Publishing $package"
+              dotnet nuget push "$package" \
+                --api-key ${{ secrets.RA_UTILITIES_NUGET_KEY }} \
+                --source "https://api.nuget.org/v3/index.json" \
+                --skip-duplicate
+            fi
+          done
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
