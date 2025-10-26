@@ -41,6 +41,10 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore "${{ env.PROJECT_FILE_PATH }}"
 
+      - name: Build project
+        run: dotnet build "${{ env.PROJECT_FILE_PATH}}" --configuration Release --no-restore
+
+
       - name: Build and Pack project
         run: |
           # Let pack handle the build. We pass GeneratePackageOnBuild=true to be explicit, which is the default for pack.
