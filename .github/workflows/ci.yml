@@ -1,28 +1,43 @@
-name: Run tests and upload coverage
+# .github/workflows/ci.yml
+name: .NET CI
 
-on: 
-  push
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
-  test:
-    name: Run tests and collect coverage
+  build-and-test:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        # This should match the .NET version in your publish workflow
+        dotnet-version: 10.0.*
 
-      - name: Install dependencies
-        run: npm install
+    - name: Restore dependencies
+      run: dotnet restore
 
-      - name: Run tests
-        run: npx jest --coverage
+    - name: Build
+      run: dotnet build --no-restore
 
-      - name: Upload results to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+    - name: Run tests and generate coverage report
+      run: |
+        dotnet test \
+          --no-build \
+          --verbosity normal \
+          /p:CollectCoverage=true \
+          /p:CoverletOutputFormat=cobertura \
+          /p:CoverletOutput=./coverage/
+
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        directory: ./coverage/
