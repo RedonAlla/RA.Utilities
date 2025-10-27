@@ -21,9 +21,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../Core/RA.Utilities.Core.Exceptions/RA.Utilities.Core.Exceptions.csproj" />
-    <ProjectReference Include="../Core/RA.Utilities.Core/RA.Utilities.Core.csproj" />
+    <ProjectReference Include="../../Core/RA.Utilities.Core.Exceptions/RA.Utilities.Core.Exceptions.csproj" />
+    <ProjectReference Include="../../Core/RA.Utilities.Core/RA.Utilities.Core.csproj" />
   </ItemGroup>
+  
 
   <ItemGroup>
     <Using Include="Xunit" />
