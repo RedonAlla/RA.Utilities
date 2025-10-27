@@ -37,10 +37,6 @@ jobs:
           /p:CoverletOutput=./coverage/
 
     - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       with:
-        # It's recommended to set this as a repository secret
-        # See: https://docs.codecov.com/docs/codecov-uploader-token
         token: ${{ secrets.CODECOV_TOKEN }}
-        # Specify the directory where coverage reports are located
-        directory: ./coverage/
