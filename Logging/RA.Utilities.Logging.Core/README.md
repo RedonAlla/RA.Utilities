@@ -4,7 +4,7 @@
 
 # RA.Utilities.Logging.Core
 
-[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Logging.Core.svg)](https://www.nuget.org/packages/RA.Utilities.Logging.Core/)
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Logging.Core?logo=nuget&label=NuGet)](https://www.nuget.org/packages/RA.Utilities.Logging.Core/)
 
 `RA.Utilities.Logging.Core` provides a set of opinionated helpers and configurations for setting up structured logging with Serilog in .NET applications. This package simplifies the integration of common sinks (Console, File), enrichers (Exceptions, Sensitive Data), and performance features like asynchronous logging, enabling a robust and consistent logging strategy out of the box.
 
