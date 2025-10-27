@@ -49,9 +49,9 @@ public class InternalHeadersForwardHandler : DelegatingHandler
     {
         ArgumentNullException.ThrowIfNull(httpContextAccessor);
 
-        _token = httpContextAccessor.HttpContext?.Request?.Headers[HeaderParameters.Authorization]!;
-        _requestId = httpContextAccessor.HttpContext?.Request.Headers[HeaderParameters.XRequestId].ToString()!;
-        _traceIdentifier = httpContextAccessor?.HttpContext?.TraceIdentifier!;
+        _token = httpContextAccessor.HttpContext?.Request.Headers[HeaderParameters.Authorization].ToString() ?? string.Empty;
+        _requestId = httpContextAccessor.HttpContext?.Request.Headers[HeaderParameters.XRequestId].ToString() ?? string.Empty;
+        _traceIdentifier = httpContextAccessor.HttpContext?.TraceIdentifier ?? string.Empty;
     }
 
     /// <summary>
@@ -65,10 +65,11 @@ public class InternalHeadersForwardHandler : DelegatingHandler
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        
+
         request.Headers.AddSafe(HeaderParameters.Authorization, _token);
         request.Headers.AddSafe(HeaderParameters.XRequestId, RequestId);
 
         return await base.SendAsync(request, cancellationToken);
     }
+
 }

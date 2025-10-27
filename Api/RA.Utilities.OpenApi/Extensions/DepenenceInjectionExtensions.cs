@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.OpenApi;
 using RA.Utilities.OpenApi.DocumentTransformers;
 
-
 namespace RA.Utilities.OpenApi.Extensions;
 
 /// <summary>

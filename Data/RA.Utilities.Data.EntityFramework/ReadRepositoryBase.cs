@@ -22,7 +22,7 @@ public class ReadRepositoryBase<T> : IReadRepositoryBase<T>
     /// <summary>
     /// The database context used by the repository.
     /// </summary>
-    public DbContext _dbContext;
+    protected DbContext dataContext;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ReadRepositoryBase{T}"/> class.
@@ -32,7 +32,7 @@ public class ReadRepositoryBase<T> : IReadRepositoryBase<T>
     {
         ArgumentNullException.ThrowIfNull(dbContext);
         _dbSet = dbContext.Set<T>();
-        _dbContext = dbContext;
+        dataContext = dbContext;
     }
 
     /// <inheritdoc />

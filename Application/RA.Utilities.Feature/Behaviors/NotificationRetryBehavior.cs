@@ -42,14 +42,18 @@ public class NotificationRetryBehavior<TNotification> : INotificationBehavior<TN
             {
                 if (attempt < _maxRetries)
                 {
-                    _logger.LogWarning(ex, "[Notification Retry] Attempt {Attempt} failed for {NotificationType}. Retrying... Notification: {@Notification}", 
-                        attempt, typeof(TNotification).Name, notification);
+                    _logger.LogWarning(
+                        ex,
+                        "[Notification Retry] Attempt {Attempt} failed for {NotificationType}. Retrying... Notification: {@Notification}",
+                        attempt,
+                        typeof(TNotification).Name,
+                        notification);
                     await Task.Delay(200 * attempt, cancellationToken);
                 }
                 else
                 {
-                    _logger.LogError(ex, "[Notification Retry] All {MaxRetries} attempts failed for {NotificationType}. Notification: {@Notification}", 
-                        _maxRetries, typeof(TNotification).Name, notification);
+                    _logger.LogError(ex, "[Notification Retry] All {MaxRetries} attempts failed for {NotificationType}. Notification: {@Notification}",
+                        _maxRetries, typeof(TNotification).Name, notification); // This line was causing the error
                     throw; // Re-throw the last exception after logging
                 }
             }

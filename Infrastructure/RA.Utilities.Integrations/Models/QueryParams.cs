@@ -31,7 +31,7 @@ public class QueryParams : List<KeyValuePair<string, string>>
             return string.Empty;
         }
 
-        var segments = this.Select(kvp =>
+        IEnumerable<string> segments = this.Select(kvp =>
             $"{WebUtility.UrlEncode(kvp.Key)}={WebUtility.UrlEncode(kvp.Value)}");
 
         return string.Join("&", segments);
