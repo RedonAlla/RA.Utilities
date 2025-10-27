@@ -4,7 +4,7 @@
 
 # RA.Utilities.Core.Constants
 
-[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Core.Constants.svg)](https://www.nuget.org/packages/RA.Utilities.Core.Constants/)
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Core.Constants?logo=nuget&label=NuGet)](https://www.nuget.org/packages/RA.Utilities.Core.Constants/)
 
 A centralized and consistent set of core constants for the RA Utilities ecosystem. This package helps streamline development, improve code readability, and reduce "magic strings" and "magic numbers" by providing a single source of truth for common values.
 

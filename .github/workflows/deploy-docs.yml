@@ -1,5 +1,6 @@
 # .github/workflows/deploy-docs.yml
-name: Deploy Documentation to GitHub Pages
+# Deploy Documentation to GitHub Pages
+name: Deploy Documentation
 
 on:
   # Runs on pushes targeting the main branch

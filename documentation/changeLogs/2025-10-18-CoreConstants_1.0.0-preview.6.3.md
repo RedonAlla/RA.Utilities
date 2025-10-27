@@ -4,7 +4,7 @@ authors: [RedonAlla]
 ---
 
 ## Version 1.0.0-preview.6.3
-[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Core.Constants.svg)](https://www.nuget.org/packages/RA.Utilities.Core.Constants/)
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Core.Constants?logo=nuget&label=NuGet)](https://www.nuget.org/packages/RA.Utilities.Core.Constants/)
 
 This release focuses on enhancing the clarity, consistency, and completeness of the constants provided by the package. The changes make the constants more intuitive to use and align the code with the documentation.
 

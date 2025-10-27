@@ -4,7 +4,7 @@
 
 # RA.Utilities.Core.Exceptions
 
-[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Core.Exceptions.svg)](https://www.nuget.org/packages/RA.Utilities.Core.Exceptions/)
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Core.Exceptions?logo=nuget&label=NuGet)](https://www.nuget.org/packages/RA.Utilities.Core.Exceptions/)
 
 `RA.Utilities.Core.Exceptions` provides a set of standardized, semantic exceptions for use across the RA.Utilities ecosystem. These exceptions, such as `NotFoundException` and `ConflictException`, allow for clear, intent-driven error handling in your business logic.
 

@@ -1,5 +1,6 @@
 # .github/workflows/publish-nuget.yml
-name: Publish NuGet Package on Tag
+# Publish NuGet Package on Tag
+name: Publish NuGet
 
 on:
   push:

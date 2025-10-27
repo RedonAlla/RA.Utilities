@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Version>1.0.0-preview.6.3</Version>
+    <Version>10.0.100-rc.2</Version>
     <Title>Core Exceptions</Title>
     <Description>Provides a set of standardized, semantic exceptions for use in the RA.Utilities ecosystem. These exceptions, such as NotFoundException, ConflictException, and BadRequestException, allow for clear, intent-driven error handling in business logic and can be easily mapped to consistent API responses by middleware.</Description>
     <Summary>A set of standardized, semantic exceptions for clear error handling in business logic and API layers.</Summary>

@@ -1,0 +1,46 @@
+# .github/workflows/ci.yml
+name: .NET CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        # This should match the .NET version in your publish workflow
+        dotnet-version: 10.0.*
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --no-restore
+
+    - name: Run tests and generate coverage report
+      run: |
+        dotnet test \
+          --no-build \
+          --verbosity normal \
+          /p:CollectCoverage=true \
+          /p:CoverletOutputFormat=cobertura \
+          /p:CoverletOutput=./coverage/
+
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        # It's recommended to set this as a repository secret
+        # See: https://docs.codecov.com/docs/codecov-uploader-token
+        token: ${{ secrets.CODECOV_TOKEN }}
+        # Specify the directory where coverage reports are located
+        directory: ./coverage/
