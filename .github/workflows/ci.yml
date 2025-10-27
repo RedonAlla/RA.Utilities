@@ -30,11 +30,13 @@ jobs:
     - name: Run tests and generate coverage report
       run: |
         dotnet test \
+          --project ./Tests/RA.Utilities.Core.Tests/RA.Utilities.Core.Tests.csproj \
           --no-build \
           --verbosity normal \
           /p:CollectCoverage=true \
           /p:CoverletOutputFormat=cobertura \
-          /p:CoverletOutput=./coverage/
+          /p:CoverletOutput=./coverage/ \
+          /p:MergeWith=./coverage/coverage.cobertura.xml
 
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v4
