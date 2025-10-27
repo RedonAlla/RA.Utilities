@@ -9,6 +9,8 @@ on:
 permissions:
   # This permission is required for the softprops/action-gh-release action to create a GitHub release.
   contents: write
+  # This permission is required to publish to GitHub Packages.
+  packages: write
 
 jobs:
   build-and-publish:
@@ -71,6 +73,13 @@ jobs:
           dotnet nuget push "./nuget-packages/*.nupkg" \
             --api-key ${{ secrets.RA_UTILITIES_NUGET_KEY }} \
             --source "https://api.nuget.org/v3/index.json" \
+            --skip-duplicate
+
+      - name: Publish to GitHub Packages
+        run: |
+          dotnet nuget push "./nuget-packages/*.nupkg" \
+            --api-key ${{ secrets.GITHUB_TOKEN }} \
+            --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
             --skip-duplicate
 
       - name: Create GitHub Release
