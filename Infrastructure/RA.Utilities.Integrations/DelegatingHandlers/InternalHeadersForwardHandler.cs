@@ -18,23 +18,23 @@ public class InternalHeadersForwardHandler : DelegatingHandler
     /// <summary>
     /// The authorization token from the incoming request. An empty string if not found.
     /// </summary>
-    private readonly string _token;
+    private string Token { get; }
 
     /// <summary>
     /// The x-request-id from the incoming request. An empty string if not found.
     /// </summary>
-    private readonly string _requestId;
+    private string RequestIdHeader { get; }
 
     /// <summary>
     /// The trace identifier from the current HttpContext. An empty string if not available.
     /// </summary>
-    private readonly string _traceIdentifier;
+    private string TraceIdentifier { get; }
 
     /// <summary>
     /// Gets the request identifier.
     /// </summary>
-    /// <value>The request identifier, which is the value of <see cref="_requestId"/> if it's not null or whitespace; otherwise, it's the value of <see cref="_traceIdentifier"/>.</value>
-    private string RequestId => !string.IsNullOrWhiteSpace(_requestId) ? _requestId : _traceIdentifier;
+    /// <value>The request identifier, which is the value of <see cref="RequestIdHeader"/> if it's not null or whitespace; otherwise, it's the value of <see cref="TraceIdentifier"/>.</value>
+    private string RequestId => !string.IsNullOrWhiteSpace(RequestIdHeader) ? RequestIdHeader : TraceIdentifier;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="InternalHeadersForwardHandler"/> class.
@@ -49,9 +49,9 @@ public class InternalHeadersForwardHandler : DelegatingHandler
     {
         ArgumentNullException.ThrowIfNull(httpContextAccessor);
 
-        _token = httpContextAccessor.HttpContext?.Request.Headers[HeaderParameters.Authorization].ToString() ?? string.Empty;
-        _requestId = httpContextAccessor.HttpContext?.Request.Headers[HeaderParameters.XRequestId].ToString() ?? string.Empty;
-        _traceIdentifier = httpContextAccessor.HttpContext?.TraceIdentifier ?? string.Empty;
+        Token = httpContextAccessor.HttpContext?.Request.Headers[HeaderParameters.Authorization].ToString() ?? string.Empty;
+        RequestIdHeader = httpContextAccessor.HttpContext?.Request.Headers[HeaderParameters.XRequestId].ToString() ?? string.Empty;
+        TraceIdentifier = httpContextAccessor.HttpContext?.TraceIdentifier ?? string.Empty;
     }
 
     /// <summary>
@@ -66,7 +66,7 @@ public class InternalHeadersForwardHandler : DelegatingHandler
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        request.Headers.AddSafe(HeaderParameters.Authorization, _token);
+        request.Headers.AddSafe(HeaderParameters.Authorization, Token);
         request.Headers.AddSafe(HeaderParameters.XRequestId, RequestId);
 
         return await base.SendAsync(request, cancellationToken);
