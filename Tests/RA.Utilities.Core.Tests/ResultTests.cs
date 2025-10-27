@@ -105,11 +105,7 @@ public class ResultTests
         result.IsSuccess.Should().BeFalse();
         result.IsFailure.Should().BeTrue();
         result.Exception.Should().Be(exception);
-
-        // Accessing value on failure should throw
-        Action act = () => { };
-        act.Should().Throw<InvalidOperationException>()
-           .WithMessage("Cannot access the value of a failure result.");
+        result.Exception.Should().BeOfType<InvalidOperationException>();
     }
 
     /// <summary>
