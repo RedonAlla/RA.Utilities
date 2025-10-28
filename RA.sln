@@ -64,7 +64,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RA.Utilities.Core.Tests", "Tests\RA.Utilities.Core.Tests\RA.Utilities.Core.Tests.csproj", "{C5FE8ED4-944F-45F1-AC7F-B68A101A6012}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RA.Utilities.Tests", "Tests\RA.Utilities.Tests\RA.Utilities.Tests.csproj", "{C5FE8ED4-944F-45F1-AC7F-B68A101A6012}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

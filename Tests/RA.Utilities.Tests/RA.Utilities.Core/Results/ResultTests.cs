@@ -4,7 +4,7 @@ using RA.Utilities.Core;
 using RA.Utilities.Core.Exceptions;
 using RA.Utilities.Core.Results;
 
-namespace RA.Utilities.Core.Tests;
+namespace RA.Utilities.Tests.RA.Utilities.Core.Results;
 
 /// <summary>
 /// Contains unit tests for the <see cref="Result"/> and <see cref="Result{T}"/> types.
@@ -231,5 +231,80 @@ public class ResultTests
         // Assert
         boundResult.IsSuccess.Should().BeTrue();
         boundResult.Value.Should().Be("Value is 5");
+    }
+
+    /// <summary>
+    /// Tests that the <see cref="ResultExtensions.Bind{TIn, TOut}(Result{TIn}, Func{TIn, Result{TOut}})"/> method propagates failure.
+    /// </summary>
+    [Fact]
+    public void Bind_ShouldPropagateFailure_WhenResultIsFailure()
+    {
+        // Arrange
+        var exception = new InvalidOperationException("Initial failure");
+        Result result = Result<int>.Failure(exception);
+        Func<Result> chainFunc = () => Result.Success($"chainFunc call");
+
+        // Act
+        Result boundResult = result.Bind(chainFunc);
+
+        // Assert
+        boundResult.IsFailure.Should().BeTrue();
+        boundResult.Exception.Should().Be(exception);
+    }
+
+    /// <summary>
+    /// Tests that the non-generic Match method executes the success function when the result is successful.
+    /// </summary>
+    [Fact]
+    public void Match_NonGeneric_ShouldExecuteSuccessFunc_WhenResultIsSuccess()
+    {
+        // Arrange
+        var result = Result.Success();
+
+        // Act
+        string matchResult = result.Match(
+            success: () => "success",
+            failure: ex => "failure");
+
+        // Assert
+        matchResult.Should().Be("success");
+    }
+
+    /// <summary>
+    /// Tests that the non-generic Match method executes the failure function when the result is a failure.
+    /// </summary>
+    [Fact]
+    public void Match_NonGeneric_ShouldExecuteFailureFunc_WhenResultIsFailure()
+    {
+        // Arrange
+        var exception = new Exception("error");
+        var result = Result.Failure(exception);
+
+        // Act
+        string matchResult = result.Match(
+            success: () => "success",
+            failure: ex => ex.Message);
+
+        // Assert
+        matchResult.Should().Be("error");
+    }
+
+    /// <summary>
+    /// Tests that the generic Match method executes the failure function when the result is a failure.
+    /// </summary>
+    [Fact]
+    public void Match_Generic_ShouldExecuteFailureFunc_WhenResultIsFailure()
+    {
+        // Arrange
+        var exception = new Exception("error");
+        Result<int> result = exception;
+
+        // Act
+        string matchResult = result.Match(
+            success: val => val.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            failure: ex => ex.Message);
+
+        // Assert
+        matchResult.Should().Be("error");
     }
 }

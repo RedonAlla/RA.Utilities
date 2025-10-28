@@ -28,10 +28,6 @@ public class Result
     /// <param name="exception">The exception that caused the failure.</param>
     protected Result(Exception exception)
     {
-        if (exception is null)
-        {
-            throw new ArgumentNullException(nameof(exception), "A failure result must have an exception.");
-        }
         Exception = exception;
     }
 
