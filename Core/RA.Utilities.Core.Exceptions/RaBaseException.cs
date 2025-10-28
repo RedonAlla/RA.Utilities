@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.Serialization;
 using RA.Utilities.Core.Constants;
 
 namespace RA.Utilities.Core.Exceptions;
@@ -7,7 +6,6 @@ namespace RA.Utilities.Core.Exceptions;
 /// <summary>
 /// Represents the base class for custom exceptions in the RA domain.
 /// </summary>
-[Serializable]
 public class RaBaseException : Exception
 {
     /// <summary>
@@ -45,15 +43,5 @@ public class RaBaseException : Exception
     public RaBaseException(int errorCode, string message) : base(message)
     {
         ErrorCode = errorCode;
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="RaBaseException"/> class with serialized data.
-    /// </summary>
-    /// <param name="info">The <see cref="SerializationInfo"/> that holds the serialized object data about the exception being thrown.</param>
-    /// <param name="context">The <see cref="StreamingContext"/> that contains contextual information about the source or destination.</param>
-    protected RaBaseException(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-        ErrorCode = info.GetInt32(nameof(ErrorCode));
     }
 }

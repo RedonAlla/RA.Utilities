@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.Serialization;
 using RA.Utilities.Core.Constants;
 
 namespace RA.Utilities.Core.Exceptions;
@@ -7,7 +6,6 @@ namespace RA.Utilities.Core.Exceptions;
 /// <summary>
 /// Represents an exception thrown when a request conflicts with the current state of the target resource (HTTP 409).
 /// </summary>
-[Serializable]
 public class ConflictException : RaBaseException
 {
     /// <summary>
@@ -44,16 +42,5 @@ public class ConflictException : RaBaseException
     {
         EntityName = entityName;
         EntityValue = entityValue;
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="ConflictException"/> class with serialized data.
-    /// </summary>
-    /// <param name="info">The <see cref="SerializationInfo"/> that holds the serialized object data about the exception being thrown.</param>
-    /// <param name="context">The <see cref="StreamingContext"/> that contains contextual information about the source or destination.</param>
-    protected ConflictException(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-        EntityName = info.GetString(nameof(EntityName))!;
-        EntityValue = info.GetValue(nameof(EntityValue), typeof(object))!;
     }
 }

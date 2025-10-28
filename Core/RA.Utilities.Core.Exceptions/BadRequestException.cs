@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using RA.Utilities.Core.Constants;
 
@@ -8,7 +7,6 @@ namespace RA.Utilities.Core.Exceptions;
 /// <summary>
 /// Represents an exception thrown for a bad request, typically due to invalid client-side input (HTTP 400).
 /// </summary>
-[Serializable]
 public class BadRequestException : RaBaseException
 {
     /// <summary>
@@ -30,16 +28,6 @@ public class BadRequestException : RaBaseException
     /// Gets or sets the list of validation errors.
     /// </summary>
     public ValidationErrors[] Errors { get; }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="BadRequestException"/> class with serialized data.
-    /// </summary>
-    /// <param name="info">The <see cref="SerializationInfo"/> that holds the serialized object data about the exception being thrown.</param>
-    /// <param name="context">The <see cref="StreamingContext"/> that contains contextual information about the source or destination.</param>
-    protected BadRequestException(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-        Errors = (ValidationErrors[]?)info.GetValue(nameof(Errors), typeof(ValidationErrors[])) ?? [];
-    }
 }
 
 /// <summary>
