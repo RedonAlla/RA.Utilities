@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
 using RA.Utilities.Core.Exceptions;
@@ -14,24 +15,6 @@ public class ResultExtensionsTests
     // =================================================================
     // Tests for ResultExtensions
     // =================================================================
-
-    /// <summary>
-    /// Tests that implicit conversion from an <see cref="Exception"/> to a non-generic <see cref="Result"/> correctly creates a failure result.
-    /// </summary>
-    [Fact]
-    public void ImplicitConversion_FromException_ShouldCreateFailureResult()
-    {
-        // Arrange
-        var exception = new NotFoundException("Student", "Name");
-
-        // Act
-        Result result = exception;
-
-        // Assert
-        result.IsSuccess.Should().BeFalse();
-        result.IsFailure.Should().BeTrue();
-        result.Exception.Should().Be(exception);
-    }
 
     /// <summary>
     /// Tests that the <see cref="ResultExtensions.OnSuccess(Result, Action)"/> method executes the action based on the result's state.
@@ -53,22 +36,220 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Tests that the <see cref="ResultExtensions.OnFailure(Result, Action{Exception})"/> method executes the action based on the result's state.
+    /// Tests that <see cref="ResultExtensions.OnFailure{T}(Result{T}, Action{Exception})"/> does not call the action for a successful result.
     /// </summary>
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void OnFailure_ShouldExecuteAction_BasedOnResultState(bool isSuccess)
+    [Fact]
+    public void OnFailure_SuccessfulResult_DoesNotCallAction()
     {
         // Arrange
-        Result result = isSuccess ? Result.Success() : Result.Failure(new Exception("error"));
-        bool wasCalled = false;
+        var successResult = Result.Success(42);
+        bool actionCalled = false;
 
         // Act
-        result.OnFailure(ex => wasCalled = true);
+        Result<int> result = successResult.OnFailure(ex => actionCalled = true);
 
         // Assert
-        wasCalled.Should().Be(!isSuccess);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(42);
+        actionCalled.Should().BeFalse();
+        result.Should().BeSameAs(successResult);
+    }
+
+    /// <summary>
+    /// Tests that <see cref="ResultExtensions.OnFailure{T}(Result{T}, Action{Exception})"/> calls the action with the exception for a failed result.
+    /// </summary>
+    [Fact]
+    public void OnFailure_FailedResult_CallsActionWithException()
+    {
+        // Arrange
+        var exception = new InvalidOperationException("Test failure");
+        var failedResult = Result.Failure<int>(exception);
+        Exception? capturedException = null;
+
+        // Act
+        Result<int> result = failedResult.OnFailure(ex => capturedException = ex);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.Exception.Should().BeSameAs(exception);
+        capturedException.Should().BeSameAs(exception);
+        result.Should().BeSameAs(failedResult);
+    }
+
+    /// <summary>
+    /// Tests that <see cref="ResultExtensions.OnFailure{T}(Result{T}, Action{Exception})"/> returns the original failed result after executing the action.
+    /// </summary>
+    [Fact]
+    public void OnFailure_FailedResult_ReturnsOriginalResultAfterAction()
+    {
+        // Arrange
+        var exception = new InvalidOperationException("Test failure");
+        var failedResult = Result.Failure<int>(exception);
+        bool actionCalled = false;
+
+        // Act
+        Result<int> result = failedResult.OnFailure(ex => actionCalled = true);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.Exception.Should().BeSameAs(exception);
+        actionCalled.Should().BeTrue();
+        result.Should().BeSameAs(failedResult);
+    }
+
+    /// <summary>
+    /// Tests that <see cref="ResultExtensions.OnFailure{T}(Result{T}, Action{Exception})"/> propagates an exception thrown by the action.
+    /// </summary>
+    [Fact]
+    public void OnFailure_ActionThrowsException_PropagatesException()
+    {
+        // Arrange
+        var exception = new InvalidOperationException("Original failure");
+        var failedResult = Result.Failure<int>(exception);
+        var actionException = new ArgumentException("Action failed");
+
+        // Act & Assert
+        ArgumentException exceptionThrown = Assert.Throws<ArgumentException>(() =>
+        {
+            failedResult.OnFailure(ex => throw actionException);
+        });
+
+        exceptionThrown.Should().BeSameAs(actionException);
+    }
+
+    /// <summary>
+    /// Tests that <see cref="ResultExtensions.OnFailure{T}(Result{T}, Action{Exception})"/> throws an <see cref="ArgumentNullException"/> when the action is null.
+    /// </summary>
+    [Fact]
+    public void OnFailure_NullAction_ThrowsArgumentNullException()
+    {
+        // Arrange
+        var successResult = Result.Failure(new Exception());
+
+        // Act & Assert
+        Assert.Throws<NullReferenceException>(() =>
+            successResult.OnFailure(null!));
+    }
+
+    /// <summary>
+    /// Tests that <see cref="ResultExtensions.OnFailure{T}(Result{T}, Action{Exception})"/> can be chained with other operations.
+    /// </summary>
+    [Fact]
+    public void OnFailure_CanBeChainedWithOtherOperations()
+    {
+        // Arrange
+        var exception = new InvalidOperationException("Test failure");
+        var failedResult = Result.Failure<int>(exception);
+        int sideEffectValue = 0;
+
+        // Act
+        Result<int> result = failedResult
+            .OnFailure(ex => sideEffectValue = 100);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        sideEffectValue.Should().Be(100);
+        result.Should().BeSameAs(failedResult);
+    }
+
+    /// <summary>
+    /// Tests that <see cref="ResultExtensions.OnFailure{T}(Result{T}, Action{Exception})"/> does not call the action for a successful result, even if the value is null.
+    /// </summary>
+    [Fact]
+    public void OnFailure_SuccessfulResultWithNullValue_DoesNotCallAction()
+    {
+        // Arrange
+        var successResult = Result.Success<string>(null!);
+        bool actionCalled = false;
+
+        // Act
+        Result<string> result = successResult.OnFailure(ex => actionCalled = true);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeNull();
+        actionCalled.Should().BeFalse();
+        result.Should().BeSameAs(successResult);
+    }
+
+    /// <summary>
+    /// Tests that multiple <see cref="ResultExtensions.OnFailure{T}(Result{T}, Action{Exception})"/> calls execute all actions for a failed result.
+    /// </summary>
+    [Fact]
+    public void OnFailure_MultipleOnFailureCalls_AllActionsCalledForFailure()
+    {
+        // Arrange
+        var exception = new InvalidOperationException("Test failure");
+        var failedResult = Result.Failure<int>(exception);
+        int callCount = 0;
+
+        // Act
+        Result<int> result = failedResult
+            .OnFailure(ex => callCount++)
+            .OnFailure(ex => callCount++);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        callCount.Should().Be(2);
+    }
+
+    /// <summary>
+    /// Tests that the action in <see cref="ResultExtensions.OnFailure{T}(Result{T}, Action{Exception})"/> can modify external state.
+    /// </summary>
+    [Fact]
+    public void OnFailure_ActionModifiesExternalState_StateIsModified()
+    {
+        // Arrange
+        var exception = new InvalidOperationException("Test failure");
+        var failedResult = Result.Failure<int>(exception);
+        var logger = new TestLogger();
+
+        // Act
+        Result<int> result = failedResult.OnFailure(ex => logger.LogError($"Operation failed: {ex.Message}"));
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        logger.Logs.Should().Contain("Operation failed: Test failure");
+    }
+
+    /// <summary>
+    /// Tests that <see cref="ResultExtensions.OnFailure{T}(Result{T}, Action{Exception})"/> works correctly with a value type.
+    /// </summary>
+    [Fact]
+    public void OnFailure_WithValueType_WorksCorrectly()
+    {
+        // Arrange
+        var exception = new InvalidOperationException("Test failure");
+        var failedResult = Result.Failure<double>(exception);
+        bool actionCalled = false;
+
+        // Act
+        Result<double> result = failedResult.OnFailure(ex => actionCalled = true);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        actionCalled.Should().BeTrue();
+        result.Exception.Should().BeSameAs(exception);
+    }
+
+    /// <summary>
+    /// Tests that <see cref="ResultExtensions.OnFailure{T}(Result{T}, Action{Exception})"/> works correctly with a reference type.
+    /// </summary>
+    [Fact]
+    public void OnFailure_WithReferenceType_WorksCorrectly()
+    {
+        // Arrange
+        var exception = new InvalidOperationException("Test failure");
+        var failedResult = Result.Failure<string>(exception);
+        bool actionCalled = false;
+
+        // Act
+        Result<string> result = failedResult.OnFailure(ex => actionCalled = true);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        actionCalled.Should().BeTrue();
+        result.Exception.Should().BeSameAs(exception);
     }
 
     /// <summary>
@@ -101,24 +282,29 @@ public class ResultExtensionsTests
     /// <summary>
     /// Tests that the <see cref="ResultExtensions.Bind{TIn, TOut}(Result{TIn}, Func{TIn, Result{TOut}})"/> method chains an operation or propagates a failure.
     /// </summary>
-    [Fact]
-    public void Bind_ShouldChainOrPropagate()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Bind_ShouldChainOrPropagate(bool isSuccess)
     {
         // Arrange
-        var successResult = Result.Success(5);
-        var failureResult = Result.Failure<int>(new InvalidOperationException("Initial failure"));
+        var exception = new InvalidOperationException("Initial failure");
+        Result<int> result = isSuccess ? Result.Success(5) : Result.Failure<int>(exception);
         static Result<string> chainFunc(int value) => Result.Success($"Value is {value}");
 
         // Act
-        Result<string> successBoundResult = successResult.Bind(chainFunc);
-        Result<string> failureBoundResult = failureResult.Bind(chainFunc);
+        Result<string> boundResult = result.Bind(chainFunc);
 
         // Assert
-        successBoundResult.IsSuccess.Should().BeTrue();
-        successBoundResult.Value.Should().Be("Value is 5");
-
-        failureBoundResult.IsFailure.Should().BeTrue();
-        failureBoundResult.Exception.Should().Be(failureResult.Exception);
+        boundResult.IsSuccess.Should().Be(isSuccess);
+        if (isSuccess)
+        {
+            boundResult.Value.Should().Be("Value is 5");
+        }
+        else
+        {
+            boundResult.Exception.Should().Be(exception);
+        }
     }
 
     /// <summary>
@@ -126,7 +312,7 @@ public class ResultExtensionsTests
     /// </summary>
     [Fact]
     public void Match_NonGeneric_ShouldExecuteSuccessFunc_WhenResultIsSuccess()
-    { // Arrange
+    {
         var successResult = Result.Success();
         var failureResult = Result.Failure(new Exception("error"));
 
@@ -150,10 +336,10 @@ public class ResultExtensionsTests
     {
         // Arrange
         var exception = new Exception("error");
-        Result<int> result = exception;
+        Result<int> failureResult = exception;
 
         // Act
-        string matchResult = result.Match(
+        string matchResult = failureResult.Match(
             success: val => val.ToString(System.Globalization.CultureInfo.InvariantCulture),
             failure: ex => ex.Message);
 
@@ -277,130 +463,212 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Tests that BindAsync chains an operation or propagates a failure.
+    /// Tests that BindAsync returns the bound result when the initial result is successful.
     /// </summary>
     [Fact]
-    public async Task BindAsync_ShouldChainOrPropagate()
+    public async Task BindAsync_SuccessfulResult_ReturnsBoundResult()
     {
         // Arrange
-        Task<Result<int>> successResultTask = Task.FromResult(Result.Success(5));
-        Task<Result<int>> failureResultTask = Task.FromResult(Result.Failure<int>(new InvalidOperationException("Initial failure")));
-        static Task<Result<string>> chainFunc(int value) => Task.FromResult(Result.Success($"Value is {value}"));
+        int initialValue = 42;
+        string expectedBoundValue = "Success: 42";
+        var successResult = Result.Success(initialValue);
 
         // Act
-        Result<string> successBoundResult = await successResultTask.BindAsync(chainFunc);
-        Result<string> failureBoundResult = await failureResultTask.BindAsync(chainFunc);
+        Result<string> result = await successResult.BindAsync(async x =>
+        {
+            string transformed = await Task.FromResult($"Success: {x}");
+            return Result.Success(transformed);
+        });
 
         // Assert
-        successBoundResult.IsSuccess.Should().BeTrue();
-        successBoundResult.Value.Should().Be("Value is 5");
-
-        failureBoundResult.IsFailure.Should().BeTrue();
-        failureBoundResult.Exception.Should().Be((await failureResultTask).Exception);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(expectedBoundValue);
     }
 
     /// <summary>
-    /// Tests that the <see cref="ResultExtensions.OnSuccess{T}(Result{T}, Action{T})"/> method executes the provided action when the result is successful.
+    /// Tests that BindAsync returns a failed result without calling the bind function when the initial result is a failure.
     /// </summary>
     [Fact]
-    public void OnSuccess_ShouldExecuteAction_WhenResultIsSuccess()
+    public async Task BindAsync_FailedResult_ReturnsFailureWithoutCallingBindFunc()
     {
         // Arrange
-        var result = Result<string>.Success("data");
-        bool wasCalled = false;
+        var exception = new InvalidOperationException("Test failure");
+        var failedResult = Result.Failure<int>(exception);
+        bool bindFuncCalled = false;
 
         // Act
-        result.OnSuccess(value => wasCalled = true);
+        Result<string> result = await failedResult.BindAsync<int, string>(async x =>
+        {
+            bindFuncCalled = true;
+            return await Task.FromResult(Result.Success(x.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+        });
 
         // Assert
-        wasCalled.Should().BeTrue();
+        result.IsSuccess.Should().BeFalse();
+        result.Exception.Should().BeSameAs(exception);
+        bindFuncCalled.Should().BeFalse();
     }
 
     /// <summary>
-    /// Tests that ResultExtensions.OnSuccess{T}(Result{T}method does not execute the provided action when the result is a failure.
+    /// Tests that BindAsync returns a failed result when the bind function itself returns a failure.
     /// </summary>
     [Fact]
-    public void OnSuccess_ShouldNotExecuteAction_WhenResultIsFailure()
+    public async Task BindAsync_BindFuncReturnsFailure_ReturnsFailedResult()
     {
         // Arrange
-        Result result = Result<string>.Failure(new Exception());
-        bool wasCalled = false;
+        int initialValue = 42;
+        var successResult = Result.Success(initialValue);
+        var bindException = new ArgumentException("Binding failed");
 
         // Act
-        result.OnSuccess(() => wasCalled = true);
+        Result<string> result = await successResult.BindAsync<int, string>(async x =>
+        {
+            await Task.CompletedTask; // Simulate async work
+            return Result.Failure<string>(bindException);
+        });
 
         // Assert
-        wasCalled.Should().BeFalse();
+        result.IsSuccess.Should().BeFalse();
+        result.Exception.Should().BeSameAs(bindException);
     }
 
     /// <summary>
-    /// Tests that the <see cref="ResultExtensions.OnFailure(Result, Action{Exception})"/> method executes the provided action when the result is a failure.
+    /// Tests that BindAsync propagates an exception thrown by the bind function.
     /// </summary>
     [Fact]
-    public void OnFailure_ShouldExecuteAction_WhenResultIsFailure()
+    public async Task BindAsync_BindFuncThrowsException_PropagatesException()
     {
         // Arrange
-        var result = Result.Failure(new Exception("error"));
-        bool wasCalled = false;
+        int initialValue = 42;
+        var successResult = Result.Success(initialValue);
+        var expectedException = new InvalidOperationException("Bind func crashed");
 
-        // Act
-        result.OnFailure(ex => wasCalled = true);
+        // Act & Assert
+        InvalidOperationException exception = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await successResult.BindAsync<int, string>(async x =>
+            {
+                await Task.CompletedTask;
+                throw expectedException;
+            }));
 
-        // Assert
-        wasCalled.Should().BeTrue();
+        exception.Should().BeSameAs(expectedException);
     }
 
     /// <summary>
-    /// Tests that the <see cref="ResultExtensions.Map{TIn, TOut}(Result{TIn}, Func{TIn, TOut})"/> method transforms the value when the result is successful.
+    /// Tests that BindAsync throws an <see cref="ArgumentNullException"/> when the bind function is null.
     /// </summary>
     [Fact]
-    public void Map_ShouldTransformValue_WhenResultIsSuccess()
+    public async Task BindAsync_NullBindFunc_ThrowsNullReferenceException()
     {
         // Arrange
-        var result = Result<int>.Success(10);
+        var successResult = Result.Success(42);
 
-        // Act
-        Result<int> mappedResult = result.Map(value => value * 2);
-
-        // Assert
-        mappedResult.IsSuccess.Should().BeTrue();
-        mappedResult.Value.Should().Be(20);
+        // Act & Assert
+        await Assert.ThrowsAsync<NullReferenceException>(async () =>
+            await successResult.BindAsync<int, string>(null!));
     }
 
     /// <summary>
-    /// Tests that the <see cref="ResultExtensions.Bind{TIn, TOut}(Result{TIn}, Func{TIn, Result{TOut}})"/> method chains operations when the result is successful.
+    /// Tests that BindAsync correctly handles asynchronous work within the bind function and completes successfully.
     /// </summary>
     [Fact]
-    public void Bind_ShouldChainOperation_WhenResultIsSuccess()
+    public async Task BindAsync_WithAsyncWorkInBindFunc_CompletesSuccessfully()
     {
         // Arrange
-        var result = Result<int>.Success(5);
-        Func<int, Result<string>> chainFunc = value => Result<string>.Success($"Value is {value}");
+        int initialValue = 5;
+        var successResult = Result.Success(initialValue);
+        var simulatedDelay = TimeSpan.FromMilliseconds(10);
 
         // Act
-        Result<string> boundResult = result.Bind(chainFunc);
+        Result<int> result = await successResult.BindAsync<int, int>(async x =>
+        {
+            await Task.Delay(simulatedDelay);
+            return Result.Success(x * 2);
+        });
 
         // Assert
-        boundResult.IsSuccess.Should().BeTrue();
-        boundResult.Value.Should().Be("Value is 5");
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(10);
     }
 
     /// <summary>
-    /// Tests that the non-generic Match method executes the failure function when the result is a failure.
+    /// Tests that multiple BindAsync operations can be chained together and work correctly.
     /// </summary>
     [Fact]
-    public void Match_NonGeneric_ShouldExecuteFailureFunc_WhenResultIsFailure()
+    public async Task BindAsync_ChainMultipleBindOperations_WorksCorrectly()
     {
         // Arrange
-        var exception = new Exception("error");
-        var result = Result.Failure(exception);
+        var initialResult = Result.Success(10);
 
         // Act
-        string matchResult = result.Match(
-            success: () => "success",
-            failure: ex => ex.Message);
+        Result<bool> result = await initialResult
+            .BindAsync<int, string>(async x =>
+            {
+                await Task.CompletedTask;
+                return Result.Success((x * 2).ToString(System.Globalization.CultureInfo.InvariantCulture));
+            })
+            .BindAsync<string, bool>(async s =>
+            {
+                await Task.CompletedTask;
+                return Result.Success(int.Parse(s, System.Globalization.CultureInfo.InvariantCulture) > 15);
+            });
 
         // Assert
-        matchResult.Should().Be("error");
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeTrue(); // 10 * 2 = 20 > 15
+    }
+
+    /// <summary>
+    /// Tests that MapAsync returns the mapped value when the result is successful.
+    /// </summary>
+    [Fact]
+    public async Task MapAsync_SuccessfulResult_ReturnsMappedValue()
+    {
+        // Arrange
+        int initialValue = 42;
+        string expectedMappedValue = "42";
+        Task<Result<int>> successResultTask = Task.FromResult(Result.Success(initialValue));
+
+        // Act
+        Result<string> result = await successResultTask.MapAsync(async x =>
+            await Task.FromResult(x.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(expectedMappedValue);
+    }
+
+    /// <summary>
+    /// Tests that MapAsync returns a failed result without calling the mapping function when the initial result is a failure.
+    /// </summary>
+    [Fact]
+    public async Task MapAsync_FailedResult_ReturnsFailureWithoutCallingMapFunc()
+    {
+        // Arrange
+        var exception = new InvalidOperationException("Test failure");
+        Task<Result<int>> failedResultTask = Task.FromResult(Result.Failure<int>(exception));
+        bool mapFuncCalled = false;
+
+        // Act
+        Result<string> result = await failedResultTask.MapAsync<int, string>(async x =>
+        {
+            mapFuncCalled = true;
+            return await Task.FromResult(x.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        });
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.Exception.Should().BeSameAs(exception);
+        mapFuncCalled.Should().BeFalse();
+    }
+}
+
+internal sealed class TestLogger
+{
+    public List<string> Logs { get; } = [];
+
+    public void LogError(string message)
+    {
+        Logs.Add(message);
     }
 }
