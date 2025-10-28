@@ -142,8 +142,7 @@ const config: Config = {
   ],
 
   themeConfig: {
-    // Replace with your project's social card
-    image: 'img/docusaurus-social-card.jpg',
+    image: 'img/social-card.jpg',
     metadata: [
       {name: 'theme-color', content: '#e50d00'},
       {name: 'color-scheme', content: 'light dark'},
