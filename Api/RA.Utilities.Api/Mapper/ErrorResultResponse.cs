@@ -30,6 +30,10 @@ public static class ErrorResultResponse
             ErrorResultMapper.MapToNotFoundResponse(notFoundException),
             statusCode: BaseResponseCode.NotFound
         ),
+        UnauthorizedException baseException => Microsoft.AspNetCore.Http.Results.Json(
+            data: ErrorResultMapper.MapToUnauthorizedResponse(baseException),
+            statusCode: BaseResponseCode.Unauthorized
+        ),
         RaBaseException baseException => Microsoft.AspNetCore.Http.Results.Json(
             data: ErrorResultMapper.ToGeneralErrorResponse(baseException),
             statusCode: BaseResponseCode.InternalServerError

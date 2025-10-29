@@ -77,6 +77,21 @@ public static class ErrorResultMapper
     }
 
     /// <summary>
+    /// Maps an <see cref="UnauthorizedException"/> to an <see cref="UnauthorizedResponse"/>.
+    /// </summary>
+    /// <param name="exception">The <see cref="UnauthorizedException"/> instance to map from.</param>
+    /// <returns>An <see cref="UnauthorizedResponse"/> representing the mapped exception.</returns>
+    public static UnauthorizedResponse MapToUnauthorizedResponse(UnauthorizedException exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+
+        return new UnauthorizedResponse(
+            responseCode: exception.ErrorCode,
+            responseMessage: exception.Message
+        );
+    }
+
+    /// <summary>
     /// Maps a <see cref="RaBaseException"/> to an <see cref="ErrorResponse"/>.
     /// </summary>
     /// <param name="exception">The <see cref="RaBaseException"/> instance to map from.</param>
