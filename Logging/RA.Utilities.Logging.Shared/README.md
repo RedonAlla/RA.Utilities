@@ -1,10 +1,14 @@
 <p align="center">
-  <img src="../../Assets/Images/log.svg" alt="RA.Utilities.Logging.Shared Logo" width="128">
+  <img src="https://raw.githubusercontent.com/RedonAlla/RA.Utilities/7609528d2f5783472cd1b6a8be8cc20957e85fbb/Assets/Images/log.svg" alt="RA.Utilities.Logging.Shared Logo" width="128">
 </p>
 
 # RA.Utilities.Logging.Shared
 
-[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Logging.Shared.svg)](https://www.nuget.org/packages/RA.Utilities.Logging.Shared/)
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Logging.Shared?logo=nuget&label=NuGet)](https://www.nuget.org/packages/RA.Utilities.Logging.Shared/)
+[![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Logging.Shared.svg)](https://www.nuget.org/packages/RA.Utilities.Logging.Shared/)
+
 
 `RA.Utilities.Logging.Shared` provides shared components and abstractions for logging HTTP requests and responses within the RA.Utilities ecosystem.
 This package contains core models and helpers used by other logging libraries, such as `RA.Utilities.Api.Middlewares`, to ensure a consistent approach to capturing and structuring diagnostic information for HTTP calls.
