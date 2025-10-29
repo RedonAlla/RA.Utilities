@@ -1,5 +1,5 @@
 ---
-title: `UnauthorizedException`
+title: UnauthorizedException
 ---
 
 ```bash
