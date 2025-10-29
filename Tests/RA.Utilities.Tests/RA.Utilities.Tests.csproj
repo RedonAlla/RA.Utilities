@@ -3,6 +3,12 @@
   <PropertyGroup>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <!--
+      To disable a specific warning, add its code to the NoWarn property.
+      For example, to disable warning CS1591 (missing XML comment for publicly visible type or member), you would use: <NoWarn>$(NoWarn);CS1591</NoWarn>
+      You can add multiple warning codes by separating them with a semicolon.
+    -->
   </PropertyGroup>
 
   <ItemGroup>
