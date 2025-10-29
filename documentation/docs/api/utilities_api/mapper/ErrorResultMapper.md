@@ -57,8 +57,12 @@ The class provides a dedicated mapping method for each custom exception type:
 - **`MapToConflictResponse(ConflictException ex)`**:
   Maps a `ConflictException` to a `ConflictResponse`, populating the `ConflictResult` with the entity name and value.
 
-- **`MapToNotFoundResponse(NotFoundException ex)`**:
-  Maps a `NotFoundException` to a `NotFoundResponse`, populating the `NotFoundResult` and generating a descriptive message.
+- **`MapToUnauthorizedResponse(UnauthorizedException ex)`**:
+  Maps a `UnauthorizedException` to a `UnauthorizedResponse`, populating the `UnauthorizedResult` and generating a descriptive message.
 
 - **`ToGeneralErrorResponse(RaBaseException ex)`**:
   Maps any other `RaBaseException` to a generic `ErrorResponse`, using the exception's message and error code.
+
+- **`ToGeneralErrorResponse(RaBaseException ex)`**:
+  Maps any other `RaBaseException` to a generic `ErrorResponse`, using the exception's message and error code.
+

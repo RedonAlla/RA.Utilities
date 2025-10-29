@@ -3,8 +3,9 @@ title: RA.Utilities.Core.Exceptions
 authors: [RedonAlla]
 ---
 
-## Version 1.0.0-preview.6.3
-[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Core.Exceptions?logo=nuget&label=NuGet)](https://www.nuget.org/packages/RA.Utilities.Core.Exceptions/)
+## Version 10.0.100-rc.2
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.100--rc.2-orange?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Exceptions/10.0.100-rc.2)
+
 
 This release focuses on clarifying the central role of semantic exceptions within the RA.Utilities ecosystem through greatly improved documentation and usage examples in related packages. While the exception classes themselves have not changed, their purpose and integration are now much clearer.
 

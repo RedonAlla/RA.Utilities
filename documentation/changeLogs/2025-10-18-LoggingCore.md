@@ -3,8 +3,9 @@ title: RA.Utilities.Logging.Core
 authors: [RedonAlla]
 ---
 
-## Version 1.0.0-preview.6.3
-[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Logging.Core?logo=nuget&label=NuGet)](https://www.nuget.org/packages/RA.Utilities.Logging.Core/)
+## Version 10.0.0-rc.2
+
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.0--rc.2-orange?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Logging.Core/10.0.0-rc.2)
 
 - Initial release of the core logging package.
 - Provides `AddRaSerilog` extension method for opinionated Serilog configuration.

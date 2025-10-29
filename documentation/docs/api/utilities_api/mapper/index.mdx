@@ -3,7 +3,228 @@ title: Mappers
 sidebar_position: 3
 ---
 
-Provides some static methods for mapping various exception types to their corresponding API error responses.
+The `RA.Utilities.Api.Mapper` namespace contains a set of static helper classes designed to standardize and
+simplify the creation of API responses in ASP.NET Core Minimal APIs.
+
+Their main purpose is to bridge the gap between your application's internal logic (like the `Result<T>` pattern and custom exceptions)
+and the [`IResult`](../../../core/UtilitiesCore/Results.md) objects that ASP.NET Core uses to generate HTTP responses.
+
+#### Let's break down the purpose of each class in that namespace.
+
+#### 1. [`SuccessResponse`](./SuccessResponse)
+* **Purpose**: This class is a factory for creating consistent, successful [`IResult`](../../../core/UtilitiesCore/Results.md) objects.
+* **How it works**: It provides simple static methods like `Ok()`, `Ok<T>()`, `Created()`, and `Accepted()`
+that wrap your data in a standardized [`SuccessResponse`](./SuccessResponse) object and return the correct HTTP status code (200, 201, 202, etc.).
+This keeps your endpoint logic clean and ensures all success responses from your API have a uniform structure.
+
+```csharp
+public static class SuccessResponse
+{
+    // Creates an HTTP 200 OK with a body
+    public static IResult Ok<TResult>(TResult results) where TResult : new()
+    {
+        return Microsoft.AspNetCore.Http.Results.Ok(new SuccessResponse<TResult>(results));
+    }
+
+    // Creates an HTTP 201 Created
+    public static IResult Created()
+    {
+        return Microsoft.AspNetCore.Http.Results.Created();
+    }
+    // ... and other success helpers
+}
+```
+
+#### 2. [`ErrorResultMapper`](./ErrorResultMapper)
+
+* **Purpose**: This class is responsible for transforming specific exception types into structured error **response bodies** (DTOs).
+* **How it works*: It has methods that take a specific exception (e.g., [`NotFoundException`](../../../core/CoreExceptions//NotFoundException.md), [`ConflictException`](../../../core/CoreExceptions//ConflictException.md))
+and map its properties to a corresponding response model (e.g., [`NotFoundResponse`](../../ApiResults/NotFoundResponse.md), [`ConflictResponse`](../../ApiResults/ConflictResponse.md)).
+It deals with the "*what*" of the error—creating the JSON payload—but does not create the final [`IResult`](../../../core/UtilitiesCore/Results.md) itself.
+It's an internal helper used by [`ErrorResultResponse`](../../ApiResults/ErrorResultResponse.md).
+
+```csharp
+public static class ErrorResultMapper
+{
+    // Maps a NotFoundException to a NotFoundResponse object (the response body)
+    public static NotFoundResponse MapToNotFoundResponse(NotFoundException exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+
+        var result = new NotFoundResult
+        (
+            exception.EntityName ?? string.Empty,
+            exception.EntityValue?.ToString() ?? string.Empty
+        );
+
+        return new NotFoundResponse(
+            result,
+            responseMessage: $"{exception.EntityName} with value: '{exception.EntityValue}' not found."
+        );
+    }
+    // ... and other exception-to-body mappers
+}
+```
+
+#### 3. [`ErrorResultResponse`](./ErrorResultResponse)
+
+* **Purpose**: This is the key class for handling failures.
+It takes an `Exception` and creates the final, appropriate [`IResult`](../../../core/UtilitiesCore/Results.md) with the correct HTTP status code and a standardized error body.
+* **How it works**: Its `Result(Exception)` method uses a switch expression to determine the exception type.
+It then calls the appropriate method from ErrorResultMapper to get the error body and wraps that body in a `JsonResult` with the correct status code (e.g., 404 Not Found, 409 Conflict).
+
+This class is designed to be used with the Result.Match() method, allowing you to handle all failure cases in a single line of code.
+
+```csharp
+public static class ErrorResultResponse
+{
+    public static IResult Result(Exception exception) => exception switch
+    {
+        // ...
+        NotFoundException notFoundException => Microsoft.AspNetCore.Http.Results.Json(
+            // It calls ErrorResultMapper to create the body...
+            ErrorResultMapper.MapToNotFoundResponse(notFoundException),
+            // ...and sets the correct status code.
+            statusCode: BaseResponseCode.NotFound
+        ),
+        // ... and other exception-to-IResult cases
+    };
+}
+```
+
+## 🚀 Example
+The mapper classes in `RA.Utilities.Api.Mapper` are designed to work together seamlessly with the `Result<T>` type
+`from RA.Utilities.Core` to create clean and consistent API endpoints.
+
+The core pattern is to have your application/service layer return a `Result<T>` object,
+and then use the `.Match()` method in your Minimal API endpoint to map the success and
+failure outcomes to the appropriate HTTP response using [`SuccessResponse`](SuccessResponse.md) and [`ErrorResultResponse`](./ErrorResultResponse.md).
+
+Here is a complete, step-by-step example based on the documentation you provided.
+
+### Step 1: Create a Service That Returns a `Result<T>`
+First, your business logic should not know about HTTP.
+It should simply return a `Result` indicating the outcome of an operation.
+A success result will contain the value, and a failure result will contain a specific exception (like [`NotFoundException`](../../../core/CoreExceptions/NotFoundException.md)).
+
+```csharp showLineNumbers
+using RA.Utilities.Core;
+using RA.Utilities.Core.Exceptions;
+
+// A simple Product record for the example
+public record Product(int Id, string Name);
+
+public class ProductService
+{
+    public Result<Product> GetProductById(int id)
+    {
+        // Simulate invalid input
+        if (id <= 0)
+        {
+            return new BadRequestException("Invalid product ID.");
+        }
+
+        // Simulate not finding a product
+        if (id != 1)
+        {
+            // Return a failure Result containing a NotFoundException
+            return new NotFoundException(nameof(Product), id);
+        }
+
+        // Return a success Result with the product
+        var product = new Product(id, "Sample Product");
+        return product; // Implicit conversion to Result<Product>
+    }
+}
+```
+
+### Step 2: Use `Match` in Your Minimal API Endpoint
+Now, in your API endpoint, you call the service and use the `Match` method.
+This forces you to handle both success and failure cases, which is where the mapper classes come in.
+
+```csharp showLineNumbers
+// Example: Program.cs or a dedicated endpoint class
+
+// Make sure to import the mappers
+using RA.Utilities.Api.Mapper;
+
+// Assume 'app' is your WebApplication and ProductService is registered in DI
+app.MapGet("/products/{id}", (int id, ProductService service) => 
+{
+    Result<Product> result = service.GetProductById(id);
+    
+    // The Match method maps the outcome to an IResult.
+    // It's clean, declarative, and handles all cases.
+    return result.Match<IResult>(
+        success: product => SuccessResponse.Ok(product),
+        failure: ErrorResultResponse.Result 
+    );
+})
+.WithTags("Products");
+```
+
+### How It Works
+Let's break down the Match call:
+
+#### 1 `success: product => SuccessResponse.Ok(product)`:
+
+  * If the `result` is a success, this lambda is executed.
+  * The `product` object inside the `Result` is passed to `SuccessResponse.Ok()`.
+  * This helper wraps the product in a standard `SuccessResponse<Product>` body and returns an `HTTP 200 OK` result.
+
+#### `failure: ErrorResultResponse.Result`:
+
+  * If the `result` is a failure, this delegate is executed.
+  * The `Exception` from the `Result` is passed to the `ErrorResultResponse.Result` method.
+  * This method inspects the exception type (`NotFoundException`, `BadRequestException`, etc.)
+  and automatically returns the correct HTTP status code (`404`, `400`) with a standardized error body.
+
+### Example Outcomes
+#### ✅ Success Request
+A request to `/products/1` will execute the `success` path and return an `HTTP 200 OK` with this body:
+
+```json showLineNumbers
+{
+  "responseCode": 200,
+  "responseType": "Success",
+  "responseMessage": "Operation completed successfully.",
+  "result": {
+    "id": 1,
+    "name": "Sample Product"
+  }
+}
+```
+
+#### ❌ Failure Request
+A request to `/products/99` will execute the failure path.
+`ErrorResultResponse.Result` will see the `NotFoundException` and return an `HTTP 404 Not Found` with this body:
+
+```json showLineNumbers
+{
+  "responseCode": 404,
+  "responseType": "NotFound",
+  "responseMessage": "Product with value '99' not found.",
+  "result": {
+    "entityName": "Product",
+    "entityValue": "99"
+  }
+}
+```
+
+This pattern ensures your API endpoints remain clean and consistent,
+delegating all the response-creation logic to these reusable mapper classes.
+
+
+## 🧠 Summary: How They Work Together
+1. Your application logic returns a `Result<T>` object.
+1. In your API endpoint, you call `.Match()` on the result.
+1. If the result is a **success**, you use `SuccessResponse.Ok(data)` to generate a `200 OK` response.
+1. If the result is a **failure**, you pass the `ErrorResultResponse.Result` method to the failure delegate.
+`ErrorResultResponse` inspects the exception, uses `ErrorResultMapper` to build a standardized error body,
+and returns the final IResult with the correct HTTP error code.
+
+Together, these classes create a clean, consistent, and robust pattern for handling API responses
+that aligns perfectly with a Railway-Oriented Programming style using the `Result<T>` type.
 
 <br />
 <br />
