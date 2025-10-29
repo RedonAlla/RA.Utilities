@@ -21,11 +21,11 @@ namespace RA.Utilities.Core.Tests.Results
         public void OnSuccess_WithSuccessResult_ExecutesAction()
         {
             // Arrange
-            var result = Result.Success();
-            var actionExecuted = false;
+            Result result = Result.Success();
+            bool actionExecuted = false;
 
             // Act
-            var returnedResult = result.OnSuccess(() => actionExecuted = true);
+            Result returnedResult = result.OnSuccess(() => actionExecuted = true);
 
             // Assert
             Assert.True(actionExecuted);
@@ -40,12 +40,12 @@ namespace RA.Utilities.Core.Tests.Results
         public void OnSuccess_WithFailureResult_DoesNotExecuteAction()
         {
             // Arrange
-            var exception = new InvalidOperationException("Test exception");
-            var result = Result.Failure(exception);
-            var actionExecuted = false;
+            Exception exception = new InvalidOperationException("Test exception");
+            Result result = Result.Failure(exception);
+            bool actionExecuted = false;
 
             // Act
-            var returnedResult = result.OnSuccess(() => actionExecuted = true);
+            Result returnedResult = result.OnSuccess(() => actionExecuted = true);
 
             // Assert
             Assert.False(actionExecuted);
@@ -60,12 +60,12 @@ namespace RA.Utilities.Core.Tests.Results
         public void OnSuccess_WithSuccessResultT_ExecutesActionWithValue()
         {
             // Arrange
-            var testValue = 42;
-            var result = Result.Success(testValue);
-            var receivedValue = 0;
+            int testValue = 42;
+            Result<int> result = Result.Success(testValue);
+            int receivedValue = 0;
 
             // Act
-            var returnedResult = result.OnSuccess(value => receivedValue = value);
+            Result<int> returnedResult = result.OnSuccess(value => receivedValue = value);
 
             // Assert
             Assert.Equal(testValue, receivedValue);
@@ -80,12 +80,12 @@ namespace RA.Utilities.Core.Tests.Results
         public void OnSuccess_WithFailureResultT_DoesNotExecuteAction()
         {
             // Arrange
-            var exception = new InvalidOperationException("Test exception");
-            var result = Result.Failure<int>(exception);
-            var actionExecuted = false;
+            Exception exception = new InvalidOperationException("Test exception");
+            Result<int> result = Result.Failure<int>(exception);
+            bool actionExecuted = false;
 
             // Act
-            var returnedResult = result.OnSuccess(value => actionExecuted = true);
+            Result<int> returnedResult = result.OnSuccess(value => actionExecuted = true);
 
             // Assert
             Assert.False(actionExecuted);
@@ -104,12 +104,12 @@ namespace RA.Utilities.Core.Tests.Results
         public void OnFailure_WithFailureResult_ExecutesActionWithException()
         {
             // Arrange
-            var exception = new InvalidOperationException("Test exception");
-            var result = Result.Failure(exception);
+            Exception exception = new InvalidOperationException("Test exception");
+            Result result = Result.Failure(exception);
             Exception receivedException = null;
 
             // Act
-            var returnedResult = result.OnFailure(ex => receivedException = ex);
+            Result returnedResult = result.OnFailure(ex => receivedException = ex);
 
             // Assert
             Assert.Same(exception, receivedException);
@@ -124,11 +124,11 @@ namespace RA.Utilities.Core.Tests.Results
         public void OnFailure_WithSuccessResult_DoesNotExecuteAction()
         {
             // Arrange
-            var result = Result.Success();
-            var actionExecuted = false;
+            Result result = Result.Success();
+            bool actionExecuted = false;
 
             // Act
-            var returnedResult = result.OnFailure(ex => actionExecuted = true);
+            Result returnedResult = result.OnFailure(ex => actionExecuted = true);
 
             // Assert
             Assert.False(actionExecuted);
@@ -143,12 +143,12 @@ namespace RA.Utilities.Core.Tests.Results
         public void OnFailure_WithFailureResultT_ExecutesActionWithException()
         {
             // Arrange
-            var exception = new InvalidOperationException("Test exception");
-            var result = Result.Failure<int>(exception);
+            Exception exception = new InvalidOperationException("Test exception");
+            Result<int> result = Result.Failure<int>(exception);
             Exception receivedException = null;
 
             // Act
-            var returnedResult = result.OnFailure(ex => receivedException = ex);
+            Result<int> returnedResult = result.OnFailure(ex => receivedException = ex);
 
             // Assert
             Assert.Same(exception, receivedException);
@@ -163,11 +163,11 @@ namespace RA.Utilities.Core.Tests.Results
         public void OnFailure_WithSuccessResultT_DoesNotExecuteAction()
         {
             // Arrange
-            var result = Result.Success(42);
-            var actionExecuted = false;
+            Result<int> result = Result.Success(42);
+            bool actionExecuted = false;
 
             // Act
-            var returnedResult = result.OnFailure(ex => actionExecuted = true);
+            Result<int> returnedResult = result.OnFailure(ex => actionExecuted = true);
 
             // Assert
             Assert.False(actionExecuted);
@@ -186,11 +186,11 @@ namespace RA.Utilities.Core.Tests.Results
         public void Map_WithSuccessResult_TransformsValue()
         {
             // Arrange
-            var inputValue = 5;
-            var result = Result.Success(inputValue);
+            int inputValue = 5;
+            Result<int> result = Result.Success(inputValue);
 
             // Act
-            var mappedResult = result.Map(x => x * 2);
+            Result<int> mappedResult = result.Map(x => x * 2);
 
             // Assert
             Assert.True(mappedResult.IsSuccess);
@@ -205,11 +205,11 @@ namespace RA.Utilities.Core.Tests.Results
         public void Map_WithFailureResult_PropagatesException()
         {
             // Arrange
-            var exception = new InvalidOperationException("Test exception");
-            var result = Result.Failure<int>(exception);
+            Exception exception = new InvalidOperationException("Test exception");
+            Result<int> result = Result.Failure<int>(exception);
 
             // Act
-            var mappedResult = result.Map(x => x * 2);
+            Result<int> mappedResult = result.Map(x => x * 2);
 
             // Assert
             Assert.True(mappedResult.IsFailure);
@@ -224,7 +224,7 @@ namespace RA.Utilities.Core.Tests.Results
         public void Map_WithNullMapFunc_ThrowsArgumentNullException()
         {
             // Arrange
-            var result = Result.Success(42);
+            Result<int> result = Result.Success(42);
 
             // Act & Assert
             Assert.Throws<ArgumentNullException>(() => result.Map<int, string>(null!));
@@ -242,12 +242,12 @@ namespace RA.Utilities.Core.Tests.Results
         public void Bind_WithSuccessResult_ExecutesBindFunction()
         {
             // Arrange
-            var result = Result.Success();
-            var bindResult = Result.Success();
-            var bindExecuted = false;
+            Result result = Result.Success();
+            Result bindResult = Result.Success();
+            bool bindExecuted = false;
 
             // Act
-            var returnedResult = result.Bind(() =>
+            Result returnedResult = result.Bind(() =>
             {
                 bindExecuted = true;
                 return bindResult;
@@ -266,12 +266,12 @@ namespace RA.Utilities.Core.Tests.Results
         public void Bind_WithFailureResult_DoesNotExecuteBindFunction()
         {
             // Arrange
-            var exception = new InvalidOperationException("Test exception");
-            var result = Result.Failure(exception);
-            var bindExecuted = false;
+            Exception exception = new InvalidOperationException("Test exception");
+            Result result = Result.Failure(exception);
+            bool bindExecuted = false;
 
             // Act
-            var returnedResult = result.Bind(() =>
+            Result returnedResult = result.Bind(() =>
             {
                 bindExecuted = true;
                 return Result.Success();
@@ -290,13 +290,13 @@ namespace RA.Utilities.Core.Tests.Results
         public void Bind_WithSuccessResultT_ExecutesBindFunction()
         {
             // Arrange
-            var inputValue = 42;
-            var result = Result.Success(inputValue);
-            var bindResult = Result.Success();
-            var receivedValue = 0;
+            int inputValue = 42;
+            Result<int> result = Result.Success(inputValue);
+            Result bindResult = Result.Success();
+            int receivedValue = 0;
 
             // Act
-            var returnedResult = result.Bind(value =>
+            Result returnedResult = result.Bind(value =>
             {
                 receivedValue = value;
                 return bindResult;
@@ -315,11 +315,11 @@ namespace RA.Utilities.Core.Tests.Results
         public void Bind_WithSuccessResultT_ReturnsNewResult()
         {
             // Arrange
-            var inputValue = 5;
-            var result = Result.Success(inputValue);
+            int inputValue = 5;
+            Result<int> result = Result.Success(inputValue);
 
             // Act
-            var returnedResult = result.Bind<int, string>(value => Result.Success(value.ToString()));
+            Result<string> returnedResult = result.Bind<int, string>(value => Result.Success(value.ToString()));
 
             // Assert
             Assert.True(returnedResult.IsSuccess);
@@ -334,11 +334,11 @@ namespace RA.Utilities.Core.Tests.Results
         public void Bind_WithFailureResultT_PropagatesException()
         {
             // Arrange
-            var exception = new InvalidOperationException("Test exception");
-            var result = Result.Failure<int>(exception);
+            Exception exception = new InvalidOperationException("Test exception");
+            Result<int> result = Result.Failure<int>(exception);
 
             // Act
-            var returnedResult = result.Bind<int, string>(value => Result.Success(value.ToString()));
+            Result<string> returnedResult = result.Bind<int, string>(value => Result.Success(value.ToString()));
 
             // Assert
             Assert.True(returnedResult.IsFailure);
@@ -357,12 +357,12 @@ namespace RA.Utilities.Core.Tests.Results
         public void Match_WithSuccessResult_ExecutesSuccessFunction()
         {
             // Arrange
-            var result = Result.Success();
-            var successExecuted = false;
-            var failureExecuted = false;
+            Result result = Result.Success();
+            bool successExecuted = false;
+            bool failureExecuted = false;
 
             // Act
-            var matchResult = result.Match(
+            string matchResult = result.Match(
                 success: () => { successExecuted = true; return "success"; },
                 failure: ex => { failureExecuted = true; return "failure"; });
 
@@ -380,13 +380,13 @@ namespace RA.Utilities.Core.Tests.Results
         public void Match_WithFailureResult_ExecutesFailureFunction()
         {
             // Arrange
-            var exception = new InvalidOperationException("Test exception");
-            var result = Result.Failure(exception);
-            var successExecuted = false;
-            var failureExecuted = false;
+            Exception exception = new InvalidOperationException("Test exception");
+            Result result = Result.Failure(exception);
+            bool successExecuted = false;
+            bool failureExecuted = false;
 
             // Act
-            var matchResult = result.Match(
+            string matchResult = result.Match(
                 success: () => { successExecuted = true; return "success"; },
                 failure: ex => { failureExecuted = true; return "failure"; });
 
@@ -404,10 +404,10 @@ namespace RA.Utilities.Core.Tests.Results
         public void Match_WithActions_ExecutesCorrectAction()
         {
             // Arrange
-            var exception = new InvalidOperationException("Test exception");
-            var result = Result.Failure(exception);
-            var successExecuted = false;
-            var failureExecuted = false;
+            Exception exception = new InvalidOperationException("Test exception");
+            Result result = Result.Failure(exception);
+            bool successExecuted = false;
+            bool failureExecuted = false;
 
             // Act
             result.Match(
@@ -431,11 +431,11 @@ namespace RA.Utilities.Core.Tests.Results
         public async Task OnSuccessAsync_WithSuccessResult_ExecutesAsyncAction()
         {
             // Arrange
-            var result = Result.Success();
-            var actionExecuted = false;
+            Result result = Result.Success();
+            bool actionExecuted = false;
 
             // Act
-            var returnedResult = await Task.FromResult(result)
+            Result returnedResult = await Task.FromResult(result)
                 .OnSuccessAsync(async () =>
                 {
                     await Task.Delay(1);
@@ -455,12 +455,12 @@ namespace RA.Utilities.Core.Tests.Results
         public async Task OnSuccessAsync_WithFailureResult_DoesNotExecuteAsyncAction()
         {
             // Arrange
-            var exception = new InvalidOperationException("Test exception");
-            var result = Result.Failure(exception);
-            var actionExecuted = false;
+            Exception exception = new InvalidOperationException("Test exception");
+            Result result = Result.Failure(exception);
+            bool actionExecuted = false;
 
             // Act
-            var returnedResult = await Task.FromResult(result)
+            Result returnedResult = await Task.FromResult(result)
                 .OnSuccessAsync(async () =>
                 {
                     await Task.Delay(1);
@@ -480,12 +480,12 @@ namespace RA.Utilities.Core.Tests.Results
         public async Task OnSuccessAsync_WithSuccessResultT_ExecutesAsyncActionWithValue()
         {
             // Arrange
-            var testValue = 42;
-            var result = Result.Success(testValue);
-            var receivedValue = 0;
+            int testValue = 42;
+            Result<int> result = Result.Success(testValue);
+            int receivedValue = 0;
 
             // Act
-            var returnedResult = await Task.FromResult(result)
+            Result<int> returnedResult = await Task.FromResult(result)
                 .OnSuccessAsync(async value =>
                 {
                     await Task.Delay(1);
@@ -509,12 +509,12 @@ namespace RA.Utilities.Core.Tests.Results
         public async Task OnFailureAsync_WithFailureResult_ExecutesAsyncActionWithException()
         {
             // Arrange
-            var exception = new InvalidOperationException("Test exception");
-            var result = Result.Failure(exception);
+            Exception exception = new InvalidOperationException("Test exception");
+            Result result = Result.Failure(exception);
             Exception receivedException = null;
 
             // Act
-            var returnedResult = await Task.FromResult(result)
+            Result returnedResult = await Task.FromResult(result)
                 .OnFailureAsync(async ex =>
                 {
                     await Task.Delay(1);
@@ -534,11 +534,11 @@ namespace RA.Utilities.Core.Tests.Results
         public async Task OnFailureAsync_WithSuccessResult_DoesNotExecuteAsyncAction()
         {
             // Arrange
-            var result = Result.Success();
-            var actionExecuted = false;
+            Result result = Result.Success();
+            bool actionExecuted = false;
 
             // Act
-            var returnedResult = await Task.FromResult(result)
+            Result returnedResult = await Task.FromResult(result)
                 .OnFailureAsync(async ex =>
                 {
                     await Task.Delay(1);
@@ -562,11 +562,11 @@ namespace RA.Utilities.Core.Tests.Results
         public async Task MapAsync_WithSuccessResult_TransformsValueAsync()
         {
             // Arrange
-            var inputValue = 5;
-            var result = Result.Success(inputValue);
+            int inputValue = 5;
+            Result<int> result = Result.Success(inputValue);
 
             // Act
-            var mappedResult = await Task.FromResult(result)
+            Result<int> mappedResult = await Task.FromResult(result)
                 .MapAsync(async x =>
                 {
                     await Task.Delay(1);
@@ -586,11 +586,11 @@ namespace RA.Utilities.Core.Tests.Results
         public async Task MapAsync_WithFailureResult_PropagatesException()
         {
             // Arrange
-            var exception = new InvalidOperationException("Test exception");
-            var result = Result.Failure<int>(exception);
+            Exception exception = new InvalidOperationException("Test exception");
+            Result<int> result = Result.Failure<int>(exception);
 
             // Act
-            var mappedResult = await Task.FromResult(result)
+            Result<int> mappedResult = await Task.FromResult(result)
                 .MapAsync(async x =>
                 {
                     await Task.Delay(1);
@@ -610,11 +610,11 @@ namespace RA.Utilities.Core.Tests.Results
         public async Task MapAsync_WithSyncResult_TransformsValueAsync()
         {
             // Arrange
-            var inputValue = 5;
-            var result = Result.Success(inputValue);
+            int inputValue = 5;
+            Result<int> result = Result.Success(inputValue);
 
             // Act
-            var mappedResult = await result.MapAsync(async x =>
+            Result<int> mappedResult = await result.MapAsync(async x =>
             {
                 await Task.Delay(1);
                 return x * 2;
@@ -637,12 +637,12 @@ namespace RA.Utilities.Core.Tests.Results
         public async Task BindAsync_WithSuccessResult_ExecutesAsyncBindFunction()
         {
             // Arrange
-            var result = Result.Success();
-            var bindResult = Result.Success();
-            var bindExecuted = false;
+            Result result = Result.Success();
+            Result bindResult = Result.Success();
+            bool bindExecuted = false;
 
             // Act
-            var returnedResult = await Task.FromResult(result)
+            Result returnedResult = await Task.FromResult(result)
                 .BindAsync(async () =>
                 {
                     await Task.Delay(1);
@@ -663,12 +663,12 @@ namespace RA.Utilities.Core.Tests.Results
         public async Task BindAsync_WithSyncResult_ExecutesAsyncBindFunction()
         {
             // Arrange
-            var result = Result.Success();
-            var bindResult = Result.Success();
-            var bindExecuted = false;
+            Result result = Result.Success();
+            Result bindResult = Result.Success();
+            bool bindExecuted = false;
 
             // Act
-            var returnedResult = await result.BindAsync(async () =>
+            Result returnedResult = await result.BindAsync(async () =>
             {
                 await Task.Delay(1);
                 bindExecuted = true;
@@ -688,13 +688,13 @@ namespace RA.Utilities.Core.Tests.Results
         public async Task BindAsync_WithSuccessResultT_ExecutesAsyncBindFunction()
         {
             // Arrange
-            var inputValue = 42;
-            var result = Result.Success(inputValue);
-            var bindResult = Result.Success("transformed");
-            var receivedValue = 0;
+            int inputValue = 42;
+            Result<int> result = Result.Success(inputValue);
+            Result<string> bindResult = Result.Success("transformed");
+            int receivedValue = 0;
 
             // Act
-            var returnedResult = await Task.FromResult(result)
+            Result<string> returnedResult = await Task.FromResult(result)
                 .BindAsync<int, string>(async value =>
                 {
                     await Task.Delay(1);
@@ -715,11 +715,11 @@ namespace RA.Utilities.Core.Tests.Results
         public async Task BindAsync_WithFailureResultT_PropagatesException()
         {
             // Arrange
-            var exception = new InvalidOperationException("Test exception");
-            var result = Result.Failure<int>(exception);
+            Exception exception = new InvalidOperationException("Test exception");
+            Result<int> result = Result.Failure<int>(exception);
 
             // Act
-            var returnedResult = await Task.FromResult(result)
+            Result<string> returnedResult = await Task.FromResult(result)
                 .BindAsync<int, string>(async value =>
                 {
                     await Task.Delay(1);
@@ -739,12 +739,12 @@ namespace RA.Utilities.Core.Tests.Results
         public async Task BindAsync_WithSyncResultT_ExecutesAsyncBindFunction()
         {
             // Arrange
-            var inputValue = 42;
-            var result = Result.Success(inputValue);
-            var bindResult = Result.Success("transformed");
+            int inputValue = 42;
+            Result<int> result = Result.Success(inputValue);
+            Result<string> bindResult = Result.Success("transformed");
 
             // Act
-            var returnedResult = await result.BindAsync<int, string>(async value =>
+            Result<string> returnedResult = await result.BindAsync<int, string>(async value =>
             {
                 await Task.Delay(1);
                 return bindResult;
@@ -766,7 +766,7 @@ namespace RA.Utilities.Core.Tests.Results
         public void OnSuccess_WithNullAction_ThrowsArgumentNullException()
         {
             // Arrange
-            var result = Result.Success();
+            Result result = Result.Success();
 
             // Act & Assert
             Assert.Throws<ArgumentNullException>(() => result.OnSuccess(null!));
@@ -780,7 +780,7 @@ namespace RA.Utilities.Core.Tests.Results
         public void OnFailure_WithNullAction_ThrowsArgumentNullException()
         {
             // Arrange
-            var result = Result.Success();
+            Result result = Result.Success();
 
             // Act & Assert
             Assert.Throws<ArgumentNullException>(() => result.OnFailure(null!));
@@ -794,7 +794,7 @@ namespace RA.Utilities.Core.Tests.Results
         public async Task OnSuccessAsync_WithNullAction_ThrowsArgumentNullException()
         {
             // Arrange
-            var result = Task.FromResult(Result.Success());
+            Task<Result> result = Task.FromResult(Result.Success());
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentNullException>(() => result.OnSuccessAsync(null!));
@@ -808,7 +808,7 @@ namespace RA.Utilities.Core.Tests.Results
         public async Task MapAsync_WithNullFunc_ThrowsArgumentNullException()
         {
             // Arrange
-            var result = Task.FromResult(Result.Success(42));
+            Task<Result<int>> result = Task.FromResult(Result.Success(42));
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentNullException>(() => result.MapAsync<int, string>(null!));
