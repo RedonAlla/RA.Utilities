@@ -216,6 +216,10 @@ app.Run();
 With this transformer enabled, your Swagger UI will now show predefined response schemas for 400, 404, 409, and 500 status codes on all endpoints, matching the structure of your `RA.Utilities.Api.Results` models.
 
 
+## Additional documentation
+
+For more information on how this package fits into the larger RA.Utilities ecosystem, please see the main repository [documentation](https://redonalla.github.io/RA.Utilities/nuget-packages/api/OpenApi/).
+
 ## Contributing
 
 Contributions are welcome! If you have a suggestion or find a bug, please open an issue to discuss it.

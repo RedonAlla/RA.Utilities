@@ -1,28 +1,17 @@
-<p align="center">
-  <img src="../../Assets/Images/authorization.svg" alt="RA.Utilities.Authorization Logo" width="128">
-</p>
-
 # RA.Utilities.Authorization
 
 [![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Authorization.svg)](https://www.nuget.org/packages/RA.Utilities.Authorization/)
+[![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Authorization.svg)](https://www.nuget.org/packages/RA.Utilities.Authorization/)
 
-`RA.Utilities.Authorization` offers a streamlined approach to handling user authentication and authorization in ASP.NET Core applications. It provides a strongly-typed, injectable service to easily access the current user's claims, such as user ID, name, and roles, directly from the [`HttpContext`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.httpcontext). This utility simplifies the process of retrieving authenticated user data, reducing boilerplate code and improving the readability and maintainability of your authorization logic.
+A utility library to simplify permission-based authorization in ASP.NET Core applications. This package provides a clean and flexible way to define and enforce authorization policies based on permissions associated with a user's identity.
 
-## Purpose
+It solves the problem of hardcoding roles and policies directly in your application code. Instead of scattering `[Authorize(Roles = "Admin")]` attributes, you can define granular permissions and check for them dynamically. This makes your authorization logic more maintainable, testable, and easier to manage as your application grows.
 
-In any ASP.NET Core application that requires authentication, you often need to access information about the currently logged-in user. This typically involves injecting [`IHttpContextAccessor`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.ihttpcontextaccessor) and manually parsing claims from `HttpContext.User`.
+## Getting started
 
-This package abstracts that logic away into a clean, reusable, and testable service, `ICurrentUser`.
-
-The main benefits are:
-- **Simplified Access**: No more [`IHttpContextAccessor`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.ihttpcontextaccessor) in your controllers and services. Just inject `ICurrentUser`.
-- **Strongly-Typed**: Get the user's ID as a `Guid` or `int` without manual parsing and type conversion.
-- **Testable**: Easily mock `ICurrentUser` in your unit tests to simulate different authenticated users and scenarios.
-- **Reduced Boilerplate**: Drastically cuts down on repetitive code for accessing user claims.
-
-## 🛠️ Installation
-
-You can install the package via the .NET CLI:
+Install the package via the .NET CLI:
 
 ```bash
 dotnet add package RA.Utilities.Authorization
@@ -30,15 +19,53 @@ dotnet add package RA.Utilities.Authorization
 
 Or through the NuGet Package Manager in Visual Studio.
 
----
+## 🔗 Dependencies
+
+-   [`Microsoft.AspNetCore.Http`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http)
+-   [`Microsoft.Extensions.Options.ConfigurationExtensions`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection)
+
+
+### Prerequisites
+
+This package is designed to work on top of an existing authentication setup. It expects that the user's identity (`ClaimsPrincipal`) has been populated with claims. It works seamlessly with `RA.Utilities.Authentication.JwtBearer`, which helps configure JWT-based authentication.
+
+Your JWTs should contain a "permissions" claim that holds the permissions assigned to the user.
+
+**Example JWT Payload:**
+```json
+{
+  "sub": "12345",
+  "name": "John Doe",
+  "permissions": [
+    "products:read",
+    "products:create"
+  ]
+}
+```
 
 ## Usage
 
-Using the library involves two simple steps: registering the service and injecting it where needed.
+The core of this package is the `AddPermissionAuthorization()` extension method and the `HasPermission` attribute.
 
-### Step 1: Register the Service
+### 1. Define Your Permissions
 
-In your `Program.cs` (or `Startup.cs`), call the `AddCurrentUser()` extension method to register the `ICurrentUser` service and its dependencies with the dependency injection container.
+It's good practice to define your permissions as constants to avoid magic strings.
+
+```csharp
+// Permissions/ProductPermissions.cs
+
+public static class ProductPermissions
+{
+    public const string Read = "products:read";
+    public const string Create = "products:create";
+    public const string Update = "products:update";
+    public const string Delete = "products:delete";
+}
+```
+
+### 2. Register Authorization Services
+
+In your `Program.cs`, call the `AddPermissionAuthorization()` extension method to register the necessary services and configure the authorization policies.
 
 ```csharp
 // Program.cs
@@ -47,87 +74,101 @@ using RA.Utilities.Authorization.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddControllers();
+// Assumes you have authentication configured, e.g., using RA.Utilities.Authentication.JwtBearer
+// builder.Services.AddJwtBearerAuthentication(builder.Configuration);
 
-// Register the ICurrentUser service
-builder.Services.AddCurrentUser();
+// 1. Add permission-based authorization services.
+builder.Services.AddPermissionAuthorization();
+
+builder.Services.AddControllers();
 
 var app = builder.Build();
 
-// ...
+// 2. Add authentication and authorization middleware.
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
 
 app.Run();
 ```
 
-### Step 2: Inject and Use `ICurrentUser`
+### 3. Protect Your Endpoints
 
-Now you can inject `ICurrentUser` into any of your services or controllers to access the current user's information.
+Use the `[HasPermission]` attribute on your controller actions or minimal API endpoints to enforce permission checks.
+
+#### Controller-based Example
 
 ```csharp
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using RA.Utilities.Authorization.Abstractions;
+using RA.Utilities.Authorization.Attributes;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize] // Ensure the user is authenticated
-public class ProfileController : ControllerBase
+[Authorize] // Ensures the user is authenticated before checking permissions
+public class ProductsController : ControllerBase
 {
-    private readonly ICurrentUser _currentUser;
-
-    public ProfileController(ICurrentUser currentUser)
+    [HttpGet]
+    [HasPermission(ProductPermissions.Read)]
+    public IActionResult GetProducts()
     {
-        _currentUser = currentUser;
+        return Ok("List of all products.");
     }
 
-    [HttpGet]
-    public IActionResult GetUserProfile()
+    [HttpPost]
+    [HasPermission(ProductPermissions.Create)]
+    public IActionResult CreateProduct()
     {
-        if (!_currentUser.IsAuthenticated())
-        {
-            return Unauthorized();
-        }
+        return Created("api/products/1", "Product created.");
+    }
 
-        var userInfo = new
-        {
-            UserId = _currentUser.GetId<Guid>(), // Get ID as a Guid
-            UserName = _currentUser.GetName(),
-            Email = _currentUser.GetEmail(),
-            IsAdmin = _currentUser.IsInRole("Admin")
-        };
-
-        return Ok(userInfo);
+    [HttpDelete("{id}")]
+    [HasPermission(ProductPermissions.Delete)]
+    public IActionResult DeleteProduct(int id)
+    {
+        return NoContent();
     }
 }
 ```
 
-The `ICurrentUser` interface provides several helpful methods:
-- `IsAuthenticated()`: Checks if the user is authenticated.
-- `GetId<T>()`: Gets the user's ID and converts it to the specified type (e.g., `Guid`, `int`, `string`).
-- `GetName()`: Gets the user's name claim.
-- `GetEmail()`: Gets the user's email claim.
-- `IsInRole(string roleName)`: Checks if the user belongs to a specific role.
-- `GetClaimValue(string claimType)`: Gets the value of any specified claim.
+#### Minimal API Example
 
----
+You can also use the attribute with minimal APIs.
 
-## API Reference
+```csharp
+using RA.Utilities.Authorization.Attributes;
 
-### `AppUser` Class
+app.MapGet("/dashboard", () => "Sensitive dashboard data.")
+   .RequireAuthorization() // Ensures the user is authenticated
+   .WithMetadata(new HasPermissionAttribute("dashboard:view"));
+```
 
-| Property | Type | Description |
-| -------- | ---- | ----------- |
-| `IsAuthenticated` | **bool** | Checks if the user is authenticated. |
-| `Id` | **string?** | Gets the user's unique identifier (from `ClaimTypes.NameIdentifier`). |
-| `Name` | **string?** | Gets the user's name (from `ClaimTypes.Name`). |
-| `Email` | **string?** | Gets the user's email (from `ClaimTypes.Email`). |
-| `IsInRole(string roleName)` | **bool** | Checks if the user belongs to a specific role. |
-| `GetClaimValue(string claimType)` | **string?** | Gets the value of the first claim of a specific type. |
-| `GetClaimValues(string claimType)` | **IEnumerable\<string\>** | Gets all values for a specific claim type. |
-| `HasClaim(string claimValue)` | **bool** | Checks if the current user has a specific scope value. Returns `true` if the current user has the specified `claim` value otherwise, `false`. |
-| `HasScope(string scopeValue)` | **bool** | Checks if the current user has a specific claim value. Returns `true` if the current user has the specified `scope` value otherwise, `false`. |
+If a user tries to access an endpoint without the required permission, the middleware will automatically return an **HTTP 403 Forbidden** response.
 
-## Contributing
+## Additional documentation
 
-Contributions are welcome! If you have a suggestion or find a bug, please open an issue to discuss it. Please follow the contribution guidelines outlined in the other projects in this repository.
+For more information on how this package fits into the larger RA.Utilities ecosystem, please see the main repository [documentation](http://redonalla.github.io/RA.Utilities/nuget-packages/auth/Authorization/).
+
+- To learn about setting up JWT authentication, see the `RA.Utilities.Authentication.JwtBearer` package documentation.
+- For details on standardized API responses, refer to the `RA.Utilities.Api.Results` package.
+
+## Feedback
+
+Contributions are welcome! If you have a suggestion, find a bug, or want to provide feedback, please open an issue in the RA.Utilities GitHub repository.
+
+### Pull Request Process
+
+1.  **Fork the Repository**: Start by forking the RA.Utilities repository.
+2.  **Create a Branch**: Create a new branch for your feature or bug fix from the `main` branch. Please use a descriptive name (e.g., `feature/add-policy-provider` or `fix/permission-claim-type`).
+3.  **Make Your Changes**: Write your code, ensuring it adheres to the existing coding style. Add or update XML documentation for any new public APIs.
+4.  **Update README**: If you are adding new functionality, please update the `README.md` file accordingly.
+5.  **Submit a Pull Request**: Push your branch to your fork and open a pull request to the `main` branch of the original repository. Provide a clear description of the changes you have made.
+
+### Coding Standards
+
+- Follow the existing coding style and conventions used in the project.
+- Ensure all public members are documented with clear XML comments.
+- Keep changes focused. A pull request should address a single feature or bug.
+
+Thank you for contributing!

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-		<Version>1.0.0-preview.6.3</Version>
+		<Version>10.0.0-rc.2</Version>
     <Title>Authorization</Title>
 		<Description>RA.Utilities.Authorization offers a streamlined approach to handling user authentication and authorization in ASP.NET Core applications. It provides a strongly-typed, injectable service to easily access the current user's claims, such as user ID, name, and roles, directly from the HttpContext. This utility simplifies the process of retrieving authenticated user data, reducing boilerplate code and improving the readability and maintainability of your authorization logic.</Description>
 		<Summary>An injectable service for ASP.NET Core to easily access strongly-typed authenticated user claims and information.</Summary>
