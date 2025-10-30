@@ -23,7 +23,7 @@ import LogoSvg from '../../../../Assets/Images/error.svg';
 
 Instead of throwing generic `Exception` or `ArgumentException` types, this package provides exceptions that carry semantic meaning about what went wrong. This approach has several key benefits:
 
-- **Clear Intent**: Throwing a `NotFoundException` is more descriptive than a generic exception with a "not found" message.
+- **Clear Intent**: Throwing a [`NotFoundException`](./NotFoundException.md) is more descriptive than a generic exception with a "not found" message.
 - **Standardized Error Handling**: Middleware (like in `RA.Utilities.Api`) can catch these specific exception types and automatically map them to the correct HTTP status codes and structured error responses (e.g., 404 Not Found, 409 Conflict).
 - **Decoupled Logic**: Your domain or application layer can focus on business rules and throw semantic exceptions without needing to know about HTTP details. The web layer handles the translation.
 - **Reduced Boilerplate**: Eliminates the need for repetitive `try-catch` blocks in your controllers for common error scenarios.
@@ -44,7 +44,7 @@ Install-Package RA.Utilities.Core.Exceptions
 
 Or through the NuGet Package Manager in Visual Studio.
 
-## Available Exceptions
+## ✨ Available Exceptions
 * [`RaBaseException`](./RaBaseException.md)
 * [`NotFoundException`](./NotFoundException.md)
 * [`ConflictException`](./ConflictException.md)

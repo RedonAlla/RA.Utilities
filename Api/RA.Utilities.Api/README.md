@@ -132,11 +132,14 @@ public class ProductEndpoints : IEndpoint
 **Step 2: Register the endpoints in `Program.cs`**
 
 The `MapEndpoints` method scans the specified assembly (or the calling assembly by default) for all types implementing `IEndpoint` and calls their `MapEndpoints` method.
-
 ```csharp
 // Program.cs
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Scans the assembly and registers all IEndpoint implementations with DI
+builder.Services.AddEndpoints();
+
 var app = builder.Build();
 
 // Scans the assembly and registers all IEndpoint implementations
@@ -261,11 +264,7 @@ public class ProductEndpoints : IEndpoint
             Result<Product> result = service.GetProductById(id);
             
             // Match the result to an appropriate HTTP response
-            return result.Match<IResult>(
-                // Use the new helper for a clean success response
-                success: product => SuccessResponse.Ok(product),
-                failure: ErrorResultResponse.Result // Use the error mapper for a consistent failure response
-            );
+            return result.Match(SuccessResponse.Ok, ErrorResultResponse.Result);
         }).WithTags("Products");
     }
 }
