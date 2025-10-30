@@ -24,7 +24,7 @@ The main benefits are:
 
 You can install the package via the .NET CLI:
 
-```sh
+```bash
 dotnet add package RA.Utilities.Authorization
 ```
 

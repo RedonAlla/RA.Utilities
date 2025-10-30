@@ -30,7 +30,7 @@ Integrating with external APIs is a common requirement. This package provides a 
 
 Install the package via the .NET CLI:
 
-```sh
+```bash
 dotnet add package RA.Utilities.Integrations
 ```
 

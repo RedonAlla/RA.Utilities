@@ -21,7 +21,7 @@ This library is designed to work seamlessly with the other `RA.Utilities` packag
 
 You can install the package via the .NET CLI:
 
-```sh
+```bash
 dotnet add package RA.Utilities.Api.Results
 ```
 

@@ -21,7 +21,7 @@ Instead of throwing generic `Exception` or `ArgumentException` types, this packa
 
 You can install the package via the .NET CLI:
 
-```sh
+```bash
 dotnet add package RA.Utilities.Core.Exceptions
 ```
 

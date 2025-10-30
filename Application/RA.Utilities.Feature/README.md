@@ -26,7 +26,7 @@ By using `RA.Utilities.Feature`, you can build features faster, with more confid
 
 You will need to install this package along with a mediator implementation (like MediatR) and FluentValidation.
 
-```sh
+```bash
 dotnet add package RA.Utilities.Feature
 dotnet add package FluentValidation.DependencyInjectionExtensions
 ```

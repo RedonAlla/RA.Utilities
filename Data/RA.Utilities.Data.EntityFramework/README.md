@@ -27,7 +27,7 @@ This library accelerates the setup of a data access layer by providing ready-to-
 
 Install the package via the .NET CLI:
 
-```sh
+```bash
 dotnet add package RA.Utilities.Data.EntityFramework
 ```
 

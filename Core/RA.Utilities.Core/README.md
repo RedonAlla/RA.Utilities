@@ -27,7 +27,7 @@ This pattern encourages you to handle failures as part of your normal code flow,
 
 You can install the package via the .NET CLI:
 
-```sh
+```bash
 dotnet add package RA.Utilities.Core
 ```
 

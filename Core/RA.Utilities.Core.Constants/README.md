@@ -20,7 +20,7 @@ The primary goal of this package is to ensure consistency across different proje
 
 You can install the package via the .NET CLI:
 
-```sh
+```bash
 dotnet add package RA.Utilities.Core.Constants
 ```
 

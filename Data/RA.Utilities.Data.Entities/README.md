@@ -1,92 +1,105 @@
 <p align="center">
-  <img src="../../Assets/Images//entity.svg" alt="RA.Utilities.Data.Entities Logo" width="128">
+  <img src="https://raw.githubusercontent.com/RedonAlla/RA.Utilities/7609528d2f5783472cd1b6a8be8cc20957e85fbb/Assets/Images/entity.svg" alt="RA.Utilities.Data.Entities Logo" width="128">
 </p>
 
 # RA.Utilities.Data.Entities
 
-[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Data.Entities.svg)](https://www.nuget.org/packages/RA.Utilities.Data.Entities/)
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Data.Entities?logo=nuget&label=NuGet)](https://www.nuget.org/packages/RA.Utilities.Data.Entities/)
+[![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Data.Entities.svg)](https://www.nuget.org/packages/RA.Utilities.Data.Entities/)
 
-Provides a set of core abstractions and base classes for data entities within the **`RA.Utilities`** ecosystem.
+This package provides a set of core abstractions and base classes for data entities within the RA.Utilities ecosystem. It helps solve the problem of boilerplate and inconsistency in data models by providing common interfaces like `IEntity<T>` and base classes with standard properties like `Id`, `CreatedDate`, and `UpdatedDate`.
 
-## Overview
+The primary goal is to promote consistency and reduce repetitive code when creating data entities for use with an ORM like Entity Framework Core.
 
-This package offers common interfaces and base classes to promote consistency and reduce boilerplate code in your data models. By using these core abstractions, you can ensure that all your entities share a common structure, including properties for identifiers and timestamps.
+## Getting started
 
-The main benefits are:
-- **Consistency**: Enforces a standard structure for all data entities (e.g., `Id`, `CreatedDate`, `UpdatedDate`).
-- **Reduced Boilerplate**: Eliminates the need to repeatedly define common properties in every entity class.
-- **Generic Repository Support**: The common `IEntity` interface makes it easier to implement generic repository patterns.
+You can install the package via the .NET CLI:
 
-## 🛠️ Installation
-
-You can install the package from NuGet.
-
-```shell
+```bash
 dotnet add package RA.Utilities.Data.Entities
 ```
 
-## Features
+Or through the NuGet Package Manager in Visual Studio.
 
-This package provides the following core components:
+## Usage
 
-### `IEntity`
+To use the package, simply have your entity classes inherit from one of the provided base classes. This automatically gives your entities a primary key and auditing fields.
 
-A generic interface that defines the contract for an entity with a strongly-typed primary key.
+### `BaseEntity<T>`
+
+This is the most common base class. It provides an `Id` property of a specified type `T`, along with `CreatedDate` and `UpdatedDate` for auditing.
+
+Here is an example of a `Product` entity inheriting from `BaseEntity<int>`:
 
 ```csharp
-public interface IEntity<T>
+using RA.Utilities.Data.Entities;
+
+public class Product : BaseEntity<int>
 {
-    T Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public decimal Price { get; set; }
 }
 ```
 
-**Properties**
+When you create an instance of this `Product` class, it will have the following properties:
 
-| Property   | Type        | Description                                         |
-|------------|-------------|-----------------------------------------------------|
-| Id         | `Guid`      | The unique identifier for the entity.               |
-| CreatedAt  | `DateTime`  | The date and time when the entity was created.      |
-| ModifiedAt | `DateTime?` | The date and time when the entity was last modified.|
+*   `Id` (int)
+*   `CreatedDate` (DateTime)
+*   `UpdatedDate` (DateTime?)
+*   `Name` (string)
+*   `Description` (string?)
+*   `Price` (decimal)
 
-### `AuditableBaseEntity`
+### `BaseEntity`
 
-Inherits from `BaseEntity` and adds properties to track which user created and last modified the entity.
-
-**Properties**
-
-| Property       | Type     | Description                                             |
-|----------------|----------|---------------------------------------------------------|
-| CreatedBy      | `string` | The identifier of the user who created the entity.      |
-| LastModifiedBy | `string` | The identifier of the user who last modified the entity.|
-
-**Example**
+This is a non-generic version that provides a `Guid` as the primary key type.
 
 ```csharp
-// Example usage
-public class Product : AuditableBaseEntity
-{
-  public string Name { get; set; }
-  public decimal Price { get; set; }
-}
+using RA.Utilities.Data.Entities;
 
-// Base class provides:
-// public T Id { get; set; }
-// public DateTime CreatedDate { get; set; }
-// public DateTime? UpdatedDate { get; set; }
+public class Order : BaseEntity
+{
+    public DateTime OrderDate { get; set; }
+    public decimal TotalAmount { get; set; }
+    
+    // Foreign key
+    public Guid CustomerId { get; set; }
+}
 ```
 
-### `SoftDeleteEntity`
+This `Order` class will have an `Id` property of type `Guid`.
 
-Inherits from `BaseEntity` and adds a flag for implementing soft-delete functionality, allowing entities to be marked as deleted without being permanently removed from the database.
+### Using with Entity Framework Core
 
-**Properties**
+These base entities work seamlessly with EF Core. You can configure the properties in your `DbContext`.
 
-| Property  | Type   | Description                                             |
-|-----------|--------|---------------------------------------------------------|
-| IsDeleted | `bool` | A boolean value indicating whether the entity is marked as deleted.      |
+```csharp
+using Microsoft.EntityFrameworkCore;
 
-## Contributing
+public class AppDbContext : DbContext
+{
+    public DbSet<Product> Products { get; set; }
+    public DbSet<Order> Orders { get; set; }
 
-Contributions are welcome! If you have a suggestion or find a bug, please open an issue to discuss it. Please refer to the contribution guidelines in the other project READMEs for the pull request process and coding standards.
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Product>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Price).HasColumnType("decimal(18,2)");
+        });
+    }
+}
+```
 
-Thank you for contributing!
+## Additional documentation
+
+For more information on how this package fits into the larger RA.Utilities ecosystem, please see the main repository [documentation](https://redonalla.github.io/RA.Utilities/nuget-packages/Data/Entities/).
+
+## Feedback
+
+If you have suggestions or find a bug, please open an issue in the RA.Utilities GitHub repository. Contributions are welcome!

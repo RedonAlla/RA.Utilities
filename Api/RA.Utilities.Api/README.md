@@ -2,6 +2,9 @@
   <img src="../../Assets/Images/api.svg" alt="RA.Utilities.Api Logo" width="128">
 </p>
 
+![alt text](../../Assets/Images/api.svg?width=18)
+
+
 # RA.Utilities.Api
 
 [![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Api.svg)](https://www.nuget.org/packages/RA.Utilities.Api/)
@@ -23,7 +26,7 @@ By using this package, you can significantly reduce boilerplate code and enforce
 
 You can install the package via the .NET CLI:
 
-```sh
+```bash
 dotnet add package RA.Utilities.Api
 ```
 

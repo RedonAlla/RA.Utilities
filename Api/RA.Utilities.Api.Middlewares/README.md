@@ -20,7 +20,7 @@ This package aims to solve common cross-cutting concerns in API development:
 
 You can install the package via the .NET CLI:
 
-```sh
+```bash
 dotnet add package RA.Utilities.Api.Middlewares
 ```
 

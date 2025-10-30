@@ -31,7 +31,7 @@ This package is a core component of the `RA.Utilities` ecosystem and is designed
 
 Install the package via the .NET CLI:
 
-```sh
+```bash
 dotnet add package RA.Utilities.Data.Abstractions
 ```
 

@@ -24,7 +24,7 @@ This package is designed to work with the standard `Microsoft.AspNetCore.OpenApi
 
 You can install the package via the .NET CLI:
 
-```sh
+```bash
 dotnet add package RA.Utilities.OpenApi
 ```
 

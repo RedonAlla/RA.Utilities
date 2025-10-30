@@ -25,7 +25,7 @@ By centralizing these models, we ensure that any middleware or service that logs
 While you typically won't need to install this package directly, it is available on NuGet.
 It will be included automatically when you install a dependent package like `RA.Utilities.Api.Middlewares`.
 
-```sh
+```bash
 dotnet add package RA.Utilities.Logging.Shared
 ```
 

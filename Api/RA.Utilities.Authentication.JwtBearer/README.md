@@ -21,7 +21,7 @@ The main benefits are:
 
 You can install the package from NuGet.
 
-```shell
+```bashell
 dotnet add package RA.Utilities.Authentication.JwtBearer
 ```
 

@@ -33,7 +33,7 @@ Setting up a comprehensive logging solution from scratch can be repetitive. This
 
 You can install the package via the .NET CLI:
 
-```sh
+```bash
 dotnet add package RA.Utilities.Logging.Core
 ```
 
