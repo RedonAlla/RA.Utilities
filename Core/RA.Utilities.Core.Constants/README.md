@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../../Assets/Images/constant.svg" alt="RA.Utilities.Integrations Logo" width="128">
+  <img src="https://raw.githubusercontent.com/RedonAlla/RA.Utilities/main/Assets/Images/constant.svg" alt="RA.Utilities.Core.Constants Logo" width="128">
 </p>
 
 # RA.Utilities.Core.Constants

@@ -1,14 +1,15 @@
 <p align="center">
-  <img src="../../Assets/Images/data-outline.svg" alt="RA.Utilities.Data.Abstractions Logo" width="128">
+  <img src="https://raw.githubusercontent.com/RedonAlla/RA.Utilities/main/Assets/Images/data-outline.svg" alt="RA.Utilities.Data.Abstractions Logo" width="128">
 </p>
 
 # RA.Utilities.Data.Abstractions
 
-[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Data.Abstractions.svg)](https://www.nuget.org/packages/RA.Utilities.Data.Abstractions/)
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Data.Abstractions?logo=nuget&label=NuGet)](https://www.nuget.org/packages/RA.Utilities.Data.Abstractions/)
+[![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Data.Abstractions.svg)](https://www.nuget.org/packages/RA.Utilities.Data.Abstractions/)
 
 Provides a collection of essential data access abstractions, including the Repository and Unit of Work patterns. This library helps create a decoupled and testable data access layer in .NET applications.
-
-## 🎯 Purpose
 
 The goal of this library is to provide a clean, reusable, and consistent way to interact with a data source. By abstracting data access logic behind generic interfaces, you can:
 
@@ -16,18 +17,7 @@ The goal of this library is to provide a clean, reusable, and consistent way to 
 - **Improve Testability**: Easily mock repositories and units of work in your unit tests.
 - **Enforce Consistency**: Ensure that data access patterns are used consistently across your application.
 
-This package is a core component of the `RA.Utilities` ecosystem and is designed to be used with `RA.Utilities.Data.Entities`.
-
-## ✨ Features
-
-- **Repository Pattern**: Generic interfaces for CRUD (Create, Read, Update, Delete) operations.
-- **Segregated Interfaces**: Separate read (`IReadRepositoryBase<T>`) and write (`IWriteRepositoryBase<T>`) interfaces to enforce CQS (Command Query Separation).
-- **Unit of Work**: A `SaveChangesAsync` method to commit transactional changes, ensuring data consistency.
-- **IDbContext**: An interface for the DbContext
-- **Async Support**: All data operations are asynchronous, promoting scalable and responsive applications.
-- **Decoupling**: Enforces a clean separation between your domain/application layers and the data access/infrastructure layer.
-
-## 🛠️ Installation
+## Getting started
 
 Install the package via the .NET CLI:
 
@@ -173,6 +163,11 @@ public class ProductService(IProductRepository productRepository)
 ## 🔗 Dependencies
 
 -   **RA.Utilities.Data.Entities**: This package provides the base `IEntity` interface and `BaseEntity` class required by the repository pattern.
+
+## Additional documentation
+
+For more information on how this package fits into the larger RA.Utilities ecosystem, please see the main repository [documentation](https://redonalla.github.io/RA.Utilities/nuget-packages/Data/Abstractions/).
+
 
 ## Contributing
 

@@ -3,8 +3,8 @@ title: RA.Utilities.Data.Abstractions
 authors: [RedonAlla]
 ---
 
-## Version 1.0.0-preview.6.3
-[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Data.Abstractions.svg)](https://www.nuget.org/packages/RA.Utilities.Data.Abstractions/)
+## Version v10.0.0-rc.2
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.0--rc.2-orange?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.Abstractions/10.0.0-rc.2)
 
 This is the initial release of `RA.Utilities.Data.Abstractions`, a core library that provides essential abstractions for building a decoupled and testable data access layer. It introduces standard interfaces for the Repository and Unit of Work patterns.
 

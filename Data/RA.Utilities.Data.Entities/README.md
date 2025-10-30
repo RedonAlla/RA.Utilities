@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/RedonAlla/RA.Utilities/7609528d2f5783472cd1b6a8be8cc20957e85fbb/Assets/Images/entity.svg" alt="RA.Utilities.Data.Entities Logo" width="128">
+  <img src="https://raw.githubusercontent.com/RedonAlla/RA.Utilities/main/Assets/Images/entity.svg" alt="RA.Utilities.Data.Entities Logo" width="128">
 </p>
 
 # RA.Utilities.Data.Entities

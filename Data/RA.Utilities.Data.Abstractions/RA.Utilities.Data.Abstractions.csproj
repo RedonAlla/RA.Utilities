@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-		<Version>1.0.0-preview.6.3</Version>
+		<Version>10.0.0-rc.2</Version>
 		<Title>Data Core</Title>
 		<Description>Provides a collection of essential data access abstractions, including the Repository and Unit of Work patterns. This library helps create a decoupled and testable data access layer in .NET applications.</Description>
 		<PackageTags>Data, Repository, UnitOfWork, Abstractions, Data access</PackageTags>

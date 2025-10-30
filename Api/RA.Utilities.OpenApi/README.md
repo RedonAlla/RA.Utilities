@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="../../Assets/Images/openapi.png" alt="RA.Utilities.OpenApi Logo" width="128">
+  <img src="https://raw.githubusercontent.com/RedonAlla/RA.Utilities/main/Assets/Images/openapi.png" alt="RA.Utilities.OpenApi Logo" width="128">
 </p>
 
 # RA.Utilities.OpenApi
 
-[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.OpenApi.svg)](https://www.nuget.org/packages/RA.Utilities.OpenApi/)
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.OpenApi?logo=nuget&label=NuGet)](https://www.nuget.org/packages/RA.Utilities.OpenApi/)
 
 A utility library to enhance and customize OpenAPI (Swagger) documentation in ASP.NET Core applications.
 
