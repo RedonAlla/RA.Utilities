@@ -187,8 +187,8 @@ public class ProductsController : ControllerBase
 
 ## 🔗 Dependencies
 
--   **RA.Utilities.Data.Abstractions**: Provides the core interfaces (`IRepository<T>`, `IUnitOfWork`, etc.) that this package implements.
--   **Microsoft.EntityFrameworkCore**: The underlying ORM used for the implementations.
+-   **[`RA.Utilities.Data.Abstractions`](../Abstractions/index.mdx)**: Provides the core interfaces (`IRepository<T>`, `IUnitOfWork`, etc.) that this package implements.
+-   **[`Microsoft.EntityFrameworkCore`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.entityframeworkcore)**: The underlying ORM used for the implementations.
 
 ## Additional documentation
 

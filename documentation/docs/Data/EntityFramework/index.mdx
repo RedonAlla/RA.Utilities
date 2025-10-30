@@ -56,7 +56,7 @@ This makes your code more decoupled, maintainable, and easier to test.
 The package offers several key components to achieve this:
 
 * **[`RepositoryBase<T>`](../EntityFramework/RepositoryBase.md)**: A full generic repository with both read and write functionality.
-* **[`ReadRepositoryBase<T>`](../EntityFramework/ReadRepositoryBase.md)`**: A read-only version optimized for performance (`AsNoTracking()`), ideal for query operations in a CQRS architecture.
+* **[`ReadRepositoryBase<T>`](../EntityFramework/ReadRepositoryBase.md)**: A read-only version optimized for performance (`AsNoTracking()`), ideal for query operations in a CQRS architecture.
 * **[`WriteRepositoryBase<T>`](../EntityFramework/WriteRepositoryBase.md)`**: A write-only version for add, update, and delete operations.
 
 By using this package, you can quickly set up a robust and well-architected data access layer for your .NET applications.
@@ -74,6 +74,11 @@ Or through the NuGet Package Manager console:
 ```powershell
 Install-Package RA.Utilities.Data.EntityFramework
 ```
+
+## 🔗 Dependencies
+
+-   **[`RA.Utilities.Data.Abstractions`](../Abstractions/index.mdx)**: Provides the core interfaces (`IRepository<T>`, `IUnitOfWork`, etc.) that this package implements.
+-   **[`Microsoft.EntityFrameworkCore`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.entityframeworkcore)**: The underlying ORM used for the implementations.
 
 
 <br />

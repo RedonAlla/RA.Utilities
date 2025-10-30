@@ -1,20 +1,46 @@
 # Release Notes for RA.Utilities.Data.EntityFramework
 
-## Version 1.0.0-preview.6.3
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.0--rc.2-orange?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.EntityFramework/10.0.0-rc.2)
 
-This is the initial preview release of the `RA.Utilities.Data.EntityFramework` package. It provides concrete implementations of the repository and unit of work patterns for Entity Framework Core, based on the abstractions from `RA.Utilities.Data.Abstractions`.
+This release of `RA.Utilities.Data.EntityFramework` provides concrete implementations of the Repository and Unit of Work patterns for Entity Framework Core. It serves as the persistence layer for the abstractions defined in `RA.Utilities.Data.Abstractions`.
 
-### ✨ New Features
+### ✨ Key Features
 
-*   **Initial Release**: Provides a set of generic base classes to quickly build a data access layer with EF Core.
 *   **Generic Repository Implementations**:
-    *   `RepositoryBase<T>`: A full implementation of `IRepository<T>` for complete CRUD functionality.
-    *   `ReadRepositoryBase<T>`: A read-only repository that uses `AsNoTracking()` for efficient querying, ideal for CQS patterns.
+    *   `RepositoryBase<T>`: A full implementation of `IRepositoryBase<T>` for complete CRUD functionality.
+    *   `ReadRepositoryBase<T>`: A read-only repository that uses `AsNoTracking()` by default for efficient querying, ideal for CQS patterns.
     *   `WriteRepositoryBase<T>`: A write-only repository for command operations (Add, Update, Delete).
-*   **Unit of Work Implementation**:
 
-### 💥 Breaking Changes
+*   **Generic Unit of Work Implementation**:
+    *   `UnitOfWork<TContext>`: A generic implementation of `IUnitOfWork` that manages the `DbContext` lifecycle and ensures transactional integrity by saving all changes atomically.
 
-*   As this is the initial release, there are no breaking changes.
+*   **Dependency Injection Extensions**:
+    *   Includes `AddRepositoryBase()`, `AddReadRepositoryBase()`, and `AddWriteRepositoryBase()` extension methods to simplify the registration of generic repositories in your application's DI container.
 
----
+### 🚀 Getting Started
+
+1.  **Define Your DbContext**: Create your `ApplicationDbContext` inheriting from `DbContext`.
+    ```csharp
+    public class ApplicationDbContext : DbContext, IDbContext
+    {
+        // ... DbSets
+    }
+    ```
+
+2.  **Register Services**: In `Program.cs`, register your `DbContext`, the `UnitOfWork`, and your repositories.
+    ```csharp
+    // Register DbContext
+    builder.Services.AddDbContext<ApplicationDbContext>(...);
+
+    // Register UnitOfWork and generic repositories
+    builder.Services.AddScoped<IUnitOfWork, UnitOfWork<ApplicationDbContext>>();
+    builder.Services.AddRepositoryBase(); // Registers IRepositoryBase<>
+    ```
+
+3.  **Use in Your Application**: Inject `IUnitOfWork` or `IRepositoryBase<T>` into your services to interact with the database.
+    ```csharp
+    public class ProductService(IRepositoryBase<Product> productRepo, IUnitOfWork uow)
+    {
+        // ... use repository methods and uow.SaveChangesAsync()
+    }
+    ```

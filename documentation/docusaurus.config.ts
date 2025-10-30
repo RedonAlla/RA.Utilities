@@ -129,10 +129,10 @@ const config: Config = {
            * Path to data on filesystem relative to site dir.
            */
           path: 'changeLogs',
-          blogTitle: 'Change Logs',
-          blogSidebarTitle: 'Change Logs',
+          blogTitle: 'Changelogs',
+          blogSidebarTitle: 'Changelogs',
           blogSidebarCount: 'ALL',
-          blogDescription: 'Lis of Change Logs for RA.Utilities packages',
+          blogDescription: 'Lis of Changelogs for RA.Utilities packages',
           feedOptions: {
             type: 'all',
             copyright: `Copyright © ${new Date().getFullYear()} Redon Alla.`,
@@ -184,7 +184,7 @@ const config: Config = {
           className: 'menu_item_icon nuget_menu_item',
         },
         // {to: '/blog', label: 'Blog', position: 'left'},
-        {to: '/changelogs', label: 'Change Logs', position: 'left'},
+        {to: '/changelogs', label: 'Changelog', position: 'left'},
         {
           href: 'https://github.com/RedonAlla/RA.Utilities',
           position: 'right',

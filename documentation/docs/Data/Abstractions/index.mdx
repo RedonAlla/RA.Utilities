@@ -57,8 +57,8 @@ It provides methods like `GetByIdAsync`, `GetAllAsync`, `AddAsync`, `Update`, an
 ## 🧩 How It Fits into the Ecosystem
 This package is a foundational part of the `RA.Utilities` data access strategy.
 
-  * It depends on **`RA.Utilities.Data.Entities`** to provide the base structure for entities that the repositories will manage.
-  * It is implemented by **`RA.Utilities.Data.EntityFramework`**, which contains the concrete repository and unit of work classes that use Entity Framework Core.
+  * It depends on **[`RA.Utilities.Data.Entities`](../Entities/index.mdx)** to provide the base structure for entities that the repositories will manage.
+  * It is implemented by **[`RA.Utilities.Data.EntityFramework`](../EntityFramework/index.mdx)**, which contains the concrete repository and unit of work classes that use Entity Framework Core.
 
 
 ## 🧠 Summary
@@ -79,6 +79,10 @@ Or through the NuGet Package Manager console:
 Install-Package RA.Utilities.Data.Abstractions
 ```
 
+## 🔗 Dependencies
+
+-   **[`RA.Utilities.Data.Entities`](../Entities/index.mdx)**:
+This package provides the base `IEntity` interface and `BaseEntity` class required by the repository pattern.
 
 <br />
 <br />

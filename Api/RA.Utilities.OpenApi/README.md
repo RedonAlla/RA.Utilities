@@ -1,28 +1,22 @@
-<p align="center">
-  <img src="https://raw.githubusercontent.com/RedonAlla/RA.Utilities/main/Assets/Images/openapi.png" alt="RA.Utilities.OpenApi Logo" width="128">
-</p>
-
 # RA.Utilities.OpenApi
 
 [![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.OpenApi?logo=nuget&label=NuGet)](https://www.nuget.org/packages/RA.Utilities.OpenApi/)
+[![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.OpenApi.svg)](https://www.nuget.org/packages/RA.Utilities.OpenApi/)
 
 A utility library to enhance and customize OpenAPI (Swagger) documentation in ASP.NET Core applications.
 
-## 🎯 Purpose
-
-This package provides a collection of `IOpenApiDocumentTransformer` implementations to automate common modifications to your generated OpenAPI specification.
-Instead of manually annotating every endpoint with attributes for common headers or security schemes, you can apply these transformations globally.
+This package provides a collection of `IOpenApiDocumentTransformer` implementations to automate common modifications to your generated OpenAPI specification. Instead of manually annotating every endpoint with attributes for common headers or security schemes, you can apply these transformations globally.
 
 The primary goals are to:
 - **Reduce Boilerplate**: Automatically add common parameters (like correlation IDs) to all API operations.
 - **Enforce Consistency**: Ensure that all endpoints consistently document required headers and responses.
 - **Simplify Configuration**: Keep your endpoint definitions clean by centralizing OpenAPI modifications.
 
-This package is designed to work with the standard `Microsoft.AspNetCore.OpenApi` tooling in ASP.NET Core.
+## Getting started
 
-## 🛠️ Installation
-
-You can install the package via the .NET CLI:
+Install the package via the .NET CLI:
 
 ```bash
 dotnet add package RA.Utilities.OpenApi
@@ -164,14 +158,16 @@ Represents a single header to be added to the OpenAPI specification.
 
 ## 🔗 Dependencies
 
--   Microsoft.AspNetCore.OpenApi
--   Microsoft.Extensions.Options.ConfigurationExtensions
+-   [`Microsoft.AspNetCore.OpenApi`](https://www.nuget.org/packages/Microsoft.AspNetCore.OpenApi)
+-   [`Microsoft.Extensions.Options.ConfigurationExtensions`](https://www.nuget.org/packages/microsoft.extensions.options.configurationextensions/)
+
 
 ## Usage
 
 ### Recommended: Using Default Transformers
 
-The easiest way to get started is by using the `AddDefaultsDocumentTransformer` extension method. This single call registers `DocumentInfoTransformer`, `BearerSecuritySchemeTransformer`, and `HeadersParameterTransformer`.
+The easiest way to get started is by using the `AddDefaultsDocumentTransformer` extension method.
+This single call registers `DocumentInfoTransformer`, `BearerSecuritySchemeTransformer`, and `HeadersParameterTransformer`.
 
 You can then register other transformers, like `ResponsesDocumentTransformer`, individually.
 
