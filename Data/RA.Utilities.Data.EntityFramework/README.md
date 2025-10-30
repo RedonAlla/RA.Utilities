@@ -1,15 +1,12 @@
-<p align="center">
-  <img src="../../Assets/Images/entity_framework_core.svg" alt="RA.Utilities.Data.EntityFramework Logo" width="128">
-</p>
-
 # RA.Utilities.Data.EntityFramework
 
-[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Data.EntityFramework.svg)](https://www.nuget.org/packages/RA.Utilities.Data.EntityFramework/)
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Data.EntityFramework?logo=nuget&label=NuGet)](https://www.nuget.org/packages/RA.Utilities.Data.EntityFramework/)
+[![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Data.EntityFramework.svg)](https://www.nuget.org/packages/RA.Utilities.Data.EntityFramework/)
 
 Provides generic base classes for implementing the Repository and Unit of Work patterns with Entity Framework Core.
 This package is the concrete implementation layer for the abstractions defined in `RA.Utilities.Data.Abstractions`.
-
-## 🎯 Purpose
 
 This library accelerates the setup of a data access layer by providing ready-to-use, generic base classes that handle common data operations. By using these implementations, you can:
 
@@ -17,13 +14,7 @@ This library accelerates the setup of a data access layer by providing ready-to-
 - **Ensure Transactional Integrity**: Use the `UnitOfWork` implementation to manage database transactions and ensure that changes are saved atomically.
 - **Promote Best Practices**: Encourages a clean, decoupled architecture by building on the abstractions from `RA.Utilities.Data.Abstractions`.
 
-## ✨ Core Components
-
--   **`RepositoryBase<T>`**: A complete generic repository that implements both `IReadRepositoryBase<T>` and `IWriteRepositoryBase<T>`. It provides full CRUD functionality.
--   **`ReadRepositoryBase<T>`**: A read-only generic repository implementation, perfect for query-side operations in a CQS architecture. It uses `AsNoTracking()` by default for performance.
--   **`WriteRepositoryBase<T>`**: A write-only generic repository for command-side operations (Add, Update, Delete).
-
-## 🛠️ Installation
+## Getting started
 
 Install the package via the .NET CLI:
 
@@ -198,3 +189,11 @@ public class ProductsController : ControllerBase
 
 -   **RA.Utilities.Data.Abstractions**: Provides the core interfaces (`IRepository<T>`, `IUnitOfWork`, etc.) that this package implements.
 -   **Microsoft.EntityFrameworkCore**: The underlying ORM used for the implementations.
+
+## Additional documentation
+
+For more information on how this package fits into the larger RA.Utilities ecosystem, please see the main repository [documentation](https://redonalla.github.io/RA.Utilities/nuget-packages/Data/EntityFramework/).
+
+## Feedback
+
+If you have suggestions or find a bug, please open an issue in the RA.Utilities GitHub repository. Contributions are welcome!
