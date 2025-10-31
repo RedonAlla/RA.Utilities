@@ -1,9 +1,9 @@
 # RA.Utilities.Integrations
 
-[![NuGet version](https://img.shields.io/nuget/v/RRA.Utilities.Integrations.svg)](https://www.nuget.org/packages/RRA.Utilities.Integrations/)
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Integrations.svg)](https://www.nuget.org/packages/RA.Utilities.Integrations/)
 [![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
 [![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
-[![NuGet Downloads](https://img.shields.io/nuget/dt/RRA.Utilities.Integrations.svg)](https://www.nuget.org/packages/RRA.Utilities.Integrations/)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Integrations.svg)](https://www.nuget.org/packages/RA.Utilities.Integrations/)
 
 `RA.Utilities.Integrations` is a utility library that simplifies and standardizes HTTP client calls in .NET applications. It solves the problem of managing external API integrations by providing a robust and repeatable pattern that centralizes configuration, simplifies registration, and improves resilience with built-in retry policies.
 
