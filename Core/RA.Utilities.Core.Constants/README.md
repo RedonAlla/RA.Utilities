@@ -4,19 +4,14 @@
 
 # RA.Utilities.Core.Constants
 
-[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Core.Constants?logo=nuget&label=NuGet)](https://www.nuget.org/packages/RA.Utilities.Core.Constants/)
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Core.Constants.svg)](https://www.nuget.org/packages/RA.Utilities.Core.Constants/)
+[![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Core.Constants.svg)](https://www.nuget.org/packages/RA.Utilities.Core.Constants/)
 
 A centralized and consistent set of core constants for the RA Utilities ecosystem. This package helps streamline development, improve code readability, and reduce "magic strings" and "magic numbers" by providing a single source of truth for common values.
 
-## 🎯 Purpose
-
-The primary goal of this package is to ensure consistency across different projects and services. By using these predefined constants, you can:
-
-- **Avoid Typos**: Prevent hard-to-find bugs caused by typos in strings or numbers.
-- **Improve Readability**: Make your code more self-documenting (e.g., `HttpStatusCodes.NotFound` is clearer than `404`).
-- **Simplify Maintenance**: Update a constant in one place, and the change propagates everywhere it's used.
-
-## 🛠️ Installation
+## Getting started
 
 You can install the package via the .NET CLI:
 
@@ -143,6 +138,10 @@ public class ProductsController : ControllerBase
     }
 }
 ```
+
+## Additional documentation
+
+For more information on how this package fits into the larger RA.Utilities ecosystem, please see the main repository [documentation](http://localhost:3000/RA.Utilities/nuget-packages/core/CoreConstants/).
 
 ## Contributing
 

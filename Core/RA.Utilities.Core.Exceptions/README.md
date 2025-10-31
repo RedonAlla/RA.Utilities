@@ -1,23 +1,19 @@
-<p align="center">
-  <img src="../../Assets/Images/exceptions.png" alt="RA.Utilities.Core.Exceptions Logo" width="128">
-</p>
-
 # RA.Utilities.Core.Exceptions
 
-[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Core.Exceptions?logo=nuget&label=NuGet)](https://www.nuget.org/packages/RA.Utilities.Core.Exceptions/)
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Core.Exceptions.svg)](https://www.nuget.org/packages/RA.Utilities.Core.Exceptions/)
+[![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Core.Exceptions.svg)](https://www.nuget.org/packages/RA.Utilities.Core.Exceptions/)
 
-`RA.Utilities.Core.Exceptions` provides a set of standardized, semantic exceptions for use across the RA.Utilities ecosystem. These exceptions, such as `NotFoundException` and `ConflictException`, allow for clear, intent-driven error handling in your business logic.
+`RA.Utilities.Core.Exceptions` provides a set of standardized, semantic exceptions like `NotFoundException` and `ConflictException`. It solves the problem of using generic exceptions (e.g., `Exception` or `InvalidOperationException`) for predictable business rule failures.
 
-## Purpose
-
-Instead of throwing generic `Exception` or `ArgumentException` types, this package provides exceptions that carry semantic meaning about what went wrong. This approach has several key benefits:
-
+By throwing exceptions that describe *what* went wrong (e.g., a resource was not found), you can create cleaner, more maintainable code. This allows other parts of your system, like API middleware, to catch specific exception types and produce standardized, meaningful error responses automatically.
 - **Clear Intent**: Throwing a `NotFoundException` is more descriptive than a generic exception with a "not found" message.
 - **Standardized Error Handling**: Middleware (like in `RA.Utilities.Api`) can catch these specific exception types and automatically map them to the correct HTTP status codes and structured error responses (e.g., 404 Not Found, 409 Conflict).
 - **Decoupled Logic**: Your domain or application layer can focus on business rules and throw semantic exceptions without needing to know about HTTP details. The web layer handles the translation.
 - **Reduced Boilerplate**: Eliminates the need for repetitive `try-catch` blocks in your controllers for common error scenarios.
 
-## 🛠️ Installation
+## Getting started
 
 You can install the package via the .NET CLI:
 
@@ -88,6 +84,12 @@ public void UpdateOrderStatus(int orderId, string newStatus)
 ```
 
 This will typically be translated into an **HTTP 400 Bad Request** response.
+
+---
+
+## Additional documentation
+
+For more information on how this package fits into the larger RA.Utilities ecosystem, please see the main repository [documentation](http://localhost:3000/RA.Utilities/nuget-packages/core/CoreExceptions/).
 
 ---
 

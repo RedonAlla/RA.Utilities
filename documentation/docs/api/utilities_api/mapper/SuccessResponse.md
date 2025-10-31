@@ -7,7 +7,7 @@ The `SuccessResponse` static class, located in the `RA.Utilities.Api` package, i
 Its primary goals are:
 
 **1. Enforce Consistency**:
-It ensures that every successful response from your API (like a `200 OK` or `201 Created`) is wrapped in the standard `SuccessResponse<T>` model from the `RA.Utilities.Api.Results` package.
+It ensures that every successful response from your API (like a `200 OK` or `201 Created`) is wrapped in the standard `SuccessResponse<T>` model from the [`RA.Utilities.Api.Results`](../../ApiResults/index.mdx) package.
 This provides a predictable JSON structure (`responseCode`, `responseType`, `result`, etc.) for all your API's success outcomes, which is a mirror to how errors are handled.
 
 **2. Reduce Boilerplate**:

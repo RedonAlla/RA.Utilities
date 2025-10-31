@@ -192,8 +192,9 @@ public class ProductsController : ControllerBase
 
 ## Additional documentation
 
-For more information on how this package fits into the larger RA.Utilities ecosystem, please see the main repository [documentation](https://redonalla.github.io/RA.Utilities/nuget-packages/Data/EntityFramework/).
+For more information on how this package fits into the larger RA.Utilities ecosystem, please see the [officiary documentation](https://redonalla.github.io/RA.Utilities/nuget-packages/Data/EntityFramework/).
 
 ## Feedback
 
-If you have suggestions or find a bug, please open an issue in the RA.Utilities GitHub repository. Contributions are welcome!
+If you have suggestions or find a bug, please open an issue in the RA.Utilities [GitHub repository](https://github.com/RedonAlla/RA.Utilities).
+Contributions are welcome!

@@ -155,7 +155,7 @@ For more information on how this package fits into the larger RA.Utilities ecosy
 
 ## Feedback
 
-Contributions are welcome! If you have a suggestion, find a bug, or want to provide feedback, please open an issue in the RA.Utilities GitHub repository.
+Contributions are welcome! If you have a suggestion, find a bug, or want to provide feedback, please open an issue in the RA.Utilities [GitHub repository](https://github.com/RedonAlla/RA.Utilities).
 
 ### Pull Request Process
 

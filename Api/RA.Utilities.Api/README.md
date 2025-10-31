@@ -1,28 +1,16 @@
-<p align="center">
-  <img src="../../Assets/Images/api.svg" alt="RA.Utilities.Api Logo" width="128">
-</p>
-
-![alt text](../../Assets/Images/api.svg?width=18)
-
-
 # RA.Utilities.Api
 
-[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Api.svg)](https://www.nuget.org/packages/RA.Utilities.Api/)
+[![NuGet version](https://img.shields.io/nuget/v/?logo=nuget&label=NuGet)](https://www.nuget.org/packages//)
+[![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Api.svg)](https://www.nuget.org/packages/RA.Utilities.Api/)
 
-`RA.Utilities.Api` provides a collection of essential utilities for building robust and consistent ASP.NET Core APIs. This package includes endpoint registration helpers, standardized response models, and exception handling middleware to streamline development and promote best practices.
 
-It acts as the glue between the `RA.Utilities.Core` libraries and your web application, providing concrete implementations for ASP.NET Core.
+`RA.Utilities.Api` provides essential utilities for building robust and consistent ASP.NET Core APIs. It solves common challenges like inconsistent error handling and messy endpoint organization by providing exception handling middleware, standardized response helpers, and a clean pattern for registering endpoints.
 
-## 🎯 Purpose
+By using this package, you can significantly reduce boilerplate code, enforce consistency across all your API endpoints, and keep your `Program.cs` file clean and maintainable.
 
-This package is designed to solve two common challenges in API development:
-
-1.  **Consistent Error Handling**: It provides a middleware that automatically catches custom exceptions from `RA.Utilities.Core.Exceptions` (like `NotFoundException`, `ConflictException`) and transforms them into standardized JSON responses using models from `RA.Utilities.Api.Results`.
-2.  **Clean Endpoint Organization**: It offers a simple pattern for organizing API endpoints into separate files, keeping your `Program.cs` clean and your routes maintainable as the application grows.
-
-By using this package, you can significantly reduce boilerplate code and enforce consistency across all your API endpoints.
-
-## 🛠️ Installation
+## Getting started
 
 You can install the package via the .NET CLI:
 
@@ -31,6 +19,12 @@ dotnet add package RA.Utilities.Api
 ```
 
 Or through the NuGet Package Manager in Visual Studio.
+
+---
+
+## 🔗 Dependencies
+
+-   [`Microsoft.AspNetCore.App`](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/metapackage-app)
 
 ---
 

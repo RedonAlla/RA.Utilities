@@ -1,21 +1,43 @@
-# Release Notes for RA.Utilities.Api
+# RA.Utilities.Api Release Notes
 
-## Version 1.0.0-preview.6.31
+## Version 10.0.100-rc.2
 
-This release focuses on improving the developer experience by adding new helper methods for success responses and enhancing the documentation to showcase best practices for endpoint implementation.
+This release modernizes the `RA.Utilities.Api` package, introducing a suite of tools to build robust, consistent, and maintainable ASP.NET Core APIs. Key features include a .NET 8 global exception handler, helpers for standardized success responses, and a clean pattern for endpoint registration.
 
 ### ✨ New Features & Improvements
 
-*   **Added `SuccessResponse` Helpers**: Introduced a new static `SuccessResponse` class with helper methods (`Ok`, `Created`, `NoContent`, etc.) to simplify the creation of standardized, successful API responses. This complements the existing error response models and promotes a consistent response structure across the entire API.
-*   **Improved `README` Documentation**:
-    *   Added a new section to the `README.md` detailing the usage of the new `SuccessResponse` helpers.
-    *   Updated the endpoint example for using the `Result<T>` type to demonstrate a cleaner, more powerful pattern using both `SuccessResponse.Ok()` for success cases and `ErrorResultResponse.Result` for failure cases.
+*   **Global Exception Handling (`AddRaExceptionHandling`)**:
+    *   Introduced a .NET 8 `IExceptionHandler` implementation that automatically catches exceptions and transforms them into standardized JSON error responses.
+    *   Catches semantic exceptions from `RA.Utilities.Core.Exceptions` (e.g., `NotFoundException`, `ConflictException`) and maps them to the correct HTTP status codes (404, 409, etc.).
+    *   Handles any unhandled exceptions by returning a generic 500 Internal Server Error to prevent leaking sensitive information.
 
+*   **Endpoint Registration Helpers (`AddEndpoints` & `MapEndpoints`)**:
+    *   Provides a clean pattern for organizing API endpoints into separate files using the `IEndpoint` interface.
+    *   Keeps `Program.cs` clean and maintainable by automatically discovering and registering all endpoint implementations in your project.
 
-### 📝 Notes
+*   **Standardized Success Response Helpers (`SuccessResponse`)**:
+    *   Added a new static `SuccessResponse` class with helper methods (`Ok`, `Created`, `NoContent`, etc.).
+    *   These helpers simplify the creation of successful API responses and automatically wrap the payload in the standard `SuccessResponse<T>` model, ensuring consistency with error responses.
 
-The main goal of this update is to make API endpoint logic cleaner and more readable. By providing dedicated helpers for both success and failure responses, developers can write more expressive and maintainable code while ensuring a consistent API contract for consumers.
+*   **Seamless `Result<T>` Integration**:
+    *   The `SuccessResponse` helpers and the exception handling middleware work together to provide a clean way to handle the `Result<T>` type from `RA.Utilities.Core`.
+    *   Use the `Match` method on a `Result` to map success outcomes to `SuccessResponse.Ok()` and failure outcomes directly to an exception that the middleware will handle.
 
----
+*   **Comprehensive Documentation**:
+    *   The `README.md` has been completely rewritten to provide clear, step-by-step instructions and usage examples for all major features.
 
-Thank you for using RA.Utilities!
+### 🚀 Getting Started
+
+Register the services in your `Program.cs`:
+
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddRaExceptionHandling();
+builder.Services.AddEndpoints();
+
+var app = builder.Build();
+
+app.UseRaExceptionHandling();
+app.MapEndpoints();
+```

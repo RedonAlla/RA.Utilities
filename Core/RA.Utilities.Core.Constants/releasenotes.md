@@ -1,5 +1,4 @@
-# Release Notes for RA.Utilities.Core.Constants
-
+# Release Notes 
 ## Version 10.0.0-rc.2
 
 This release focuses on enhancing the clarity, consistency, and completeness of the constants provided by the package. The changes make the constants more intuitive to use and align the code with the documentation.

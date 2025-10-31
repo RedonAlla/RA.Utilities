@@ -13,17 +13,24 @@ import LogoSvg from '../../../../Assets/Images/api.svg';
 
 # RA.Utilities.Api
 
-[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Api.svg)](https://www.nuget.org/packages/RA.Utilities.Api/)
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.OpenApi?logo=nuget&label=NuGet)](https://www.nuget.org/packages/RA.Utilities.OpenApi/)
+[![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.OpenApi.svg)](https://www.nuget.org/packages/RA.Utilities.OpenApi/)
 
 `RA.Utilities.Api` provides a collection of essential utilities for building robust and consistent ASP.NET Core APIs. This package includes endpoint registration helpers, standardized response models, and exception handling middleware to streamline development and promote best practices.
 
-It acts as the glue between the `RA.Utilities.Core` libraries and your web application, providing concrete implementations for ASP.NET Core.
+It acts as the glue between the [`RA.Utilities.Core`](../../core/UtilitiesCore/index.mdx)
+libraries and your web application, providing concrete implementations for ASP.NET Core.
 
 ## 🎯 Purpose
 
 This package is designed to solve two common challenges in API development:
 
-1.  **Consistent Error Handling**: It provides a middleware that automatically catches custom exceptions from `RA.Utilities.Core.Exceptions` (like `NotFoundException`, `ConflictException`) and transforms them into standardized JSON responses using models from `RA.Utilities.Api.Results`.
+1.  **Consistent Error Handling**: It provides a middleware that automatically catches custom exceptions from
+[`RA.Utilities.Core.Exceptions`](../../core/CoreExceptions/index.mdx)
+(like [`NotFoundException`](../../core/CoreExceptions/NotFoundException.md), [`ConflictException`](../../core/CoreExceptions/ConflictException.md))
+and transforms them into standardized JSON responses using models from [`RA.Utilities.Api.Results`](../ApiResults/index.mdx).
 2.  **Clean Endpoint Organization**: It offers a simple pattern for organizing API endpoints into separate files, keeping your `Program.cs` clean and your routes maintainable as the application grows.
 
 By using this package, you can significantly reduce boilerplate code and enforce consistency across all your API endpoints.
@@ -43,6 +50,10 @@ Install-Package RA.Utilities.Api
 ```
 
 Or through the NuGet Package Manager in Visual Studio.
+
+## 🔗 Dependencies
+
+-   [`Microsoft.AspNetCore.App`](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/metapackage-app)
 
 <br />
 <br />
