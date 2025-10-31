@@ -1,6 +1,6 @@
 # Release Notes for RA.Utilities.Core.Exceptions
 
-## Version 1.0.0-preview.6.3
+## Version 10.0.100-rc.2
 
 This release focuses on clarifying the central role of semantic exceptions within the RA.Utilities ecosystem through greatly improved documentation and usage examples in related packages. While the exception classes themselves have not changed, their purpose and integration are now much clearer.
 

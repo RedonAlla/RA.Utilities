@@ -3,7 +3,7 @@ title: RA.Utilities.Integrations
 authors: [RedonAlla]
 ---
 
-## Version 1.0.0-preview.6.3
+## 10.0.0-rc.2
 [![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Integrations.svg)](https://www.nuget.org/packages/RA.Utilities.Integrations/)
 
 This is the initial preview release of the `RA.Utilities.Integrations` package. It provides a standardized and resilient way to manage HTTP client integrations in .NET applications.
