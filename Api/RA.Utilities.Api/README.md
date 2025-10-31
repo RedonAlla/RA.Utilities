@@ -1,6 +1,6 @@
 # RA.Utilities.Api
 
-[![NuGet version](https://img.shields.io/nuget/v/?logo=nuget&label=NuGet)](https://www.nuget.org/packages//)
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Api.svg)](https://www.nuget.org/packages/RA.Utilities.Api/)
 [![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
 [![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Api.svg)](https://www.nuget.org/packages/RA.Utilities.Api/)

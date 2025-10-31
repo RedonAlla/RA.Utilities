@@ -14,7 +14,7 @@ This provides deep visibility into your API's behavior, which is invaluable for 
 ### Key Features
 
 1.  **Detailed Capture**: Logs the full request and response cycle, including methods, paths, headers, and bodies.
-2.  **High Performance**: Utilizes `Microsoft.IO.RecyclableMemoryStream` to minimize memory allocations and reduce garbage collection pressure, making it safe for high-throughput applications.
+2.  **High Performance**: Utilizes [`Microsoft.IO.RecyclableMemoryStream`](https://www.nuget.org/packages/Microsoft.IO.RecyclableMemoryStream) to minimize memory allocations and reduce garbage collection pressure, making it safe for high-throughput applications.
 3.  **Structured Logging**: Attempts to parse request/response bodies as JSON, enabling powerful querying and analysis in modern logging platforms.
 4.  **Configurability**: Allows you to exclude specific paths (e.g., `/swagger`, `/health`) from logging to reduce noise and set a maximum body size to prevent logging overly large payloads.
 
@@ -25,7 +25,7 @@ Here’s a breakdown of its key features and why they are important:
   * **Response**: Status code, headers, the full response body, and the total processing time.
 
 2. **High Performance by Design**: Logging request and response bodies can be memory-intensive, especially under high load.
-This middleware is built for performance using `Microsoft.IO.RecyclableMemoryStream`.
+This middleware is built for performance using [`Microsoft.IO.RecyclableMemoryStream`](https://www.nuget.org/packages/Microsoft.IO.RecyclableMemoryStream) .
 Instead of allocating a new large memory block for each request body (which puts pressure on the garbage collector), it reuses memory from a shared pool. This makes it safe and efficient enough for production environments.
 
 3. **Structured Logging**: The middleware attempts to parse the request and response bodies as JSON.

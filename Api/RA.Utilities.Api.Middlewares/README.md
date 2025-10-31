@@ -1,24 +1,15 @@
-<p align="center">
-  <img src="../../Assets/Images/middleware.svg" alt="RA.Utilities.Api.Middlewares Logo" width="128">
-</p>
-
 # RA.Utilities.Api.Middlewares
 
 [![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Api.Middlewares.svg)](https://www.nuget.org/packages/RA.Utilities.Api.Middlewares/)
+[![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Api.Middlewares.svg)](https://www.nuget.org/packages/RA.Utilities.Api.Middlewares/)
 
-`RA.Utilities.Api.Middlewares` provides a collection of useful ASP.NET Core middlewares designed to improve diagnostics and enforce API best practices.
-This package includes middlewares for efficient HTTP request/response logging and for ensuring the presence of default required headers.
+`RA.Utilities.Api.Middlewares` provides a collection of useful ASP.NET Core middlewares to solve common cross-cutting concerns. It includes a high-performance middleware for logging HTTP requests/responses and another for enforcing the presence of required headers like `X-Request-Id` to ensure traceability.
 
-## 🎯 Purpose
+## Getting started
 
-This package aims to solve common cross-cutting concerns in API development:
-
-1.  **HTTP Request/Response Logging**: Provides a highly performant middleware to log detailed information about incoming requests and their corresponding responses. It uses `Microsoft.IO.RecyclableMemoryStream` to minimize memory allocations, making it suitable for high-throughput applications.
-2.  **Header Enforcement**: Includes a middleware to validate the presence of essential headers, such as `X-Request-Id`, to ensure traceability and consistency across your services.
-
-## 🛠️ Installation
-
-You can install the package via the .NET CLI:
+Install the package via the .NET CLI:
 
 ```bash
 dotnet add package RA.Utilities.Api.Middlewares
@@ -28,11 +19,18 @@ Or through the NuGet Package Manager in Visual Studio.
 
 ---
 
+## 🔗 Dependencies
+
+- [`Microsoft.AspNetCore.App`](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/metapackage-app)
+- [`Microsoft.IO.RecyclableMemoryStream`](https://www.nuget.org/packages/Microsoft.IO.RecyclableMemoryStream)
+
+---
+
 ## Features
 
 ### 1. HTTP Logging Middleware
 
-The `HttpLoggingMiddleware` captures and logs the details of each HTTP request and response, including headers, body, and status codes. It is designed for performance and uses the structured logging models from `RA.Utilities.Logging.Shared`.
+The [`HttpLoggingMiddleware`] captures and logs the details of each HTTP request and response, including headers, body, and status codes. It is designed for performance and uses the structured logging models from `RA.Utilities.Logging.Shared`.
 
 #### Usage
 
@@ -137,6 +135,13 @@ A request without the `X-Request-Id` header will receive a response like this:
 
 ---
 
+## Additional documentation
+
+For more information on how this package fits into the larger RA.Utilities ecosystem, please see the main repository [documentation](https://redonalla.github.io/RA.Utilities/nuget-packages/api/ApiMiddlewares/).
+
+---
+
 ## Contributing
 
-Contributions are welcome! If you have a suggestion or find a bug, please open an issue to discuss it. Please follow the contribution guidelines outlined in the other `RA.Utilities` packages.
+Contributions are welcome! If you have a suggestion or find a bug, please open an issue to discuss it.
+Please follow the contribution guidelines outlined in the other `RA.Utilities` packages.
