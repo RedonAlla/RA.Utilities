@@ -2,7 +2,8 @@
 
 ## Version 10.0.100-rc.2
 
-This release modernizes the middleware package, aligning it with the latest patterns and dependencies in the RA.Utilities ecosystem. The focus is on performance, consistency, and ease of use.
+This release modernizes the middleware package, aligning it with the latest patterns and dependencies in the RA.Utilities ecosystem.
+The focus is on performance, consistency, and ease of use.
 
 ### ✨ New Features & Improvements
 
