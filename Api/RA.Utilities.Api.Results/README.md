@@ -1,10 +1,9 @@
-<p align="center">
-  <img src="../../Assets/Images/results.svg" alt="RA.Utilities.Api.Results Logo" width="128">
-</p>
-
 # RA.Utilities.Api.Results
 
 [![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Api.Results.svg)](https://www.nuget.org/packages/RA.Utilities.Api.Results/)
+[![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Api.Results.svg)](https://www.nuget.org/packages/RA.Utilities.Api.Results/)
 
 `RA.Utilities.Api.Results` provides a standardized set of models for creating consistent API responses within the RA.Utilities ecosystem.
 This package includes generic wrappers for success, error, and validation failure scenarios, helping to streamline API development and improve client-side handling.
@@ -15,7 +14,7 @@ When building APIs, it's crucial to have a consistent and predictable response s
 This package provides a set of ready-to-use C# records that can be returned from your ASP.NET Core controller actions.
 These models ensure that every response—whether it's a success, a generic error, or a detailed validation failure—has the same shape, making it easier for clients to parse and handle.
 
-This library is designed to work seamlessly with the other `RA.Utilities` packages, such as `RA.Utilities.Core.Constants` for status codes and messages.
+This library is designed to work seamlessly with the other `RA.Utilities` packages, such as`RA.Utilities.Core.Constants` for status codes and messages.
 
 ## 🛠️ Installation
 
@@ -26,6 +25,11 @@ dotnet add package RA.Utilities.Api.Results
 ```
 
 Or through the NuGet Package Manager in Visual Studio.
+
+## 🔗 Dependencies
+
+-   [`RA.Utilities.Core.Constants`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/CoreConstants/)
+
 
 ---
 
@@ -295,6 +299,7 @@ It automatically sets `ResponseType` to `ResponseType.NotFound` and defaults the
 
 #### Example response:
 This response indicates that a Product with an ID of 999 could not be found.
+
 ```json {
   "responseCode": 404,
   "responseType": "NotFound",
@@ -327,4 +332,3 @@ Contributions are welcome! If you have a suggestion or find a bug, please open a
 - Keep changes focused. A pull request should address a single feature or bug.
 
 Thank you for contributing!
-```

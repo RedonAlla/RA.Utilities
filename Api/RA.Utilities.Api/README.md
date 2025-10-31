@@ -5,7 +5,6 @@
 [![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Api.svg)](https://www.nuget.org/packages/RA.Utilities.Api/)
 
-
 `RA.Utilities.Api` provides essential utilities for building robust and consistent ASP.NET Core APIs. It solves common challenges like inconsistent error handling and messy endpoint organization by providing exception handling middleware, standardized response helpers, and a clean pattern for registering endpoints.
 
 By using this package, you can significantly reduce boilerplate code, enforce consistency across all your API endpoints, and keep your `Program.cs` file clean and maintainable.
@@ -24,6 +23,8 @@ Or through the NuGet Package Manager in Visual Studio.
 
 ## 🔗 Dependencies
 
+-   [`RA.Utilities.Api.Results`](https://redonalla.github.io/RA.Utilities/nuget-packages/api/ApiResults/)
+-   [`RA.Utilities.Core.Exceptions`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/CoreExceptions/)
 -   [`Microsoft.AspNetCore.App`](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/metapackage-app)
 
 ---
