@@ -27,6 +27,10 @@ Or through the NuGet Package Manager in Visual Studio.
 -   [`RA.Utilities.Core.Exceptions`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/CoreExceptions/)
 -   [`Microsoft.AspNetCore.App`](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/metapackage-app)
 
+## Additional documentation
+
+For more information on how this package fits into the larger RA.Utilities ecosystem, please see the main repository [documentation](https://redonalla.github.io/RA.Utilities/nuget-packages/api/utilities_api/).
+
 ---
 
 ## ✨ Features

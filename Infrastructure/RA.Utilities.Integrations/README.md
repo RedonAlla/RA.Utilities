@@ -1,32 +1,15 @@
-<p align="center">
-  <img src="../..//Assets/Images/http.png" alt="RA.Utilities.Integrations Logo" width="128">
-</p>
-
 # RA.Utilities.Integrations
 
-[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Integrations.svg)](https://www.nuget.org/packages/RA.Utilities.Integrations/)
+[![NuGet version](https://img.shields.io/nuget/v/RRA.Utilities.Integrations.svg)](https://www.nuget.org/packages/RRA.Utilities.Integrations/)
+[![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RRA.Utilities.Integrations.svg)](https://www.nuget.org/packages/RRA.Utilities.Integrations/)
 
-A utility library to simplify and standardize HTTP client calls in .NET applications. It builds upon `IHttpClientFactory` to provide a structured way to configure and use typed HTTP clients for various integrations.
+`RA.Utilities.Integrations` is a utility library that simplifies and standardizes HTTP client calls in .NET applications. It solves the problem of managing external API integrations by providing a robust and repeatable pattern that centralizes configuration, simplifies registration, and improves resilience with built-in retry policies.
 
-## 🎯 Purpose
+By building on `IHttpClientFactory`, it promotes best practices like using typed `HttpClient`s, which provides better compile-time safety and intellisense.
 
-Integrating with external APIs is a common requirement. This package provides a robust and repeatable pattern for managing these integrations by:
-
-- **Standardizing Configuration**: Centralizes HTTP client settings (like Base URL, timeouts, and default headers) in your `appsettings.json`.
-- **Simplifying Registration**: Offers a single extension method to register a typed `HttpClient`, configure it from settings, and set up logging and retry policies.
-- **Promoting Best Practices**: Encourages the use of typed `HttpClient`s, which provides better compile-time safety and intellisense.
-- **Improving Resilience**: Includes built-in support for transient fault handling with Polly.
-
-## ✨ Core Components
-
--   **`HttpClientSettings`**: A base class for creating strongly-typed configuration objects that map to your `appsettings.json`.
--   **`AddIntegrationHttpClient<TClient, TSettings>`**: An `IServiceCollection` extension method that wires everything up:
-    -   Registers a typed `HttpClient` (`TClient`).
-    -   Binds configuration from `appsettings.json` to your settings class (`TSettings`).
-    -   Configures the `HttpClient`'s `BaseAddress`, `Timeout`, and default headers.
-    -   Adds a default transient error handling policy (retry with exponential backoff).
-
-## 🛠️ Installation
+## Getting started
 
 Install the package via the .NET CLI:
 
@@ -39,6 +22,21 @@ Or through the NuGet Package Manager console:
 ```powershell
 Install-Package RA.Utilities.Integrations
 ```
+
+## 🔗 Dependencies
+
+-   [`RA.Utilities.Core.Constants`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/CoreConstants/)
+-   [`RA.Utilities.Logging.Shared`](https://redonalla.github.io/RA.Utilities/nuget-packages/Logging/Shared/)
+-   [`Microsoft.AspNetCore.Http`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http)
+-   [`Microsoft.Extensions.DependencyInjection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection)
+-   [`Microsoft.Extensions.Http`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.http)
+-   [`Microsoft.Extensions.Logging.Abstractions`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.logging.abstractions)
+-   [`Microsoft.Extensions.Options.ConfigurationExtensions`](https://www.nuget.org/packages/microsoft.extensions.options.configurationextensions/)
+-   [`Microsoft.Extensions.Options.DataAnnotations`](https://www.nuget.org/packages/Microsoft.Extensions.Options.DataAnnotations)
+
+## Additional documentation
+
+For more information on how this package fits into the larger RA.Utilities ecosystem, please see the main repository [documentation](https://redonalla.github.io/RA.Utilities/nuget-packages/Integrations/).
 
 ---
 
