@@ -1,29 +1,25 @@
-<p align="center">
-  <img src="../../Assets/Images/jwt.svg" alt="RA.Utilities.Authentication.JwtBearer Logo" width="128">
-</p>
-
 # RA.Utilities.Authentication.JwtBearer
+
 [![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Authentication.JwtBearer.svg)](https://www.nuget.org/packages/RA.Utilities.Authentication.JwtBearer/)
+[![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Authentication.JwtBearer.svg)](https://www.nuget.org/packages/RA.Utilities.Authentication.JwtBearer/)
 
-A utility library to simplify the configuration of JWT Bearer authentication in ASP.NET Core applications.
+`RA.Utilities.Authentication.JwtBearer` is a utility library that simplifies the configuration of JWT Bearer authentication in ASP.NET Core. It solves the problem of having complex, hardcoded authentication setup in your `Program.cs` by allowing you to configure everything from your `appsettings.json` file.
 
-## Overview
+This approach reduces boilerplate code and makes your authentication settings easier to manage across different environments.
 
-This library provides extension methods to streamline the setup of JWT Bearer authentication by leveraging the standard `IConfiguration` system.
-It allows you to configure `JwtBearerOptions` directly from your `appsettings.json` file, reducing boilerplate code in your `Program.cs` or `Startup.cs`.
+## Getting started
 
-The main benefits are:
--   **Simplified Setup**: A single extension method call to configure JWT Bearer authentication.
--   **Configuration-driven**: Easily manage JWT validation parameters through `appsettings.json` without changing code.
--   **Customizable**: Supports custom configuration for `ClockSkew` and the `IssuerSigningKey`.
+Install the package via the .NET CLI:
 
-## 🛠️ Installation
-
-You can install the package from NuGet.
-
-```bashell
+```bash
 dotnet add package RA.Utilities.Authentication.JwtBearer
 ```
+
+## 🔗 Dependencies
+
+-   [`Microsoft.AspNetCore.Authentication.JwtBearer`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.authentication.jwtbearer)
 
 *(Note: This assumes the package is published on NuGet with the name `RA.Utilities.Authentication.JwtBearer`.)*
 
@@ -89,6 +85,11 @@ The library automatically binds these settings to `JwtBearerOptions`. It also pr
 
 -   `ClockSkewInSeconds`: Converts this integer value into a `TimeSpan` for `TokenValidationParameters.ClockSkew`.
 -   `IssuerSigningKeyString`: Converts this string into a `SymmetricSecurityKey` for `TokenValidationParameters.IssuerSigningKey`.
+
+## Additional documentation
+
+For more information on how this package fits into the larger RA.Utilities ecosystem, please see the main repository
+[documentation](https://redonalla.github.io/RA.Utilities/nuget-packages/auth/AuthenticationJwtBearer/).
 
 ## Contributing
 
