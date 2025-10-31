@@ -3,7 +3,6 @@
 ## Version 10.0.0-rc.2
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.0--rc.2-orange?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Feature/10.0.0-rc.2)
 
-
 This release modernizes the `RA.Utilities.Feature` package, providing a foundational toolkit for implementing the **Vertical Slice Architecture** pattern using CQRS. It offers base handlers, validation behaviors, and seamless integration with the `Result<T>` type to streamline feature development.
 
 ### ✨ New Features & Improvements
