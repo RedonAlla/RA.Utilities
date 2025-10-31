@@ -129,8 +129,8 @@ Creates a `Response<T>` object that produces a `Success` response, typically cor
 
 ### `BadRequestResponse`
 
-Namespace: RA.Utilities.Api.Results</br>
-Package: RA.Utilities.Api.Results v1.0.0</br>
+Namespace: RA.Utilities.Api.Results
+Package: RA.Utilities.Api.Results
 Source: [RA.Utilities.Api.Results](https://github.com/RedonAlla/RA.Utilities.git)
 
 ```csharp
