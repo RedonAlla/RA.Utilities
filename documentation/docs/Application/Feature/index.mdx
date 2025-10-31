@@ -11,6 +11,9 @@ import LogoSvg from '../../../../Assets/Images/mediator.svg';
 </p>
 
 [![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Feature.svg)](https://www.nuget.org/packages/RA.Utilities.Feature/)
+[![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Feature.svg)](https://www.nuget.org/packages/RA.Utilities.Feature/)
 
 The main goal of this package is to help you organize your application's business logic into self-contained "features" or "slices."
 Instead of having logic for a single operation scattered across multiple layers (e.g., a controller, a service, a repository), all the code for one use case—from the incoming request to the final response—is located together.
@@ -20,22 +23,22 @@ This solves a common problem with traditional layered architectures where classe
 ## ✨ Key Features and How They Help
 The package provides several key components to achieve this clean architecture:
 
-1. **Base Handlers (`IRequestHandler<TRequest, TResponse>`)**:
+1. **Base Handlers ([`IRequestHandler<TRequest, TResponse>`](./Abstractions/IRequestHandler.md))**:
 
   * **Purpose*: These are base classes for your CQRS command and query handlers.
   * **Benefit**: They reduce boilerplate code by providing built-in logging for the start and end of a request, as well as automatic exception handling.
   Any unhandled exception within your logic is safely caught and wrapped in a Result.Failure object, preventing crashes and ensuring a consistent error-handling strategy.
 
-2. **Validation Pipeline Behavior (`ValidationBehavior<TRequest, TResponse>`)**:
+2. **Validation Pipeline Behavior ([`ValidationBehavior<TRequest, TResponse>`](./Behaviors/ValidationBehavior.md))**:
 
   * **Purpose**: This is a pipeline behavior (like MediatR middleware) that automatically validates incoming commands and queries before they reach your business logic.
-  * **Benefit**: It uses `FluentValidation` to check the request.
+  * **Benefit**: It uses [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/) to check the request.
   If validation fails, it immediately stops processing and returns a structured validation error.
   This ensures that your handlers only ever deal with valid data, making them simpler and more robust.
 
 3. **Seamless Integration with RA.Utilities.Core**:
 
-  * **Purpose**: The handlers are designed to return a `Result<T>` object from the `RA.Utilities.Core` package.
+  * **Purpose**: The handlers are designed to return a [`Result<T>`](../../core/UtilitiesCore/Results.md) object from the [`RA.Utilities.Core`](../../core/UtilitiesCore/index.mdx) package.
   * **Benefit**: This allows you to explicitly communicate the outcome of an operation—either success with a value or a predictable failure (like "user not found" or "item already exists")—without using exceptions for control flow.
   This leads to cleaner, more readable, and more predictable code.
 
@@ -46,7 +49,7 @@ it uses strongly-typed generic registration and explicit DI resolution instead o
 
   * ✅ No runtime reflection
   * ✅ Purely generic and compile-time safe
-  * ✅ Simplified DI registration via `AddRequestHandler<TRequest, TResponse, THandler>()`
+  * ✅ Simplified DI registration via [`AddRequestHandler<TRequest, TResponse, THandler>()`](./Extensions/MediatorServiceCollectionExtensions.md)
   * ✅ The mediator now supports notifications and publish/subscribe just like MediatR.
   * ✅ Multiple notifications (publish/subscribe model)
   * ✅ Multiple notification pipeline behaviors (logging, metrics, retry, etc.)
@@ -78,6 +81,15 @@ Or through the NuGet Package Manager console:
 ```powershell
 Install-Package RA.Utilities.Feature
 ```
+
+## 🔗 Dependencies
+
+-  [`RA.Utilities.Core.Exceptions`](../../core/CoreExceptions/index.mdx)
+-  [`RA.Utilities.Core`](../../core/UtilitiesCore/index.mdx)
+-  [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/)
+-  [`Microsoft.Extensions.DependencyInjection.Abstractions`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection)
+-  [`Microsoft.Extensions.Logging.Abstractions`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.logging.abstractions)
+
 
 <br />
 <br />

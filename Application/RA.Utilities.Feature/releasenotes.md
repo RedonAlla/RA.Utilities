@@ -1,21 +1,41 @@
-# Release Notes for RA.Utilities.Feature
+# RA.Utilities.Feature Release Notes
 
-## Version 1.0.0-preview.6.3
+## Version 10.0.0-rc.2
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.0--rc.2-orange?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Feature/10.0.0-rc.2)
 
-This release focuses on significant documentation improvements, code example corrections, and enhanced clarity to make the library easier to understand and use. The core functionality of the package remains the same, but the guidance on how to implement it has been substantially improved.
+
+This release modernizes the `RA.Utilities.Feature` package, providing a foundational toolkit for implementing the **Vertical Slice Architecture** pattern using CQRS. It offers base handlers, validation behaviors, and seamless integration with the `Result<T>` type to streamline feature development.
 
 ### ✨ New Features & Improvements
 
-*   **Improved Documentation**: The `README.md` file has been overhauled for clarity, consistency, and accuracy.
-*   **Corrected Usage Examples**: The code examples in the `README.md` now correctly demonstrate the use of the `BaseHandler<TRequest, TResponse>` class provided by this package, instead of MediatR's `IRequestHandler`. This makes the purpose of the base handlers much clearer.
-*   **Standardized DI Registration**: The dependency injection example has been updated to use the standard and widely recognized registration methods (`AddMediatR`, `AddValidatorsFromAssembly`), making it easier for developers to integrate the package into their projects.
-*   **Updated Installation Guide**: The installation instructions now correctly include the necessary peer dependencies: `MediatR` and `FluentValidation.DependencyInjectionExtensions`.
+*   **Base Handlers for CQRS**:
+    *   Provides abstract base classes (`BaseHandler<TRequest, TResponse>`) that encapsulate common logic like logging and exception handling.
+    *   Handlers automatically catch exceptions and wrap them in a `Result.Failure`, ensuring robust error handling without boilerplate `try-catch` blocks.
 
+*   **Automatic Validation Pipeline Behavior**:
+    *   Includes a `ValidationBehavior<TRequest, TResponse>` for MediatR pipelines.
+    *   Automatically intercepts incoming requests, finds the corresponding `FluentValidation` validator, and executes it.
+    *   If validation fails, the pipeline is short-circuited, and a `Result.Failure` containing a `ValidationException` is returned immediately, preventing invalid data from reaching your business logic.
 
-### 📝 Notes
+*   **Seamless `Result<T>` Integration**:
+    *   Designed from the ground up to work with the `Result<T>` type from `RA.Utilities.Core`, promoting explicit and predictable error handling for business logic failures.
 
-The primary goal of this update is to enhance the developer experience. By providing accurate and easy-to-follow documentation, we aim to help users get up and running with Vertical Slice Architecture and CQRS patterns more quickly and effectively.
+*   **Updated Documentation**:
+    *   The `README.md` has been updated to provide a clear, step-by-step guide for creating a complete feature slice, including the command, validator, handler, and DI registration.
 
----
+### 🚀 Getting Started
 
-Thank you for using RA.Utilities!
+Register MediatR, the validation behavior, and your validators in `Program.cs`:
+
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+
+// 1. Add MediatR and register handlers
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
+
+// 2. Add the validation pipeline behavior from this package
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
+// 3. Scan and register all FluentValidation validators
+builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+```

@@ -18,15 +18,16 @@ By inheriting from these base handlers, you gain several key benefits "for free"
 
 1. **Automatic Logging**: The base handlers automatically log the start and end of every request they process, providing consistent and valuable diagnostic information.
 2. **Robust Exception Handling**: Any unhandled exception that occurs within your handler's business logic is automatically caught.
-It is then wrapped in a `Result.Failure` object (from the `RA.Utilities.Core` package), ensuring your application doesn't crash and returns a predictable error response.
+It is then wrapped in a `Result.Failure` object (from the [`RA.Utilities.Core`](../../../core/UtilitiesCore/index.mdx) package),
+ensuring your application doesn't crash and returns a predictable error response.
 3. **Consistent Structure**: They enforce a consistent structure for all your handlers by providing a single `HandleAsync` method that you must override.
 This is where you place your core business logic.
 
 The main abstractions mentioned are:
 
-* **`IRequestHandler<TRequest, TResponse>`**: The most common base handler.
+* **[`IRequestHandler<TRequest, TResponse>`](../Abstractions/IRequestHandler.md)**: The most common base handler.
 It's used for features that process a request and are expected to return a value (e.g., creating a user and returning their ID, or fetching a product and returning its data).
-* **`IRequestHandler<TRequest>`**: A base handler for "fire-and-forget" operations that process a request but do not return a value (e.g., queuing a background job).
+* **[`IRequestHandler<TRequest>`](../Abstractions/IRequestHandler.md)**: A base handler for "fire-and-forget" operations that process a request but do not return a value (e.g., queuing a background job).
 
 ## 🧠 Summary
 In summary, the `RA.Utilities.Feature.Abstractions` classes are the cornerstone of the CQRS pattern in this framework, providing a robust, consistent, and low-boilerplate foundation for all your business logic features.

@@ -1,35 +1,33 @@
-<p align="center">
-  <img src="../../Assets/Images/mediator.svg" alt="RA.Utilities.Feature Logo" width="128">
-</p>
-
 # RA.Utilities.Feature
 
 [![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Feature.svg)](https://www.nuget.org/packages/RA.Utilities.Feature/)
+[![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Feature.svg)](https://www.nuget.org/packages/RA.Utilities.Feature/)
 
-`RA.Utilities.Feature` provides a foundational toolkit for implementing the **Vertical Slice Architecture** pattern using CQRS (Command Query Responsibility Segregation). It offers base handlers, validation behaviors, and exception handling mechanisms to streamline feature development and promote clean, maintainable code.
 
-This package is designed to work like a mediator library to create self-contained "features" or "slices," where all the logic for a single use case—from request to response—is located together.
-
-## Purpose
+`RA.Utilities.Feature` provides a foundational toolkit for implementing the **Vertical Slice Architecture** pattern using CQRS (Command Query Responsibility Segregation).
+It offers base handlers, validation behaviors, and exception handling mechanisms to streamline feature development and promote clean, maintainable code.
 
 Building applications with a traditional layered architecture can lead to wide, coupled classes and scattered logic.
 The Vertical Slice pattern, combined with CQRS, addresses this by organizing code around features.
 This package provides the essential building blocks to support that pattern:
 
-1.  **Consistent Handler Logic**: It offers generic base handlers that encapsulate common logic like logging, exception handling, and performance monitoring. This reduces boilerplate and ensures every feature behaves consistently.
-2.  **Automatic Validation**: It includes a pipeline behavior that automatically validates incoming CQRS requests (commands/queries) using `FluentValidation`, returning a structured error response on failure.
-3.  **Robust Error Handling**: It integrates seamlessly with the `Result` type from `RA.Utilities.Core`, allowing handlers to return explicit success or failure outcomes without relying on exceptions for control flow.
-
-By using `RA.Utilities.Feature`, you can build features faster, with more confidence, and with less repetitive code.
-
-## 🛠️ Installation
-
-You will need to install this package along with a mediator implementation (like MediatR) and FluentValidation.
+## Getting started
 
 ```bash
 dotnet add package RA.Utilities.Feature
-dotnet add package FluentValidation.DependencyInjectionExtensions
 ```
+
+---
+
+## 🔗 Dependencies
+
+-   [`RA.Utilities.Core.Exceptions`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/CoreExceptions/)
+-   [`RA.Utilities.Core`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/UtilitiesCore/)
+-   [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/)
+-   [`Microsoft.Extensions.DependencyInjection.Abstractions`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection)
+-   [`Microsoft.Extensions.Logging.Abstractions`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.logging.abstractions)
 
 ---
 
@@ -37,7 +35,8 @@ dotnet add package FluentValidation.DependencyInjectionExtensions
 
 ### 1. Base Handlers
 
-The package provides abstract base classes that implement the `IRequestHandler` interfaces. Inheriting from these base classes gives your handlers a consistent structure and automatically handles cross-cutting concerns.
+The package provides abstract base classes that implement the `IRequestHandler` interfaces.
+Inheriting from these base classes gives your handlers a consistent structure and automatically handles cross-cutting concerns.
 
 The primary base classes are:
 -   **`RequestHandler<TRequest>`**: For handlers that process a request but do not return a value. It implements `IRequestHandler<TRequest>`.

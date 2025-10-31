@@ -6,14 +6,14 @@ sidebar_position: 1
 Namespace: RA.Utilities.Feature.Behaviors
 ```
 
-`LoggingBehavior` is an implementation of the `IPipelineBehavior` interface.
+`LoggingBehavior` is an implementation of the [`IPipelineBehavior`](../Abstractions/IPipelineBehavior.md) interface.
 Its primary purpose is to act as a "middleware" within your CQRS pipeline to automatically log requests and their corresponding responses.
 
 It elegantly solves the cross-cutting concern of logging by intercepting every command and query that is sent through the mediator.
 This provides several key benefits:
 
 1. **Reduces Boilerplate**:
-You no longer need to add logging statements to the beginning and end of every single `IRequestHandler`.
+You no longer need to add logging statements to the beginning and end of every single [`IRequestHandler`](../Abstractions//IRequestHandler.md).
 The behavior handles it for you.
 
 2. **Enforces Consistency**:

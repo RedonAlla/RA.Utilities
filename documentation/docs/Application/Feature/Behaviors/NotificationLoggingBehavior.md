@@ -6,14 +6,14 @@ sidebar_position: 2
 Namespace: RA.Utilities.Feature.Behaviors
 ```
 
-`NotificationLoggingBehavior` is an implementation of the `INotificationBehavior` interface.
+`NotificationLoggingBehavior` is an implementation of the [`INotificationBehavior`](../Abstractions/INotificationBehavior.md) interface.
 Its primary purpose is to act as a "middleware" in your CQRS pipeline to automatically log the handling of notifications (events).
 
-When a notification is published, this behavior intercepts it before it reaches its `INotificationHandler`(s).
+When a notification is published, this behavior intercepts it before it reaches its [`INotificationHandler`](../Abstractions/INotificationHandler.md)(s).
 This provides several key benefits for your event-driven logic:
 
 1. **Reduces Boilerplate:**
-You don't need to add logging statements to every `INotificationHandler`.
+You don't need to add logging statements to every [`INotificationHandler`](../Abstractions/INotificationHandler.md).
 The behavior does it for you.
 
 2. **Enforces Consistency**:

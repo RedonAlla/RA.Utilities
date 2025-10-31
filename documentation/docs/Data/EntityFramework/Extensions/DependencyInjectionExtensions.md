@@ -7,7 +7,7 @@ Namespace: RA.Utilities.Data.EntityFramework.Extensions
 ```
 The `DependencyInjectionExtensions` class in the `RA.Utilities.Data.EntityFramework` project serves as a convenience layer to simplify the registration of the generic repository patterns in an ASP.NET Core application's dependency injection (DI) container.
 
-Its primary goal is to **reduce boilerplate** and **promote convention** by providing simple, one-line extension methods for `IServiceCollection`.
+Its primary goal is to **reduce boilerplate** and **promote convention** by providing simple, one-line extension methods for [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection).
 
 Instead of developers needing to remember and write the full generic type registration like this:
 
@@ -44,7 +44,7 @@ It is ideal for services that only need to query data, enforcing the ***Command 
 
 | Parameter |	Type	| Description |
 | --------- | ----- | ----------- |
-| **services** | `IServiceCollection` |	The `IServiceCollection` to add the service registration to. This is the `this` parameter for the extension method. |
+| **services** | [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection) |	The [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection) to add the service registration to. This is the `this` parameter for the extension method. |
 
 #### Example
 Here is how you would register and use the read-only repository.
@@ -99,7 +99,7 @@ It should be used in services that are responsible for creating, updating, or de
 
 | Parameter |	Type	| Description |
 | --------- | ----- | ----------- |
-| **services** | `IServiceCollection` |	The `IServiceCollection` to add the service registration to. This is the `this` parameter for the extension method. |
+| **services** | [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection) |	The [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection) to add the service registration to. This is the `this` parameter for the extension method. |
 
 #### Example
 Here is how you would register and use the write-only repository.
@@ -158,7 +158,7 @@ It's a convenient, all-in-one solution for services that need to both query and 
 
 | Parameter |	Type	| Description |
 | --------- | ----- | ----------- |
-| **services** | `IServiceCollection` |	The `IServiceCollection` to add the service registration to. This is the `this` parameter for the extension method. |
+| **services** | [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection) |	The [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection) to add the service registration to. This is the `this` parameter for the extension method. |
 
 #### Example
 Here is how you would register and use the full repository.

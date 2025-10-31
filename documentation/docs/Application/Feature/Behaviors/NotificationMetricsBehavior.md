@@ -6,10 +6,10 @@ sidebar_position: 3
 Namespace: RA.Utilities.Feature.Behaviors
 ```
 
-`NotificationMetricsBehavior` is an implementation of the `INotificationBehavior` interface.
+`NotificationMetricsBehavior` is an implementation of the [`INotificationBehavior`](../Abstractions/INotificationBehavior.md) interface.
 Its primary purpose is to act as a performance monitoring "middleware" for your CQRS notification pipeline.
 
-It works by wrapping the execution of your `INotificationHandler`(s) with a `Stopwatch`.
+It works by wrapping the execution of your [`INotificationHandler`](../Abstractions/INotificationHandler.md)(s) with a `Stopwatch`.
 This allows it to measure the total time it takes for all handlers to process a given notification.
 
 The key function of this behavior is to **identify slow-running event handlers**.

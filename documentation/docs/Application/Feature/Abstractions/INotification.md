@@ -82,4 +82,5 @@ public class AuditLogHandler : INotificationHandler<ProductCreatedNotification>
 
 ## 🧠 Summary
 
-In summary, `INotification` is the key to implementing a robust, decoupled eventing system within your Vertical Slice Architecture, allowing features to remain self-contained while still communicating with other parts of the application.
+In summary, `INotification` is the key to implementing a robust, decoupled eventing system within your Vertical Slice Architecture,
+allowing features to remain self-contained while still communicating with other parts of the application.

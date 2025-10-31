@@ -6,7 +6,7 @@ sidebar_position: 4
 Namespace: RA.Utilities.Feature.Behaviors
 ```
 
-`NotificationRetryBehavior` is an implementation of the `INotificationBehavior` interface.
+`NotificationRetryBehavior` is an implementation of the [`INotificationBehavior`](../Abstractions/INotificationBehavior.md) interface.
 Its primary purpose is to add resilience to your event handling system by automatically retrying failed notification handlers.
 
 When a notification is published, it's processed by its handlers.
@@ -16,7 +16,7 @@ Instead of immediately failing and logging an error, this behavior intercepts th
 ## 🛠️ How it works:
 
 1. **Intercepts Execution**:
-It wraps the call to your `INotificationHandler`(s) (represented by the `next` delegate) inside a try-catch block within a loop.
+It wraps the call to your [`INotificationHandler`](../Abstractions/INotificationHandler.md)(s) (represented by the `next` delegate) inside a try-catch block within a loop.
 
 2. **Retries on Failure**:
 If an exception occurs, the catch block is executed.

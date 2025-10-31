@@ -18,7 +18,8 @@ The `FeatureBuilderExtensions` class uses the **Builder Pattern** to create a cl
 Let's break down how it works:
 
 #### 1. Bootstrapping the Feature:
-The process starts with an extension method on `IServiceCollection`, such as `AddFeature` or `AddNotification`.
+The process starts with an extension method on [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection),
+such as `AddFeature` or `AddNotification`.
 
 ```csharp showLineNumbers
 // From: /RA.Utilities/Application/RA.Utilities.Feature/Extensions/FeatureBuilderExtensions.cs
@@ -38,8 +39,8 @@ public static FeatureBuilder<TRequest, TResponse> AddFeature<TRequest, TResponse
 
 #### 2. Enabling Fluent Chaining:
 The key is that these methods return a `FeatureBuilder` or `NotificationFeatureBuilder` object.
-This builder object holds a reference to the `IServiceCollection` and provides its own methods for adding related components,
-like validators or pipeline behaviors.
+This builder object holds a reference to the [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection)
+and provides its own methods for adding related components, like validators or pipeline behaviors.
 
 #### 3. Creating a Vertical Slice Configuration:
 This design allows you to define an entire vertical slice in a single, coherent block of code
