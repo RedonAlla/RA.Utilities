@@ -548,6 +548,74 @@ public class ResultExtensionsTests
     #region Match Tests
 
     /// <summary>
+    /// Verifies that <see cref="Result{TResult}.Match{TContract}(Func{TResult, TContract}, Func{Exception, TContract})"/> executes the success action
+    /// with the value when the result is successful.
+    /// </summary>
+    [Fact]
+    public void Match_WithSuccessResultTAndActions_ExecutesSuccessAction()
+    {
+        // Arrange
+        int testValue = 42;
+        var result = Result.Success(testValue);
+        int receivedValue = 0;
+        bool successExecuted = false;
+        bool failureExecuted = false;
+
+        // Act
+        result.Match(
+            success: value =>
+            {
+                successExecuted = true;
+                receivedValue = value;
+                return receivedValue;
+            },
+            failure: ex =>
+            {
+                failureExecuted = true;
+                return receivedValue;
+            });
+
+        // Assert
+        Assert.True(successExecuted);
+        Assert.False(failureExecuted);
+        Assert.Equal(testValue, receivedValue);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="Result{TResult}.Match{TContract}(Func{TResult, TContract}, Func{Exception, TContract})"/>
+    /// executes the failure action when the result is a failure.
+    /// </summary>
+    [Fact]
+    public void Match_WithFailureResultTAndActions_ExecutesFailureAction()
+    {
+        // Arrange
+        Exception exception = new InvalidOperationException("Test exception");
+        var result = Result.Failure<int>(exception);
+        bool successExecuted = false;
+        bool failureExecuted = false;
+        Exception receivedException = null;
+
+        // Act
+        result.Match(
+            success: value =>
+            {
+                successExecuted = true;
+                return result;
+            },
+            failure: ex =>
+            {
+                failureExecuted = true;
+                receivedException = ex;
+                return receivedException;
+            });
+
+        // Assert
+        Assert.False(successExecuted);
+        Assert.True(failureExecuted);
+        Assert.Same(exception, receivedException);
+    }
+
+    /// <summary>
     /// Verifies that <see cref="ResultExtensions.Match(Result, Action, Action{Exception})"/> executes the correct action
     /// based on whether the result is successful or a failure.
     /// </summary>
@@ -568,6 +636,28 @@ public class ResultExtensionsTests
         // Assert
         Assert.False(successExecuted);
         Assert.True(failureExecuted);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="ResultExtensions.Match(Result, Action, Action{Exception})"/> executes the correct action
+    /// based on whether the result is successful or a failure.
+    /// </summary>
+    [Fact]
+    public void Match_WithActions_ExecutesCorrectAction2()
+    {
+        // Arrange
+        var result = Result.Success(25);
+        bool successExecuted = false;
+        bool failureExecuted = false;
+
+        // Act
+        result.Match(
+            success: () => successExecuted = true,
+            failure: ex => failureExecuted = true);
+
+        // Assert
+        Assert.True(successExecuted);
+        Assert.False(failureExecuted);
     }
 
     /// <summary>
