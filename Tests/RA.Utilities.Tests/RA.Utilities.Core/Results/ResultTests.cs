@@ -1072,6 +1072,7 @@ public class ResultExtensionsTests
             });
 
         // Assert
+        Assert.True(result.IsSuccess);
         Assert.True(mappedResult.IsSuccess);
         Assert.Equal(10, mappedResult.Value);
     }
@@ -1096,6 +1097,7 @@ public class ResultExtensionsTests
             });
 
         // Assert
+        Assert.False(result.IsSuccess);
         Assert.True(mappedResult.IsFailure);
         Assert.Same(exception, mappedResult.Exception);
     }
