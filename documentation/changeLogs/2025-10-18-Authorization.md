@@ -10,6 +10,8 @@ authors: [RedonAlla]
 
 This release marks a major evolution of the `RA.Utilities.Authorization` package, shifting its focus from a simple current user service to a powerful, claims-based authorization system. The package now provides a flexible and maintainable way to implement permission-based security in ASP.NET Core applications.
 
+<!-- truncate -->
+
 ### 🚀 Features & Enhancements
 
 *   **Permission-Based Authorization**: Introduced the `[HasPermission]` attribute to protect endpoints with granular permissions, moving away from role-based checks.
