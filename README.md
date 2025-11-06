@@ -81,7 +81,6 @@ Overall, this is a robust structure for a reusable utilities library. It's clean
 ## How the Pieces Fit Together
 The solution is broken down into several NuGet packages, each addressing a specific concern:
 
-
 | Layer/Concern	| RA.Utilities Package(s)	| Purpose |
 | ------------- | ----------------------- | ------- |
 | **API & Web** | `RA.Utilities.Api`, `RA.Utilities.Api.Middlewares`, `RA.Utilities.Api.Results`, `RA.Utilities.OpenApi`, `RA.Utilities.Authentication.JwtBearer`, `RA.Utilities.Authorization` |	Provides middleware for logging and header validation, automates OpenAPI/Swagger documentation, and simplifies access to authenticated user data. |
@@ -89,7 +88,4 @@ The solution is broken down into several NuGet packages, each addressing a speci
 | **Core Building Blocks** |	`RA.Utilities.Core.Constants`, `RA.Utilities.Core.Exceptions` |	Offers shared constants (like HTTP status codes) and a set of standardized exceptions (`NotFoundException`, `ConflictException`) to create clear, semantic error handling. |
 | **Data Access** | `RA.Utilities.Data.Abstractions`, `RA.Utilities.Data.EntityFramework` | Provides abstractions and implementations for talking to the database. |
 | **Integrations** | `RA.Utilities.Integrations` | Simplifies and standardizes HTTP client calls to external APIs, with built-in support for configuration, logging, and resilience policies. |
-| **Core Building Blocks** | `RA.Utilities.Core.Constants`, `RA.Utilities.Core.Exceptions` | Offers shared constants (like HTTP status codes) and a set of standardized exceptions (`NotFoundException`, `ConflictException`) to create clear, semantic error handling. |
 | **Logging** | `RA.Utilities.Logging.Core`, `RA.Utilities.Logging.Shared` | Provides a one-line setup for production-ready structured logging with Serilog. |
-
-In short, **RA.Utilities** is a "batteries-included" framework for building modern .NET APIs. It provides the foundation for a clean architecture so you can focus more on writing business logic and less on setting up infrastructure.
