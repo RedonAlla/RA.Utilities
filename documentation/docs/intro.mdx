@@ -10,13 +10,19 @@ sidebar_position: 1
 [![GitHub issues](https://img.shields.io/github/issues/RedonAlla/RA.Utilities.svg)](https://github.com/RedonAlla/RA.Utilities/issues)
 
 
-## High-Level Purpose
-The main goal is to provide a set of reusable, opinionated building blocks that solve common problems in web API development. By using these packages, you can:
 
-* **Reduce Boilerplate Code**: Automate repetitive tasks like setting up logging, authentication, API documentation, and error handling.
-* **Enforce Consistency**: Ensure that all parts of your application follow the same patterns for logging, configuration, and API responses.
-* **Promote Clean Architecture**: The packages are designed to guide you toward a **Vertical Slice Architecture** using the **CQRS (Command Query Responsibility Segregation)** pattern. This helps you build features that are self-contained and easier to maintain.
-* **Improve Developer Experience**: Simplify complex configurations and provide clear, injectable services for common needs.
+RA.Utilities provides a set of reusable, opinionated building blocks primarily aimed at solving common problems in web API development. The high-level purpose is to reduce boilerplate code, enforce consistency, promote a clean architecture (specifically Vertical Slice Architecture using the CQRS pattern), and improve the overall developer experience.
+The repository is structured into several solution folders, each mapping to a specific architectural layer:
+ * **Api/**: Contains projects related to the web layer, including API setup, custom middlewares, authentication/authorization helpers, and OpenAPI (Swagger) configuration.
+ * **Application/**: Holds the RA.Utilities.Feature project, which is the core of the application logic and implements the CQRS pattern.
+ * **Core/**: Contains foundational projects with minimal dependencies, such as shared exceptions and constants.
+ * **Data/**: Represents the data access layer, with projects for abstractions and a specific implementation using Entity Framework.
+ * **Infrastructure/**: Houses projects that interact with external systems, like standardizing calls to other APIs.
+ * **Logging/**: Isolates logging as a cross-cutting concern into its own projects.
+ * **documentation/**: Includes documentation as a first-class citizen within the solution.
+
+
+The solution is broken down into several NuGet packages, each addressing a specific concern like **API & Web**, **Application Logic**, **Core Building Blocks**, **Data Access**, **Integrations**, and **Logging**. In essence, RA.Utilities acts as a "batteries-included" framework to help developers build modern .NET APIs by providing a foundation for a clean architecture, allowing them to focus more on business logic rather than infrastructure setup. The repository is public, licensed under the MIT license, and uses C#.
 
 
 ## Solution Structure
@@ -59,41 +65,6 @@ RA.Utilities/
 │
 └── 📁 documentation/
 ```
-
-Here’s how the folders map to architectural layers:
-
-* **`Api/`**: This solution folder contains all projects related to the web layer. This includes the main API setup, custom middlewares, authentication/authorization helpers, and OpenAPI (Swagger) configuration. This aligns perfectly with the API & Web concern.
-
-* **`Application/`**: This holds the [`RA.Utilities.Feature`](./Application/Feature/index.mdx) project, which is the core of your application logic. As your documentation states, this is where the CQRS pattern is implemented, promoting a Vertical Slice Architecture.
-
-* **`Core/`**: This contains the foundational building blocks of your application that have minimal dependencies. Projects for shared exceptions and constants reside here, which can be referenced by any other project in the solution.
-
-* **`Data/`**: This is your data access layer. It's well-organized with abstractions ([`RA.Utilities.Data.Abstractions`](./Data/Abstractions/index.mdx)) and a concrete implementation using Entity Framework ([`RA.Utilities.Data.EntityFramework`](./Data/EntityFramework/index.mdx)).
-
-* **`Infrastructure/`**: This folder is for projects that interact with external systems. The [`A.Utilities.Integrations`](./Integrations/index.mdx) project is a good example, standardizing how you call other APIs.
-
-* **`Logging/`**: You've correctly isolated logging as a cross-cutting concern into its own set of projects, making it easy to manage and configure.
-
-* **`documentation/`**: It's great to see documentation treated as a first-class citizen within the solution structure.
-
-Overall, this is a robust structure for a reusable utilities library. It's clean, scalable, and easy for other developers to understand.
-
-## How the Pieces Fit Together
-The solution is broken down into several NuGet packages, each addressing a specific concern:
-
-
-| Layer/Concern	| RA.Utilities Package(s)	| Purpose |
-| ------------- | ----------------------- | ------- |
-| **API & Web** | [`RA.Utilities.Api`](./api/utilities_api/index.mdx), [`RA.Utilities.Api.Middlewares`](./api/ApiMiddlewares/index.mdx), [`RA.Utilities.Api.Results`](./api/ApiResults/index.mdx), [`RA.Utilities.OpenApi`](./api/OpenApi/index.mdx), [`RA.Utilities.Authentication.JwtBearer`](./auth/AuthenticationJwtBearer/index.mdx), [`RA.Utilities.Authorization`](./auth/Authorization/index.mdx)|	Provides middleware for logging and header validation, automates OpenAPI/Swagger documentation, and simplifies access to authenticated user data. |
-| **Application Logic** | [`RA.Utilities.Feature`](./Application/Feature//index.mdx) |	This is the heart of the CQRS implementation. It provides base classes for your feature "handlers" and a validation pipeline to automatically validate incoming requests. |
-| **Core Building Blocks** |	[`RA.Utilities.Core.Constants`](./core/CoreConstants/index.mdx), [`RA.Utilities.Core.Exceptions`](./core/CoreExceptions/index.mdx) |	Offers shared constants (like HTTP status codes) and a set of standardized exceptions ([`NotFoundException`](./core/CoreExceptions/NotFoundException.md), [`ConflictException`](./core/CoreExceptions/ConflictException.md)) to create clear, semantic error handling. |
-| **Data Access** | [`RA.Utilities.Data.Abstractions`](./Data/Abstractions/index.mdx), [`RA.Utilities.Data.EntityFramework`](./Data/EntityFramework/index.mdx) | Provides abstractions and implementations for talking to the database. |
-| **Integrations** | [`RA.Utilities.Integrations`](./Integrations/index.mdx) | Simplifies and standardizes HTTP client calls to external APIs, with built-in support for configuration, logging, and resilience policies. |
-| **Core Building Blocks** | [`RA.Utilities.Core.Constants`](./core/CoreConstants/index.mdx), [`RA.Utilities.Core.Exceptions`](./core/CoreExceptions/index.mdx) | Offers shared constants (like HTTP status codes) and a set of standardized exceptions ([`NotFoundException`](./core/CoreExceptions/NotFoundException.md), [`ConflictException`](./core/CoreExceptions/ConflictException.md)) to create clear, semantic error handling. |
-| **Logging** | [`RA.Utilities.Logging.Core`](./Logging/Core/index.mdx), [`RA.Utilities.Logging.Shared`](./Logging/Shared/index.mdx)| Provides a one-line setup for production-ready structured logging with Serilog. |
-
-
-In short, **`RA.Utilities`** is a "batteries-included" framework for building modern .NET APIs. It provides the foundation for a clean architecture so you can focus more on writing business logic and less on setting up infrastructure.
 
 import DocCardList from '@theme/DocCardList';
 
