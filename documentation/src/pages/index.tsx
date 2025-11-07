@@ -1,6 +1,4 @@
 import type {ReactNode} from 'react';
-import clsx from 'clsx';
-import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
 import HomepageFeatures from '@site/src/components/HomepageFeatures';
@@ -22,7 +20,7 @@ function HomepageHeader() {
             <p>{siteConfig.tagline}</p>
           </div>
           <div className="col col--4">
-            <Illustration width={'25rem'} height={'25rem'} />
+            <Illustration width={'20rem'} height={'20rem'} style={{float: 'right'}} />
           </div>
         </div>
       </div>
