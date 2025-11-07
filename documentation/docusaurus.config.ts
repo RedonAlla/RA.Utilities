@@ -9,7 +9,7 @@ const defaultLocale = 'en';
 const config: Config = {
   title: 'RA.Utilities',
   tagline: 'RA.Utilities is a "batteries-included" framework for building modern .NET APIs. It provides the foundation for a clean architecture so you can focus more on writing business logic and less on setting up infrastructure.',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/logo.svg',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
