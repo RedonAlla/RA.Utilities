@@ -39,19 +39,10 @@ jobs:
           PROJECT_FILE_PATH=$(find . -type f -name "${PACKAGE_NAME}.csproj" | head -n 1)
           echo "PROJECT_FILE_PATH=${PROJECT_FILE_PATH}" >> $GITHUB_ENV
 
-      - name: Validate Version
+      - name: Update .csproj Version
         run: |
-          echo "Validating versions..."
-          echo "Tag version: ${{ env.PACKAGE_VERSION }}"
-          
-          # Extract version from .csproj file using grep with Perl-compatible regex
-          CSPROJ_VERSION=$(grep -oP '<Version>\K[^<]+' "${{ env.PROJECT_FILE_PATH }}")
-          echo "Csproj version: $CSPROJ_VERSION"
-
-          if [ "${{ env.PACKAGE_VERSION }}" != "$CSPROJ_VERSION" ]; then
-            echo "Error: Tag version ('${{ env.PACKAGE_VERSION }}') does not match csproj version ('$CSPROJ_VERSION')."
-            exit 1
-          fi
+          echo "Updating ${{ env.PROJECT_FILE_PATH }} to version ${{ env.PACKAGE_VERSION }}"
+          sed -i "s|<Version>.*</Version>|<Version>${{ env.PACKAGE_VERSION }}</Version>|" "${{ env.PROJECT_FILE_PATH }}"
 
       - name: Show project info
         run: |
