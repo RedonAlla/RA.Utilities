@@ -46,13 +46,18 @@ jobs:
 
       - name: Commit and Push Version Change
         run: |
+          # Fetch all branches to ensure we can find the branch for the tag
+          git fetch origin --depth=1
+
+          # Find the branch that contains the tag's commit
+          BRANCH_NAME=$(git branch -r --contains ${{ github.ref }} | grep -v 'HEAD' | sed 's/origin\///' | head -n 1)
+          echo "Branch containing tag: $BRANCH_NAME"
+
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add "${{ env.PROJECT_FILE_PATH }}"
-          # The commit message includes [skip ci] to prevent workflow recursion
           git commit -m "ci: Bump version of ${{ env.PACKAGE_NAME }} to ${{ env.PACKAGE_VERSION }} [skip ci]"
-          # Push to the branch the tag is on, not the tag itself
-          git push origin HEAD:${{ github.ref_name }}
+          git push origin HEAD:"$BRANCH_NAME"
 
       - name: Show project info
         run: |
