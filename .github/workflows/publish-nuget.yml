@@ -44,6 +44,16 @@ jobs:
           echo "Updating ${{ env.PROJECT_FILE_PATH }} to version ${{ env.PACKAGE_VERSION }}"
           sed -i "s|<Version>.*</Version>|<Version>${{ env.PACKAGE_VERSION }}</Version>|" "${{ env.PROJECT_FILE_PATH }}"
 
+      - name: Commit and Push Version Change
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add "${{ env.PROJECT_FILE_PATH }}"
+          # The commit message includes [skip ci] to prevent workflow recursion
+          git commit -m "ci: Bump version of ${{ env.PACKAGE_NAME }} to ${{ env.PACKAGE_VERSION }} [skip ci]"
+          # Push to the branch the tag is on, not the tag itself
+          git push origin HEAD:${{ github.ref_name }}
+
       - name: Show project info
         run: |
           echo "Project file: ${{ env.PROJECT_FILE_PATH }}"
