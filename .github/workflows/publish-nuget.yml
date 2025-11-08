@@ -50,7 +50,7 @@ jobs:
           git fetch origin --depth=1
 
           # Find the branch that contains the tag's commit
-          BRANCH_NAME=$(git branch -r --contains ${{ github.ref }} | grep -v 'HEAD' | sed 's/origin\///' | head -n 1)
+          BRANCH_NAME=$(git branch -r --contains ${{ github.ref }} | grep -v 'HEAD' | sed 's/origin\///' | head -n 1 | xargs)
           echo "Branch containing tag: $BRANCH_NAME"
 
           git config --global user.name 'github-actions[bot]'
