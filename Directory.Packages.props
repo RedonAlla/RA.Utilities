@@ -42,6 +42,8 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Abstractions" Version="10.0.0-rc.2.25502.107" />
     <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.15.0.120848" />
 
+    <PackageVersion Include="RA.Utilities.Data.Abstractions" Version="10.0.0-rc.2" />
+
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.0" />
     <PackageVersion Include="xunit" Version="2.9.2" />
