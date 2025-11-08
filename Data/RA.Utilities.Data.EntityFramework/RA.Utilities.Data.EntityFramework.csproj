@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-		<Version>10.0.1-rc.2</Version>
+		<Version>10.0.2-rc.2</Version>
 		<Title>Data Entity Framework</Title>
 		<Description>Provides generic repository base classes for implementing the Repository and Unit of Work patterns with Entity Framework Core.</Description>
 		<PackageTags>RA;Utilities;Data;EntityFramework;Repository;UnitOfWork</PackageTags>
