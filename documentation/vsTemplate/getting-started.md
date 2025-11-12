@@ -64,12 +64,20 @@ dotnet new RA.Template -n MyMinimalApi --UsePersistence "" --UseIntegrations fal
 ### 5. Running Your New Application
 
 1.  **Navigate to the project directory**:
-    `cd YourProjectName`
+    ```bash
+    cd YourProjectName
+    ```
 2.  **Restore Dependencies**:
-    `dotnet restore`
+    ```bash
+    dotnet restore
+    ```
+
 3.  **Configure Settings**: Open `src/Web/YourProjectName.Api/appsettings.Development.json` and update the `ConnectionStrings` section if you are using a persistence layer.
+
 4.  **Run the application**:
-    `dotnet run --project src/Web/YourProjectName.Api/YourProjectName.Api.csproj`
+    ```bash
+    dotnet run --project src/Web/YourProjectName.Api/YourProjectName.Api.csproj
+    ```
 5.  **Access the API**: The application will be running on the configured port (e.g., `https://localhost:7001`). You can access the OpenAPI documentation at `https://localhost:7001/openapi-ui`.
 
 ### 6. Uninstalling the Template

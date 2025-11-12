@@ -1,0 +1,25 @@
+---
+title: Core
+sidebar_position: 2
+---
+
+The Core folder in this the heart of the application and contains its central business logic.
+It is intentionally isolated from external concerns like databases, user interfaces, or third-party services.
+This separation makes the application more modular, scalable, and easier to maintain.
+
+The `Core` folder is divided into two main projects:
+
+  * `RaTemplate.Domain`: This project holds the core business logic and data structures of the application.
+  It includes entities, value objects, and business rules.
+  This layer is the innermost part of the architecture and has no dependencies on any other project in the solution.
+
+  * `RaTemplate.Application`: This project orchestrates the use cases of the application by using the domain objects. 
+  t contains the application-specific business logic, defining what the application can do.
+  It depends on the `Domain` layer but remains independent of the `Infrastructure` and `Web` layers.
+  It often includes features like CQRS (Command Query Responsibility Segregation) handlers and interfaces that are implemented by outer layers.
+
+In summary, the Core folder encapsulates all the business-critical logic, ensuring it remains pure and independent of any specific technology implementation.
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />

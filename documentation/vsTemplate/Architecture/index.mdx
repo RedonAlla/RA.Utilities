@@ -1,0 +1,127 @@
+---
+title: Architecture
+sidebar_position: 3
+---
+
+## Dependency Flow
+
+```
+Dependencies flow inward only:
+API (Presentation) → Application → Domain ← Infrastructure
+     │              │           │           │
+     └──────────────┼───────────┼───────────┘
+                    │           │
+                    ▼           ▼
+           Application can only    Infrastructure implements
+           depend on Domain        Application interfaces
+```
+
+The Dependency Inversion Principle (DIP) is a cornerstone of Clean Architecture, and understanding it is key to seeing the benefits of this template.
+
+Here’s a detailed explanation of the principle and how it's applied within this Architecture.
+
+
+## What is the Dependency Inversion Principle?
+
+The Dependency Inversion Principle is one of the five SOLID principles of object-oriented design.
+It states two key things:
+
+#### 1. High-level modules should not depend on low-level modules. Both should depend on abstractions (e.g., interfaces).
+#### 2. Abstractions should not depend on details. Details (concrete implementations) should depend on abstractions.
+
+In simpler terms, the principle aims to "invert" the traditional direction of dependencies.
+Instead of your core business logic (high-level) depending directly on technical details like a specific database or web service (low-level),
+both depend on a shared contract or interface.
+This decouples your core logic from the implementation details, making the system far more flexible and maintainable.
+
+## How is DIP Used in This Architecture?
+
+This solution template is a perfect example of DIP in action. Let's break it down by looking at the different layers:
+
+* **High-Level Module (The "What")**: The `RaTemplate.Application` project is a high-level module.
+It defines the application's use cases and business flows—what the application does (e.g., "get a product," "create a user").
+It should not care how these things are actually done.
+
+* **Low-Level Module (The "How")**: The * **RaTemplate.Infrastructure* ** project (and its sub-projects like Persistence and Integration) is a low-level module. It contains the technical details—how to do things (e.g., "get data from a SQL Server database using Entity Framework," "send an email using an SMTP client").
+
+* **Abstraction (The "Contract")**: The contracts are the interfaces defined within the `RaTemplate.Application` layer.
+For example, the `Application` layer might define an `IProductRepository` interface with methods like `GetByIdAsync()` and `AddAsync()`.
+
+Here’s how the dependency is "inverted":
+
+### 1. Defining the Contract:
+The `Application` layer dictates the rules by defining an interface, for example, `IProductRepository`.
+It needs some way to get and save products, but it doesn't know or care about the specific technology used.
+
+```csharp
+// Defined in RaTemplate.Application/Interfaces/
+public interface IProductRepository
+{
+    Task<Product> GetByIdAsync(int id);
+    Task AddAsync(Product product);
+}
+```
+
+### 2. Implementing the Contract:
+The `Infrastructure` layer then provides a concrete implementation of that interface.
+It depends on the `Application` layer to see the interface definition.
+
+```csharp
+// Defined in RaTemplate.Persistence/Repositories/
+public class EfProductRepository : IProductRepository
+{
+    private readonly AppDbContext _context;
+    // ... constructor and method implementations
+}
+```
+
+### 3. Inverting the Dependency:
+Notice the direction of dependency here.
+Instead of `Application` depending on `Infrastructure` (the intuitive but wrong way), the `Infrastructure` project depends on the `Application` project.
+The dependency flow points inwards towards the core logic, which is the essence of Clean Architecture.
+
+**Traditional (Incorrect) Flow**: `Api` → `Application` → `Infrastructure` (High-level depends on low-level)
+
+**DIP (Correct) Flow**: `Api` → `Application` ← `Infrastructure` (Both depend on abstractions in Application)
+
+### 4. Wiring It All Up with Dependency Injection:
+At runtime, everything is connected in the application's entry point (the `RaTemplate.Api` project).
+The Api project references both `Application` and `Infrastructure`.
+
+In `InfrastructureServiceRegistration.cs`, you see the concrete implementations from the `Infrastructure` layer being registered against the
+interfaces from the `Application` layer.
+
+```csharp
+// In RaTemplate.Infrastructure/InfrastructureServiceRegistration.cs
+public static IServiceCollection AddInfrastructureServices(...)
+{
+    // ...
+    services.AddPersistence(configuration); // This method registers the repository implementations
+    // ...
+    return services;
+}
+```
+
+When a service in the `Application` layer requests an `IProductRepository` via its constructor,
+the dependency injection container provides the `EfProductRepository` instance that was registered at startup.
+The `Application` layer service never knows the concrete type it's talking to, only the interface.
+
+
+## Why is This So Powerful?
+
+This decoupling provides immense benefits:
+
+* **Flexibility**:
+You can swap out implementations with zero changes to your core business logic.
+Want to switch from `SQL Server` to `Oracle`? Just create a new `OracleProductRepository` in the `Infrastructure` layer and register it in the DI container.
+The `Application` layer is completely unaffected.
+* **Testability**:
+When unit testing your `Application` layer services, you can easily provide a mock or in-memory implementation of the repository interface.
+This allows you to test your business logic in complete isolation from external dependencies like a database.
+* **Maintainability**:
+Since concerns are clearly separated, the codebase is easier to understand, navigate, and modify without causing unintended side effects in other parts of the system.
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />
+
