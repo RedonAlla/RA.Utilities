@@ -77,6 +77,7 @@ jobs:
           dotnet pack "${{ env.PROJECT_FILE_PATH }}" \
             --configuration Release \
             --no-build \
+            --no-dependencies \
             --no-restore \
             --output ./nuget-packages \
             -p:Version=${{ env.PACKAGE_VERSION }} \
