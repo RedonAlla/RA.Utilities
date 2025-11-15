@@ -39,25 +39,16 @@ jobs:
           PROJECT_FILE_PATH=$(find . -type f -name "${PACKAGE_NAME}.csproj" | head -n 1)
           echo "PROJECT_FILE_PATH=${PROJECT_FILE_PATH}" >> $GITHUB_ENV
 
-      - name: Update .csproj Version
+      - name: Verify Version Match
         run: |
-          echo "Updating ${{ env.PROJECT_FILE_PATH }} to version ${{ env.PACKAGE_VERSION }}"
-          sed -i "s|<Version>.*</Version>|<Version>${{ env.PACKAGE_VERSION }}</Version>|" "${{ env.PROJECT_FILE_PATH }}"
-
-      - name: Commit and Push Version Change
-        run: |
-          # Fetch all branches to ensure we can find the branch for the tag
-          git fetch origin --depth=1
-
-          # Find the branch that contains the tag's commit
-          BRANCH_NAME=$(git branch -r --contains ${{ github.ref }} | grep -v 'HEAD' | sed 's/origin\///' | head -n 1 | xargs)
-          echo "Branch containing tag: $BRANCH_NAME"
-
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add "${{ env.PROJECT_FILE_PATH }}"
-          git commit -m "ci: Bump version of ${{ env.PACKAGE_NAME }} to ${{ env.PACKAGE_VERSION }} [skip ci]"
-          git push origin HEAD:"$BRANCH_NAME"
+          echo "Verifying project version matches tag version..."
+          CSPROJ_VERSION=$(grep -oP '(?<=<Version>).*(?=</Version>)' "${{ env.PROJECT_FILE_PATH }}")
+          echo "Tag version: ${{ env.PACKAGE_VERSION }}"
+          echo "Project version: $CSPROJ_VERSION"
+          if [ "$CSPROJ_VERSION" != "${{ env.PACKAGE_VERSION }}" ]; then
+            echo "Error: The version in ${{ env.PROJECT_FILE_PATH }} ($CSPROJ_VERSION) does not match the tag version (${{ env.PACKAGE_VERSION }})."
+            exit 1
+          fi
 
       - name: Show project info
         run: |
