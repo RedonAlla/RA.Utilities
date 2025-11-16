@@ -19,9 +19,7 @@
 	</ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../RA.Utilities.Core.Constants/RA.Utilities.Core.Constants.csproj">
-      <IncludeAssets>all</IncludeAssets>
-    </ProjectReference>
+    <ProjectReference Include="../RA.Utilities.Core.Constants/RA.Utilities.Core.Constants.csproj" />
   </ItemGroup>
 
 </Project>
