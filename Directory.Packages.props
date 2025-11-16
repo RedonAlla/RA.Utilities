@@ -51,6 +51,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageVersion Include="RA.Utilities.Api" Version="10.0.94-rc.2" />
+    <PackageVersion Include="RA.Utilities.Api.Results" Version="10.0.0-rc.2" />
+    <PackageVersion Include="RA.Utilities.Core.Exceptions" Version="10.0.100-rc.2" />
     <PackageVersion Include="RA.Utilities.Data.Abstractions" Version="10.0.0-rc.2" />
   </ItemGroup>
 </Project>

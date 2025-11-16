@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-		<Version>10.0.92-rc.2</Version>
+		<Version>10.0.94-rc.2</Version>
 		<Title>Api Utilities</Title>
 		<Description>Provides a collection of essential utilities for building robust and consistent ASP.NET Core APIs. This package includes endpoint registration helpers, standardized response models, and exception handling middleware to streamline development and promote best practices.</Description>
 		<PackageTags>RA;Utilities;API;Web;AspNetCore;Endpoints;Helpers;Middleware;Exceptions;Responses;Standardization</PackageTags>
@@ -22,8 +22,19 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="../../Core/RA.Utilities.Core.Exceptions/RA.Utilities.Core.Exceptions.csproj" />
-	  <ProjectReference Include="../RA.Utilities.Api.Results/RA.Utilities.Api.Results.csproj" />
+		<ProjectReference Include="../../Core/RA.Utilities.Core.Exceptions/RA.Utilities.Core.Exceptions.csproj">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>none</IncludeAssets>
+		</ProjectReference>
+
+		<ProjectReference Include="../RA.Utilities.Api.Results/RA.Utilities.Api.Results.csproj">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>none</IncludeAssets>
+		</ProjectReference>
 	</ItemGroup>
 
+	<ItemGroup>
+		<FrameworkReference Include="RA.Utilities.Api.Results" />
+		<FrameworkReference Include="RA.Utilities.Core.Exceptions" />
+	</ItemGroup>
 </Project>
