@@ -1,4 +1,3 @@
-using System;
 using RA.Utilities.Core.Constants;
 
 namespace RA.Utilities.Core.Exceptions;
