@@ -23,18 +23,16 @@
 
 	<ItemGroup>
 		<ProjectReference Include="../../Core/RA.Utilities.Core.Exceptions/RA.Utilities.Core.Exceptions.csproj">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>none</IncludeAssets>
+			<ReferenceOutputAssembly>false</ReferenceOutputAssembly>
 		</ProjectReference>
 
 		<ProjectReference Include="../RA.Utilities.Api.Results/RA.Utilities.Api.Results.csproj">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>none</IncludeAssets>
+			<ReferenceOutputAssembly>false</ReferenceOutputAssembly>
 		</ProjectReference>
 	</ItemGroup>
 
 	<ItemGroup>
-		<FrameworkReference Include="RA.Utilities.Api.Results" />
-		<FrameworkReference Include="RA.Utilities.Core.Exceptions" />
+		<PackageReference Include="RA.Utilities.Api.Results" />
+		<PackageReference Include="RA.Utilities.Core.Exceptions" />
 	</ItemGroup>
 </Project>
