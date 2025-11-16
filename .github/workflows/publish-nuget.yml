@@ -8,7 +8,9 @@ on:
       - '*-v*.*.*'
 
 permissions:
+  # This permission is required for the softprops/action-gh-release action to create a GitHub release.
   contents: write
+  # This permission is required to publish to GitHub Packages.
   packages: write
 
 jobs:
@@ -21,6 +23,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
+          # Use .NET 8.0 which is stable, or if you need 10.0, use a specific version
           dotnet-version: 10.0.*
 
       - name: Parse Tag and Set Environment Variables
@@ -53,37 +56,30 @@ jobs:
           echo "Target framework from project:"
           grep -oP '<TargetFramework>[^<]+' "${{ env.PROJECT_FILE_PATH }}" || echo "No TargetFramework found"
 
-      - name: Restore entire solution
-        run: dotnet restore
+      - name: Restore dependencies
+        run: dotnet restore "${{ env.PROJECT_FILE_PATH }}"
 
-      - name: Build entire solution
-        run: dotnet build --configuration Release --no-restore
+      - name: Build project
+        run: dotnet build "${{ env.PROJECT_FILE_PATH }}" --configuration Release --no-restore
 
-      - name: Pack all projects with their own versions
+      - name: Pack Package
         run: |
-          # Create output directory
-          mkdir -p ./nuget-packages
-
-          # Find all projects that have a Version defined and pack them
-          find . -name "*.csproj" -type f | while read proj; do
-            PROJ_VERSION=$(grep -oP '(?<=<Version>).*(?=</Version>)' "$proj" || echo "")
-            if [ -n "$PROJ_VERSION" ]; then
-              echo "Packing: $(basename "$proj") with version $PROJ_VERSION"
-              dotnet pack "$proj" \
-                --configuration Release \
-                --no-build \
-                --output ./nuget-packages \
-                -p:PackageVersion="$PROJ_VERSION" \
-                -p:IncludeSymbols=true \
-                -p:SymbolPackageFormat=snupkg
-            fi
-          done
+          # Pack the project, but do not build again
+          dotnet pack "${{ env.PROJECT_FILE_PATH }}" \
+            --configuration Release \
+            --no-build \
+            --no-restore \
+            --output ./nuget-packages \
+            -p:IncludeSymbols=true \
+            -p:SymbolPackageFormat=snupkg
 
       - name: List generated packages
         run: ls -la ./nuget-packages/
 
       - name: Publish to NuGet.org
         run: |
+          # dotnet nuget push "./nuget-packages/${{ env.PACKAGE_NAME }}.${{ env.PACKAGE_VERSION }}.nupkg" \
+          # Push both the main package and the symbols package
           dotnet nuget push "./nuget-packages/*.nupkg" \
             --api-key ${{ secrets.RA_UTILITIES_NUGET_KEY }} \
             --source "https://api.nuget.org/v3/index.json" \
