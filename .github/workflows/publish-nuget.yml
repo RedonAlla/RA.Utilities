@@ -53,41 +53,31 @@ jobs:
           echo "Target framework from project:"
           grep -oP '<TargetFramework>[^<]+' "${{ env.PROJECT_FILE_PATH }}" || echo "No TargetFramework found"
 
-      - name: Restore dependencies
-        run: dotnet restore "${{ env.PROJECT_FILE_PATH }}"
+      - name: Restore entire solution
+        run: dotnet restore
 
-      - name: Build project
-        run: dotnet build "${{ env.PROJECT_FILE_PATH }}" --configuration Release --no-restore
+      - name: Build entire solution
+        run: dotnet build --configuration Release --no-restore
 
-      - name: Build and Pack with dependencies
+      - name: Pack all projects with their own versions
         run: |
-          # First, pack all dependencies with their own versions
-          # Find all project references and pack them individually
+          # Create output directory
+          mkdir -p ./nuget-packages
+
+          # Find all projects that have a Version defined and pack them
           find . -name "*.csproj" -type f | while read proj; do
-            if [ "$proj" != "${{ env.PROJECT_FILE_PATH }}" ]; then
-              PROJ_VERSION=$(grep -oP '(?<=<Version>).*(?=</Version>)' "$proj" || echo "")
-              if [ -n "$PROJ_VERSION" ]; then
-                echo "Packing dependency: $(basename $proj) with version $PROJ_VERSION"
-                dotnet pack "$proj" \
-                  --configuration Release \
-                  --no-build \
-                  --output ./nuget-packages \
-                  -p:PackageVersion=$PROJ_VERSION \
-                  -p:IncludeSymbols=true \
-                  -p:SymbolPackageFormat=snupkg
-              fi
+            PROJ_VERSION=$(grep -oP '(?<=<Version>).*(?=</Version>)' "$proj" || echo "")
+            if [ -n "$PROJ_VERSION" ]; then
+              echo "Packing: $(basename "$proj") with version $PROJ_VERSION"
+              dotnet pack "$proj" \
+                --configuration Release \
+                --no-build \
+                --output ./nuget-packages \
+                -p:PackageVersion="$PROJ_VERSION" \
+                -p:IncludeSymbols=true \
+                -p:SymbolPackageFormat=snupkg
             fi
           done
-
-          # Then pack the main project
-          echo "Packing main project: ${{ env.PACKAGE_NAME }} with version ${{ env.PACKAGE_VERSION }}"
-          dotnet pack "${{ env.PROJECT_FILE_PATH }}" \
-            --configuration Release \
-            --no-build \
-            --output ./nuget-packages \
-            -p:PackageVersion=${{ env.PACKAGE_VERSION }} \
-            -p:IncludeSymbols=true \
-            -p:SymbolPackageFormat=snupkg
 
       - name: List generated packages
         run: ls -la ./nuget-packages/
