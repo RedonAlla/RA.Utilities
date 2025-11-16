@@ -22,19 +22,13 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="../../Core/RA.Utilities.Core.Exceptions/RA.Utilities.Core.Exceptions.csproj">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>none</IncludeAssets>
+		<ProjectReference Include="../../Core/RA.Utilities.Core.Exceptions/RA.Utilities.Core.Exceptions.csproj" >
+			<IncludeAssets>all</IncludeAssets>
 		</ProjectReference>
 
-		<ProjectReference Include="../RA.Utilities.Api.Results/RA.Utilities.Api.Results.csproj">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>none</IncludeAssets>
+		<ProjectReference Include="../RA.Utilities.Api.Results/RA.Utilities.Api.Results.csproj" >
+			<IncludeAssets>all</IncludeAssets>
 		</ProjectReference>
 	</ItemGroup>
-
-	<ItemGroup>
-		<PackageReference Include="RA.Utilities.Api.Results" />
-		<PackageReference Include="RA.Utilities.Core.Exceptions" />
-	</ItemGroup>
+	
 </Project>
