@@ -1,11 +1,14 @@
 # .github/workflows/publish-nuget.yml
 # Publish NuGet Package on Tag
-name: Publish NuGet
+name: Publish NuGet Package
 
 on:
-  push:
-    tags:
-      - '*-v*.*.*'
+  workflow_dispatch:
+    inputs:
+      package_name:
+        description: 'The name of the package to publish (e.g., RA.Utilities.Api)'
+        required: true
+        type: string
 
 permissions:
   # This permission is required for the softprops/action-gh-release action to create a GitHub release.
@@ -26,29 +29,22 @@ jobs:
           # Use .NET 8.0 which is stable, or if you need 10.0, use a specific version
           dotnet-version: 10.0.*
 
-      - name: Parse Tag and Set Environment Variables
+      - name: Set Environment Variables from Project File
         run: |
-          TAG_NAME="${{ github.ref_name }}"
-
-          PACKAGE_NAME="${TAG_NAME%-v*}"
+          PACKAGE_NAME="${{ inputs.package_name }}"
           echo "PACKAGE_NAME=${PACKAGE_NAME}" >> $GITHUB_ENV
-
-          PACKAGE_VERSION="${TAG_NAME##*-v}"
-          echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> $GITHUB_ENV
 
           PROJECT_FILE_PATH=$(find . -type f -name "${PACKAGE_NAME}.csproj" | head -n 1)
           echo "PROJECT_FILE_PATH=${PROJECT_FILE_PATH}" >> $GITHUB_ENV
 
-      - name: Verify Version Match
-        run: |
-          echo "Verifying project version matches tag version..."
-          CSPROJ_VERSION=$(grep -oP '(?<=<Version>).*(?=</Version>)' "${{ env.PROJECT_FILE_PATH }}")
-          echo "Tag version: ${{ env.PACKAGE_VERSION }}"
-          echo "Project version: $CSPROJ_VERSION"
-          if [ "$CSPROJ_VERSION" != "${{ env.PACKAGE_VERSION }}" ]; then
-            echo "Error: The version in ${{ env.PROJECT_FILE_PATH }} ($CSPROJ_VERSION) does not match the tag version (${{ env.PACKAGE_VERSION }})."
-            exit 1
-          fi
+          # Use msbuild to reliably get the final PackageVersion property
+          # This correctly evaluates Directory.Build.props
+          PACKAGE_VERSION=$(dotnet msbuild -getProperty:PackageVersion "${PROJECT_FILE_PATH}" | tr -d '\r')
+          echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> $GITHUB_ENV
+
+          # Determine if it's a pre-release
+          IS_PRERELEASE=$(echo "$PACKAGE_VERSION" | grep -q "-" && echo "true" || echo "false")
+          echo "IS_PRERELEASE=${IS_PRERELEASE}" >> $GITHUB_ENV
 
       - name: Show project info
         run: |
@@ -70,8 +66,7 @@ jobs:
             --no-build \
             --no-restore \
             --output ./nuget-packages \
-            -p:IncludeSymbols=true \
-            -p:SymbolPackageFormat=snupkg
+            -p:Version="${{ env.PACKAGE_VERSION }}" # Override is kept to ensure the extracted version is used
 
       - name: List generated packages
         run: ls -la ./nuget-packages/
@@ -100,7 +95,7 @@ jobs:
             ## Version ${{ env.PACKAGE_VERSION }}
 
             This is a pre-release of the **${{ env.PACKAGE_NAME }}** package.
-
+            
             - **View on NuGet.org:** [${{ env.PACKAGE_NAME }} ${{ env.PACKAGE_VERSION }}](https://www.nuget.org/packages/${{ env.PACKAGE_NAME }}/${{ env.PACKAGE_VERSION }})
           files: ./nuget-packages/*
-          prerelease: true
+          prerelease: ${{ env.IS_PRERELEASE }}
