@@ -39,7 +39,9 @@ jobs:
 
           # Use msbuild to reliably get the final PackageVersion property
           # This correctly evaluates Directory.Build.props
-          PACKAGE_VERSION=$(dotnet build "${PROJECT_FILE_PATH}" -t:GetPackageVersion -p:Configuration=Release --getProperty:PackageVersion | tr -d '\r')
+          # The command forces a rebuild to evaluate the property and prints only the result.
+          # See: https://github.com/dotnet/msbuild/issues/3499#issuecomment-410333137
+          PACKAGE_VERSION=$(dotnet build "${PROJECT_FILE_PATH}" -t:rebuild -p:Configuration=Release -v:q -noconsolelogger "/p:CustomAfterMicrosoftCommonTargets=$(pwd)/GetProperty.targets" | tr -d '\r\n')
           echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> $GITHUB_ENV
 
           # Determine if it's a pre-release

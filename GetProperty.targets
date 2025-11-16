@@ -1,0 +1,5 @@
+<Project>
+  <Target Name="GetProperty" AfterTargets="AfterBuild">
+    <Message Text="$(PackageVersion)" Importance="high" />
+  </Target>
+</Project>
