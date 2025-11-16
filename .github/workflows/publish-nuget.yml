@@ -39,7 +39,7 @@ jobs:
 
           # Use msbuild to reliably get the final PackageVersion property
           # This correctly evaluates Directory.Build.props
-          PACKAGE_VERSION=$(dotnet msbuild -getProperty:PackageVersion "${PROJECT_FILE_PATH}" | tr -d '\r')
+          PACKAGE_VERSION=$(dotnet build "${PROJECT_FILE_PATH}" -t:GetPackageVersion -p:Configuration=Release --getProperty:PackageVersion | tr -d '\r')
           echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> $GITHUB_ENV
 
           # Determine if it's a pre-release
