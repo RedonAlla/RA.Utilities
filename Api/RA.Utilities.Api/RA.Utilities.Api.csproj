@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-		<Version>10.0.9-rc.2</Version>
+		<Version>10.0.10-rc.2</Version>
 		<Title>Api Utilities</Title>
 		<Description>Provides a collection of essential utilities for building robust and consistent ASP.NET Core APIs. This package includes endpoint registration helpers, standardized response models, and exception handling middleware to streamline development and promote best practices.</Description>
 		<PackageTags>RA;Utilities;API;Web;AspNetCore;Endpoints;Helpers;Middleware;Exceptions;Responses;Standardization</PackageTags>
