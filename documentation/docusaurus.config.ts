@@ -161,6 +161,11 @@ const config: Config = {
         autoCollapseCategories: false,
       },
     },
+    blog: {
+      sidebar: {
+        groupByYear: true,
+      },
+    },
     navbar: {
       title: 'RA.Utilities',
       logo: {

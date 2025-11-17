@@ -1,12 +1,11 @@
 # RA.Utilities
 
-[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?logo=mit)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?logo=mit)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
 [![Publish NuGet](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml/badge.svg)](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml)
 [![codecov](https://codecov.io/gh/RedonAlla/RA.Utilities/branch/main/graph/badge.svg)](https://codecov.io/gh/RedonAlla/RA.Utilities)
 <br />
 [![NuGet](https://img.shields.io/nuget/v/RA.Utilities.Core.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core/)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Core.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core/)
-[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Api.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api/)
 
 ## High-Level Purpose
 The main goal is to provide a set of reusable, opinionated building blocks that solve common problems in web API development. By using these packages, you can:
