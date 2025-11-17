@@ -47,13 +47,16 @@ jobs:
           IS_PRERELEASE=$(echo "$PACKAGE_VERSION" | grep -q "-" && echo "true" || echo "false")
           echo "IS_PRERELEASE=${IS_PRERELEASE}" >> $GITHUB_ENV
 
-      - name: Validate Package Version
+      - name: Extract package version
+        id: extract_version
         run: |
-          if [ -z "${{ env.PACKAGE_VERSION }}" ]; then
+          VERSION=$(grep -oPm1 "(?<=<Version>)[^<]+" ${{ env.PROJECT_FILE_PATH}})
+          if [ -z "$VERSION" ]; then
             echo "::error::Failed to extract PACKAGE_VERSION from project file."
             exit 1
           fi
-          echo "Package version is: ${{ env.PACKAGE_VERSION }}"
+          echo "PACKAGE_VERSION=$VERSION">> $GITHUB_ENV
+
 
       - name: Show project info
         run: |
