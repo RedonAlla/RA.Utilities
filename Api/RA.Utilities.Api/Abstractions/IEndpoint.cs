@@ -3,7 +3,8 @@ using Microsoft.AspNetCore.Routing;
 namespace RA.Utilities.Api.Abstractions;
 
 /// <summary>
-/// Defines the contract for an API endpoint that can be mapped by the application.
+/// Represents a feature's endpoints that can be dynamically registered with the application.
+/// Implement this interface to group related API endpoints and keep `Program.cs` clean.
 /// </summary>
 public interface IEndpoint
 {

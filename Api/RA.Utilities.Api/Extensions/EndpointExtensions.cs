@@ -10,7 +10,7 @@ using RA.Utilities.Api.Abstractions;
 namespace RA.Utilities.Api.Extensions;
 
 /// <summary>
-/// Provides extension methods for discovering and registering API endpoints that implement the <see cref="IEndpoint"/> interface.
+/// Provides extension methods for discovering and registering <see cref="IEndpoint"/> implementations.
 /// </summary>
 public static class EndpointExtensions
 {
@@ -26,7 +26,7 @@ public static class EndpointExtensions
     /// </strong>
     /// </remarks>
     /// <param name="services">The <see cref="IServiceCollection"/> to add the services to.</param>
-    /// <param name="assembly">The assembly to scan for endpoint definitions.</param>
+    /// <param name="assembly">The assembly to scan. If null, the calling assembly is used.</param>
     /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
     public static IServiceCollection AddEndpoints(this IServiceCollection services, Assembly assembly)
     {

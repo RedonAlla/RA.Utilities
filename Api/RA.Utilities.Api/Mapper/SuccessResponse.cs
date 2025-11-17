@@ -4,25 +4,26 @@ using RA.Utilities.Api.Results;
 namespace RA.Utilities.Api.Mapper;
 
 /// <summary>
-/// Provides static methods for creating API results.
+/// Provides static helper methods for creating standardized, successful API responses
+/// wrapped in the <see cref="RA.Utilities.Api.Results.SuccessResponse{T}"/> model.
 /// </summary>
 public static class SuccessResponse
 {
     /// <summary>
-    /// Creates an HTTP 200 OK response with the specified result.
+    /// Creates a new <see cref="IResult"/> object that represents a 200 OK response with a payload.
     /// </summary>
-    /// <typeparam name="TResult">The type of the result.</typeparam>
-    /// <param name="results">The result object.</param>
-    /// <returns>An <see cref="IResult"/> representing the HTTP 200 OK response.</returns>
-    public static IResult Ok<TResult>(TResult results) where TResult : new()
+    /// <typeparam name="TResult">The type of the payload.</typeparam>
+    /// <param name="result">The payload to include in the response body.</param>
+    /// <returns>An <see cref="IResult"/> representing a 200 OK response with the specified payload.</returns>
+    public static IResult Ok<TResult>(TResult result) where TResult : new()
     {
-        return Microsoft.AspNetCore.Http.Results.Ok(new SuccessResponse<TResult>(results));
+        return Microsoft.AspNetCore.Http.Results.Ok(new SuccessResponse<TResult>(result));
     }
 
     /// <summary>
-    /// Creates an HTTP 200 OK response without a specific result body.
+    /// Creates a new <see cref="IResult"/> object that represents a 200 OK response with a payload.
     /// </summary>
-    /// <returns>An <see cref="IResult"/> representing the HTTP 200 OK response.</returns>
+    /// <returns>An <see cref="IResult"/> representing a 200 OK response.</returns>
     public static IResult Ok()
     {
         return Microsoft.AspNetCore.Http.Results.Ok();
