@@ -77,7 +77,8 @@ jobs:
             --configuration Release \
             --no-build \
             --no-restore \
-            --output ./nuget-packages
+            --output ./nuget-packages \
+            -p:PackageVersion="${{ env.PACKAGE_VERSION }}" # Override is kept to ensure the extracted version is used
 
       - name: List generated packages
         run: ls -la ./nuget-packages/
@@ -86,14 +87,14 @@ jobs:
         run: |
           # dotnet nuget push "./nuget-packages/${{ env.PACKAGE_NAME }}.${{ env.PACKAGE_VERSION }}.nupkg" \
           # Push both the main package and the symbols package
-          dotnet nuget push "./nuget-packages/${{ env.PACKAGE_NAME }}.${{ env.PACKAGE_VERSION }}.nupkg" \
+          dotnet nuget push "./nuget-packages/*.nupkg" \
             --api-key ${{ secrets.RA_UTILITIES_NUGET_KEY }} \
             --source "https://api.nuget.org/v3/index.json" \
             --skip-duplicate
 
       - name: Publish to GitHub Packages
         run: |
-          dotnet nuget push "./nuget-packages/${{ env.PACKAGE_NAME }}.${{ env.PACKAGE_VERSION }}.nupkg" \
+          dotnet nuget push "./nuget-packages/*.nupkg" \
             --api-key ${{ secrets.GITHUB_TOKEN }} \
             --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
             --skip-duplicate
