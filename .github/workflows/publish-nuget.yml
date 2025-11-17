@@ -89,6 +89,15 @@ jobs:
             --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
             --skip-duplicate
 
+      - name: Create Git Tag
+        run: |
+          TAG_NAME="${{ env.PACKAGE_NAME }}/${{ env.PACKAGE_VERSION }}"
+          echo "TAG_NAME=${TAG_NAME}" >> $GITHUB_ENV
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "${TAG_NAME}" -m "Release ${{ env.PACKAGE_NAME }} ${{ env.PACKAGE_VERSION }}"
+          git push origin "${TAG_NAME}"
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -101,3 +110,4 @@ jobs:
             - **View on NuGet.org:** [${{ env.PACKAGE_NAME }} ${{ env.PACKAGE_VERSION }}](https://www.nuget.org/packages/${{ env.PACKAGE_NAME }}/${{ env.PACKAGE_VERSION }})
           files: ./nuget-packages/*
           prerelease: ${{ env.IS_PRERELEASE }}
+          tag_name: ${{ env.TAG_NAME }}
