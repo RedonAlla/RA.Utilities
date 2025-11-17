@@ -39,14 +39,21 @@ jobs:
 
           # Use msbuild to reliably get the final PackageVersion property
           # This correctly evaluates Directory.Build.props
-          # The command forces a rebuild to evaluate the property and prints only the result.
-          # See: https://github.com/dotnet/msbuild/issues/3499#issuecomment-410333137
-          PACKAGE_VERSION=$(dotnet build "${PROJECT_FILE_PATH}" -t:rebuild -p:Configuration=Release -v:q -noconsolelogger "/p:CustomAfterMicrosoftCommonTargets=$(pwd)/GetProperty.targets" | tr -d '\r\n')
+          # The command runs a specific target that prints the version and then stops the build.
+          PACKAGE_VERSION=$(dotnet build "${PROJECT_FILE_PATH}" -t:GetPackageVersion -p:Configuration=Release -v:q -noconsolelogger "/p:CustomAfterMicrosoftCommonTargets=$(pwd)/GetProperty.targets" | tr -d '\r\n')
           echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> $GITHUB_ENV
 
           # Determine if it's a pre-release
           IS_PRERELEASE=$(echo "$PACKAGE_VERSION" | grep -q "-" && echo "true" || echo "false")
           echo "IS_PRERELEASE=${IS_PRERELEASE}" >> $GITHUB_ENV
+
+      - name: Validate Package Version
+        run: |
+          if [ -z "${{ env.PACKAGE_VERSION }}" ]; then
+            echo "::error::Failed to extract PACKAGE_VERSION from project file."
+            exit 1
+          fi
+          echo "Package version is: ${{ env.PACKAGE_VERSION }}"
 
       - name: Show project info
         run: |
