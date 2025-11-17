@@ -1,6 +1,5 @@
 <Project>
-  <Target Name="GetPackageVersion" BeforeTargets="CoreBuild">
+  <Target Name="GetPackageVersion">
     <Message Text="$(PackageVersion)" Importance="high" />
-    <Error Code="MSB4188" Text="Stopping build after getting property." />
   </Target>
 </Project>
