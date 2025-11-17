@@ -78,7 +78,7 @@ jobs:
             --no-build \
             --no-restore \
             --output ./nuget-packages \
-            -p:Version="${{ env.PACKAGE_VERSION }}" # Override is kept to ensure the extracted version is used
+            -p:PackageVersion="${{ env.PACKAGE_VERSION }}" # Override is kept to ensure the extracted version is used
 
       - name: List generated packages
         run: ls -la ./nuget-packages/
