@@ -1,14 +1,12 @@
 # RA.Utilities
 
 [![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?logo=mit)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
-[![.NET CI](https://github.com/RedonAlla/RA.Utilities/actions/workflows/ci.yml/badge.svg)](https://github.com/RedonAlla/RA.Utilities/actions/workflows/ci.yml)
 [![Publish NuGet](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml/badge.svg)](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml)
 [![codecov](https://codecov.io/gh/RedonAlla/RA.Utilities/branch/main/graph/badge.svg)](https://codecov.io/gh/RedonAlla/RA.Utilities)
 <br />
-[![NuGet](https://img.shields.io/nuget/v/RA.Utilities.Core.svg)](https://www.nuget.org/packages/RA.Utilities.Core/)
-[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Core.svg)](https://www.nuget.org/packages/RA.Utilities.Core/)
-[![NuGet](https://img.shields.io/nuget/v/RA.Utilities.Api.svg)](https://www.nuget.org/packages/RA.Utilities.Api/)
-[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Api.svg)](https://www.nuget.org/packages/RA.Utilities.Api/)
+[![NuGet](https://img.shields.io/nuget/v/RA.Utilities.Core.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core/)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Core.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core/)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Api.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api/)
 
 ## High-Level Purpose
 The main goal is to provide a set of reusable, opinionated building blocks that solve common problems in web API development. By using these packages, you can:
@@ -62,21 +60,21 @@ RA.Utilities/
 
 Here’s how the folders map to architectural layers:
 
-* **`Api/`**: This solution folder contains all projects related to the web layer. This includes the main API setup, custom middlewares, authentication/authorization helpers, and OpenAPI (Swagger) configuration. This aligns perfectly with the API & Web concern.
+* **`Api/`**: Contains all projects related to the presentation layer (ASP.NET Core). This includes API setup, middleware, authentication, and OpenAPI configuration. This layer depends on `Application` and `Core`.
 
-* **`Application/`**: This holds the `RA.Utilities.Feature` project, which is the core of your application logic. As your documentation states, this is where the CQRS pattern is implemented, promoting a Vertical Slice Architecture.
+* **`Application/`**: Holds the core application logic, implementing CQRS and Vertical Slice Architecture. It contains feature-specific handlers and business rules. This layer depends on `Core` but knows nothing about `Api` or `Infrastructure`.
 
-* **`Core/`**: This contains the foundational building blocks of your application that have minimal dependencies. Projects for shared exceptions and constants reside here, which can be referenced by any other project in the solution.
+* **`Core/`**: Contains the foundational building blocks of the entire solution. These projects have minimal to zero external dependencies and include shared domain models, exceptions, and constants. All other layers depend on `Core`.
 
-* **`Data/`**: This is your data access layer. It's well-organized with abstractions (`RA.Utilities.Data.Abstractions`) and a concrete implementation using Entity Framework (`RA.Utilities.Data.EntityFramework`).
+* **`Data/`**: The data access layer, responsible for persistence. It includes abstractions (`RA.Utilities.Data.Abstractions`) and a concrete implementation using Entity Framework (`RA.Utilities.Data.EntityFramework`).
 
-* **`Infrastructure/`**: This folder is for projects that interact with external systems. The `A.Utilities.Integrations` project is a good example, standardizing how you call other APIs.
+* **`Infrastructure/`**: For projects that interact with out-of-process, external systems. The `RA.Utilities.Integrations` project is a good example, standardizing how you call other APIs.
 
-* **`Logging/`**: You've correctly isolated logging as a cross-cutting concern into its own set of projects, making it easy to manage and configure.
+* **`Logging/`**: Isolates logging as a cross-cutting concern, making it easy to manage and configure across the entire application.
 
-* **`documentation/`**: It's great to see documentation treated as a first-class citizen within the solution structure.
+* **`documentation/`**: Treats documentation as a first-class citizen within the solution.
 
-Overall, this is a robust structure for a reusable utilities library. It's clean, scalable, and easy for other developers to understand.
+This structure enforces the **Dependency Rule**: source code dependencies can only point inwards. For example, `Api` can depend on `Application`, but `Application` cannot depend on `Api`. This makes the core business logic independent of any specific UI or infrastructure.
 
 ## How the Pieces Fit Together
 The solution is broken down into several NuGet packages, each addressing a specific concern:
