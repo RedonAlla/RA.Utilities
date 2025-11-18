@@ -65,7 +65,7 @@ jobs:
           grep -oP '<TargetFramework>[^<]+' "${{ env.PROJECT_FILE_PATH }}" || echo "No TargetFramework found"
 
       - name: Restore dependencies
-        run: dotnet restore "${{ env.PROJECT_FILE_PATH }}"
+        run: dotnet restore
 
       - name: Build project
         run: dotnet build "${{ env.PROJECT_FILE_PATH }}" --configuration Release --no-restore
@@ -77,8 +77,7 @@ jobs:
             --configuration Release \
             --no-build \
             --no-restore \
-            --output ./nuget-packages \
-            -p:PackageVersion="${{ env.PACKAGE_VERSION }}" # Override is kept to ensure the extracted version is used
+            --output ./nuget-packages 
 
       - name: List generated packages
         run: ls -la ./nuget-packages/

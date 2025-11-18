@@ -2,10 +2,24 @@
 
 [![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Api.Middlewares.svg)](https://www.nuget.org/packages/RA.Utilities.Api.Middlewares/)
 [![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
-[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?logo=mit)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Api.Middlewares.svg)](https://www.nuget.org/packages/RA.Utilities.Api.Middlewares/)
+[![Documentation](https://img.shields.io/badge/documentation-view-brightgreen.svg)](https://redonalla.github.io/RA.Utilities/nuget-packages/api/ApiMiddlewares/)
 
 `RA.Utilities.Api.Middlewares` provides a collection of useful ASP.NET Core middlewares to solve common cross-cutting concerns. It includes a high-performance middleware for logging HTTP requests/responses and another for enforcing the presence of required headers like `X-Request-Id` to ensure traceability.
+
+## 📚 Table of Contents
+
+- Getting started
+- Dependencies
+- Features
+  - HTTP Logging Middleware
+  - Default Headers Middleware
+- Additional documentation
+- Contributing
+- License
+
+---
 
 ## Getting started
 
@@ -146,5 +160,29 @@ For more information on how this package fits into the larger RA.Utilities ecosy
 
 ## Contributing
 
-Contributions are welcome! If you have a suggestion or find a bug, please open an issue to discuss it.
-Please follow the contribution guidelines outlined in the other `RA.Utilities` packages.
+Contributions are welcome! If you have a suggestion or find a bug, please open an issue to discuss it first.
+
+### Pull Request Process
+
+1.  **Fork the Repository**: Start by forking the RA.Utilities repository.
+2.  **Create a Branch**: Create a new branch for your feature or bug fix from the `main` branch. Please use a descriptive name (e.g., `feature/add-auth-helper` or `fix/middleware-bug`).
+3.  **Make Your Changes**: Write your code, ensuring it adheres to the project's coding style.
+4.  **Add Tests**: Add or update unit tests for your changes to ensure correctness and prevent regressions.
+5.  **Update Documentation**: Add or update XML documentation for any new public APIs. If you are adding new functionality, please update the relevant `README.md` file.
+6.  **Verify Locally**: Ensure the solution builds and all tests pass locally before submitting.
+7.  **Submit a Pull Request**: Push your branch to your fork and open a pull request to the `main` branch of the original repository. Provide a clear description of the changes you have made.
+
+### Coding Standards
+
+- **Style**: Follow the coding conventions defined in the `.editorconfig` file at the root of the repository. The build is configured to enforce these styles.
+- **Documentation**: Ensure all public members are documented with clear XML comments.
+- **Commit Messages**: Consider using Conventional Commit messages (e.g., `feat:`, `fix:`, `docs:`) to keep the commit history clean and informative.
+- **Scope**: Keep changes focused. A pull request should address a single feature or bug.
+
+Thank you for contributing!
+
+---
+
+## 📜 License
+
+This project is licensed under the MIT License. See the [LICENSE](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file) file for details.
