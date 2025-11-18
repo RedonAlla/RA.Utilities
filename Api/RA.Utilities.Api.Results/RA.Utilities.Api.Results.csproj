@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Version>10.0.0-rc.22</Version>
+    <Version>10.0.0-rc.223</Version>
     <Title>Utilities Response results</Title>
     <Description>Provides a standardized set of models for creating consistent API responses. This package includes generic wrappers for success, error, and validation failure scenarios, helping to streamline API development and improve client-side handling.</Description>
     <PackageTags>RA;Utilities;API;Models;Response;Results;Standardization;AspNetCore;Web;Contracts</PackageTags>
