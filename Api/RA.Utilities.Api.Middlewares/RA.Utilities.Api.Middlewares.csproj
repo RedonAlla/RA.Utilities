@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-		<Version>10.0.0</Version>
+		<Version>10.0.0.rc3</Version>
 		<Title>RA Middlewares</Title>
 		<Description>RA.Utilities.Api.Middlewares provides a simple and efficient ASP.NET Core middleware for logging HTTP request and response details. It's designed to be easy to integrate, configurable, and performant, using Microsoft.IO.RecyclableMemoryStream to minimize memory allocations and improve application performance.</Description>
 		<Summary>An efficient and configurable ASP.NET Core middleware for logging HTTP requests and responses with structured data.</Summary>
