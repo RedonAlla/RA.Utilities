@@ -2,9 +2,9 @@
 
 [![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Api.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api/)
 [![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
-[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?logo=mit)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Api.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api/)
-[![Documentation](https://img.shields.io/badge/documentation-view-brightgreen.svg)](https://redonalla.github.io/RA.Utilities/nuget-packages/api/utilities_api/)
+[![Documentation](https://img.shields.io/badge/documentation-view-brightgreen.svg?logo=readthedocs&logoColor=fff)](https://redonalla.github.io/RA.Utilities/nuget-packages/api/utilities_api/)
 
 `RA.Utilities.Api` provides essential utilities for building robust and consistent ASP.NET Core APIs. It solves common challenges like inconsistent error handling and messy endpoint organization by providing exception handling middleware, standardized response helpers, and a clean pattern for registering endpoints.
 
