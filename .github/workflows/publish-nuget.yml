@@ -64,8 +64,7 @@ jobs:
             --configuration Release \
             --no-build \
             --no-restore \
-            --output ./nuget-packages \
-            --no-warn NU5104
+            --output ./nuget-packages
 
       - name: List generated packages
         run: ls -la ./nuget-packages/
