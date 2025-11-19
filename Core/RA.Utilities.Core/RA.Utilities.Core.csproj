@@ -9,6 +9,7 @@
 		<PackageId>RA.Utilities.Core</PackageId>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageReleaseNotesFile>releasenotes.md</PackageReleaseNotesFile>
+		<NoWarn>$(NoWarn);NU5104</NoWarn>
 	</PropertyGroup>
 
   <ItemGroup>
