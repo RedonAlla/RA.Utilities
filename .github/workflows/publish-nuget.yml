@@ -37,20 +37,7 @@ jobs:
           PROJECT_FILE_PATH=$(find . -type f -name "${PACKAGE_NAME}.csproj" | head -n 1)
           echo "PROJECT_FILE_PATH=${PROJECT_FILE_PATH}" >> $GITHUB_ENV
 
-          # Use msbuild to reliably get the final PackageVersion property
-          # This correctly evaluates Directory.Build.props
-          # The command runs a specific target that prints the version and then stops the build.
-          PACKAGE_VERSION=$(dotnet build "${PROJECT_FILE_PATH}" -t:GetPackageVersion -p:Configuration=Release -v:q -noconsolelogger "/p:CustomAfterMicrosoftCommonTargets=$(pwd)/GetProperty.targets" | tr -d '\r\n')
-          echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> $GITHUB_ENV
-
-          # Determine if it's a pre-release
-          IS_PRERELEASE=$(echo "$PACKAGE_VERSION" | grep -q "-" && echo "true" || echo "false")
-          echo "IS_PRERELEASE=${IS_PRERELEASE}" >> $GITHUB_ENV
-
-      - name: Extract package version
-        id: extract_version
-        run: |
-          VERSION=$(grep -oPm1 "(?<=<Version>)[^<]+" ${{ env.PROJECT_FILE_PATH}})
+          VERSION=$(grep -oPm1 "(?<=<Version>)[^<]+" "${PROJECT_FILE_PATH}")
           if [ -z "$VERSION" ]; then
             echo "::error::Failed to extract PACKAGE_VERSION from project file."
             exit 1
