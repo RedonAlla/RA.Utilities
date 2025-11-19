@@ -17,7 +17,7 @@
 	</ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../RA.Utilities.Data.Abstractions/RA.Utilities.Data.Abstractions.csproj" PrivateAssets="All" />
+    <ProjectReference Include="../RA.Utilities.Data.Abstractions/RA.Utilities.Data.Abstractions.csproj" />
   </ItemGroup>
 
   <ItemGroup>
