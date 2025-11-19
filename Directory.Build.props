@@ -1,12 +1,6 @@
 <Project>
   <PropertyGroup>
 
-    <!-- Centralized Versioning -->
-    <VersionPrefix>10.0.0</VersionPrefix>
-    <VersionSuffix>rc.2</VersionSuffix>
-    <PackageVersion>$(VersionPrefix)-$(VersionSuffix)</PackageVersion>
-    <InformationalVersion>$(PackageVersion)</InformationalVersion>
-  
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
 		<IncludeSymbols>true</IncludeSymbols>
