@@ -1,13 +1,10 @@
-<p align="center">
-  <img src="https://raw.githubusercontent.com/RedonAlla/RA.Utilities/main/Assets/Images/constant.svg" alt="RA.Utilities.Core.Constants Logo" width="128">
-</p>
-
 # RA.Utilities.Core.Constants
 
 [![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Core.Constants.svg)](https://www.nuget.org/packages/RA.Utilities.Core.Constants/)
 [![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
-[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
-[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Core.Constants.svg)](https://www.nuget.org/packages/RA.Utilities.Core.Constants/)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Core.Constants.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Constants/)
+[![Documentation](https://img.shields.io/badge/documentation-view-brightgreen.svg?logo=readthedocs&logoColor=fff)](https://redonalla.github.io/RA.Utilities/nuget-packages/core/CoreConstants/)
 
 A centralized and consistent set of core constants for the RA Utilities ecosystem. This package helps streamline development, improve code readability, and reduce "magic strings" and "magic numbers" by providing a single source of truth for common values.
 
@@ -34,6 +31,7 @@ Contains integer constants for common HTTP status codes, aligning with standard 
 | Constant Name         | Value | Category           |
 |-----------------------|-------|--------------------|
 | `Success`             | 200   | Success (2xx)      |
+| `Created`             | 201   | Success (2xx)      |
 | `BadRequest`          | 400   | Client Error (4xx) |
 | `Unauthorized`        | 401   | Client Error (4xx) |
 | `Forbidden`           | 403   | Client Error (4xx) |
@@ -61,7 +59,7 @@ Contains default string messages for common API responses. This helps maintain a
 
 ### `HeaderParameters`
 
-Contains constant strings for common HTTP header names.
+Contains constant strings for common HTTP header names, ensuring consistency when accessing or setting headers.
 
 | Constant Name   | Value            | Description                                                              |
 |-----------------|------------------|--------------------------------------------------------------------------|
@@ -134,7 +132,7 @@ public class ProductsController : ControllerBase
         var createdProduct = _productService.Create(newProduct);
 
         // Use constants for a 'Created' response
-        return StatusCode(201, createdProduct); // Or a custom constant like BaseResponseCode.Created if added
+        return StatusCode(BaseResponseCode.Created, createdProduct);
     }
 }
 ```

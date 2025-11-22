@@ -55,7 +55,7 @@ const config: Config = {
 
         },
         blog: {
-          showReadingTime: true,
+          showReadingTime: false,
           feedOptions: {
             type: ['rss', 'atom'],
             xslt: true,
@@ -133,6 +133,7 @@ const config: Config = {
           blogSidebarTitle: 'Changelogs',
           blogSidebarCount: 'ALL',
           blogDescription: 'Lis of Changelogs for RA.Utilities packages',
+          
           feedOptions: {
             type: 'all',
             copyright: `Copyright © ${new Date().getFullYear()} Redon Alla.`,
@@ -163,7 +164,7 @@ const config: Config = {
     },
     blog: {
       sidebar: {
-        groupByYear: true,
+        groupByYear: false,
       },
     },
     navbar: {

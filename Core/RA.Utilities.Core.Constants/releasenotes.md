@@ -1,5 +1,15 @@
 # Release Notes 
-## Version 10.0.0-rc.2
+
+## Version 10.0.0
+![Date Badge](https://img.shields.io/badge/date-19%20November%202025-blue)
+![Date Badge](https://img.shields.io/badge/date-23%20November%202025-blue?style=flat-square)
+
+This is the official stable release of version 10.0.0.
+
+The project version has been updated from `10.0.0-rc.2` to the stable release version `10.0.0` in preparation for a production release. All features and improvements from the release candidate are included.
+
+---
+## Version 10.0.0-rc.2 (Pre-release)
 
 This release focuses on enhancing the clarity, consistency, and completeness of the constants provided by the package. The changes make the constants more intuitive to use and align the code with the documentation.
 
