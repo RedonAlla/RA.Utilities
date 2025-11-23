@@ -31,20 +31,15 @@ jobs:
           dotnet tool list --global || true
           ls -la $HOME/.dotnet/tools || true
 
-      - name: Install expect (for non-interactive prompts)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y expect
-
       - name: Generate nuget-stats.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Opt out of telemetry (documented by SponsorLink)
           SPONSOR_CLI_TELEMETRY_OPTOUT: '1'
         run: |
-          # Non-interactive invocation: pipe a single 'y' to accept usage terms if prompted.
-          # The --tos flag automatically accepts the terms of service for non-interactive environments.
-          dotnet sponsor nuget --org RedonAlla --output nuget-stats.json --tos
+          # Use the full path to the executable to bypass any PATH issues.
+          # The --tos flag accepts the terms of service for non-interactive use.
+          $HOME/.dotnet/tools/dotnet-sponsor nuget --org RedonAlla --output nuget-stats.json --tos
 
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v5
@@ -53,9 +48,4 @@ jobs:
           commit_user_name: "github-actions[bot]"
           commit_user_email: "github-actions[bot]@users.noreply.github.com"
           file_pattern: "nuget-stats.json"
-
-      - name: Configure SSH and push changes
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.NUGET_STATS_DEPLOY_KEY }}
       
