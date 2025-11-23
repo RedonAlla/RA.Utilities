@@ -1,0 +1,32 @@
+name: Update NuGet Stats
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # Runs every Sunday at midnight
+  workflow_dispatch:     # Allows manual triggering
+
+jobs:
+  update-stats:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup.NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install dotnet-sponsor
+        run: dotnet tool install --global dotnet-sponsor
+
+      - name: Generate nuget-stats.json
+        run: dotnet sponsor nuget --org RedonAlla --output nuget-stats.json
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add nuget-stats.json
+          git commit -m "Update NuGet stats"
+          git push
