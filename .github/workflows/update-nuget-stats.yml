@@ -39,7 +39,7 @@ jobs:
         run: |
           # Use the full path to the executable to bypass any PATH issues.
           # The --tos flag accepts the terms of service for non-interactive use.
-          $HOME/.dotnet/tools/dotnet-sponsor nuget --org RedonAlla --output nuget-stats.json --tos
+          $HOME/.dotnet/tools/sponsor nuget --org RedonAlla --output nuget-stats.json --tos
 
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v5
