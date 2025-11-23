@@ -35,7 +35,7 @@ It contains the POCO (Plain Old C# Object) classes that represent the data you w
 such as the path, headers, status code, and body.
 
 ### 2. Ensures Consistency:
-It's a shared dependency for other packages like [`RA.Utilities.Api.Middlewares`](../../api/ApiMiddlewares/index.mdx) (for logging incoming API requests) and
+It's a shared dependency for other packages like [`RA.Utilities.Api.Middlewares`](../../api/RA.Utilities.Api.Middlewares/index.mdx) (for logging incoming API requests) and
 [`RA.Utilities.Integrations`](../../Integrations/index.mdx) (for logging outgoing [HttpClient](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient) requests).
 This guarantees that a log entry for an incoming request has the same structure as a log entry for an outgoing one,
 making logs much easier to query and correlate.

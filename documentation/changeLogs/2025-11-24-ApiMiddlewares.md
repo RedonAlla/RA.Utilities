@@ -3,13 +3,21 @@ title: RA.Utilities.Api.Middlewares
 authors: [RedonAlla]
 ---
 
-## Version 10.0.10-rc.2
-[![NuGet version](https://img.shields.io/badge/NuGet-10.0.10--rc.2-orange?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api.Middlewares/10.0.10-rc.2)
+## Version 10.0.0
+![Date Badge](https://img.shields.io/badge/Publish-24%20November%202025-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-v10.0.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api.Middlewares/10.0.0)
+
+Updated the project from version `10.0.100-rc.2` to `10.0.0`, marking the transition from release candidate to stable release.
+
+<!-- truncate -->
+
+## Version 10.0.0-rc.2
+![Date Badge](https://img.shields.io/badge/Publish-18%20Octomber%202025-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.0--rc.2-orange?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api.Middlewares/10.0.0-rc.2)
 
 This release focuses on significantly improving the documentation and clarifying the purpose and usage of the middlewares provided in this package.
 The goal is to make it easier for developers to implement robust logging and header validation in their APIs.
 
-<!-- truncate -->
 
 ### ✨ New Features & Improvements
 
