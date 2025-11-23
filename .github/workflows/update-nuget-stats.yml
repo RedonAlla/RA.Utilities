@@ -7,23 +7,48 @@ on:
 jobs:
   update-badge:
     runs-on: ubuntu-latest
+    permissions:
+      # Give the workflow permissions to write to the repository
+      contents: write
     steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
     - name: Calculate Total Downloads
       id: downloads
       run: |
-        PACKAGES=("RA.Utilities.Core" "RA.Utilities.Core.Constants  " "RA.Utilities.Core.Exceptions" "RA.Utilities.Api" "RA.Utilities.Api.Middlewares" "RA.Utilities.Api.Results" "RA.Utilities.OpenApi" "RA.Utilities.Authorization" "RA.Utilities.Authentication.JwtBearer" "RA.Utilities.Feature" "RA.Utilities.Data.Entities" "RA.Utilities.Data.Abstractions" "RA.Utilities.Data.EntityFramework" "RA.Utilities.Integrations" "RA.Utilities.Logging.Shared" "RA.Utilities.Logging.Core")
+        # Corrected package names (no trailing spaces)
+        PACKAGES=("RA.Utilities.Core" "RA.Utilities.Core.Constants" "RA.Utilities.Core.Exceptions" "RA.Utilities.Api" "RA.Utilities.Api.Middlewares" "RA.Utilities.Api.Results" "RA.Utilities.OpenApi" "RA.Utilities.Authorization" "RA.Utilities.Authentication.JwtBearer" "RA.Utilities.Feature" "RA.Utilities.Data.Entities" "RA.Utilities.Data.Abstractions" "RA.Utilities.Data.EntityFramework" "RA.Utilities.Integrations" "RA.Utilities.Logging.Shared" "RA.Utilities.Logging.Core")
         TOTAL=0
         for package in "${PACKAGES[@]}"; do
-          URL="https://api.nuget.org/v3/registration3-gz-semver2/$package/index.json"
-          DOWNLOADS=$(curl -s $URL | jq -r '.items[0].count // 0')
+          # Use the NuGet Search API, which provides total downloads directly
+          URL="https://azuresearch-usnc.nuget.org/query?q=packageid:${package,,}&prerelease=true"
+          DOWNLOADS=$(curl -s "$URL" | jq -r '.data[0].totalDownloads // 0')
           TOTAL=$((TOTAL + DOWNLOADS))
           echo "📦 $package: $DOWNLOADS downloads"
         done
         echo "total=$TOTAL" >> $GITHUB_OUTPUT
         echo "🏆 Total Downloads: $TOTAL"
-    
-    - name: Update Repository Badge
+
+    - name: Create JSON for Shields.io Endpoint
       run: |
-        # This would update a badge file or create a dynamic badge
-        # You can use this data to update your README
-        echo "Total Downloads: ${{ steps.downloads.outputs.total }}"
+        TOTAL_DOWNLOADS=${{ steps.downloads.outputs.total }}
+        # Format the number for readability (e.g., 15123 -> 15k)
+        if (( TOTAL_DOWNLOADS > 1000 )); then
+          MESSAGE="$(echo "scale=1; $TOTAL_DOWNLOADS / 1000" | bc)k"
+        else
+          MESSAGE="$TOTAL_DOWNLOADS"
+        fi
+        
+        # Create the JSON file for the shields.io endpoint badge
+        mkdir -p ./.github/badges
+        echo '{"schemaVersion": 1, "label": "Total Downloads", "message": "'"$MESSAGE"'", "color": "blue"}' > ./.github/badges/total-downloads.json
+
+    - name: Commit and push updated badge data
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: "chore: Update total downloads badge data"
+        file_pattern: ".github/badges/total-downloads.json"
+        commit_user_name: "github-actions[bot]"
+        commit_user_email: "github-actions[bot]@users.noreply.github.com"
+        commit_author: "github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
