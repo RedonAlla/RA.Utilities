@@ -48,13 +48,12 @@ jobs:
 
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v5
-        run: |
-          with:
-            commit_message: "docs: Update NuGet package statistics"
-            commit_user_name: "github-actions[bot]"
-            commit_user_email: "github-actions[bot]@users.noreply.github.com"
-            file_pattern: "nuget-stats.json"
-            
+        with:
+          commit_message: "docs: Update NuGet package statistics"
+          commit_user_name: "github-actions[bot]"
+          commit_user_email: "github-actions[bot]@users.noreply.github.com"
+          file_pattern: "nuget-stats.json"
+
       - name: Configure SSH and push changes
         uses: webfactory/ssh-agent@v0.9.0
         with:
