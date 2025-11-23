@@ -1,16 +1,22 @@
-<p align="center">
-  <img src="https://raw.githubusercontent.com/RedonAlla/RA.Utilities/7609528d2f5783472cd1b6a8be8cc20957e85fbb/Assets/Images/logging.svg" alt="RA.Utilities.Logging.Core Logo" width="128">
-</p>
-
 # RA.Utilities.Logging.Core
 
 [![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Logging.Core?logo=nuget&label=NuGet)](https://www.nuget.org/packages/RA.Utilities.Logging.Core/)
 [![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
-[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
-[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Logging.Core.svg)](https://www.nuget.org/packages/RA.Utilities.Logging.Core/)
-
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Logging.Core.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Logging.Core/)
+[![Documentation](https://img.shields.io/badge/Documentation-read-brightgreen.svg?logo=readthedocs&logoColor=fff)](https://redonalla.github.io/RA.Utilities/nuget-packages/core/RA.Utilities.Logging.Core/)
 
 `RA.Utilities.Logging.Core` provides a set of opinionated helpers and configurations for setting up structured logging with Serilog in .NET applications. This package simplifies the integration of common sinks (Console, File), enrichers (Exceptions, Sensitive Data), and performance features like asynchronous logging, enabling a robust and consistent logging strategy out of the box.
+
+## 📚 Table of Contents
+
+- Getting Started
+- Dependencies
+- How It Works
+- Usage
+- Contributing
+
+---
 
 ## Purpose
 
@@ -28,6 +34,8 @@ Setting up a comprehensive logging solution from scratch can be repetitive. This
   - `WithExceptionDetails`: Destructures exceptions to include detailed information like the stack trace.
   - `WithSensitiveDataMasking`: Automatically finds and masks sensitive data in log messages based on property names (e.g., "Password", "CreditCard").
 - **Configuration-Driven**: Reads settings from `appsettings.json`, allowing you to easily adjust log levels and other parameters without changing code.
+
+---
 
 ## 🛠️ Installation
 

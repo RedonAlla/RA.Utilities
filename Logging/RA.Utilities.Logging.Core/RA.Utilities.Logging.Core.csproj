@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-		<Version>10.0.0-rc.2</Version>
+		<Version>10.0.0</Version>
 		<Title>RA Utilities Logging</Title>
 		<Description>Provides a set of opinionated helpers and configurations for setting up structured logging with Serilog in .NET applications. This package simplifies the integration of common sinks (Console, File), enrichers (Exceptions, Sensitive Data), and performance features like asynchronous logging, enabling a robust and consistent logging strategy out of the box.</Description>
 		<PackageTags>RA;Utilities;Core;Logging;Serilog;StructuredLogging;Diagnostics;AspNetCore;Configuration</PackageTags>
@@ -18,7 +18,7 @@
 	</ItemGroup>
 
   <ItemGroup>
-		<PackageReference Include="Destructurama.SystemTextJson" />
+		<PackageReference Include="Destructure.SystemTextJson" />
 		<PackageReference Include="Serilog.AspNetCore" />
 		<PackageReference Include="Serilog.Enrichers.Sensitive" />
 		<PackageReference Include="Serilog.Exceptions" />
