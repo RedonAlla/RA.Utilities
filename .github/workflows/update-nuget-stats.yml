@@ -34,17 +34,20 @@ jobs:
       - name: Generate nuget-stats.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Opt out of telemetry (documented by SponsorLink)
+          SPONSOR_CLI_TELEMETRY_OPTOUT: '1'
         run: |
+          # Non-interactive invocation: pipe a single 'y' to accept usage terms if prompted.
           # Prefer calling the tool by its shim path if present (diagnostic + fallback)
           if [ -x "$HOME/.dotnet/tools/dotnet-sponsor" ]; then
             echo "Using $HOME/.dotnet/tools/dotnet-sponsor"
-            "$HOME/.dotnet/tools/dotnet-sponsor" nuget --org RedonAlla --output nuget-stats.json
+            printf 'y\n' | "$HOME/.dotnet/tools/dotnet-sponsor" nuget --org RedonAlla --output nuget-stats.json
           elif [ -x "$HOME/.dotnet/tools/sponsor" ]; then
             echo "Using $HOME/.dotnet/tools/sponsor"
-            "$HOME/.dotnet/tools/sponsor" nuget --org RedonAlla --output nuget-stats.json
+            printf 'y\n' | "$HOME/.dotnet/tools/sponsor" nuget --org RedonAlla --output nuget-stats.json
           else
             echo "Falling back to 'dotnet sponsor' invocation"
-            dotnet sponsor nuget --org RedonAlla --output nuget-stats.json
+            printf 'y\n' | dotnet sponsor nuget --org RedonAlla --output nuget-stats.json
           fi
 
       - name: Commit and push changes
