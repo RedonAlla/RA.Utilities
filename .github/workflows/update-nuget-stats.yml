@@ -1,61 +1,29 @@
-name: Update NuGet Stats
-
+name: Update NuGet Download Badge
 on:
   schedule:
-    - cron: '0 0 * * 0'  # Runs every Sunday at midnight
-  workflow_dispatch:     # Allows manual triggering
-
-permissions:
-  # This permission is required for the softprops/action-gh-release action to create a GitHub release.
-  contents: write
-  # This permission is required to publish to GitHub Packages.
-  packages: write
+    - cron: '0 0 * * *'  # Daily at midnight
+  workflow_dispatch:      # Manual trigger
 
 jobs:
-  update-stats:
-    permissions:
-      # Grant write permission to commit and push the updated stats file
-      contents: write
+  update-badge:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Setup.NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.*'
-
-      - name: Install dotnet-sponsor
-        run: dotnet tool install --global dotnet-sponsor
-
-      - name: Add .dotnet/tools to PATH
-        run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
-
-      - name: List installed dotnet tools (diagnostic)
-        run: |
-          dotnet tool list --global || true
-          ls -la $HOME/.dotnet/tools || true
-
-      - name: Install and Authenticate GitHub CLI
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gh
-          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
-          
-      - name: Generate nuget-stats.json
-        run: |
-          # Use the full path to the executable to bypass any PATH issues.
-          # The --tos flag accepts the terms of service for non-interactive use.
-          $HOME/.dotnet/tools/sponsor nuget --org RedonAlla --output nuget-stats.json --tos
-
-      - name: Commit and push changes
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "docs: Update NuGet package statistics"
-          commit_user_name: "github-actions[bot]"
-          commit_user_email: "github-actions[bot]@users.noreply.github.com"
-          file_pattern: "nuget-stats.json"
-      
+    - name: Calculate Total Downloads
+      id: downloads
+      run: |
+        PACKAGES=("RA.Utilities.Core" "RA.Utilities.Core.Constants  " "RA.Utilities.Core.Exceptions" "RA.Utilities.Api" "RA.Utilities.Api.Middlewares" "RA.Utilities.Api.Results" "RA.Utilities.OpenApi" "RA.Utilities.Authorization" "RA.Utilities.Authentication.JwtBearer" "RA.Utilities.Feature" "RA.Utilities.Data.Entities" "RA.Utilities.Data.Abstractions" "RA.Utilities.Data.EntityFramework" "RA.Utilities.Integrations" "RA.Utilities.Logging.Shared" "RA.Utilities.Logging.Core")
+        TOTAL=0
+        for package in "${PACKAGES[@]}"; do
+          URL="https://api.nuget.org/v3/registration3-gz-semver2/$package/index.json"
+          DOWNLOADS=$(curl -s $URL | jq -r '.items[0].count // 0')
+          TOTAL=$((TOTAL + DOWNLOADS))
+          echo "📦 $package: $DOWNLOADS downloads"
+        done
+        echo "total=$TOTAL" >> $GITHUB_OUTPUT
+        echo "🏆 Total Downloads: $TOTAL"
+    
+    - name: Update Repository Badge
+      run: |
+        # This would update a badge file or create a dynamic badge
+        # You can use this data to update your README
+        echo "Total Downloads: ${{ steps.downloads.outputs.total }}"
