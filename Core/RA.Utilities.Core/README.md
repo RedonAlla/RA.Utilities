@@ -82,4 +82,4 @@ var result = await FindUserAsync(userId)
 
 ## Additional documentation
 
-For more information on how this package fits into the larger RA.Utilities ecosystem, please see the main repository [documentation](http://localhost:3000/RA.Utilities/nuget-packages/core/UtilitiesCore/).
+For more information on how this package fits into the larger RA.Utilities ecosystem, please see the main repository [documentation](https://redonalla.github.io/RA.Utilities/nuget-packages/core/UtilitiesCore/).
