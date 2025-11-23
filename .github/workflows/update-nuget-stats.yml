@@ -26,10 +26,26 @@ jobs:
       - name: Add .dotnet/tools to PATH
         run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
 
+      - name: List installed dotnet tools (diagnostic)
+        run: |
+          dotnet tool list --global || true
+          ls -la $HOME/.dotnet/tools || true
+
       - name: Generate nuget-stats.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: dotnet sponsor nuget --org RedonAlla --output nuget-stats.json
+        run: |
+          # Prefer calling the tool by its shim path if present (diagnostic + fallback)
+          if [ -x "$HOME/.dotnet/tools/dotnet-sponsor" ]; then
+            echo "Using $HOME/.dotnet/tools/dotnet-sponsor"
+            "$HOME/.dotnet/tools/dotnet-sponsor" nuget --org RedonAlla --output nuget-stats.json
+          elif [ -x "$HOME/.dotnet/tools/sponsor" ]; then
+            echo "Using $HOME/.dotnet/tools/sponsor"
+            "$HOME/.dotnet/tools/sponsor" nuget --org RedonAlla --output nuget-stats.json
+          else
+            echo "Falling back to 'dotnet sponsor' invocation"
+            dotnet sponsor nuget --org RedonAlla --output nuget-stats.json
+          fi
 
       - name: Commit and push changes
         run: |
