@@ -1,9 +1,11 @@
 # RA.Utilities.Integrations
 
-[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Integrations.svg)](https://www.nuget.org/packages/RA.Utilities.Integrations/)
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Integrations.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Integrations/)
 [![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
-[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
-[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Integrations.svg)](https://www.nuget.org/packages/RA.Utilities.Integrations/)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Integrations.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Integrations/)
+[![Documentation](https://img.shields.io/badge/Documentation-read-brightgreen.svg?logo=readthedocs&logoColor=fff)](https://redonalla.github.io/RA.Utilities/nuget-packages/Integrations/)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
+
 
 `RA.Utilities.Integrations` is a utility library that simplifies and standardizes HTTP client calls in .NET applications. It solves the problem of managing external API integrations by providing a robust and repeatable pattern that centralizes configuration, simplifies registration, and improves resilience with built-in retry policies.
 
@@ -26,7 +28,7 @@ Install-Package RA.Utilities.Integrations
 ## 🔗 Dependencies
 
 -   [`RA.Utilities.Core.Constants`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/RA.Utilities.Core.Constants/)
--   [`RA.Utilities.Logging.Shared`](https://redonalla.github.io/RA.Utilities/nuget-packages/Logging/Shared/)
+-   [`RA.Utilities.Logging.Shared`](https://redonalla.github.io/RA.Utilities/nuget-packages/Logging/RA.Utilities.Logging.Shared/)
 -   [`Microsoft.AspNetCore.Http`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http)
 -   [`Microsoft.Extensions.DependencyInjection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection)
 -   [`Microsoft.Extensions.Http`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.http)
@@ -165,10 +167,3 @@ public class ProductService
     }
 }
 ```
-
-## 🔗 Dependencies
-
--   **RA.Utilities.Core.Constants**: Used for common constants.
--   **RA.Utilities.Logging.Shared**: Provides shared components for logging.
--   **Microsoft.Extensions.Http**: Core library for `IHttpClientFactory`.
--   **Microsoft.Extensions.Options.DataAnnotations**: For validating configuration settings.

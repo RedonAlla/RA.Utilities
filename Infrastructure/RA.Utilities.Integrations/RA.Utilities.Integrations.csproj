@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-		<Version>10.0.0-rc.2</Version>
+		<Version>10.0.0</Version>
 		<Title>HTTP Client Integrations</Title>
 		<Description>A utility library to simplify and standardize HTTP client calls in .NET applications. It builds upon `IHttpClientFactory` to provide a structured way to configure and use typed HTTP clients for various integrations.</Description>
 		<PackageTags>RA;Core;Integrations;Http Client</PackageTags>
