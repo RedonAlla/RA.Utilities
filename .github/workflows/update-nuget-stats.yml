@@ -47,9 +47,16 @@ jobs:
           dotnet sponsor nuget --org RedonAlla --output nuget-stats.json --tos
 
       - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
         run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
-          git add nuget-stats.json
-          git commit -m "Update NuGet stats"
-          git push
+          with:
+            commit_message: "docs: Update NuGet package statistics"
+            commit_user_name: "github-actions[bot]"
+            commit_user_email: "github-actions[bot]@users.noreply.github.com"
+            file_pattern: "nuget-stats.json"
+            
+      - name: Configure SSH and push changes
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.NUGET_STATS_DEPLOY_KEY }}
+      
