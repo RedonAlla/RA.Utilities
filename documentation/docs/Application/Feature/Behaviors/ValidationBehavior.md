@@ -19,7 +19,7 @@ This is a critical component for building robust and secure applications.
 
 1.  **Clean Handlers**: Your [`IRequestHandler`](../Abstractions/IRequestHandler.md) implementations are freed from the responsibility of validation, allowing them to focus purely on business logic.
 2.  **Short-Circuiting**: If validation fails, the behavior immediately stops the pipeline and returns a structured error response. The handler is never executed with invalid data.
-3.  **Centralized Logic**: Validation rules are defined in dedicated [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/) classes, keeping them separate from the business logic and making them easy to manage and reuse.
+3.  **Centralized Logic**: Validation rules are defined in dedicated `FluentValidation` classes, keeping them separate from the business logic and making them easy to manage and reuse.
 4.  **Consistent Errors**: It guarantees that all validation failures across the application result in a consistent, predictable error response format.
 
 ## ⚙️ How It Works
@@ -32,7 +32,7 @@ For every request sent through the mediator:
 3.  **Executes Validation**: It runs the `ValidateAsync` method on all resolved validators.
 4.  **Checks the Result**:
     - If there are no validation errors, it calls `await next()` to pass the request along the pipeline.
-    - If there are validation errors, it constructs a `Result.Failure` containing a [`ValidationException`](../../../core/RA.Utilities.Core.Exceptions/) and returns it immediately.
+    - If there are validation errors, it constructs a `Result.Failure` containing a [`ValidationFailure`](../../../core/RA.Utilities.Core.Exceptions/) and returns it immediately.
 
 ## 🚀 Usage Example
 
