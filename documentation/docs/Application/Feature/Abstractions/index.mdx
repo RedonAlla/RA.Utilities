@@ -18,7 +18,7 @@ By inheriting from these base handlers, you gain several key benefits "for free"
 
 1. **Automatic Logging**: The base handlers automatically log the start and end of every request they process, providing consistent and valuable diagnostic information.
 2. **Robust Exception Handling**: Any unhandled exception that occurs within your handler's business logic is automatically caught.
-It is then wrapped in a `Result.Failure` object (from the [`RA.Utilities.Core`](../../../core/UtilitiesCore/index.mdx) package),
+It is then wrapped in a `Result.Failure` object (from the [`RA.Utilities.Core`](../../../core/RA.Utilities.Core/index.mdx) package),
 ensuring your application doesn't crash and returns a predictable error response.
 3. **Consistent Structure**: They enforce a consistent structure for all your handlers by providing a single `HandleAsync` method that you must override.
 This is where you place your core business logic.

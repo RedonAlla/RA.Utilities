@@ -16,14 +16,14 @@ Here's a breakdown of their differences:
 ### [`IPipelineBehavior<TRequest, TResponse>`](./IPipelineBehavior.md)
 * **Purpose**: [`IPipelineBehavior`](./IPipelineBehavior.md) is designed to intercept and wrap the execution of **requests** (commands and queries).
 Requests are typically part of a request-response pattern, where a single request is sent, and a single response is expected back.
-* **Message Type**: It operates on types that implement [`IRequest<TResponse>`](./IRequest.md) (for requests with a response) or [`IRequest`](./IRequest.md) (for requests without a specific response, but still returning a [`Result`](../../../core/UtilitiesCore/Results.md)).
+* **Message Type**: It operates on types that implement [`IRequest<TResponse>`](./IRequest.md) (for requests with a response) or [`IRequest`](./IRequest.md) (for requests without a specific response, but still returning a [`Result`](../../../core/RA.Utilities.Core/Results.md)).
 * **Mediator Method**: Used with the `IMediator.Send()` method.
 * **Relationship**: There is a **one-to-one** relationship between a request and its primary [`IRequestHandler`](./IRequestHandler.md).
 The [`IPipelineBehavior`](./IPipelineBehavior.md) wraps this single handler.
 * **Return Type**: The `HandleAsync` method of [`IPipelineBehavior`](./IPipelineBehavior.md) returns a `Task<Result<TResponse>>` (or `Task<Result>`).
 This means behaviors can:
   * **Modify the response**: A behavior can transform the `TResponse` before it's returned.
-  * **Short-circuit the pipeline**: If a condition (like validation failure) is met, the behavior can return an error [`Result`](../../../core/UtilitiesCore/Results.md) immediately, preventing the actual [`IRequestHandler`](./IRequestHandler.md) from executing. This is crucial for concerns like validation.
+  * **Short-circuit the pipeline**: If a condition (like validation failure) is met, the behavior can return an error [`Result`](../../../core/RA.Utilities.Core/Results.md) immediately, preventing the actual [`IRequestHandler`](./IRequestHandler.md) from executing. This is crucial for concerns like validation.
 * **Delegate**: It receives a [`RequestHandlerDelegate<TResponse>`](../Models/RequestHandlerDelegate.md) (or [RequestHandlerDelegate](../Models/RequestHandlerDelegate.md)) as its next parameter.
 This delegate, when invoked, will execute the next stage in the request pipeline (either another behavior or the [`IRequestHandler`](../Abstractions/IRequestHandler.md)).
 * **Common Use Cases**:
@@ -31,7 +31,7 @@ This delegate, when invoked, will execute the next stage in the request pipeline
   * **Logging**: Log request and response details.
   * **Transaction Management**: Wrap the handler execution in a database transaction.
   * **Caching**: Intercept queries to return cached results or cache results after execution.
-  * **Error Handling**: Catch exceptions and transform them into standardized [`Result`](../../../core/UtilitiesCore/Results.md) failures.
+  * **Error Handling**: Catch exceptions and transform them into standardized [`Result`](../../../core/RA.Utilities.Core/Results.md) failures.
 
 ### [`INotificationBehavior<TNotification>`](./INotificationBehavior.md)
 * **Purpose: [`INotificationBehavior<TNotification>`](./INotificationBehavior.md)** is designed to intercept and wrap the execution of **notifications** (events).

@@ -38,7 +38,7 @@ The package provides several key components to achieve this clean architecture:
 
 3. **Seamless Integration with RA.Utilities.Core**:
 
-  * **Purpose**: The handlers are designed to return a [`Result<T>`](../../core/UtilitiesCore/Results.md) object from the [`RA.Utilities.Core`](../../core/UtilitiesCore/index.mdx) package.
+  * **Purpose**: The handlers are designed to return a [`Result<T>`](../../core/RA.Utilities.Core/Results.md) object from the [`RA.Utilities.Core`](../../core/RA.Utilities.Core/index.mdx) package.
   * **Benefit**: This allows you to explicitly communicate the outcome of an operation—either success with a value or a predictable failure (like "user not found" or "item already exists")—without using exceptions for control flow.
   This leads to cleaner, more readable, and more predictable code.
 
@@ -85,7 +85,7 @@ Install-Package RA.Utilities.Feature
 ## 🔗 Dependencies
 
 -  [`RA.Utilities.Core.Exceptions`](../../core/RA.Utilities.Core.Exceptions/index.mdx)
--  [`RA.Utilities.Core`](../../core/UtilitiesCore/index.mdx)
+-  [`RA.Utilities.Core`](../../core/RA.Utilities.Core/index.mdx)
 -  [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/)
 -  [`Microsoft.Extensions.DependencyInjection.Abstractions`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection)
 -  [`Microsoft.Extensions.Logging.Abstractions`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.logging.abstractions)

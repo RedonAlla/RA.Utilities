@@ -3,7 +3,7 @@ Namespace: RA.Utilities.Api.Mapper
 ```
 
 The `ErrorResultResponse` is a static helper class that provides a clean, centralized way to map exceptions from the
-[`RA.Utilities.Core`](../../../core/UtilitiesCore/index.mdx) layer into standardized `IResult` objects for ASP.NET Core Minimal APIs.
+[`RA.Utilities.Core`](../../../core/RA.Utilities.Core/index.mdx) layer into standardized `IResult` objects for ASP.NET Core Minimal APIs.
 It is a key component for creating consistent error responses when using the [`Result<T>`](../../ApiResults/index.mdx) pattern.
 
 ## 🎯 Purpose

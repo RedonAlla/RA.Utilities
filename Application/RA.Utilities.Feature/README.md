@@ -24,7 +24,7 @@ dotnet add package RA.Utilities.Feature
 ## 🔗 Dependencies
 
 -   [`RA.Utilities.Core.Exceptions`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/RA.Utilities.Core.Exceptions/)
--   [`RA.Utilities.Core`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/UtilitiesCore/)
+-   [`RA.Utilities.Core`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/RA.Utilities.Core/)
 -   [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/)
 -   [`Microsoft.Extensions.DependencyInjection.Abstractions`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection)
 -   [`Microsoft.Extensions.Logging.Abstractions`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.logging.abstractions)
