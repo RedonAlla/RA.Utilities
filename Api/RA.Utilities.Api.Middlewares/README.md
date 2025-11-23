@@ -37,7 +37,7 @@ Or through the NuGet Package Manager in Visual Studio.
 
 - [`RA.Utilities.Core.Constants`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/RA.Utilities.Core.Constants/)
 - [`RA.Utilities.Logging.Shared`](https://redonalla.github.io/RA.Utilities/nuget-packages/Logging/RA.Utilities.Logging.Shared/)
-- [`RA.Utilities.Api.Results`](https://redonalla.github.io/RA.Utilities/nuget-packages/api/ApiResults/)
+- [`RA.Utilities.Api.Results`](https://redonalla.github.io/RA.Utilities/nuget-packages/api/RA.Utilities.Api.Results/)
 - [`Microsoft.AspNetCore.App`](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/metapackage-app)
 - [`Microsoft.IO.RecyclableMemoryStream`](https://www.nuget.org/packages/Microsoft.IO.RecyclableMemoryStream)
 

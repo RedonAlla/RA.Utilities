@@ -7,14 +7,14 @@ sidebar_position: 4
 Namespace: RA.Utilities.OpenApi.DocumentTransformers
 ```
 
-The `ResponsesDocumentTransformer` is an `IOpenApiDocumentTransformer` that automatically adds standardized error responses to every operation in your OpenAPI document. It ensures your API contract accurately reflects the structured error models from the [`RA.Utilities.Api.Results`](../../ApiResults/index.mdx) package.
+The `ResponsesDocumentTransformer` is an `IOpenApiDocumentTransformer` that automatically adds standardized error responses to every operation in your OpenAPI document. It ensures your API contract accurately reflects the structured error models from the [`RA.Utilities.Api.Results`](../../RA.Utilities.Api.Results/index.mdx) package.
 
 ### 🎯 Purpose
 
 The `ResponsesDocumentTransformer` is a powerful utility that automates the documentation of your API's standardized error responses.
 
 In a well-designed API, you want to return consistent, structured error responses for common HTTP status codes like `400 Bad Request` or `404 Not Found`.
-The [`RA.Utilities.Api.Results`](../../ApiResults/index.mdx) package provides exactly these models ([`BadRequestResponse`](../../ApiResults/BadRequestResponse.md), [`NotFoundResponse`](../../ApiResults/NotFoundResponse.md), etc.).
+The [`RA.Utilities.Api.Results`](../../RA.Utilities.Api.Results/index.mdx) package provides exactly these models ([`BadRequestResponse`](../../RA.Utilities.Api.Results/BadRequestResponse.md), [`NotFoundResponse`](../../RA.Utilities.Api.Results/NotFoundResponse.md), etc.).
 
 However, to make these visible in your OpenAPI (Swagger) documentation, you would normally have to decorate every single API endpoint with multiple `[ProducesResponseType]` attributes.
 This is highly repetitive, clutters your controller code, and is easy to forget.
@@ -25,12 +25,12 @@ The ResponsesDocumentTransformer solves this problem elegantly.
 
 1.  **Global Application**: It scans every API operation in the generated OpenAPI document.
 2.  **Adds Standard Responses**: For each operation, it adds response definitions for the following HTTP status codes:
-    *   `400 Bad Request`: Uses the schema for [`BadRequestResponse`](../../ApiResults/BadRequestResponse.md).
-    *   `404 Not Found`: Uses the schema for [`NotFoundResponse`](../../ApiResults/NotFoundResponse.md).
-    *   `409 Conflict`: Uses the schema for [`ConflictResponse`](../../ApiResults/ConflictResponse.md).
-    *   `500 Internal Server Error`: Uses the schema for [`ErrorResponse`](../../ApiResults/ErrorResponse.md)..
+    *   `400 Bad Request`: Uses the schema for [`BadRequestResponse`](../../RA.Utilities.Api.Results/BadRequestResponse.md).
+    *   `404 Not Found`: Uses the schema for [`NotFoundResponse`](../../RA.Utilities.Api.Results/NotFoundResponse.md).
+    *   `409 Conflict`: Uses the schema for [`ConflictResponse`](../../RA.Utilities.Api.Results/ConflictResponse.md).
+    *   `500 Internal Server Error`: Uses the schema for [`ErrorResponse`](../../RA.Utilities.Api.Results/ErrorResponse.md)..
 3.  **Prevents Duplicates**: It is smart enough not to add a response if one for that status code has already been defined on the operation (e.g., via a `[ProducesResponseType]` attribute).
-4. **Uses Correct Schemas**: It intelligently uses the schemas from the [`RA.Utilities.Api.Results`](../../ApiResults/index.mdx) models ([`BadRequestResponse`](../../ApiResults/BadRequestResponse.md), [`NotFoundResponse`](../../ApiResults/NotFoundResponse.md), [`ConflictResponse`](../../ApiResults/ConflictResponse.md), and [`ErrorResponse`](../../ApiResults/ErrorResponse.md)). This means your Swagger UI will show a precise JSON example of the error body for each status code.
+4. **Uses Correct Schemas**: It intelligently uses the schemas from the [`RA.Utilities.Api.Results`](../../RA.Utilities.Api.Results/index.mdx) models ([`BadRequestResponse`](../../RA.Utilities.Api.Results/BadRequestResponse.md), [`NotFoundResponse`](../../RA.Utilities.Api.Results/NotFoundResponse.md), [`ConflictResponse`](../../RA.Utilities.Api.Results/ConflictResponse.md), and [`ErrorResponse`](../../RA.Utilities.Api.Results/ErrorResponse.md)). This means your Swagger UI will show a precise JSON example of the error body for each status code.
 
 ### 🚀 Usage
 

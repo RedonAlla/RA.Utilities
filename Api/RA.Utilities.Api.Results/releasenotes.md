@@ -4,7 +4,7 @@
 ![Date Badge](https://img.shields.io/badge/Publish-23%20November%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-v10.0.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api.Results/10.0.0)
 
-Changed project version from a `10.0.0-rc.2` release candidate to final version `10.0.0` for production readiness.
+Updated the project from release candidate version `10.0.0-rc.2` to the final version `10.0.0`, indicating readiness for production use. 
 
 ## Version 10.0.0-rc.2
 

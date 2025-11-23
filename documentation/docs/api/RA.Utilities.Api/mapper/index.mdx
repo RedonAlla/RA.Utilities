@@ -39,7 +39,7 @@ public static class SuccessResponse
 
 * **Purpose**: This class is responsible for transforming specific exception types into structured error **response bodies** (DTOs).
 * **How it works*: It has methods that take a specific exception (e.g., [`NotFoundException`](../../../core/RA.Utilities.Core.Exceptions/NotFoundException.md), [`ConflictException`](../../../core/RA.Utilities.Core.Exceptions/ConflictException.md))
-and map its properties to a corresponding response model (e.g., [`NotFoundResponse`](../../ApiResults/NotFoundResponse.md), [`ConflictResponse`](../../ApiResults/ConflictResponse.md)).
+and map its properties to a corresponding response model (e.g., [`NotFoundResponse`](../../RA.Utilities.Api.Results/NotFoundResponse.md), [`ConflictResponse`](../../RA.Utilities.Api.Results/ConflictResponse.md)).
 It deals with the "*what*" of the error—creating the JSON payload—but does not create the final [`IResult`](../../../core/RA.Utilities.Core/Results.md) itself.
 It's an internal helper used by [`ErrorResultResponse`](../../RA.Utilities.Api/mapper/ErrorResultResponse.md).
 

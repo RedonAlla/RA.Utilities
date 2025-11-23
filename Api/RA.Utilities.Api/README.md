@@ -40,7 +40,7 @@ Or through the NuGet Package Manager in Visual Studio.
 
 ## 🔗 Dependencies
 
--   [`RA.Utilities.Api.Results`](https://redonalla.github.io/RA.Utilities/nuget-packages/api/ApiResults/)
+-   [`RA.Utilities.Api.Results`](https://redonalla.github.io/RA.Utilities/nuget-packages/api/RA.Utilities.Api.Results/)
 -   [`RA.Utilities.Core.Exceptions`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/CoreExceptions/)
 -   [`Microsoft.AspNetCore.App`](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/metapackage-app)
 

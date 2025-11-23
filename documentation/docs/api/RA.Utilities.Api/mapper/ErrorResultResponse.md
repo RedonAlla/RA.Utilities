@@ -4,18 +4,18 @@ Namespace: RA.Utilities.Api.Mapper
 
 The `ErrorResultResponse` is a static helper class that provides a clean, centralized way to map exceptions from the
 [`RA.Utilities.Core`](../../../core/RA.Utilities.Core/index.mdx) layer into standardized `IResult` objects for ASP.NET Core Minimal APIs.
-It is a key component for creating consistent error responses when using the [`Result<T>`](../../ApiResults/index.mdx) pattern.
+It is a key component for creating consistent error responses when using the [`Result<T>`](../../RA.Utilities.Api.Results/index.mdx) pattern.
 
 ## 🎯 Purpose
 
-When your application logic returns a [`Result<T>`](../../ApiResults/index.mdx) that is in a `Failure` state, it contains an `Exception` object
+When your application logic returns a [`Result<T>`](../../RA.Utilities.Api.Results/index.mdx) that is in a `Failure` state, it contains an `Exception` object
 (e.g., [`NotFoundException`](../../../core/RA.Utilities.Core.Exceptions/NotFoundException.md), [`ConflictException`](../../../core/RA.Utilities.Core.Exceptions/ConflictException.md)). The `ErrorResultResponse.Result` method inspects this exception and automatically generates the appropriate HTTP error response (`404 Not Found`, `409 Conflict`, etc.) using the standardized models from `RA.Utilities.Api.Results`.
 
 This allows you to handle all expected business-level failures in a single, declarative line of code within your API endpoints, keeping them clean and free of repetitive error-handling logic.
 
 ## 🚀 How to Use
 
-The primary use case for `ErrorResultResponse` is within the `Match` method of a [`Result<T>`](../../ApiResults/index.mdx) object. The `ErrorResultResponse.Result` method has the signature `Func<Exception, IResult>`, which perfectly matches the signature required by the `failure` delegate of `Match`.
+The primary use case for `ErrorResultResponse` is within the `Match` method of a [`Result<T>`](../../RA.Utilities.Api.Results/index.mdx) object. The `ErrorResultResponse.Result` method has the signature `Func<Exception, IResult>`, which perfectly matches the signature required by the `failure` delegate of `Match`.
 
 This allows you to pass the method directly, creating highly readable and maintainable endpoint code.
 
