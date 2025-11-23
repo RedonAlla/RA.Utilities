@@ -41,7 +41,7 @@ public static class SuccessResponse
 * **How it works*: It has methods that take a specific exception (e.g., [`NotFoundException`](../../../core/CoreExceptions//NotFoundException.md), [`ConflictException`](../../../core/CoreExceptions//ConflictException.md))
 and map its properties to a corresponding response model (e.g., [`NotFoundResponse`](../../ApiResults/NotFoundResponse.md), [`ConflictResponse`](../../ApiResults/ConflictResponse.md)).
 It deals with the "*what*" of the error—creating the JSON payload—but does not create the final [`IResult`](../../../core/UtilitiesCore/Results.md) itself.
-It's an internal helper used by [`ErrorResultResponse`](../../utilities_api/mapper/ErrorResultResponse.md).
+It's an internal helper used by [`ErrorResultResponse`](../../RA.Utilities.Api/mapper/ErrorResultResponse.md).
 
 ```csharp
 public static class ErrorResultMapper
