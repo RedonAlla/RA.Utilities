@@ -31,6 +31,14 @@ jobs:
           dotnet tool list --global || true
           ls -la $HOME/.dotnet/tools || true
 
+      - name: Install and Authenticate GitHub CLI
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gh
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+
       - name: Generate nuget-stats.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
