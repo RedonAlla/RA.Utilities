@@ -18,7 +18,7 @@
 	</ItemGroup>
 
   <ItemGroup>
-		<PackageReference Include="Destructure.SystemTextJson" />
+		<PackageReference Include="Destructurama.SystemTextJson" />
 		<PackageReference Include="Serilog.AspNetCore" />
 		<PackageReference Include="Serilog.Enrichers.Sensitive" />
 		<PackageReference Include="Serilog.Exceptions" />
