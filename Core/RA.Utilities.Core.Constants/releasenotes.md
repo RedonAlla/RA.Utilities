@@ -1,8 +1,8 @@
 # Release Notes 
 
 ## Version 10.0.0
-![Date Badge](https://img.shields.io/badge/date-19%20November%202025-blue)
-![Date Badge](https://img.shields.io/badge/date-23%20November%202025-blue?style=flat-square)
+![Date Badge](https://img.shields.io/badge/date-23%20November%202025-blue)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Constants/10.0.0)
 
 This is the official stable release of version 10.0.0.
 
@@ -10,6 +10,8 @@ The project version has been updated from `10.0.0-rc.2` to the stable release ve
 
 ---
 ## Version 10.0.0-rc.2 (Pre-release)
+![Date Badge](https://img.shields.io/badge/date-18%20Octomber%202025-blue)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.0--rc.2-orange?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Constants/10.0.0-rc.2)
 
 This release focuses on enhancing the clarity, consistency, and completeness of the constants provided by the package. The changes make the constants more intuitive to use and align the code with the documentation.
 

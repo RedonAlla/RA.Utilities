@@ -21,7 +21,6 @@ This marks the readiness of the RA Core Constants package for general availabili
 
 This release focuses on enhancing the clarity, consistency, and completeness of the constants provided by the package. The changes make the constants more intuitive to use and align the code with the documentation.
 
-<!-- truncate -->
 
 ### ✨ Key Features
 
