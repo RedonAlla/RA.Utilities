@@ -2,7 +2,7 @@
 
 ## Version 10.0.0
 
-![Date Badge](https://img.shields.io/badge/date-23%20November%202025-blue)
+![Date Badge](https://img.shields.io/badge/Publish-23%20November%202025-blue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Exceptions/10.0.0)
 
 Updated the project version from `10.0.100-rc.2` to the stable release version `10.0.0` in preparation for a production release.
@@ -23,7 +23,7 @@ The goal of this update is to make the `RA.Utilities.Core.Exceptions` package mo
 ---
 
 ## Version 10.0.100-rc.2
-![Date Badge](https://img.shields.io/badge/date-23%20November%202025-blue)
+![Date Badge](https://img.shields.io/badge/Publish-23%20November%202025-blue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.100--rc.2-orange?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Exceptions/10.0.100-rc.2)
 
 This release focuses on clarifying the central role of semantic exceptions within the RA.Utilities ecosystem through greatly improved documentation and usage examples in related packages. While the exception classes themselves have not changed, their purpose and integration are now much clearer.

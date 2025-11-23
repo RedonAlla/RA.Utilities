@@ -25,7 +25,7 @@ Install-Package RA.Utilities.Integrations
 
 ## 🔗 Dependencies
 
--   [`RA.Utilities.Core.Constants`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/CoreConstants/)
+-   [`RA.Utilities.Core.Constants`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/RA.Utilities.Core.Constants/)
 -   [`RA.Utilities.Logging.Shared`](https://redonalla.github.io/RA.Utilities/nuget-packages/Logging/Shared/)
 -   [`Microsoft.AspNetCore.Http`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http)
 -   [`Microsoft.Extensions.DependencyInjection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection)

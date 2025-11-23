@@ -32,7 +32,7 @@ For every request sent through the mediator:
 3.  **Executes Validation**: It runs the `ValidateAsync` method on all resolved validators.
 4.  **Checks the Result**:
     - If there are no validation errors, it calls `await next()` to pass the request along the pipeline.
-    - If there are validation errors, it constructs a `Result.Failure` containing a [`ValidationException`](../../../core/CoreExceptions/) and returns it immediately.
+    - If there are validation errors, it constructs a `Result.Failure` containing a [`ValidationException`](../../../core/RA.Utilities.Core.Exceptions/) and returns it immediately.
 
 ## 🚀 Usage Example
 

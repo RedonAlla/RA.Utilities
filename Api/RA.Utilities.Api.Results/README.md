@@ -28,7 +28,7 @@ Or through the NuGet Package Manager in Visual Studio.
 
 ## 🔗 Dependencies
 
--   [`RA.Utilities.Core.Constants`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/CoreConstants/)
+-   [`RA.Utilities.Core.Constants`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/RA.Utilities.Core.Constants/)
 
 
 ---

@@ -4,7 +4,7 @@
 [![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
 [![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Core.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core/)
-[![Documentation](https://img.shields.io/badge/documentation-view-brightgreen.svg?logo=readthedocs&logoColor=fff)](https://redonalla.github.io/RA.Utilities/nuget-packages/core/UtilitiesCore/)
+[![Documentation](https://img.shields.io/badge/Documentation-read-brightgreen.svg?logo=readthedocs&logoColor=fff)](https://redonalla.github.io/RA.Utilities/nuget-packages/core/UtilitiesCore/)
 
 `RA.Utilities.Core` is a lightweight .NET library designed to enhance error handling by providing a functional `Result` type. It helps you write cleaner, more predictable, and more robust code by avoiding exceptions for expected operational failures.
 

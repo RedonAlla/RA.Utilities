@@ -38,7 +38,7 @@ public static class SuccessResponse
 #### 2. [`ErrorResultMapper`](./ErrorResultMapper)
 
 * **Purpose**: This class is responsible for transforming specific exception types into structured error **response bodies** (DTOs).
-* **How it works*: It has methods that take a specific exception (e.g., [`NotFoundException`](../../../core/CoreExceptions//NotFoundException.md), [`ConflictException`](../../../core/CoreExceptions//ConflictException.md))
+* **How it works*: It has methods that take a specific exception (e.g., [`NotFoundException`](../../../core/RA.Utilities.Core.Exceptions/NotFoundException.md), [`ConflictException`](../../../core/RA.Utilities.Core.Exceptions/ConflictException.md))
 and map its properties to a corresponding response model (e.g., [`NotFoundResponse`](../../ApiResults/NotFoundResponse.md), [`ConflictResponse`](../../ApiResults/ConflictResponse.md)).
 It deals with the "*what*" of the error—creating the JSON payload—but does not create the final [`IResult`](../../../core/UtilitiesCore/Results.md) itself.
 It's an internal helper used by [`ErrorResultResponse`](../../RA.Utilities.Api/mapper/ErrorResultResponse.md).
@@ -105,7 +105,7 @@ Here is a complete, step-by-step example based on the documentation you provided
 ### Step 1: Create a Service That Returns a `Result<T>`
 First, your business logic should not know about HTTP.
 It should simply return a `Result` indicating the outcome of an operation.
-A success result will contain the value, and a failure result will contain a specific exception (like [`NotFoundException`](../../../core/CoreExceptions/NotFoundException.md)).
+A success result will contain the value, and a failure result will contain a specific exception (like [`NotFoundException`](../../../core/RA.Utilities.Core.Exceptions/NotFoundException.md)).
 
 ```csharp showLineNumbers
 using RA.Utilities.Core;

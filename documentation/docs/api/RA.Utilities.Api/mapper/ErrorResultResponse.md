@@ -9,7 +9,7 @@ It is a key component for creating consistent error responses when using the [`R
 ## 🎯 Purpose
 
 When your application logic returns a [`Result<T>`](../../ApiResults/index.mdx) that is in a `Failure` state, it contains an `Exception` object
-(e.g., [`NotFoundException`](../../../core/CoreExceptions/NotFoundException.md), [`ConflictException`](../../../core/CoreExceptions/ConflictException.md)). The `ErrorResultResponse.Result` method inspects this exception and automatically generates the appropriate HTTP error response (`404 Not Found`, `409 Conflict`, etc.) using the standardized models from `RA.Utilities.Api.Results`.
+(e.g., [`NotFoundException`](../../../core/RA.Utilities.Core.Exceptions/NotFoundException.md), [`ConflictException`](../../../core/RA.Utilities.Core.Exceptions/ConflictException.md)). The `ErrorResultResponse.Result` method inspects this exception and automatically generates the appropriate HTTP error response (`404 Not Found`, `409 Conflict`, etc.) using the standardized models from `RA.Utilities.Api.Results`.
 
 This allows you to handle all expected business-level failures in a single, declarative line of code within your API endpoints, keeping them clean and free of repetitive error-handling logic.
 
@@ -21,7 +21,7 @@ This allows you to pass the method directly, creating highly readable and mainta
 
 ### Example
 
-Imagine you have a service that retrieves a product and returns a `Result<Product>`. The result will be a `Failure` containing a [`NotFoundException`](../../../core/CoreExceptions/NotFoundException.md) if the product doesn't exist.
+Imagine you have a service that retrieves a product and returns a `Result<Product>`. The result will be a `Failure` containing a [`NotFoundException`](../../../core/RA.Utilities.Core.Exceptions/NotFoundException.md) if the product doesn't exist.
 
 In your Minimal API endpoint, you can use `ErrorResultResponse.Result` to handle this failure case automatically.
 

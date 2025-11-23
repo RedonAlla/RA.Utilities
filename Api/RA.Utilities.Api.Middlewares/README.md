@@ -4,7 +4,7 @@
 [![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
 [![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Api.Middlewares.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api.Middlewares/)
-[![Documentation](https://img.shields.io/badge/documentation-view-brightgreen.svg?logo=readthedocs&logoColor=fff)](https://redonalla.github.io/RA.Utilities/nuget-packages/api/ApiMiddlewares/)
+[![Documentation](https://img.shields.io/badge/Documentation-read-brightgreen.svg?logo=readthedocs&logoColor=fff)](https://redonalla.github.io/RA.Utilities/nuget-packages/api/ApiMiddlewares/)
 
 `RA.Utilities.Api.Middlewares` provides a collection of useful ASP.NET Core middlewares to solve common cross-cutting concerns. It includes a high-performance middleware for logging HTTP requests/responses and another for enforcing the presence of required headers like `X-Request-Id` to ensure traceability.
 
@@ -35,7 +35,7 @@ Or through the NuGet Package Manager in Visual Studio.
 
 ## 🔗 Dependencies
 
-- [`RA.Utilities.Core.Constants`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/CoreConstants/)
+- [`RA.Utilities.Core.Constants`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/RA.Utilities.Core.Constants/)
 - [`RA.Utilities.Logging.Shared`](https://redonalla.github.io/RA.Utilities/nuget-packages/Logging/Shared/)
 - [`RA.Utilities.Api.Results`](https://redonalla.github.io/RA.Utilities/nuget-packages/api/ApiResults/)
 - [`Microsoft.AspNetCore.App`](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/metapackage-app)

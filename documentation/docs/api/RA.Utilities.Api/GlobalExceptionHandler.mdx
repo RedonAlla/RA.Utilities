@@ -17,8 +17,8 @@ It performs three key actions:
 This is critical for developers to diagnose and fix bugs.
 * **2. Maps the Exception**: It calls [`ErrorResultResponse.Result(exception)`](./mapper/ErrorResultResponse.md).
 This is a smart mapper that inspects the type of exception.
-If it's a known, semantic exception from your [`RA.Utilities.Core.Exceptions`](../../core/CoreExceptions/index.mdx) library
-(like [`NotFoundException`](../../core/CoreExceptions/NotFoundException.md) or [`BadRequestException`](../../core/CoreExceptions/BadRequestException.md)),
+If it's a known, semantic exception from your [`RA.Utilities.Core.Exceptions`](../../core/RA.Utilities.Core.Exceptions/index.mdx) library
+(like [`NotFoundException`](../../core/RA.Utilities.Core.Exceptions/NotFoundException.md) or [`BadRequestException`](../../core/RA.Utilities.Core.Exceptions/BadRequestException.md)),
 it creates a specific, structured JSON response with the appropriate HTTP status code (e.g., 404 or 400).
 For any other unexpected exception, it generates a generic "Internal Server Error" (500) response to avoid leaking sensitive implementation details.
 * **3. Writes the Response**: It takes the generated error response and writes it to the HTTP response stream, completing the request gracefully from the client's perspective.

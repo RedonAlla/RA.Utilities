@@ -5,7 +5,7 @@ authors: [RedonAlla]
 
 ## Version 10.0.0
 
-![Date Badge](https://img.shields.io/badge/date-23%20November%202025-blue)
+![Date Badge](https://img.shields.io/badge/Publish-23%20November%202025-blue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Constants/10.0.0)
 
 Change the project version from `10.0.100-rc.2` to `10.0.0` to indicate the transition from release candidate to a stable version.
@@ -15,7 +15,7 @@ This marks the readiness of the RA Core Constants package for general availabili
 
 ## Version 10.0.0-rc.2
 
-![Date Badge](https://img.shields.io/badge/date-18%20Octomber%202025-blue)
+![Date Badge](https://img.shields.io/badge/Publish-18%20Octomber%202025-blue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.0--rc.2-orange?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Constants/10.0.0-rc.2)
 
 
