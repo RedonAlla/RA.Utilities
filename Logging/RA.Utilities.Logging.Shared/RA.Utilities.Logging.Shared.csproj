@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-		<Version>10.0.0-rc.2</Version>
+		<Version>10.0.0</Version>
 		<Title>Utilities Logging</Title>
 		<PackageId>RA.Utilities.Logging.Shared</PackageId>
 		<Description>Provides shared components and abstractions for logging HTTP requests and responses within the RA.Utilities ecosystem. This package contains core models and helpers used by other logging libraries, such as RA.Utilities.Api.Middlewares, to ensure a consistent approach to capturing and structuring diagnostic information for HTTP calls.</Description>
