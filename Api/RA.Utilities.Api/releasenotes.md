@@ -1,7 +1,7 @@
 # RA.Utilities.Api Release Notes
 
 ## Version 10.0.0
-![Date Badge](https://img.shields.io/badge/Publish-23%20November%202025-blue?logo=fastly&logoColor=white)
+![Date Badge](https://img.shields.io/badge/Publish-23%20November%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-v10.0.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api/10.0.0)
 
 Changed project version from a release candidate to final version `10.0.0` for production readiness.
@@ -12,7 +12,7 @@ Adjusted parameter and return type descriptions in `EndpointExtensions` for bett
 Enhanced comments in SuccessResponse to explicitly state response wrapping behavior.
 
 ## Version 10.0.100-rc.2
-![Date Badge](https://img.shields.io/badge/Publish-18%20Octomber%202025-blue?logo=fastly&logoColor=white)
+![Date Badge](https://img.shields.io/badge/Publish-18%20Octomber%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.0--rc.2-orange?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api/10.0.0-rc.2)
 
 This release modernizes the `RA.Utilities.Api` package, introducing a suite of tools to build robust, consistent, and maintainable ASP.NET Core APIs. Key features include a .NET 8 global exception handler, helpers for standardized success responses, and a clean pattern for endpoint registration.
