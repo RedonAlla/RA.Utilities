@@ -5,6 +5,12 @@ on:
     - cron: '0 0 * * 0'  # Runs every Sunday at midnight
   workflow_dispatch:     # Allows manual triggering
 
+permissions:
+  # This permission is required for the softprops/action-gh-release action to create a GitHub release.
+  contents: write
+  # This permission is required to publish to GitHub Packages.
+  packages: write
+
 jobs:
   update-stats:
     permissions:
@@ -30,14 +36,6 @@ jobs:
         run: |
           dotnet tool list --global || true
           ls -la $HOME/.dotnet/tools || true
-
-      - name: Install and Authenticate GitHub CLI
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gh
-          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
 
       - name: Generate nuget-stats.json
         env:
