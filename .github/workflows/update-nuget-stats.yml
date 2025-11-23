@@ -31,6 +31,11 @@ jobs:
           dotnet tool list --global || true
           ls -la $HOME/.dotnet/tools || true
 
+      - name: Install expect (for non-interactive prompts)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y expect
+
       - name: Generate nuget-stats.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
