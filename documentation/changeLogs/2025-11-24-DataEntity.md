@@ -3,12 +3,19 @@ title: RA.Utilities.Data.Entities
 authors: [RedonAlla]
 ---
 
+## Version 10.0.0
+![Date Badge](https://img.shields.io/badge/Publish-23%20November%202025-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.Entities/10.0.0)
+
+Updated version from `10.0.0-rc.2` to `10.0.0`, indicating the release candidate phase has ended and the package is now considered stable for production use.
+
+<!-- truncate -->
+
 ## Version 10.0.0-rc.2
+![Date Badge](https://img.shields.io/badge/Publish-18%20Octomber%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.0--rc.2-orange?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.Entities/10.0.0-rc.2)
 
-
-This is the initial release of `RA.Utilities.Data.Entities`, a library providing core abstractions for data models.
-<!-- truncate -->
+This release of `RA.Utilities.Data.Entities` provides a set of core abstractions and base classes for data entities. It helps solve the problem of boilerplate and inconsistency in data models by providing common interfaces and base classes with standard properties.
 
 ### ✨ Key Features
 
