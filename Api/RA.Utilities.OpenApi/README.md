@@ -1,5 +1,11 @@
 # RA.Utilities.OpenApi
 
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.OpenApi.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.OpenApi/)
+[![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.OpenApi.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.OpenApi/)
+[![Documentation](https://img.shields.io/badge/Documentation-read-brightgreen.svg?logo=readthedocs&logoColor=fff)](https://redonalla.github.io/RA.Utilities/nuget-packages/api/RA.Utilities.OpenApi/)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
+
 A utility library to enhance and customize OpenAPI (Swagger) documentation in ASP.NET Core applications.
 
 This package provides a collection of `IOpenApiDocumentTransformer` implementations to automate common modifications to your generated OpenAPI specification. Instead of manually annotating every endpoint with attributes for common headers or security schemes, you can apply these transformations globally.
