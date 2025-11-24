@@ -1,6 +1,6 @@
 # RA.Utilities.Authentication.JwtBearer
 
-[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Authentication.JwtBearer.svg)](https://www.nuget.org/packages/RA.Utilities.Authentication.JwtBearer/)
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Authentication.JwtBearer.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Authentication.JwtBearer/)
 [![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Authentication.JwtBearer.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Authentication.JwtBearer/)
 [![Documentation](https://img.shields.io/badge/Documentation-read-brightgreen.svg?logo=readthedocs&logoColor=fff)](https://redonalla.github.io/RA.Utilities/nuget-packages/auth/AuthenticationJwtBearer/)

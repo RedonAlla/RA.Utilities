@@ -1,6 +1,6 @@
 # RA.Utilities.Api.Results
 
-[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Api.Results.svg)](https://www.nuget.org/packages/RA.Utilities.Api.Results/)
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Api.Results.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api.Results/)
 [![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Api.Results.svg)](https://www.nuget.org/packages/RA.Utilities.Api.Results/)
 [![Documentation](https://img.shields.io/badge/Documentation-read-brightgreen.svg?logo=readthedocs&logoColor=fff)](https://redonalla.github.io/RA.Utilities/nuget-packages/api/RA.Utilities.Api.Results/)
