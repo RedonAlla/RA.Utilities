@@ -21,8 +21,6 @@ dotnet add package RA.Utilities.Authentication.JwtBearer
 
 -   [`Microsoft.AspNetCore.Authentication.JwtBearer`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.authentication.jwtbearer)
 
-*(Note: This assumes the package is published on NuGet with the name `RA.Utilities.Authentication.JwtBearer`.)*
-
 ## Usage
 
 In your `Program.cs` (for minimal APIs) or `Startup.cs`, use the `AddJwtBearerAuthentication` extension method to configure authentication and authorization services.
@@ -35,7 +33,7 @@ using RA.Utilities.Authentication.JwtBearer.Extensions;
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. Add and configure JWT Bearer authentication using settings from IConfiguration.
-// This single call also adds the necessary authorization services.
+// This single call reads from "appsettings.json" and registers authentication services.
 builder.Services.AddJwtBearerAuthentication(builder.Configuration);
 
 var app = builder.Build();
@@ -78,7 +76,7 @@ Here is an example `appsettings.json` configuration:
 > [!TIP]
 >
 >When using an identity provider (`Authority`), you typically don't need to specify `ValidIssuer`, `ValidAudience`, or `IssuerSigningKey` as these are discovered from the metadata endpoint.
-The example above shows settings for both scenarios (using an authority or validating a self-issued token).
+>The example above shows settings for validating a self-issued token.
 >
 
 The library automatically binds these settings to `JwtBearerOptions`. It also provides special handling for:

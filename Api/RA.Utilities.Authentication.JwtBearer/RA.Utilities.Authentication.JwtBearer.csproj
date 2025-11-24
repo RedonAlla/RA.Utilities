@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<Version>1.0.0-preview.6.3</Version>
+		<Version>1.0.0</Version>
     <Title>JwtBearer Authentication</Title>
 		<Description>This library simplifies JWT Bearer authentication setup to a few lines of code in your `Program.cs` (or `Startup.cs`).</Description>
 		<Summary>This package provides a streamlined way to configure JWT Bearer authentication in ASP.NET Core applications.
