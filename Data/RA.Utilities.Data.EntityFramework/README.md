@@ -1,9 +1,11 @@
 # RA.Utilities.Data.EntityFramework
 
-[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Data.EntityFramework?logo=nuget&label=NuGet)](https://www.nuget.org/packages/RA.Utilities.Data.EntityFramework/)
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Data.EntityFramework?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.EntityFramework/)
 [![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
-[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
-[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Data.EntityFramework.svg)](https://www.nuget.org/packages/RA.Utilities.Data.EntityFramework/)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Data.EntityFramework.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.EntityFramework/)
+[![Documentation](https://img.shields.io/badge/Documentation-read-brightgreen.svg?logo=readthedocs&logoColor=fff)](https://redonalla.github.io/RA.Utilities/nuget-packages/Data/EntityFramework/)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
+
 
 Provides generic base classes for implementing the Repository and Unit of Work patterns with Entity Framework Core.
 This package is the concrete implementation layer for the abstractions defined in `RA.Utilities.Data.Abstractions`.
