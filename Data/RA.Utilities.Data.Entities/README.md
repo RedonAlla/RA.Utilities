@@ -1,13 +1,10 @@
-<p align="center">
-  <img src="https://raw.githubusercontent.com/RedonAlla/RA.Utilities/main/Assets/Images/entity.svg" alt="RA.Utilities.Data.Entities Logo" width="128">
-</p>
-
 # RA.Utilities.Data.Entities
 
 [![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Data.Entities?logo=nuget&label=NuGet)](https://www.nuget.org/packages/RA.Utilities.Data.Entities/)
 [![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
-[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
-[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Data.Entities.svg)](https://www.nuget.org/packages/RA.Utilities.Data.Entities/)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Data.Entities.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.Entities/)
+[![Documentation](https://img.shields.io/badge/Documentation-read-brightgreen.svg?logo=readthedocs&logoColor=fff)](https://redonalla.github.io/RA.Utilities/nuget-packages/Data/Entities/)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
 
 This package provides a set of core abstractions and base classes for data entities within the RA.Utilities ecosystem. It helps solve the problem of boilerplate and inconsistency in data models by providing common interfaces like `IEntity<T>` and base classes with standard properties like `Id`, `CreatedDate`, and `UpdatedDate`.
 
