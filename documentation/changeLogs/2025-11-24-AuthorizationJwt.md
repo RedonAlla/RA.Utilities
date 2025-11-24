@@ -9,6 +9,8 @@ authors: [RedonAlla]
 
 Updated the project version from `10.0.0-rc.2` to the stable release version `10.0.0` in preparation for a production release.
 
+<!-- truncate -->
+
 ## Version 10.0.0-rc.2
 ![Date Badge](https://img.shields.io/badge/Publish-18%20Octomber%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.0--rc.2-orange?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Authentication.JwtBearer/10.0.0-rc.2)
