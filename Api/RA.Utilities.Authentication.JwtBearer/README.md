@@ -2,8 +2,10 @@
 
 [![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Authentication.JwtBearer.svg)](https://www.nuget.org/packages/RA.Utilities.Authentication.JwtBearer/)
 [![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
-[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
-[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Authentication.JwtBearer.svg)](https://www.nuget.org/packages/RA.Utilities.Authentication.JwtBearer/)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Authentication.JwtBearer.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Authentication.JwtBearer/)
+[![Documentation](https://img.shields.io/badge/Documentation-read-brightgreen.svg?logo=readthedocs&logoColor=fff)](https://redonalla.github.io/RA.Utilities/nuget-packages/auth/AuthenticationJwtBearer/)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
+
 
 `RA.Utilities.Authentication.JwtBearer` is a utility library that simplifies the configuration of JWT Bearer authentication in ASP.NET Core. It solves the problem of having complex, hardcoded authentication setup in your `Program.cs` by allowing you to configure everything from your `appsettings.json` file.
 
