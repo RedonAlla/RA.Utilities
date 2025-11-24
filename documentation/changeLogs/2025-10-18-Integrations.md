@@ -1,15 +1,24 @@
 ---
-title: RA.Utilities.Logging.Shared
+title: RA.Utilities.Integrations
 authors: [RedonAlla]
 ---
 
+## Version 10.0.0
+![Date Badge](https://img.shields.io/badge/Publish-23%20November%202025-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-v10.0.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Integrations/10.0.0)
+
+Updated package version `10.0.9-rc` (release candidate) to `10.0.0`, indicating a transition to a stable release.
+This change signifies that the project is no longer in the release candidate phase and is considered ready for production use, reflecting confidence in its stability and completeness.
+
+<!-- truncate -->
+
 ## Version 10.0.0-rc.2
+![Date Badge](https://img.shields.io/badge/Publish-18%20Octomber%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.0--rc.2-orange?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Integrations/10.0.0-rc.2)
 
 This release modernizes the `RA.Utilities.Integrations` package, providing a robust and repeatable pattern for managing external API integrations.
 It centralizes configuration, simplifies registration, and improves resilience with built-in retry policies.
 
-<!-- truncate -->
 
 ### ✨ New Features
 
