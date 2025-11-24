@@ -1,9 +1,10 @@
 # RA.Utilities.Feature
 
-[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Feature.svg)](https://www.nuget.org/packages/RA.Utilities.Feature/)
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Feature.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Feature/)
 [![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
-[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Feature.svg)](https://www.nuget.org/packages/RA.Utilities.Feature/)
+[![Documentation](https://img.shields.io/badge/Documentation-read-brightgreen.svg?logo=readthedocs&logoColor=fff)](https://redonalla.github.io/RA.Utilities/nuget-packages/Application/Feature/)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
 
 
 `RA.Utilities.Feature` provides a foundational toolkit for implementing the **Vertical Slice Architecture** pattern using CQRS (Command Query Responsibility Segregation).
@@ -11,7 +12,7 @@ It offers base handlers, validation behaviors, and exception handling mechanisms
 
 Building applications with a traditional layered architecture can lead to wide, coupled classes and scattered logic.
 The Vertical Slice pattern, combined with CQRS, addresses this by organizing code around features.
-This package provides the essential building blocks to support that pattern:
+This package provides the essential building blocks to support that pattern.
 
 ## Getting started
 
@@ -87,7 +88,7 @@ Next, create the handler by inheriting from `IRequestHandler<TRequest, TResponse
 
 ```csharp
 // Features/Products/CreateProduct.cs (continued)
-
+using MediatR;
 using RA.Utilities.Feature.Abstractions;
 using Microsoft.Extensions.Logging;
 using RA.Utilities.Core;
