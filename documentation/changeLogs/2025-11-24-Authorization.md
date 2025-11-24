@@ -10,6 +10,8 @@ authors: [RedonAlla]
 Update the project file to transition from release candidate `10.0.0-rc.2` to the final stable release `10.0.0`.
 This signifies that the code is considered stable and ready for production use, reflecting confidence in its readiness and addressing any issues identified during the release candidate phase.
 
+<!-- truncate -->
+
 ## Version 10.0.0-rc.2
 ![Date Badge](https://img.shields.io/badge/Publish-18%20Octomber%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.0--rc.2-orange?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Authorization/10.0.0-rc.2)
