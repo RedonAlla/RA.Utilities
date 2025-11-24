@@ -1,13 +1,11 @@
-<p align="center">
-  <img src="https://raw.githubusercontent.com/RedonAlla/RA.Utilities/main/Assets/Images/abstractions.svg" alt="RA.Utilities.Data.Abstractions Logo" width="128">
-</p>
-
 # RA.Utilities.Data.Abstractions
 
-[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Data.Abstractions.svg)](https://www.nuget.org/packages/RA.Utilities.Data.Abstractions/)
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Data.Abstractions.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.Abstractions/)
 [![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
-[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
-[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Data.Abstractions.svg)](https://www.nuget.org/packages/RA.Utilities.Data.Abstractions/)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Data.Abstractions.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.Abstractions/)
+[![Documentation](https://img.shields.io/badge/Documentation-read-brightgreen.svg?logo=readthedocs&logoColor=fff)](https://redonalla.github.io/RA.Utilities/nuget-packages/Data/Abstractions/)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
+
 
 `RA.Utilities.Data.Abstractions` provides a set of core interfaces for implementing common data access patterns, such as the Repository and Unit of Work. It solves the problem of tightly coupling your business logic to a specific data access technology (like Entity Framework Core).
 

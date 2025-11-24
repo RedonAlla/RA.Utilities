@@ -1,6 +1,6 @@
 # RA.Utilities.Data.Entities
 
-[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Data.Entities?logo=nuget&label=NuGet)](https://www.nuget.org/packages/RA.Utilities.Data.Entities/)
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Data.Entities?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.Entities/)
 [![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Data.Entities.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.Entities/)
 [![Documentation](https://img.shields.io/badge/Documentation-read-brightgreen.svg?logo=readthedocs&logoColor=fff)](https://redonalla.github.io/RA.Utilities/nuget-packages/Data/Entities/)
