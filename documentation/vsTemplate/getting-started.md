@@ -8,14 +8,14 @@ This guide will walk you through installing and using the template to create a n
 
 ## 1. Prerequisites
 
-* ⁠[.NET SDK 10.0+](https://dotnet.microsoft.com/download)
-* ⁠[Visual Studio 2022+](https://visualstudio.microsoft.com/), [Visual Studio Code](https://code.visualstudio.com/docs/languages/dotnet) or [Rider](https://www.jetbrains.com/rider/)
+*   [.NET SDK 10.0+](https://dotnet.microsoft.com/download)
+*   An IDE such as [Visual Studio 2022+](https://visualstudio.microsoft.com/), [JetBrains Rider](https://www.jetbrains.com/rider/), or [Visual Studio Code](https://code.visualstudio.com/docs/languages/dotnet).
 
 
 ## 2. Installation
-You can install the template directly from the source code repository or from NuGet **(TODO)**
+You can install the template from NuGet.org or by building it locally from the source code.
 
-*   **Local Installation (from source):**
+*   **Local Installation (from source)**
     Clone the repository and run the following command from the root directory of the template project:
     ```bash
     dotnet new install .
@@ -28,9 +28,9 @@ You can install the template directly from the source code repository or from Nu
     ```
 
 ### 3. Creating a New Project
-You can use ⁠[Visual Studio 2022+](https://visualstudio.microsoft.com/), [Visual Studio Code](https://code.visualstudio.com/docs/languages/dotnet) the .NET CLI to create a new solution from this template:
+You can use the .NET CLI, Visual Studio, or Rider to create a new solution from this template.
 
-**Example using .NET CLI**
+#### Using the .NET CLI
 ```bash
 dotnet new RA.Template -n YourProjectName
 ```
