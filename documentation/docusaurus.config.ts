@@ -216,19 +216,15 @@ const config: Config = {
           ],
         },
         {
-          title: 'Community',
+          title: 'Sours code',
           items: [
             {
-              label: 'Stack Overflow',
-              href: 'https://stackoverflow.com/questions/tagged/docusaurus',
+              label: 'NuGet Packages',
+              href: 'https://github.com/RedonAlla/RA.Utilities',
             },
             {
-              label: 'Discord',
-              href: 'https://discordapp.com/invite/docusaurus',
-            },
-            {
-              label: 'X',
-              href: 'https://x.com/docusaurus',
+              label: 'Architecture Template',
+              href: 'https://github.com/RedonAlla/RA.CleanArchitecture.Template',
             },
           ],
         },
@@ -236,13 +232,9 @@ const config: Config = {
           title: 'More',
           items: [
             {
-              label: 'Blog',
-              to: '/blog',
-            },
-            {
-              label: 'GitHub',
-              href: 'https://github.com/facebook/docusaurus',
-            },
+              label: 'NuGet Packages',
+              href: 'https://www.nuget.org/profiles/RedonAlla',
+            }
           ],
         },
       ],
