@@ -23,4 +23,8 @@
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
   </ItemGroup>
 
+ <ItemGroup>
+   <ProjectReference Include="../RA.Utilities.Api.Results/RA.Utilities.Api.Results.csproj" />
+ </ItemGroup>
+
 </Project>
