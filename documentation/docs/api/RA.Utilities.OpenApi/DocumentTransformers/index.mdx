@@ -41,6 +41,14 @@ Your library provides several concrete implementations that solve common problem
   * **Solution**: This transformer pulls that information directly from your `appsettings.json` configuration.
   This allows you to change your API's documented title or version without recompiling the code.
 
+### 5. [`PolymorphismSchemaFilter`](./PolymorphismSchemaFilter.md)
+Provides a filter for transforming OpenAPI documents to support polymorphic schemas.
+This filter adds derived types and configures the discriminator for polymorphic base schemas.
+
+### 6. [`DefaultResponsesOperationTransformer`](./DefaultResponsesOperationTransformer.md)
+An [`IOpenApiOperationTransformer`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.openapi.iopenapioperationtransformer) implementation that adds a default error response (500) to OpenAPI operations.
+
+
 
 <br />
 <br />
