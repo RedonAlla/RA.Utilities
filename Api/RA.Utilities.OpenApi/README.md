@@ -15,6 +15,24 @@ The primary goals are to:
 - **Enforce Consistency**: Ensure that all endpoints consistently document required headers and responses.
 - **Simplify Configuration**: Keep your endpoint definitions clean by centralizing OpenAPI modifications.
 
+## 📚 Table of Contents
+
+- [Getting started](#getting-started)
+- [Dependencies](#-dependencies)
+- [Default Transformers](#default-transformers)
+  - [`DocumentInfoTransformer`](#documentinfotransformer)
+  - `BearerSecuritySchemeTransformer`
+  - `HeadersParameterTransformer`
+  - `ResponsesDocumentTransformer`
+  - `DefaultResponsesOperationTransformer`
+  - `PolymorphismSchemaFilter`
+- Configuration
+  - `OpenApiInfoSettings`
+  - `HeadersParameterSettings`
+  - Example `appsettings.json`
+- Usage
+- Contributing
+
 ## Getting started
 
 Install the package via the .NET CLI:
@@ -25,6 +43,13 @@ dotnet add package RA.Utilities.OpenApi
 
 Or through the NuGet Package Manager in Visual Studio.
 
+---
+
+---
+
+## 🔗 Dependencies
+
+-   [`RA.Utilities.Api.Results`](https://redonalla.github.io/RA.Utilities/nuget-packages/api/RA.Utilities.Api.Results/)
 ---
 
 ## Default Transformers
@@ -73,6 +98,40 @@ This transformer automatically adds standardized OpenAPI responses for common HT
 
 ---
 
+### `DefaultResponsesOperationTransformer`
+
+This operation transformer automatically adds standardized OpenAPI responses for common HTTP status codes for  `500`.
+It uses the response models from `RA.Utilities.Api.Results` to generate the schema for these error responses.
+
+This transformer is an `IOpenApiOperationTransformer`, meaning it applies to each API operation individually.
+It is a more targeted alternative to the `ResponsesDocumentTransformer`.
+
+**What it does:**
+
+1.  **Standardizes Error Responses**: Ensures that your OpenAPI documentation accurately reflects the structured error responses (`ErrorResponse`) that your API produces.
+2.  **Reduces Annotations**: Eliminates the need to manually add `[ProducesResponseType]` attributes for these common errors on every single endpoint.
+3.  **Operation-Level Granularity**: As an `IOpenApiOperationTransformer`, it integrates seamlessly with Swashbuckle's operation-level processing pipeline.
+
+### `PolymorphismSchemaFilter`
+
+This schema filter enhances the OpenAPI documentation for APIs that use polymorphic types (i.e., base classes with multiple derived classes). It correctly represents the inheritance structure in the generated schema, making it understandable for clients and tools like NSwag or AutoRest.
+
+**What it does:**
+
+1.  **Identifies Polymorphic Types**: It detects when a base type is used in an API and finds all its derived types within the loaded assemblies.
+2.  **Adds `oneOf` Schema**: It modifies the base type's schema to use the `oneOf` keyword, listing all the derived types. This allows API clients to understand that the response or request body can be one of several concrete implementations.
+3.  **Enables Code Generation**: Fixes issues with client-side code generation where polymorphic types would otherwise be ignored or misinterpreted.
+
+To apply this filter, you need to register it in your `SwaggerGen` configuration:
+
+```csharp
+// Program.cs
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SchemaFilter<PolymorphismSchemaFilter>();
+});
+```
+
 ## Configuration
 
 The transformers are configured via `appsettings.json`.
@@ -116,21 +175,21 @@ Used by `HeadersParameterTransformer` to add common headers to requests and resp
 
 | Property          | Type                     | Description                                                                 |
 | ----------------- | ------------------------ | --------------------------------------------------------------------------- |
-| RequestHeaders    | `List<[HeaderDefinition](#eaderdefinition)>` | A list of header definitions to add to all API requests.                    |
-| ResponseHeaders   | `List<[HeaderDefinition](#eaderdefinition)>` | A list of header definitions to add to all API responses.                   |
+| RequestHeaders    | `List<[HeaderDefinition](#eaderdefinition)>` | A list of header definitions to add to all API requests.  |
+| ResponseHeaders   | `List<[HeaderDefinition](#eaderdefinition)>` | A list of header definitions to add to all API responses. |
 
 #### `HeaderDefinition`
 
 Represents a single header to be added to the OpenAPI specification.
 
-| Property      | Type      | Default      | Description                                                                  |
-| ------------- | --------- | ------------ | ---------------------------------------------------------------------------- |
-| Name          | `string`  | `""`         | The name of the header (e.g., "x-request-id").                               |
-| Description   | `string`  | `""`         | A description of the header's purpose.                                       |
-| Required      | `bool`    | `true`       | Specifies if the header is required.                                         |
-| Type          | `JsonSchemaType`  | `String`   | The schema type for the header value (e.g., "String", "Integer").            |
-| Format        | `string`  | `"uuid"`     | The format of the header value (e.g., "uuid", "date-time").                  |
-| Value         | `object`  | `null`       | An example value for the header.                                             |
+| Property      | Type      | Default      | Description                                                             |
+| ------------- | --------- | ------------ | ----------------------------------------------------------------------- |
+| Name          | `string`  | `""`         | The name of the header (e.g., "x-request-id").                          |
+| Description   | `string`  | `""`         | A description of the header's purpose.                                  |
+| Required      | `bool`    | `true`       | Specifies if the header is required.                                    |
+| Type          | `JsonSchemaType`  | `String`   | The schema type for the header value (e.g., "String", "Integer"). |
+| Format        | `string`  | `"uuid"`     | The format of the header value (e.g., "uuid", "date-time").             |
+| Value         | `object`  | `null`       | An example value for the header.                                        |
 
 ### Example `appsettings.json`
 
@@ -167,16 +226,16 @@ Represents a single header to be added to the OpenAPI specification.
 
 ### Recommended: Using Default Transformers
 
-The easiest way to get started is by using the `AddDefaultsDocumentTransformer` extension method.
-This single call registers `DocumentInfoTransformer`, `BearerSecuritySchemeTransformer`, and `HeadersParameterTransformer`.
-
-You can then register other transformers, like `ResponsesDocumentTransformer`, individually.
+The easiest way to get started is by using the provided extension methods to register the various transformers and filters.
 
 ```csharp
 // Program.cs
 
+using Microsoft.OpenApi.Models;
 using RA.Utilities.OpenApi.DocumentTransformers;
 using RA.Utilities.OpenApi.Extensions;
+using RA.Utilities.OpenApi.OperationTransformers;
+using RA.Utilities.OpenApi.SchemaFilters;
 using RA.Utilities.OpenApi.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -184,16 +243,27 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddEndpointsApiExplorer();
 
-// (Optional) Configure settings from appsettings.json for the transformers.
+// 1. (Optional) Configure settings from appsettings.json for the transformers.
 builder.Services.Configure<OpenApiInfoSettings>(builder.Configuration.GetSection(OpenApiInfoSettings.AppSettingsKey));
 builder.Services.Configure<HeadersParameterSettings>(builder.Configuration.GetSection(HeadersParameterSettings.AppSettingsKey));
 
-// 1. Add the OpenApi services and register the default transformers.
+// 2. Add OpenAPI services.
+// Use AddSwaggerGen() for controller-based APIs or more advanced scenarios.
 builder.Services.AddOpenApi()
     .AddDefaultsDocumentTransformer();
 
-// 2. Register any additional transformers.
+// 3. Register additional document transformers individually.
 builder.Services.AddOpenApiDocumentTransformer<ResponsesDocumentTransformer>();
+
+// 4. Register operation transformers for more granular control.
+builder.Services.AddOpenApiOperationTransformer<DefaultResponsesOperationTransformer>();
+
+// 5. If using Swashbuckle (AddSwaggerGen), you can add schema filters.
+// This is shown for completeness. AddSwaggerGen() is needed for this to work.
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SchemaFilter<PolymorphismSchemaFilter>();
+});
 
 var app = builder.Build();
 
@@ -204,7 +274,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// 3. Map the OpenAPI document endpoints.
+// 6. Map the OpenAPI document endpoints.
 app.MapOpenApi();
 
 app.MapGet("/weatherforecast", () => "Hello World!")
