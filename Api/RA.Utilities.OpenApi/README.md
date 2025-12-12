@@ -114,22 +114,29 @@ It is a more targeted alternative to the `ResponsesDocumentTransformer`.
 
 ### `PolymorphismSchemaFilter`
 
-This schema filter enhances the OpenAPI documentation for APIs that use polymorphic types (i.e., base classes with multiple derived classes). It correctly represents the inheritance structure in the generated schema, making it understandable for clients and tools like NSwag or AutoRest.
+This document transformer enhances the OpenAPI documentation for APIs that use polymorphic types (i.e., base classes with multiple derived classes). It correctly represents the inheritance structure in the generated schema using the `oneOf` and `discriminator` keywords, making it understandable for clients and code generation tools.
+
+Unlike a Swashbuckle `ISchemaFilter`, this is an `IOpenApiDocumentTransformer` that works with ASP.NET Core's native OpenAPI generation (`Microsoft.AspNetCore.OpenApi`).
 
 **What it does:**
 
-1.  **Identifies Polymorphic Types**: It detects when a base type is used in an API and finds all its derived types within the loaded assemblies.
-2.  **Adds `oneOf` Schema**: It modifies the base type's schema to use the `oneOf` keyword, listing all the derived types. This allows API clients to understand that the response or request body can be one of several concrete implementations.
-3.  **Enables Code Generation**: Fixes issues with client-side code generation where polymorphic types would otherwise be ignored or misinterpreted.
+1.  **Finds the Base Schema**: It locates the schema for a specified base type in the OpenAPI document.
+2.  **Generates Derived Schemas**: It ensures that schemas for all specified derived types are present in the document, creating them if necessary.
+3.  **Adds `oneOf` and `discriminator`**: It modifies the base schema to use the `oneOf` keyword, listing all derived types, and adds a `discriminator` object to tell clients how to determine the correct type based on a property (e.g., `"type"`).
+4.  **Enables Code Generation**: Fixes issues with client-side code generators like NSwag or AutoRest where polymorphic types would otherwise be ignored or misinterpreted.
 
-To apply this filter, you need to register it in your `SwaggerGen` configuration:
+To apply this transformer, you need to instantiate it with the required parameters and register it in `Program.cs`.
 
 ```csharp
 // Program.cs
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SchemaFilter<PolymorphismSchemaFilter>();
-});
+builder.Services.AddOpenApiDocumentTransformer(new PolymorphismSchemaFilter(
+    polymorphismPropertyName: "Error", // The name of the base schema
+    typesToInclude: new() // A dictionary of derived types
+    {
+        { "NotFound", typeof(NotFoundResponse) },
+        { "Conflict", typeof(ConflictResponse) },
+    }
+));
 ```
 
 ## Configuration
