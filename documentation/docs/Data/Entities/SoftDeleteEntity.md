@@ -1,5 +1,5 @@
 ---
-sidebar_position: 2
+sidebar_position: 3
 ---
 
 ```bash
@@ -35,7 +35,7 @@ This ensures that even soft-deleted records maintain their unique identifier and
 ## Properties
 The `SoftDeleteEntity` class includes its own IsDeleted property and also inherits several key properties from its parent, [`BaseEntity`](./BaseEntity.md).
 
-| Property |	Type	| Description	| Inherited From |
+| Property | Type	| Description | Inherited From |
 | -------- | ------ | ----------- | -------------- |
 | **Id** | `Guid` |	The unique identifier for the entity.	| [`BaseEntity`](./BaseEntity.md) |
 | **CreatedAt** | `DateTime` |	The timestamp of when the entity was created. | [`BaseEntity`](./BaseEntity.md) |

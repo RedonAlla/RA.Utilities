@@ -1,5 +1,5 @@
 ---
-sidebar_position: 1
+sidebar_position: 2
 ---
 
 ```bash
@@ -20,11 +20,11 @@ These properties automatically record when an entity was initially created and w
 
 ## Properties
 
-| Property   | Type        | Description                                         |
-|------------|-------------|-----------------------------------------------------|
-| Id         | `Guid`      | The unique identifier for the entity.               |
-| CreatedAt  | `DateTime`  | The date and time when the entity was created.      |
-| ModifiedAt | `DateTime?` | The date and time when the entity was last modified.|
+| Property   | Type        | Description                                         | Inherited From |
+|------------|-------------|-----------------------------------------------------| -------------- |
+| Id         | `Guid`      | The unique identifier for the entity.               | [`CoreEntity`](./CoreEntity.md) |
+| CreatedAt  | `DateTime`  | The date and time when the entity was created.      | - |
+| ModifiedAt | `DateTime?` | The date and time when the entity was last modified.| - |
 
 
 By inheriting from `BaseEntity`, you automatically equip your entities with these essential properties, promoting code reuse and simplifying data management.
