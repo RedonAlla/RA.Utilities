@@ -7,7 +7,7 @@
 This release introduces a significant architectural refactoring of the repository interfaces to better align with Command Query Separation (CQS) principles and simplify their usage.
 
 ### ✨ No Breaking Changes
-Change generic type `T` from `BaseEntity` in to `CoreEntity`
+Change generic type constraint from `BaseEntity` in to `CoreEntity` in repository interfaces.
 
 ```csharp
 + public interface IReadRepositoryBase<T> where T : notnull, CoreEntity

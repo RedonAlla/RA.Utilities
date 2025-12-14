@@ -3,6 +3,22 @@ title: RA.Utilities.Data.Abstractions
 authors: [RedonAlla]
 ---
 
+## Version 10.0.1
+![Date Badge](https://img.shields.io/badge/Publish-14%20December%202025-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.Abstractions/10.0.1)
+
+This release introduces a significant architectural refactoring of the repository interfaces to better align with Command Query Separation (CQS) principles and simplify their usage.
+
+<!-- truncate -->
+
+### ✨ No Breaking Changes
+Change generic type constraint from `BaseEntity` in to `CoreEntity` in repository interfaces.
+
+```csharp
++ public interface IReadRepositoryBase<T> where T : notnull, CoreEntity
+- public interface IReadRepositoryBase<T> where T : notnull, BaseEntity
+```
+
 ## Version 10.0.0
 ![Date Badge](https://img.shields.io/badge/Publish-23%20November%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.Abstractions/10.0.0)
@@ -10,7 +26,6 @@ authors: [RedonAlla]
 Updates the version from `10.0.0-rc.2` (release candidate) to `10.0.0`, signifying the transition to a stable release.
 This change indicates that the library is now considered complete and ready for general use, reflecting confidence in its stability and functionality.
 
-<!-- truncate -->
 
 ## Version 10.0.0-rc.2
 ![Date Badge](https://img.shields.io/badge/Publish-18%20Octomber%202025-lightblue?logo=fastly&logoColor=white)

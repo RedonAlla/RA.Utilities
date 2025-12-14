@@ -46,7 +46,8 @@ builder.Services.AddJwtBearerAuthentication(builder.Configuration);
 var app = builder.Build();
 
 app.UseAuth();
-```nfiguration Handling**:
+```
+*   **Cnfiguration Handling**:
     *   Automatically converts `ClockSkewInSeconds` from your configuration into a `TimeSpan`.
     *   Automatically converts `IssuerSigningKeyString` into a `SymmetricSecurityKey`, simplifying the setup for self-issued tokens.
 

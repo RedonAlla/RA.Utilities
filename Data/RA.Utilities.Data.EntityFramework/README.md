@@ -6,197 +6,136 @@
 [![Documentation](https://img.shields.io/badge/Documentation-read-brightgreen.svg?logo=readthedocs&logoColor=fff)](https://redonalla.github.io/RA.Utilities/nuget-packages/Data/EntityFramework/)
 [![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
 
+This package provides concrete implementations of the repository and unit of work patterns for Entity Framework Core, based on the abstractions from `RA.Utilities.Data.Abstractions`. It's designed to accelerate the setup of a data access layer in a clean, testable, and maintainable way.
 
-Provides generic base classes for implementing the Repository and Unit of Work patterns with Entity Framework Core.
-This package is the concrete implementation layer for the abstractions defined in `RA.Utilities.Data.Abstractions`.
+## ✨ Key Features
+* **Generic Repository Implementations**: Provides ready-to-use base classes for repository patterns, saving you from writing boilerplate CRUD (Create, Read, Update, Delete) code.
+* **Command Query Separation (CQS)**: Offers distinct `ReadRepositoryBase<T>` and `WriteRepositoryBase<T>` classes to help you build a clean architecture where read and write operations are separated.
+* **Performance-Optimized Queries**: The `ReadRepositoryBase<T>` uses `AsNoTracking()` by default for more efficient data retrieval.
+* **Automatic Timestamping**: Includes a `BaseEntitySaveChangesInterceptor` that automatically sets `CreatedAt` and `LastModifiedAt` properties on your entities when they are saved.
+* **Simplified Dependency Injection**: Provides extension methods to register your repositories with a single line of code in `Program.cs`.
 
-This library accelerates the setup of a data access layer by providing ready-to-use, generic base classes that handle common data operations. By using these implementations, you can:
-
-- **Rapidly Implement Repositories**: Inherit from `RepositoryBase`, `ReadRepositoryBase`, or `WriteRepositoryBase` to get a full suite of data access methods out of the box.
-- **Ensure Transactional Integrity**: Use the `UnitOfWork` implementation to manage database transactions and ensure that changes are saved atomically.
-- **Promote Best Practices**: Encourages a clean, decoupled architecture by building on the abstractions from `RA.Utilities.Data.Abstractions`.
-
-## Getting started
-
-Install the package via the .NET CLI:
+## Installation
+You can install the package via the .NET CLI:
 
 ```bash
 dotnet add package RA.Utilities.Data.EntityFramework
 ```
 
-Or through the NuGet Package Manager console:
-
 ```powershell
 Install-Package RA.Utilities.Data.EntityFramework
 ```
 
+## Core Components
 
-## 🧩 Extensions
-This package includes extension methods to simplify service registration for the generic repository patterns.
+### Repository Implementations
+This package provides concrete implementations for the interfaces defined in `RA.Utilities.Data.Abstractions`.
 
-### DependencyInjectionExtensions 
-Provides extension methods for setting up dependency injection for data-related services.
+* **`RepositoryBase<T>`**: A full-featured generic repository that implements `IRepositoryBase<T>` for complete CRUD functionality. It's a convenient all-in-one solution for services that need to both query and modify data.
+* **`ReadRepositoryBase<T>`**: A read-only repository implementing `IReadRepositoryBase<T>`. It is optimized for performance by using `AsNoTracking()` on queries, making it ideal for the "Query" side of a CQRS architecture.
+* **`WriteRepositoryBase<T>`**: A write-only repository implementing `IWriteRepositoryBase<T>`. It is designed for "Command" operations like adding, updating, and deleting entities.
 
-```
-Namespace: RA.Utilities.Extensions
-Source: Extensions/DependencyInjectionExtensions.cs
-public static class DependencyInjectionExtensions
-```
-### Methods
-#### AddRepositoryBase 
-Adds the generic `IRepositoryBase<>` and its implementation `RepositoryBase<>` to the service collection as a scoped service. This allows you to inject `IRepositoryBase<T>` directly for any entity without creating a specific repository class.
+### Interceptors
+* **`BaseEntitySaveChangesInterceptor`**: An Entity Framework Core interceptor that automatically populates timestamp properties (`CreatedAt`, `LastModifiedAt`) on entities inheriting from `BaseEntity` before changes are saved to the database. This ensures consistent and accurate auditing without manual intervention.
 
-Definition
-```csharp
-public static IServiceCollection AddRepositoryBase(this IServiceCollection services)
-```
+### Dependency Injection Extensions
 
-```csharp
-// In Program.cs
-builder.Services.AddRepositoryBase();
-```
+The `DependencyInjectionExtensions` class simplifies the registration of the generic repositories in your application's DI container.
 
-```csharp
-// Now you can inject IRepositoryBase in your services
-public class MyService(IRepositoryBase productRepository)
-{
-  // ... use productRepository 
-}
-```
+* `AddRepositoryBase()`: Registers the full `IRepositoryBase<> `implementation.
+* `AddReadRepositoryBase()`: Registers the read-only `IReadRepositoryBase<>` implementation.
+* `AddWriteRepositoryBase()`: Registers the write-only `IWriteRepositoryBase<>` implementation.
 
-#### AddReadRepositoryBase
-Adds the generic `IReadRepositoryBase<>` and its implementation `ReadRepositoryBase<>` as a scoped service.
-Use this if you only need read operations for certain entities, adhering to the Command Query Separation (CQS) principle.
-
-**Definition**
-```csharp
-public static IServiceCollection AddReadRepositoryBase(this IServiceCollection services)
-```
-
-#### AddWriteRepositoryBase
-Adds the generic `IWriteRepositoryBase<>` and its implementation `WriteRepositoryBase<>` as a scoped service.
-Use this if you only need write operations for certain entities.
-
-> [!NOTE]  
-> The WriteRepositoryBase also contains the SaveChangesAsync method. In a Unit of Work pattern, saving changes is typically controlled by the UnitOfWork class, not individual repositories, to ensure transactional integrity.
-
-**Definition**
-```csharp
-public static IServiceCollection AddWriteRepositoryBase(this IServiceCollection services)
-```
-
----
-
-## 🚀 Usage Guide
-
-Here’s a step-by-step guide to setting up a data access layer using this package.
+## Usage Example
+Here is how you can configure and use the components from this package in an ASP.NET Core application.
 
 ### 1. Define Your DbContext
-
-Create your Entity Framework `DbContext` and make sure it implements `IDbContext` from `RA.Utilities.Data.Abstractions`.
+First, ensure your `DbContext` implements the `IDbContext` interface from `RA.Utilities.Data.Abstractions`.
 
 ```csharp
-public class ApplicationDbContext : DbContext
+public class ApplicationDbContext : DbContext, IDbContext
 {
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-        : base(options)
-    {
-    }
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
     public DbSet<Product> Products { get; set; }
-    // Other DbSets...
 }
 ```
 
-### 2. Implement Concrete Repositories
-
-Create your own repository interfaces and classes. The interfaces should inherit from `IRepository<TEntity>` (from `RA.Utilities.Data.Abstractions`) and the classes should inherit from `Repository<TEntity>`.
+### 2. Register Services in `Program.cs`
+In your `Program.cs`, register your `DbContext`, the interceptor, and the desired repository implementations.
 
 ```csharp
-// In your Application/Domain layer (referencing RA.Utilities.Data.Abstractions)
+using RA.Utilities.Data.EntityFramework.Extensions;
+using RA.Utilities.Data.EntityFramework.Interceptors;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// 1. Register the SaveChangesInterceptor
+builder.Services.AddScoped<BaseEntitySaveChangesInterceptor>();
+
+// 2. Register the DbContext and add the interceptor
+builder.Services.AddDbContext<ApplicationDbContext>((provider, options) =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+           .AddInterceptors(provider.GetRequiredService<BaseEntitySaveChangesInterceptor>()));
+
+// 3. Register the generic repositories
+builder.Services.AddRepositoryBase(); // For IRepositoryBase<>
+builder.Services.AddReadRepositoryBase(); // For IReadRepositoryBase<>
+builder.Services.AddWriteRepositoryBase(); // For IWriteRepositoryBase<>
+
+// Register your custom repositories
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+
+var app = builder.Build();
+```
+
+### 3. Implement a Custom Repository (Optional)
+You can extend the generic repositories to add custom data access methods.
+
+```csharp
 public interface IProductRepository : IRepositoryBase<Product>
 {
-    Task<IEnumerable<Product>> GetTopSellingProductsAsync(int count);
+    Task<Product?> GetProductByNameAsync(string name);
 }
 
-// In your Infrastructure/Data layer (referencing this package)
 public class ProductRepository : RepositoryBase<Product>, IProductRepository
 {
-    public ProductRepository(ApplicationDbContext context) : base(context)
+    public ProductRepository(ApplicationDbContext dbContext) : base(dbContext)
     {
     }
 
-    public async Task<IEnumerable<Product>> GetTopSellingProductsAsync(int count)
+    public async Task<Product?> GetProductByNameAsync(string name)
     {
-        // Custom data access logic
-        return await _dbSet.OrderByDescending(p => p.UnitsSold).Take(count).ToListAsync();
+        return await _dbSet.FirstOrDefaultAsync(p => p.Name == name);
     }
 }
 ```
 
-### 3. Register Services
-
-In your `Program.cs` or `Startup.cs`, register the `DbContext`, the `UnitOfWork`, and your custom repositories.
-
-```csharp
-using RA.Utilities.Data.Abstractions;
-using RA.Utilities.Data.EntityFramework;
-
-// ...
-
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// Register UnitOfWork and Repositories
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork<ApplicationDbContext>>();
-builder.Services.AddScoped<IProductRepository, ProductRepository>();
-```
-
-### 4. Use in Your Application
-
-Inject `IUnitOfWork` into your services or controllers to access repositories and save changes.
+### 4. Use in a Service
+Finally, inject the repository interfaces into your services to interact with the database.
 
 ```csharp
-[ApiController]
-[Route("api/[controller]")]
-public class ProductsController : ControllerBase
+public class ProductService
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IProductRepository _productRepository;
 
-    public ProductsController(IUnitOfWork unitOfWork)
+    public ProductService(IProductRepository productRepository)
     {
-        _unitOfWork = unitOfWork;
+        _productRepository = productRepository;
     }
 
-    [HttpGet]
-    public async Task<IActionResult> GetTopProducts()
+    public async Task<Product?> GetProductDetailsAsync(Guid id)
     {
-        var productRepository = _unitOfWork.GetRepository<IProductRepository>();
-        var products = await productRepository.GetTopSellingProductsAsync(5);
-        return Ok(products);
+        // Use a method from the base repository
+        return await _productRepository.GetByIdAsync(id);
     }
 
-    [HttpPost]
-    public async Task<IActionResult> CreateProduct(Product product)
+    public async Task CreateProductAsync(string name, decimal price)
     {
-        var productRepository = _unitOfWork.GetRepository<IProductRepository>();
-        await productRepository.AddAsync(product);
-        await _unitOfWork.SaveChangesAsync(); // Commits the transaction
-        return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, product);
+        var newProduct = new Product { Name = name, Price = price };
+        
+        // The BaseEntitySaveChangesInterceptor will automatically set CreatedAt
+        await _productRepository.AddAsync(newProduct);
     }
 }
 ```
-
-## 🔗 Dependencies
-
--   **[`RA.Utilities.Data.Abstractions`](../Abstractions/index.mdx)**: Provides the core interfaces (`IRepository<T>`, `IUnitOfWork`, etc.) that this package implements.
--   **[`Microsoft.EntityFrameworkCore`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.entityframeworkcore)**: The underlying ORM used for the implementations.
-
-## Additional documentation
-
-For more information on how this package fits into the larger RA.Utilities ecosystem, please see the [officiary documentation](https://redonalla.github.io/RA.Utilities/nuget-packages/Data/EntityFramework/).
-
-## Feedback
-
-If you have suggestions or find a bug, please open an issue in the RA.Utilities [GitHub repository](https://github.com/RedonAlla/RA.Utilities).
-Contributions are welcome!

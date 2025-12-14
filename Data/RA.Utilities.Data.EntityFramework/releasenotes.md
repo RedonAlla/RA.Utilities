@@ -1,5 +1,17 @@
 # Release Notes for RA.Utilities.Data.EntityFramework
 
+## Version 10.0.1
+![Date Badge](https://img.shields.io/badge/Publish-14%20December%202025-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.EntityFramework/10.0.1)
+
+### ✨ No Breaking Changes
+Change generic type constraint from `BaseEntity` in to `CoreEntity` in repository interfaces.
+
+```csharp
++ public interface IReadRepositoryBase<T> where T : notnull, CoreEntity
+- public interface IReadRepositoryBase<T> where T : notnull, BaseEntity
+```
+
 ## Version 10.0.0
 ![Date Badge](https://img.shields.io/badge/Publish-23%20November%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.EntityFramework/10.0.0)
@@ -19,6 +31,9 @@ This release of `RA.Utilities.Data.EntityFramework` provides concrete implementa
     *   `RepositoryBase<T>`: A full implementation of `IRepositoryBase<T>` for complete CRUD functionality.
     *   `ReadRepositoryBase<T>`: A read-only repository that uses `AsNoTracking()` by default for efficient querying, ideal for CQS patterns.
     *   `WriteRepositoryBase<T>`: A write-only repository for command operations (Add, Update, Delete).
+
+*   **Automatic Timestamping**:
+    *   `BaseEntitySaveChangesInterceptor`: An Entity Framework Core interceptor that automatically populates `CreatedAt` and `LastModifiedAt` properties on entities inheriting from `BaseEntity` before they are saved. This ensures consistent and accurate auditing without manual intervention.
 
 *   **Generic Unit of Work Implementation**:
     *   `UnitOfWork<TContext>`: A generic implementation of `IUnitOfWork` that manages the `DbContext` lifecycle and ensures transactional integrity by saving all changes atomically.

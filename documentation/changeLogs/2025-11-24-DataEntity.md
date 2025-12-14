@@ -3,13 +3,39 @@ title: RA.Utilities.Data.Entities
 authors: [RedonAlla]
 ---
 
+## Version 10.0.1
+![Date Badge](https://img.shields.io/badge/Publish-14%20December%202025-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.Entities/10.0.1)
+
+This release introduces a major architectural refactoring of the base entity classes to provide a more flexible and intuitive inheritance hierarchy.
+
+### ✨ Key Features
+
+*   **New `CoreEntity` Root Class**:
+    *   A new abstract base class, `CoreEntity`, has been introduced as the root of the hierarchy. It provides a single virtual `Id` property of type `Guid`.
+
+<!-- truncate -->
+
+### 🚀 Getting Started (Updated)
+
+To use the package, inherit from the base class that best fits your entity's needs.
+
+#### Example: Basic Entity with Timestamps
+```csharp
+public class Product : BaseEntity
+{
+    public string Name { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+}
+```
+This entity will automatically have `Id`, `CreatedAt`, and `LastModifiedAt`.
+
 ## Version 10.0.0
 ![Date Badge](https://img.shields.io/badge/Publish-23%20November%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.Entities/10.0.0)
 
 Updated version from `10.0.0-rc.2` to `10.0.0`, indicating the release candidate phase has ended and the package is now considered stable for production use.
 
-<!-- truncate -->
 
 ## Version 10.0.0-rc.2
 ![Date Badge](https://img.shields.io/badge/Publish-18%20Octomber%202025-lightblue?logo=fastly&logoColor=white)
