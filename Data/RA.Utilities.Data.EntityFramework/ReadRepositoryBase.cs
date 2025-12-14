@@ -15,7 +15,7 @@ namespace RA.Utilities.Data.EntityFramework;
 /// </summary>
 /// <typeparam name="T">The type of the entity.</typeparam>
 public class ReadRepositoryBase<T> : IReadRepositoryBase<T>
-    where T : BaseEntity
+    where T : CoreEntity
 {
     private readonly DbSet<T> _dbSet;
 

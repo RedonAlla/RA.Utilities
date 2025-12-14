@@ -17,7 +17,7 @@ namespace RA.Utilities.Data.EntityFramework;
 /// </summary>
 /// <typeparam name="T">Entity type (must inherit BaseEntity).</typeparam>
 public class RepositoryBase<T> : ReadRepositoryBase<T>, IRepositoryBase<T>
-    where T : BaseEntity
+    where T : CoreEntity
 {
     private readonly WriteRepositoryBase<T> _writeRepository;
 

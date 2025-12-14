@@ -14,7 +14,7 @@ namespace RA.Utilities.Data.EntityFramework;
 /// </summary>
 /// <typeparam name="T">The type of the entity.</typeparam>
 public class WriteRepositoryBase<T> : IWriteRepositoryBase<T>
-    where T : BaseEntity
+    where T : CoreEntity
 {
     private readonly DbContext _dbContext;
     private readonly DbSet<T> _dbSet;
