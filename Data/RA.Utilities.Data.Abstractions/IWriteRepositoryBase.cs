@@ -10,7 +10,7 @@ namespace RA.Utilities.Data.Abstractions;
 /// Defines a base interface for write repository operations on entities.
 /// </summary>
 /// <typeparam name="T">The type of the entity.</typeparam>
-public interface IWriteRepositoryBase<T> where T : BaseEntity
+public interface IWriteRepositoryBase<T> where T : CoreEntity
 {
     /// <summary>
     /// Adds a new entity asynchronously.

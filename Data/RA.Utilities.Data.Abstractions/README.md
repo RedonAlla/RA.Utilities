@@ -7,7 +7,7 @@
 [![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
 
 
-`RA.Utilities.Data.Abstractions` provides a set of core interfaces for implementing common data access patterns, such as the Repository and Unit of Work. It solves the problem of tightly coupling your business logic to a specific data access technology (like Entity Framework Core).
+`RA.Utilities.Data.Abstractions` provides a collection of essential interfaces for building a decoupled and testable data access layer. It establishes contracts for the **Repository** and **Unit of Work** patterns, which are fundamental to Clean Architecture.
 
 By coding against these abstractions, you can create a clean, decoupled architecture where the data access layer can be swapped out with minimal impact on your application's core logic.
 
@@ -19,24 +19,51 @@ You can install the package via the .NET CLI:
 dotnet add package RA.Utilities.Data.Abstractions
 ```
 
-### Prerequisites
+## ✨ Core Abstractions
+This package provides a set of interfaces to enforce a clean, CQS-friendly data access strategy.
 
-This package contains only interfaces and is designed to be used with a concrete implementation. For example, you would create your own repository classes that implement these interfaces using an ORM like Entity Framework Core.
+### Repository Interfaces
+The repository pattern is split into read and write interfaces to support Command Query Separation (CQS).
 
-It is also recommended to use this package with `RA.Utilities.Data.Entities`, as the repository interfaces are constrained to `IEntity`.
+* **`IReadRepositoryBase<T>`**: Defines read-only operations like `GetByIdAsync` and `ListAsync`.
+Implementations of this interface are optimized for querying and should not modify data.
 
-## Usage
+* **`IWriteRepositoryBase<T>`**: Defines write-only operations like `AddAsync`, `UpdateAsync`, and `DeleteAsync`. 
 
-The package provides two main interfaces: `IRepository<TEntity, TKey>` and `IUnitOfWork`.
+* **`IRepositoryBase<T>`**: A convenience interface that inherits from both `IReadRepositoryBase<T>` and `IWriteRepositoryBase<T>`, providing a full suite of CRUD operations.
 
-### `IRepository<TEntity, TKey>`
+### IDbContext and IUnitOfWork
+* **`IDbContext`**: A marker interface that your `DbContext` should implement.
+This allows repository implementations to depend on an abstraction rather than a concrete `DbContext`, which is crucial for unit testing.
+* **`IUnitOfWork`**: Defines a contract for managing transactions.
+Its `SaveChangesAsync()` method ensures that all changes made across multiple repositories are saved as a single, atomic operation.
 
-This generic interface defines standard CRUD (Create, Read, Update, Delete) operations for an entity.
+## 🚀 Usage
+
+These abstractions are designed to be implemented in your Infrastructure layer and consumed by your Application layer.
+
+### 1. Define Your Repository Interface
+In your Application layer, define an interface for your entity that inherits from the base abstractions.
 
 ```csharp
 // An example of a concrete repository implementation
 using RA.Utilities.Data.Abstractions;
+using YourApp.Domain.Entities;
 
+public class ProductRepository : IRepositoryBase<Product>
+{
+    // You can add custom, entity-specific query methods here
+    Task<Product?> GetProductBySkuAsync(string sku);
+}
+```
+
+### 2. Implement the Concrete Repository
+In your Infrastructure layer, implement the interface. You can inherit from `RepositoryBase<T>` (provided by `RA.Utilities.Data.EntityFramework`) to get the standard implementations for free.
+
+```csharp
+using RA.Utilities.Data.EntityFramework;
+using YourApp.Domain.Entities;
+using YourApp.Persistence;
 public class ProductRepository : IRepository<Product, int>
 {
     private readonly AppDbContext _context;
@@ -46,9 +73,9 @@ public class ProductRepository : IRepository<Product, int>
         _context = context;
     }
 
-    public async Task<Product> GetByIdAsync(int id, CancellationToken cancellationToken)
+    public async Task<Product> GetProductBySkuAsync(int id, CancellationToken cancellationToken)
     {
-        return await _context.Products.FindAsync(id, cancellationToken);
+        return await _dbContext.Set<Product>().FirstOrDefaultAsync(p => p.Sku == sku);
     }
 
     public void Add(Product entity)
@@ -57,52 +84,6 @@ public class ProductRepository : IRepository<Product, int>
     }
 
     // ... other method implementations
-}
-```
-
-### `IUnitOfWork`
-
-This interface represents a transaction that groups multiple repository operations. It ensures that a series of changes are either all committed or all rolled back, maintaining data integrity.
-
-```csharp
-// An example of a Unit of Work implementation with EF Core
-public class UnitOfWork : IUnitOfWork
-{
-    private readonly AppDbContext _context;
-
-    public UnitOfWork(AppDbContext context)
-    {
-        _context = context;
-    }
-
-    public Task<int> SaveChangesAsync(CancellationToken cancellationToken)
-    {
-        return _context.SaveChangesAsync(cancellationToken);
-    }
-}
-```
-
-### Injecting into a Service
-
-You can then inject these abstractions into your business services, completely decoupling them from EF Core's `DbContext`.
-
-```csharp
-public class ProductService
-{
-    private readonly IRepository<Product, int> _productRepository;
-    private readonly IUnitOfWork _unitOfWork;
-
-    public ProductService(IRepository<Product, int> productRepository, IUnitOfWork unitOfWork)
-    {
-        _productRepository = productRepository;
-        _unitOfWork = unitOfWork;
-    }
-
-    public async Task CreateProductAsync(Product product, CancellationToken cancellationToken)
-    {
-        _productRepository.Add(product);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-    }
 }
 ```
 

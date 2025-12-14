@@ -1,5 +1,19 @@
 # Release Notes for RA.Utilities.Data.Abstractions
 
+## Version 10.0.1
+![Date Badge](https://img.shields.io/badge/Publish-14%20December%202025-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.Abstractions/10.0.1)
+
+This release introduces a significant architectural refactoring of the repository interfaces to better align with Command Query Separation (CQS) principles and simplify their usage.
+
+### ✨ No Breaking Changes
+Change generic type `T` from `BaseEntity` in to `CoreEntity`
+
+```csharp
++ public interface IReadRepositoryBase<T> where T : notnull, CoreEntity
+- public interface IReadRepositoryBase<T> where T : notnull, BaseEntity
+```
+
 ## Version 10.0.0
 ![Date Badge](https://img.shields.io/badge/Publish-23%20November%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.Abstractions/10.0.0)
