@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-		<Version>10.0.0</Version>
+		<Version>10.0.1</Version>
 		<Title>Data Core Entities</Title>
 		<Description>Provides a set of core abstractions and base classes for data entities within the RA.Utilities ecosystem. This includes common interfaces like IEntity and base classes with properties like Id, CreatedDate, and UpdatedDate to promote consistency in data models.</Description>
 		<PackageTags>RA;Utilities;Data;Entities;Core;Abstractions;BaseEntity;IEntity</PackageTags>

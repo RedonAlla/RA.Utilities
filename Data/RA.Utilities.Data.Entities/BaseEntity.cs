@@ -3,15 +3,11 @@ using System;
 namespace RA.Utilities.Data.Entities;
 
 /// <summary>
-/// Base class for all entities, providing common properties like Id, CreatedAt, and LastModifiedAt.
+/// Base class for entities, providing common properties like creation and modification timestamps,
+/// and inheriting the unique identifier from <see cref="CoreEntity"/>.
 /// </summary>
-public abstract class BaseEntity
+public abstract class BaseEntity : CoreEntity
 {
-    /// <summary>
-    /// Gets or sets the unique identifier for the entity.
-    /// </summary>
-    public virtual Guid Id { get; set; }
-
     /// <summary>
     /// Gets or sets the creation timestamp of the entity.
     /// </summary>
