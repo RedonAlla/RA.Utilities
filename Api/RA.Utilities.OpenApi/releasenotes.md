@@ -1,5 +1,72 @@
 # Release Notes for RA.Utilities.OpenApi
 
+## Version 10.0.2
+![Date Badge](https://img.shields.io/badge/Publish-117%20December%202025-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.2-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.OpenApi/10.0.2)
+
+### ✨ New Features
+
+#### OpenAPI Schema Enrichment from FluentValidation Rules
+
+You can now automatically reflect your `FluentValidation` rules in your OpenAPI schema. The new `FluentValidationSchemaTransformer` inspects your validators and applies corresponding constraints to your model properties.
+
+#### Key Benefits:
+
+* **Single Source of Truth**: Your validation rules defined in C# are now the single source of truth, and your API documentation will always stay in sync.
+* **Improved API Usability**: API consumers can see constraints like required fields, length limits, and patterns directly in the documentation, leading to fewer invalid requests.
+
+#### Supported Rules:
+
+* `NotNull` / `NotEmpty` -> Marks the property as required.
+* `Length` / `MinimumLength` / `MaximumLength` -> Sets `minLength` and `maxLength`.
+* `Matches` (Regular Expression) -> Sets the `pattern`.
+* `GreaterThan` / `GreaterThanOrEqualTo` / `LessThan` / `LessThanOrEqualTo` -> Sets `minimum`, `maximum`, `exclusiveMinimum`, and `exclusiveMaximum`.
+* `InclusiveBetween` / `ExclusiveBetween` -> Sets `minimum`, `maximum`, and the corresponding exclusive flags.
+* `EmailAddress` -> Sets the format to `email`.
+* `CreditCard` -> Sets the format to `credit-card`.
+
+**How to use it**: Simply call the `AddFluentValidationRules()` extension method when configuring your OpenAPI services.
+
+```csharp
+// In Program.cs
+builder.Services.AddOpenApi(options =>
+{
+    // ... other configurations
+    options.AddFluentValidationRules();
+});
+```
+
+#### OpenAPI Enum Descriptions from XML Documentation
+The new `EnumXmlSchemaTransformer` enhances your enums in the OpenAPI schema by appending a markdown table with the descriptions from your XML documentation comments.
+
+#### Key Benefits:
+
+* **Clearer Enum Definitions**: Provides clear, human-readable descriptions for each enum value directly in the API documentation.
+* **Reduces Ambiguity**: Helps consumers understand the meaning of each enum value without having to look at the source code.
+
+**Example Output**: If you have an enum with XML comments, the transformer will append a table like this to the schema's description:
+
+| Value	| Description |
+| ----- | ----------- |
+| Value1 | This is the first value. |
+| Value2 | This is the second value. |
+
+**How to use it**: First, ensure your project is configured to generate an XML documentation file. Then, use the `AddEnumXmlDescriptionTransformer()` extension method, providing the path to the XML file.
+
+```csharp
+// In Program.cs
+var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+
+builder.Services.AddOpenApi(options =>
+{
+    // ... other configurations
+    options.AddEnumXmlDescriptionTransformer(xmlPath);
+});
+```
+
+---
+
 ## Version 10.0.1
 ![Date Badge](https://img.shields.io/badge/Publish-12%20December%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.OpenApi/10.0.1)
