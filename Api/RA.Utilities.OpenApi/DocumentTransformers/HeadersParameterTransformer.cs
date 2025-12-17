@@ -14,7 +14,7 @@ namespace RA.Utilities.OpenApi.DocumentTransformers;
 /// An <see cref="IOpenApiDocumentTransformer"/> that adds configured headers to all API operations.
 /// This transformer reads from <see cref="HeadersParameterSettings"/> to add headers to both requests and responses.
 /// </summary>
-public sealed class HeadersParameterTransformer : IOpenApiDocumentTransformer
+internal sealed class HeadersParameterTransformer : IOpenApiDocumentTransformer
 {
     private readonly HeadersParameterSettings _settings;
 

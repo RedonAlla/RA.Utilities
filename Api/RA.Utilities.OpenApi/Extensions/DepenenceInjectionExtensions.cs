@@ -1,5 +1,8 @@
+using System;
+using System.Collections.Generic;
 using Microsoft.AspNetCore.OpenApi;
 using RA.Utilities.OpenApi.DocumentTransformers;
+using RA.Utilities.OpenApi.OperationTransformers;
 using RA.Utilities.OpenApi.SchemaTransformers;
 
 namespace RA.Utilities.OpenApi.Extensions;
@@ -19,7 +22,7 @@ public static class DependencyInjectionExtensions
     ///     <description>Adds a default set of document transformers using <see cref="AddDefaultsDocumentTransformer"/>:
     ///       <list type="bullet">
     ///         <item><description><see cref="DocumentInfoTransformer"/>: Populates document info from configuration.</description></item>
-    ///         <item><description><see cref="BearerSecuritySchemeTransformer"/>: Adds a Bearer token security scheme if JWT authentication is present.</description></item>
+    ///         <item><description><see cref="BearerSecurityDocumentTransformer"/>: Adds a Bearer token security scheme if JWT authentication is present.</description></item>
     ///         <item><description><see cref="HeadersParameterTransformer"/>: Adds configured request and response headers to all operations.</description></item>
     ///       </list>
     ///     </description>
@@ -32,7 +35,7 @@ public static class DependencyInjectionExtensions
     public static OpenApiOptions AddDefaultsDocumentTransformer(this OpenApiOptions options)
     {
         options?.AddDocumentTransformer<DocumentInfoTransformer>();
-        options?.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
+        options?.AddDocumentTransformer<BearerSecurityDocumentTransformer>();
         options?.AddDocumentTransformer<HeadersParameterTransformer>();
         return options!;
     }
@@ -73,13 +76,13 @@ public static class DependencyInjectionExtensions
         options.AddDocumentTransformer<DocumentInfoTransformer>();
 
     /// <summary>
-    /// Adds the <see cref="BearerSecuritySchemeTransformer"/> to the OpenAPI options.
+    /// Adds the <see cref="BearerSecurityDocumentTransformer"/> to the OpenAPI options.
     /// This transformer adds a Bearer security scheme if JWT authentication is detected.
     /// </summary>
     /// <param name="options">The <see cref="OpenApiOptions"/> to configure.</param>
     /// <returns>The configured <see cref="OpenApiOptions"/> for chaining.</returns>
-    public static OpenApiOptions AddBearerSecuritySchemeTransformer(this OpenApiOptions options) =>
-        options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
+    public static OpenApiOptions AddBearerSecurityDocumentTransformer(this OpenApiOptions options) =>
+        options.AddDocumentTransformer<BearerSecurityDocumentTransformer>();
 
     /// <summary>
     /// Adds the <see cref="HeadersParameterTransformer"/> to the OpenAPI options.
@@ -91,11 +94,13 @@ public static class DependencyInjectionExtensions
         options.AddDocumentTransformer<HeadersParameterTransformer>();
 
     /// <summary>
-    /// Adds the <see cref="PolymorphismSchemaFilter"/> to the OpenAPI options.
+    /// Adds the <see cref="PolymorphismDocumentTransformer"/> to the OpenAPI options.
     /// This filter supports polymorphic schemas by adding derived types and configuring a discriminator.
     /// </summary>
     /// <param name="options">The <see cref="OpenApiOptions"/> to configure.</param>
+    /// <param name="typesToInclude"></param>
+    /// <param name="discriminatorPropertyName"></param>
     /// <returns>The configured <see cref="OpenApiOptions"/> for chaining.</returns>
-    public static OpenApiOptions AddPolymorphismSchemaFilter(this OpenApiOptions options) =>
-        options.AddDocumentTransformer<PolymorphismSchemaFilter>();
+    public static OpenApiOptions AddPolymorphismDocumentTransformer<T>(this OpenApiOptions options, Dictionary<string, Type> typesToInclude, string discriminatorPropertyName = "Type") =>
+        options.AddDocumentTransformer(new PolymorphismDocumentTransformer(nameof(T), typesToInclude, discriminatorPropertyName));
 }

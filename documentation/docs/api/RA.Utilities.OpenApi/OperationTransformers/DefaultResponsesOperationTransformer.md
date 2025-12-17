@@ -32,7 +32,7 @@ var builder = WebApplication.CreateBuilder(args);
 // ... other services
 
 builder.Services.AddOpenApi(options =>
-  options.AddOpenApiOperationTransformer<DefaultResponsesOperationTransformer>());
+  options.AddDefaultResponsesOperationTransformer());
 
 var app = builder.Build();
 

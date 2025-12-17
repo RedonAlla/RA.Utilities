@@ -1,5 +1,53 @@
 # Release Notes for RA.Utilities.OpenApi
 
+## Version 10.0.3
+![Date Badge](https://img.shields.io/badge/Publish-117%20December%202025-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.3-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.OpenApi/10.0.3)
+
+### 🐞 Bug fix
+
+The extension method for registering the polymorphism transformer has been fixed and improved.
+It now correctly accepts parameters for configuration.
+
+| Parameter | Description |
+| --------- | ----------- |
+| `T` (generic type parameter) | The base type for polymorphism. The schema name is derived from this type (e.g., `nameof(T)`). |
+| `typesToInclude` | A dictionary mapping schema names to their corresponding types to include in the polymorphic schema. |
+| `discriminatorPropertyName` | The name of the discriminator property. ***Defaults to "Type".*** |
+
+**Before:**
+```csharp
+public static OpenApiOptions AddPolymorphismSchemaFilter(this OpenApiOptions options) =>
+        options.AddDocumentTransformer<PolymorphismSchemaFilter>();
+```
+**now:**
+```csharp
+    public static OpenApiOptions AddPolymorphismDocumentTransformer<T>(this OpenApiOptions options, Dictionary<string, Type> typesToInclude, string discriminatorPropertyName = "Type") =>
+        options.AddDocumentTransformer(new PolymorphismDocumentTransformer(nameof(T), typesToInclude, discriminatorPropertyName));
+```
+
+### 💥 Breaking changes
+
+#### 🏗️ Architectural Changes
+The following transformers have been made internal to enforce a consistent registration pattern:
+- `BearerSecurityDocumentTransformer`
+- `DocumentInfoTransformer`
+- `HeadersParameterTransformer`
+- `PolymorphismDocumentTransformer`
+- `DefaultResponsesOperationTransformer`
+
+They must now be registered using their corresponding extension methods provided in `DependencyInjectionExtensions`.
+This change simplifies setup and reduces the chance of misconfiguration.
+
+#### 🔏 Renaming
+* `BearerSecuritySchemeTransformer` => `BearerSecurityDocumentTransformer`
+* `PolymorphismSchemaFilter` => `PolymorphismDocumentTransformer`
+
+Changing: `BearerSecurityDocumentTransformer`, `DocumentInfoTransformer`, `HeadersParameterTransformer`, `PolymorphismDocumentTransformer`
+`DefaultResponsesOperationTransformer` each mean you now can only those thought extensions method inside `DependencyInjectionExtensions`
+
+---
+
 ## Version 10.0.2
 ![Date Badge](https://img.shields.io/badge/Publish-117%20December%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.2-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.OpenApi/10.0.2)
@@ -71,7 +119,7 @@ builder.Services.AddOpenApi(options =>
 ![Date Badge](https://img.shields.io/badge/Publish-12%20December%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.OpenApi/10.0.1)
 
-Add `DefaultResponsesOperationTransformer` and `PolymorphismSchemaFilter` for enhanced OpenAPI document transformation.
+Add `DefaultResponsesOperationTransformer` and `PolymorphismDocumentTransformer` for enhanced OpenAPI document transformation.
 
 ### `DefaultResponsesOperationTransformer`
 
@@ -79,7 +127,7 @@ This operation transformer automatically adds standardized OpenAPI responses for
 It uses the response models from `RA.Utilities.Api.Results` to generate the schema for these error responses.
 
 This transformer is an `IOpenApiOperationTransformer`, meaning it applies to each API operation individually.
-It is a more targeted alternative to the `ResponsesDocumentTransformer`.
+It is a more targeted alternative to the `BearerSecurityDocumentTransformer`.
 
 **What it does:**
 
@@ -87,7 +135,7 @@ It is a more targeted alternative to the `ResponsesDocumentTransformer`.
 2.  **Reduces Annotations**: Eliminates the need to manually add `[ProducesResponseType]` attributes for these common errors on every single endpoint.
 3.  **Operation-Level Granularity**: As an `IOpenApiOperationTransformer`, it integrates seamlessly with Swashbuckle's operation-level processing pipeline.
 
-### `PolymorphismSchemaFilter`
+### `PolymorphismDocumentTransformer`
 
 This schema filter enhances the OpenAPI documentation for APIs that use polymorphic types (i.e., base classes with multiple derived classes). It correctly represents the inheritance structure in the generated schema, making it understandable for clients and tools like NSwag or AutoRest.
 
@@ -118,7 +166,7 @@ This release of `RA.Utilities.OpenApi` provides a robust set of tools to enhance
 
 *   **`HeadersParameterTransformer`**: Adds common, configurable headers (like `x-request-id`) to every API operation, ensuring consistent documentation for tracing and correlation in distributed systems.
 
-*   **`ResponsesDocumentTransformer`**: Automatically adds standardized OpenAPI responses for common HTTP status codes (`400`, `404`, `409`, `500`), using schema models from `RA.Utilities.Api.Results` to ensure your error contracts are clearly documented.
+*   **`BearerSecurityDocumentTransformer`**: Automatically adds standardized OpenAPI responses for common HTTP status codes (`400`, `404`, `409`, `500`), using schema models from `RA.Utilities.Api.Results` to ensure your error contracts are clearly documented.
 
 *   **Simplified Setup**: Includes an `AddDefaultsDocumentTransformer()` extension method to register the most common transformers (`DocumentInfo`, `BearerSecurityScheme`, and `HeadersParameter`) with a single line of code.
 
@@ -138,7 +186,7 @@ This release of `RA.Utilities.OpenApi` provides a robust set of tools to enhance
         .AddDefaultsDocumentTransformer(); // Adds Info, Bearer, and Headers transformers
     
     // Register other transformers individually
-    builder.Services.AddOpenApiDocumentTransformer<ResponsesDocumentTransformer>();
+    builder.Services.AddOpenApiDocumentTransformer<BearerSecurityDocumentTransformer>();
     ```
 4.  **Map Endpoints**: Finally, map the OpenAPI endpoints in your request pipeline:
     ```csharp

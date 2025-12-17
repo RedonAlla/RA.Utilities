@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Version>10.0.2</Version>
+    <Version>10.0.3</Version>
     <Title>OpenApi Documentation</Title>
     <Description>This package provides utilities to generate and transform OpenAPI documents for ASP.NET Core web APIs.</Description>
     <Summary>This package provides utilities to generate and transform OpenAPI documents for ASP.NET Core web APIs.</Summary>
@@ -25,10 +25,6 @@
 
  <ItemGroup>
    <ProjectReference Include="../RA.Utilities.Api.Results/RA.Utilities.Api.Results.csproj" />
- </ItemGroup>
-
- <ItemGroup>
-   <Folder Include="SchemaTransformers/" />
  </ItemGroup>
 
 </Project>

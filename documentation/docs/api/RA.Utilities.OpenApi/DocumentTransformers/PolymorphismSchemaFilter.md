@@ -74,8 +74,7 @@ builder.Services.AddOpenApi();
 
 // highlight-start
 // Instantiate and register the transformer
-builder.Services.AddOpenApiDocumentTransformer(new PolymorphismDocumentTransformer(
-    polymorphismPropertyName: "ErrorResponse", // The name of the base schema in OpenAPI
+builder.Services.AddOpenApiDocumentTransformer<ErrorResponse>(
     typesToInclude: new()
     {
         // Maps the discriminator value to the derived type
@@ -83,7 +82,7 @@ builder.Services.AddOpenApiDocumentTransformer(new PolymorphismDocumentTransform
         { "Conflict", typeof(ConflictResponse) },
     },
     discriminatorPropertyName: "responseType" // The property used to differentiate types
-));
+);
 // highlight-end
 
 var app = builder.Build();

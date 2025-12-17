@@ -13,7 +13,7 @@ namespace RA.Utilities.OpenApi.DocumentTransformers;
 /// Transforms the OpenAPI document to include a Bearer security scheme if a `Bearer` or `BearerToken`
 /// authentication scheme is registered in the application.
 /// </summary>
-public sealed class BearerSecuritySchemeTransformer : IOpenApiDocumentTransformer
+internal sealed class BearerSecurityDocumentTransformer : IOpenApiDocumentTransformer
 {
     private const string BearerSchemeName = "Bearer";
 

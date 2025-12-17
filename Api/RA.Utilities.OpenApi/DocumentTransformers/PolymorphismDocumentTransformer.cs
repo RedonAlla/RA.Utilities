@@ -12,14 +12,14 @@ namespace RA.Utilities.OpenApi.DocumentTransformers;
 /// Provides a filter for transforming OpenAPI documents to support polymorphic schemas.
 /// This filter adds derived types and configures the discriminator for polymorphic base schemas.
 /// </summary>
-public class PolymorphismSchemaFilter : IOpenApiDocumentTransformer
+internal class PolymorphismDocumentTransformer : IOpenApiDocumentTransformer
 {
     private readonly string _polymorphismPropertyName;
     private readonly string _discriminatorPropertyName;
     private readonly Dictionary<string, Type> _typesToInclude;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="PolymorphismSchemaFilter"/> class.
+    /// Initializes a new instance of the <see cref="PolymorphismDocumentTransformer"/> class.
     /// </summary>
     /// <param name="polymorphismPropertyName">The name of the property used for polymorphism in the schema.</param>
     /// <param name="typesToInclude">A dictionary mapping schema names to their corresponding types to include in the polymorphic schema.</param>
@@ -27,7 +27,7 @@ public class PolymorphismSchemaFilter : IOpenApiDocumentTransformer
     /// <exception cref="ArgumentNullException">
     /// Thrown if <paramref name="polymorphismPropertyName"/>, <paramref name="discriminatorPropertyName"/>, or <paramref name="typesToInclude"/> is <c>null</c>.
     /// </exception>
-    public PolymorphismSchemaFilter(string polymorphismPropertyName, Dictionary<string, Type> typesToInclude, string discriminatorPropertyName = "Type")
+    public PolymorphismDocumentTransformer(string polymorphismPropertyName, Dictionary<string, Type> typesToInclude, string discriminatorPropertyName = "Type")
     {
         ArgumentNullException.ThrowIfNull(polymorphismPropertyName);
         ArgumentNullException.ThrowIfNull(discriminatorPropertyName);

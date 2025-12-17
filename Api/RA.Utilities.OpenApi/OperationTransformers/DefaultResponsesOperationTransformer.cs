@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Net.Mime;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
@@ -8,14 +10,17 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
 using RA.Utilities.Api.Results;
+using RA.Utilities.Core.Constants;
 
-namespace RA.Utilities.OpenApi.DocumentTransformers;
+namespace RA.Utilities.OpenApi.OperationTransformers;
 
 /// <summary>
 /// An <see cref="IOpenApiOperationTransformer"/> implementation that adds a default error response (500) to OpenAPI operations.
 /// </summary>
-public sealed class DefaultResponsesOperationTransformer : IOpenApiOperationTransformer
+internal sealed class DefaultResponsesOperationTransformer : IOpenApiOperationTransformer
 {
+    private static readonly string InternalServerError = BaseResponseCode.InternalServerError.ToString(CultureInfo.InvariantCulture);
+
     /// <summary>
     /// Transforms the specified <see cref="OpenApiOperation"/> by adding a default error response if not already present.
     /// </summary>
@@ -40,7 +45,7 @@ public sealed class DefaultResponsesOperationTransformer : IOpenApiOperationTran
                 Name = defaultErrorName,
             };
 
-            operation.Responses["500"] = new OpenApiResponse
+            operation.Responses[InternalServerError] = new OpenApiResponse
             {
                 Description = "Response designated \"catch-all\" for any unexpected or unhandled exceptions that occur within your application",
                 Content = new Dictionary<string, OpenApiMediaType>
@@ -50,11 +55,11 @@ public sealed class DefaultResponsesOperationTransformer : IOpenApiOperationTran
                         Schema = await context.GetOrCreateSchemaAsync(paramDesc.Type, paramDesc, cancellationToken),
                         Examples = new Dictionary<string, IOpenApiExample>
                         {
-                            ["500"] = new OpenApiExample
+                            [InternalServerError] = new OpenApiExample
                             {
                                 Summary = "Default error response",
                                 Description = "This is an example of a default error response.",
-                                Value = System.Text.Json.JsonSerializer.SerializeToNode(new ErrorResponse())
+                                Value = JsonSerializer.SerializeToNode(new ErrorResponse())
                             }
                         }
                     }

@@ -19,13 +19,15 @@ The primary goals are to:
 
 - [Getting started](#getting-started)
 - [Dependencies](#-dependencies)
-- [Default Transformers](#default-transformers)
+- [Document Transformers](#document-transformers)
   - [`DocumentInfoTransformer`](#documentinfotransformer)
-  - `BearerSecuritySchemeTransformer`
+  - `BearerSecurityDocumentTransformer`
   - `HeadersParameterTransformer`
   - `ResponsesDocumentTransformer`
+- Operation Transformers
   - `DefaultResponsesOperationTransformer`
-  - `PolymorphismSchemaFilter`
+- Schema Filters (as Document Transformers)
+  - `PolymorphismDocumentTransformer`
 - Configuration
   - `OpenApiInfoSettings`
   - `HeadersParameterSettings`
@@ -45,12 +47,6 @@ Or through the NuGet Package Manager in Visual Studio.
 
 ---
 
----
-
-## 🔗 Dependencies
-
--   [`RA.Utilities.Api.Results`](https://redonalla.github.io/RA.Utilities/nuget-packages/api/RA.Utilities.Api.Results/)
----
 
 ## Default Transformers
 
@@ -58,7 +54,7 @@ This package includes a set of default transformers that can be registered with 
 
 ### `DocumentInfoTransformer`
 
-This transformer populates the top-level information of your OpenAPI document (like title, version, description, and contact info) directly from your `appsettings.json` configuration.
+This transformer populates the top-level information of your OpenAPI document (like title, version, description, and contact info) directly from your `appsettings.json` configuration. It is registered via the `AddDocumentInfoTransformer()` extension method.
 
 **What it does:**
 
@@ -66,14 +62,14 @@ This transformer populates the top-level information of your OpenAPI document (l
 2.  **Populates `OpenApiInfo`**: It sets the `Title`, `Version`, `Description`, `Contact`, and `License` fields in the generated document.
 3.  **Simplifies Customization**: Allows you to update your API's documentation details without changing any code.
 
-### `BearerSecuritySchemeTransformer`
+### `BearerSecurityDocumentTransformer`
 
-This transformer automatically adds a "Bearer" security scheme to your OpenAPI document if it detects that JWT Bearer authentication is registered in your application. This enables the "Authorize" button in the Swagger UI, allowing users to test protected endpoints.
+This transformer automatically adds a "Bearer" security scheme to your OpenAPI document if it detects that JWT Bearer authentication is registered in your application. This enables the "Authorize" button in the Swagger UI, allowing users to test protected endpoints. It is registered via the `AddBearerSecurityDocumentTransformer()` extension method.
 
 **What it does:**
 
 1.  **Detects JWT Authentication**: It checks if an authentication scheme named `Bearer` or `BearerToken` is present.
-2.  **Adds Security Scheme**: If detected, it adds the standard JWT Bearer security definition to the document's components.
+2.  **Adds Security Scheme**: If detected, it adds the standard JWT Bearer security definition to the document's `components`.
 3.  **Reduces Boilerplate**: Eliminates the need to manually configure `AddSecurityDefinition` and `AddSecurityRequirement` in `SwaggerGenOptions` for this common scenario.
 
 ### `HeadersParameterTransformer`
@@ -89,7 +85,7 @@ Both the request and response headers are configurable via `HeadersParameterSett
 
 ### `ResponsesDocumentTransformer`
 
-This transformer automatically adds standardized OpenAPI responses for common HTTP status codes like `400`, `404`, `409`, and `500`. It uses the response models from `RA.Utilities.Api.Results` to generate the schema for these error responses.
+This transformer automatically adds standardized OpenAPI responses for common HTTP status codes like `400`, `404`, `409`, and `500`. It uses the response models from `RA.Utilities.Api.Results` to generate the schema for these error responses. It is registered via the `AddResponsesDocumentTransformer()` extension method.
 
 **What it does:**
 
@@ -97,6 +93,8 @@ This transformer automatically adds standardized OpenAPI responses for common HT
 2.  **Reduces Annotations**: Eliminates the need to manually add `[ProducesResponseType]` attributes for these common errors on every single endpoint.
 
 ---
+
+## Operation Transformers
 
 ### `DefaultResponsesOperationTransformer`
 
@@ -112,7 +110,9 @@ It is a more targeted alternative to the `ResponsesDocumentTransformer`.
 2.  **Reduces Annotations**: Eliminates the need to manually add `[ProducesResponseType]` attributes for these common errors on every single endpoint.
 3.  **Operation-Level Granularity**: As an `IOpenApiOperationTransformer`, it integrates seamlessly with Swashbuckle's operation-level processing pipeline.
 
-### `PolymorphismSchemaFilter`
+## Schema Filters (as Document Transformers)
+
+### `PolymorphismDocumentTransformer`
 
 This document transformer enhances the OpenAPI documentation for APIs that use polymorphic types (i.e., base classes with multiple derived classes). It correctly represents the inheritance structure in the generated schema using the `oneOf` and `discriminator` keywords, making it understandable for clients and code generation tools.
 
@@ -126,17 +126,18 @@ Unlike a Swashbuckle `ISchemaFilter`, this is an `IOpenApiDocumentTransformer` t
 4.  **Enables Code Generation**: Fixes issues with client-side code generators like NSwag or AutoRest where polymorphic types would otherwise be ignored or misinterpreted.
 
 To apply this transformer, you need to instantiate it with the required parameters and register it in `Program.cs`.
+The `AddPolymorphismDocumentTransformer<T>()` extension method simplifies this process.
 
 ```csharp
 // Program.cs
-builder.Services.AddOpenApiDocumentTransformer(new PolymorphismSchemaFilter(
-    polymorphismPropertyName: "Error", // The name of the base schema
-    typesToInclude: new() // A dictionary of derived types
+builder.Services.AddOpenApi(options =>
+{
+    options.AddPolymorphismDocumentTransformer<ErrorResponse>(new()
     {
         { "NotFound", typeof(NotFoundResponse) },
         { "Conflict", typeof(ConflictResponse) },
-    }
-));
+    });
+});
 ```
 
 ## Configuration
@@ -191,7 +192,7 @@ Represents a single header to be added to the OpenAPI specification.
 
 | Property      | Type      | Default      | Description                                                             |
 | ------------- | --------- | ------------ | ----------------------------------------------------------------------- |
-| Name          | `string`  | `""`         | The name of the header (e.g., "x-request-id").                          |
+| **Name**      | `string`  | `""`         | The name of the header (e.g., "x-request-id").                          |
 | Description   | `string`  | `""`         | A description of the header's purpose.                                  |
 | Required      | `bool`    | `true`       | Specifies if the header is required.                                    |
 | Type          | `JsonSchemaType`  | `String`   | The schema type for the header value (e.g., "String", "Integer"). |
@@ -219,14 +220,24 @@ Represents a single header to be added to the OpenAPI specification.
         "Url": "https://opensource.org/licenses/MIT"
       }
     }
+  },
+  "OpenApiHeaders": {
+    "RequestHeaders": [
+      {
+        "Name": "x-request-id",
+        "Description": "A unique identifier for the API call, used for tracing.",
+        "Required": true
+      }
+    ]
   }
 }
 ```
 
 ## 🔗 Dependencies
 
+-   [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/)
 -   [`Microsoft.AspNetCore.OpenApi`](https://www.nuget.org/packages/Microsoft.AspNetCore.OpenApi)
--   [`Microsoft.Extensions.Options.ConfigurationExtensions`](https://www.nuget.org/packages/microsoft.extensions.options.configurationextensions/)
+-   [`RA.Utilities.Api.Results`](https://redonalla.github.io/RA.Utilities/nuget-packages/api/RA.Utilities.Api.Results/)
 
 
 ## Usage
@@ -260,7 +271,7 @@ builder.Services.AddOpenApi()
     .AddDefaultsDocumentTransformer();
 
 // 3. Register additional document transformers individually.
-builder.Services.AddOpenApiDocumentTransformer<ResponsesDocumentTransformer>();
+builder.Services.AddOpenApiDocumentTransformer<BearerSecurityDocumentTransformer>();
 
 // 4. Register operation transformers for more granular control.
 builder.Services.AddOpenApiOperationTransformer<DefaultResponsesOperationTransformer>();
@@ -269,7 +280,7 @@ builder.Services.AddOpenApiOperationTransformer<DefaultResponsesOperationTransfo
 // This is shown for completeness. AddSwaggerGen() is needed for this to work.
 builder.Services.AddSwaggerGen(options =>
 {
-    options.SchemaFilter<PolymorphismSchemaFilter>();
+    options.SchemaFilter<PolymorphismDocumentTransformer>();
 });
 
 var app = builder.Build();

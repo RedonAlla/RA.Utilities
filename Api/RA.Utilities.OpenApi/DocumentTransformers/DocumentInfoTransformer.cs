@@ -10,7 +10,7 @@ namespace RA.Utilities.OpenApi.DocumentTransformers;
 /// <summary>
 /// Transforms the OpenAPI document by populating the Info object with values from configuration.
 /// </summary>
-public sealed class DocumentInfoTransformer : IOpenApiDocumentTransformer
+internal sealed class DocumentInfoTransformer : IOpenApiDocumentTransformer
 {
     private readonly OpenApiInfoSettings? _openApiInfoSettings;
 
