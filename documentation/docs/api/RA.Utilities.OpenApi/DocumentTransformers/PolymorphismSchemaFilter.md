@@ -1,5 +1,5 @@
 ---
-title: PolymorphismSchemaFilter
+title: PolymorphismDocumentTransformer
 sidebar_position: 6
 ---
 
@@ -7,7 +7,7 @@ sidebar_position: 6
 Namespace: RA.Utilities.OpenApi.DocumentTransformers
 ```
 
-The `PolymorphismSchemaFilter` is an [`IOpenApiDocumentTransformer`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.openapi.iopenapidocumenttransformer) that enables correct OpenAPI documentation for polymorphic types (a base class with one or more derived classes). It modifies the OpenAPI document to use the `oneOf` and `discriminator` keywords, which allows API clients and code generators to understand and handle the inheritance structure.
+The `PolymorphismDocumentTransformer` is an [`IOpenApiDocumentTransformer`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.openapi.iopenapidocumenttransformer) that enables correct OpenAPI documentation for polymorphic types (a base class with one or more derived classes). It modifies the OpenAPI document to use the `oneOf` and `discriminator` keywords, which allows API clients and code generators to understand and handle the inheritance structure.
 
 This transformer is designed for the native ASP.NET Core OpenAPI tools (`Microsoft.AspNetCore.OpenApi`).
 
@@ -15,10 +15,10 @@ This transformer is designed for the native ASP.NET Core OpenAPI tools (`Microso
 
 When an API endpoint can return different concrete types that share a common base class, standard OpenAPI generation often fails to capture this relationship. For example, a generic `Error` base class might have specific implementations like `NotFoundError` and `ConflictError`. Without special handling, the documentation would only show the base `Error` type, and clients would not know about the possible variations.
 
-The `PolymorphismSchemaFilter` solves this by explicitly defining the polymorphic relationship in the OpenAPI schema.
+The `PolymorphismDocumentTransformer` solves this by explicitly defining the polymorphic relationship in the OpenAPI schema.
 
 ### 📋 Parameters 
-The `PolymorphismSchemaFilter` is configured through its constructor.
+The `PolymorphismDocumentTransformer` is configured through its constructor.
 
 | Parameter | Type | Required | Description |
 | --------- | ---- | -------- |------------ |
@@ -54,7 +54,7 @@ The final result in the OpenAPI JSON looks something like this:
 
 ### 🚀 Usage
 
-Because the `PolymorphismSchemaFilter` needs to be configured with the specific base and derived types you're using, it must be instantiated manually and registered in `Program.cs`.
+Because the `PolymorphismDocumentTransformer` needs to be configured with the specific base and derived types you're using, it must be instantiated manually and registered in `Program.cs`.
 
 #### Register the Transformer in `Program.cs`
 
@@ -74,7 +74,7 @@ builder.Services.AddOpenApi();
 
 // highlight-start
 // Instantiate and register the transformer
-builder.Services.AddOpenApiDocumentTransformer(new PolymorphismSchemaFilter(
+builder.Services.AddOpenApiDocumentTransformer(new PolymorphismDocumentTransformer(
     polymorphismPropertyName: "ErrorResponse", // The name of the base schema in OpenAPI
     typesToInclude: new()
     {

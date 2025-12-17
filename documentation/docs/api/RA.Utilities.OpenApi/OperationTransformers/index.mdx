@@ -1,0 +1,27 @@
+---
+title: Operation Transformers
+sidebar_position: 2
+---
+
+```powershell
+Namespace: RA.Utilities.OpenApi.OperationTransformers
+```
+
+`DocumentTransformers` modify the entire OpenAPI document at once, types in the `RA.Utilities.OpenApi.OperationTransformers` namespace are designed for more granular control.
+They implement the [`IOpenApiOperationTransformer`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.openapi.iopenapioperationtransformer) interface,
+which means they are applied to *each individual API operation (i.e., each endpoint)* separately.
+
+This allows for more targeted modifications that only make sense in the context of a single endpoint.
+
+Here is the transformer provided in that namespace:
+
+### [DefaultResponsesOperationTransformer](./DefaultResponsesOperationTransformer.md)
+The `DefaultResponsesOperationTransformer` is a specific and targeted utility that automatically adds a standardized OpenAPI
+response for the HTTP `500` (Internal Server Error) status code to every single operation in your API.
+
+<br />
+<br />
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />

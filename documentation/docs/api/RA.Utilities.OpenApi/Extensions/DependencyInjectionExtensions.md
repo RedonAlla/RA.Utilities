@@ -3,89 +3,111 @@ title: DependencyInjectionExtensions
 sidebar_position: 6
 ---
 
-```powershell
+```bash
 Namespace: RA.Utilities.OpenApi.Extensions
 ```
 
-The `DependencyInjectionExtensions` class provides a convenient extension method for `OpenApiOptions` to simplify the registration of the document transformers included in this package.
+The `DependencyInjectionExtensions` class provides a set of convenient extension methods for `OpenApiOptions` to simplify the registration of the various document transformers and filters included in this package.
 
-### 🎯 Purpose
+These helpers streamline the setup process in `Program.cs`, making the code cleaner and more readable.
 
-The `DependencyInjectionExtensions` class in the `RA.Utilities.OpenApi` package provides a convenient "shortcut" method to simplify the setup of OpenAPI documentation in your ASP.NET Core application.
+### `AddDefaultsDocumentTransformer()`
 
-Its primary purpose is to bundle the registration of several common and highly useful `IOpenApiDocumentTransformer` implementations into a single, easy-to-use extension method: `AddDefaultsDocumentTransformer()`.
+This is the recommended starting point. It registers a sensible default set of document transformers with a single call.
 
-## 🧩 Available Extensions
+**What it does:**
+*   **`DocumentInfoTransformer`**: Populates the API's title, version, and description from `appsettings.json`.
+*   **`BearerSecurityDocumentTransformer`**: Automatically adds the "Authorize" button and JWT security scheme if Bearer authentication is detected.
+*   **`HeadersParameterTransformer`**: Adds common request and response headers (like `x-request-id`) to all API operations based on configuration.
 
-### AddDefaultsDocumentTransformer()
-
-This extension method registers a default set of `IOpenApiDocumentTransformer` implementations.
-It is the recommended starting point for configuring `RA.Utilities.OpenApi`.
-
-The following transformers are registered by this method:
-
-1.  **`DocumentInfoTransformer`**: Populates the API's title, version, and description from `appsettings.json`.
-2.  **`BearerSecuritySchemeTransformer`**: Automatically adds the "Authorize" button and JWT security scheme if Bearer authentication is detected.
-3.  **`HeadersParameterTransformer`**: Adds common request and response headers (like `x-request-id`) to all API operations based on configuration.
-
-Instead of registering each transformer individually in your Program.cs like this:
-
-```csharp showLineNumbers
-builder.Services.AddOpenApi()
-    .AddDocumentTransformer<DocumentInfoTransformer>()
-    .AddDocumentTransformer<BearerSecuritySchemeTransformer>()
-    .AddDocumentTransformer<HeadersParameterTransformer>();
-```
-
-You can achieve the same result with a single, more readable line of code:
-
-```csharp showLineNumbers
+#### Usage
+```csharp
+// In Program.cs
 builder.Services.AddOpenApi()
     .AddDefaultsDocumentTransformer();
 ```
 
-This approach has several benefits:
+---
 
-1. **Reduces Boilerplate**: It significantly cleans up your `Program.cs` file.
-2. **Promotes Convention**: It provides a sensible set of default configurations, guiding developers toward best practices for API documentation.
-3. **Improves Discoverability**: It makes it easy to apply a standard set of documentation rules to any project using this library.
+### `AddFluentValidationRules()`
 
+This extension registers the [`FluentValidationSchemaTransformer`](../SchemaTransformers/FluentValidationSchemaTransformer.md), which automatically enriches the OpenAPI schema with constraints derived from your `FluentValidation` rules.
 
-#### 🚀 Usage
-
-Call `AddDefaultsDocumentTransformer()` after `AddOpenApi()` in your `Program.cs`.
-
-```csharp showLineNumbers
-// Program.cs
-using RA.Utilities.OpenApi.Extensions;
-using RA.Utilities.OpenApi.Settings;
-
-var builder = WebApplication.CreateBuilder(args);
-
-builder.Services.AddEndpointsApiExplorer();
-
-// (Optional) Bind settings from appsettings.json for the transformers
-builder.Services.Configure<OpenApiInfoSettings>(
-    builder.Configuration.GetSection(OpenApiInfoSettings.AppSettingsKey)
-);
-builder.Services.Configure<HeadersParameterSettings>(
-    builder.Configuration.GetSection(HeadersParameterSettings.AppSettingsKey)
-);
-
-// highlight-start
-// Add OpenApi services and register the default transformers
-builder.Services.AddOpenApi()
-    .AddDefaultsDocumentTransformer();
-// highlight-end
-
-var app = builder.Build();
-
-if (app.Environment.IsDevelopment())
+#### Usage
+```csharp
+// In Program.cs
+builder.Services.AddOpenApi(options =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    options.AddFluentValidationRules();
+});
+```
 
-app.MapOpenApi();
-// ...
+---
+
+### `AddEnumXmlDescriptionTransformer(string xmlPath)`
+
+This extension registers the [`EnumXmlSchemaTransformer`](../SchemaTransformers/EnumXmlSchemaTransformer.md), which reads your project's XML documentation file to add descriptive markdown tables to your enum schemas.
+
+#### Usage
+```csharp
+// In Program.cs
+var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+
+builder.Services.AddOpenApi(options =>
+{
+    options.AddEnumXmlDescriptionTransformer(xmlPath);
+});
+```
+
+---
+
+### `AddDefaultResponsesOperationTransformer()`
+
+This extension registers the [`DefaultResponsesOperationTransformer`](../OperationTransformers/DefaultResponsesOperationTransformer.md), which automatically adds a standardized `500 Internal Server Error` response to every API operation.
+
+#### Usage
+```csharp
+// In Program.cs
+builder.Services.AddOpenApi()
+    .AddDefaultResponsesOperationTransformer();
+```
+
+---
+
+### `AddPolymorphismDocumentTransformer<T>()`
+
+This extension registers the [`PolymorphismDocumentTransformer`](../DocumentTransformers/PolymorphismSchemaFilter.md) to correctly document polymorphic types (a base class with several derived classes) using the `oneOf` and `discriminator` keywords.
+
+#### Usage
+
+You provide the base type `T` and a dictionary mapping discriminator values to the derived types.
+
+```csharp
+// In Program.cs
+builder.Services.AddOpenApi()
+    .AddPolymorphismDocumentTransformer<ErrorResponse>(new()
+    {
+        { "NotFound", typeof(NotFoundResponse) },
+        { "Conflict", typeof(ConflictResponse) },
+    });
+```
+
+---
+
+### Individual Transformer Extensions
+
+For more granular control, you can also register each of the default transformers individually.
+
+*   **`AddDocumentInfoTransformer()`**: Registers only the [`DocumentInfoTransformer`](../DocumentTransformers/DocumentInfoTransformer.md).
+*   **`AddBearerSecurityDocumentTransformer()`**: Registers only the [`BearerSecurityDocumentTransformer`](../DocumentTransformers/BearerSecurityDocumentTransformer.md).
+*   **`AddHeadersParameterTransformer()`**: Registers only the [`HeadersParameterTransformer`](../DocumentTransformers/HeadersParameterTransformer.md).
+
+#### Usage
+```csharp
+// In Program.cs
+builder.Services.AddOpenApi()
+    .AddDocumentInfoTransformer()
+    .AddBearerSecurityDocumentTransformer();
+    // ... and so on
 ```

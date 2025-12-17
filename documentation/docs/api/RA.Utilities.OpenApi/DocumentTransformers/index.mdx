@@ -7,47 +7,27 @@ sidebar_position: 1
 Namespace: RA.Utilities.OpenApi.DocumentTransformers
 ```
 
-Some hook provided that allows you to programmatically modify the generated OpenAPI (Swagger) document.
+The main purpose of these transformers is to automate common and repetitive tasks, enforce consistency, and keep your API endpoint definitions clean.
+Instead of manually annotating every endpoint, you can apply these transformations globally.
 
-*Document Transformers* offers a clean, powerful, and maintainable way to handle cross-cutting API documentation concerns. 
-It helps you keep your endpoint definitions focused on their primary logic while ensuring your OpenAPI specification is complete, consistent, and accurate.
 
-Your library provides several concrete implementations that solve common problems:
+Here's a breakdown of the transformers included in this package and their purposes:
 
-### 1. [`BearerSecuritySchemeTransformer`](./BearerSecuritySchemeTransformer):
+### [`DocumentInfoTransformer`](./DocumentInfoTransformer.md)
+This populates the top-level information of your OpenAPI document, such as the title, version, and description, directly from your `appsettings.json` configuration.
+This allows you to update your API's documentation details without changing any code.
 
-  * **Problem**: Manually configuring every protected endpoint to show the "Authorize" lock icon and JWT Bearer security scheme in Swagger UI is repetitive.
-  * **Solution**: This transformer automatically inspects your application's registered authentication schemes.
-  If it finds a "Bearer" scheme, it programmatically adds the correct security definition and security requirement to the OpenAPI document.
-  The result is that the "Authorize" button appears automatically in Swagger UI, allowing developers to easily test protected endpoints.
+### [`BearerSecuritySchemeTransformer`](./BearerSecuritySchemeTransformer.md)
+It automatically adds a "Bearer" security scheme to your OpenAPI document if it detects that JWT Bearer authentication is registered in your application.
+This enables the "Authorize" button in the Swagger UI, simplifying the testing of protected endpoints.
 
-### 2. [`HeadersParameterTransformer`](./HeadersParameterTransformer):
+### [`HeadersParameterTransformer`](./HeadersParameterTransformer.md)
+his transformer adds common headers, like `x-request-id` for correlation and tracing, to every API operation.
+This is particularly useful for microservices where tracking requests across different services is essential.
 
-  * **Problem**: Your API requires certain headers on every request for traceability (like `x-request-id`).
-  Documenting this on every single endpoint is tedious and error-prone.
-  * **Solution**: This transformer iterates through every operation in the OpenAPI document and automatically adds the configured request and response headers (like `x-request-id`).
-  This ensures your API contract is consistently and accurately documented everywhere without cluttering your endpoint code.
-
-### 3. [`ResponsesDocumentTransformer`](./ResponsesDocumentTransformer):
-
-  * **Problem**: Your API uses standardized error responses from RA.Utilities.Api.Results for common status codes (`400`, `404`, `409`, `500`).
-  You want your Swagger documentation to reflect these exact response structures for all endpoints.
-  * **Solution**: This transformer automatically adds these common error responses to every operation in the document, using the correct schemas from your results library.
-  This saves you from adding multiple `[ProducesResponseType]` attributes to every action.
-
-### 4. `DocumentInfoTransformer`:
-
-  * **Problem**: API metadata like the title, version, and description are hard-coded in `Program.cs`.
-  * **Solution**: This transformer pulls that information directly from your `appsettings.json` configuration.
-  This allows you to change your API's documented title or version without recompiling the code.
-
-### 5. [`PolymorphismSchemaFilter`](./PolymorphismSchemaFilter.md)
-Provides a filter for transforming OpenAPI documents to support polymorphic schemas.
-This filter adds derived types and configures the discriminator for polymorphic base schemas.
-
-### 6. [`DefaultResponsesOperationTransformer`](./DefaultResponsesOperationTransformer.md)
-An [`IOpenApiOperationTransformer`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.openapi.iopenapioperationtransformer) implementation that adds a default error response (500) to OpenAPI operations.
-
+### [`PolymorphismDocumentTransformer`](./PolymorphismDocumentTransformer.md)
+This transformer correctly represents inheritance in polymorphic types (a base class with several derived classes) within the OpenAPI schema.
+It uses the `oneOf` and `discriminator` keywords to help client-side code generators understand the API's data structure.
 
 
 <br />

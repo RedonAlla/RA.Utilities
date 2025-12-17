@@ -1,0 +1,32 @@
+---
+title: Schema Transformers
+sidebar_position: 3
+---
+
+```powershell
+Namespace: RA.Utilities.OpenApi.SchemaTransformers
+```
+
+While `DocumentTransformers` modify the entire OpenAPI document and OperationTransformers modify individual endpoints,
+the classes in the `RA.Utilities.OpenApi.SchemaTransformers` namespace are even more granular.
+
+They implement the [`IOpenApiSchemaTransformer`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.openapi.iopenapischematransformer) interface,
+which is designed to modify the generated schema for a specific data model (a C# `Type`) within your OpenAPI specification.
+
+This allows for powerful, type-specific enhancements that enrich your API documentation automatically.
+
+Based on the files, this namespace contains the following key transformers:
+
+### [`FluentValidationSchemaTransformer`](./FluentValidationSchemaTransformer.md)
+This is a highly useful transformer that bridges the gap between your business logic's validation rules and your API documentation.
+
+### [`EnumXmlSchemaTransformer`](./EnumXmlSchemaTransformer.md)
+This transformer addresses a common pain point with enums in API documentation: making their values understandable.
+Its goal is to read the XML documentation comments you've written for your C# `enum` members and append them directly to the enum's schema description in the OpenAPI document.
+
+<br />
+<br />
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />
