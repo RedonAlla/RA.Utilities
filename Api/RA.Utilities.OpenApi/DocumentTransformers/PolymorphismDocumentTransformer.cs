@@ -12,7 +12,7 @@ namespace RA.Utilities.OpenApi.DocumentTransformers;
 /// Provides a filter for transforming OpenAPI documents to support polymorphic schemas.
 /// This filter adds derived types and configures the discriminator for polymorphic base schemas.
 /// </summary>
-internal class PolymorphismDocumentTransformer : IOpenApiDocumentTransformer
+internal sealed class PolymorphismDocumentTransformer : IOpenApiDocumentTransformer
 {
     private readonly string _polymorphismPropertyName;
     private readonly string _discriminatorPropertyName;
