@@ -1,6 +1,6 @@
 # RA.Utilities.Api Release Notes
 
-## Version 10.0.0
+## Version 10.0.1
 ![Date Badge](https://img.shields.io/badge/Publish-17%20December%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-v10.0.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api/10.0.1)
 

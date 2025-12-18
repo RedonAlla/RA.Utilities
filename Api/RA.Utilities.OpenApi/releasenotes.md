@@ -36,8 +36,12 @@ The following transformers have been made internal to enforce a consistent regis
 - `PolymorphismDocumentTransformer`
 - `DefaultResponsesOperationTransformer`
 
+:::info
+
 They must now be registered using their corresponding extension methods provided in `DependencyInjectionExtensions`.
 This change simplifies setup and reduces the chance of misconfiguration.
+
+:::
 
 #### 🔏 Renaming
 * `BearerSecuritySchemeTransformer` => `BearerSecurityDocumentTransformer`

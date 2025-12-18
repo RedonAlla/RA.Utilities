@@ -146,7 +146,7 @@ public class ProductEndpoints : IEndpoint
 
 **Step 2: Register the endpoints in `Program.cs`**
 
-The `MapEndpoints` method scans the specified assembly (or the calling assembly by default) for all types implementing `IEndpoint` and calls their `MapEndpoints` method.
+The `MapEndpoints` method scans the specified assembly (or the calling assembly by default) for all types implementing `IEndpoint` and calls their `MapEndpoint` method.
 ```csharp
 // Program.cs
 
@@ -272,7 +272,7 @@ In your `IEndpoint` implementation, call the service and use the `Match` method 
 
 public class ProductEndpoints : IEndpoint
 {
-    public void MapEndpoints(IEndpointRouteBuilder app)
+    public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapGet("/products/{id}", (int id, ProductService service) => 
         {

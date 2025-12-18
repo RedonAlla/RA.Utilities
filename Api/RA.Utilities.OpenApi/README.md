@@ -21,9 +21,9 @@ The primary goals are to:
 - [Dependencies](#-dependencies)
 - [Document Transformers](#document-transformers)
   - [`DocumentInfoTransformer`](#documentinfotransformer)
-  - `BearerSecurityDocumentTransformer`
+  - `BearerSecuritySchemeTransformer`
   - `HeadersParameterTransformer`
-  - `ResponsesDocumentTransformer`
+  - `BearerSecurityDocumentTransformer`
 - Operation Transformers
   - `DefaultResponsesOperationTransformer`
 - Schema Filters (as Document Transformers)
@@ -54,7 +54,7 @@ This package includes a set of default transformers that can be registered with 
 
 ### `DocumentInfoTransformer`
 
-This transformer populates the top-level information of your OpenAPI document (like title, version, description, and contact info) directly from your `appsettings.json` configuration. It is registered via the `AddDocumentInfoTransformer()` extension method.
+This transformer populates the top-level information of your OpenAPI document (like title, version, description, and contact info) directly from your `appsettings.json` configuration.
 
 **What it does:**
 
@@ -62,14 +62,14 @@ This transformer populates the top-level information of your OpenAPI document (l
 2.  **Populates `OpenApiInfo`**: It sets the `Title`, `Version`, `Description`, `Contact`, and `License` fields in the generated document.
 3.  **Simplifies Customization**: Allows you to update your API's documentation details without changing any code.
 
-### `BearerSecurityDocumentTransformer`
+### `BearerSecuritySchemeTransformer`
 
-This transformer automatically adds a "Bearer" security scheme to your OpenAPI document if it detects that JWT Bearer authentication is registered in your application. This enables the "Authorize" button in the Swagger UI, allowing users to test protected endpoints. It is registered via the `AddBearerSecurityDocumentTransformer()` extension method.
+This transformer automatically adds a "Bearer" security scheme to your OpenAPI document if it detects that JWT Bearer authentication is registered in your application. This enables the "Authorize" button in the Swagger UI, allowing users to test protected endpoints.
 
 **What it does:**
 
 1.  **Detects JWT Authentication**: It checks if an authentication scheme named `Bearer` or `BearerToken` is present.
-2.  **Adds Security Scheme**: If detected, it adds the standard JWT Bearer security definition to the document's `components`.
+2.  **Adds Security Scheme**: If detected, it adds the standard JWT Bearer security definition to the document's components.
 3.  **Reduces Boilerplate**: Eliminates the need to manually configure `AddSecurityDefinition` and `AddSecurityRequirement` in `SwaggerGenOptions` for this common scenario.
 
 ### `HeadersParameterTransformer`
@@ -85,7 +85,7 @@ Both the request and response headers are configurable via `HeadersParameterSett
 
 ### `ResponsesDocumentTransformer`
 
-This transformer automatically adds standardized OpenAPI responses for common HTTP status codes like `400`, `404`, `409`, and `500`. It uses the response models from `RA.Utilities.Api.Results` to generate the schema for these error responses. It is registered via the `AddResponsesDocumentTransformer()` extension method.
+This transformer automatically adds standardized OpenAPI responses for common HTTP status codes like `400`, `404`, `409`, and `500`. It uses the response models from `RA.Utilities.Api.Results` to generate the schema for these error responses.
 
 **What it does:**
 
@@ -126,18 +126,17 @@ Unlike a Swashbuckle `ISchemaFilter`, this is an `IOpenApiDocumentTransformer` t
 4.  **Enables Code Generation**: Fixes issues with client-side code generators like NSwag or AutoRest where polymorphic types would otherwise be ignored or misinterpreted.
 
 To apply this transformer, you need to instantiate it with the required parameters and register it in `Program.cs`.
-The `AddPolymorphismDocumentTransformer<T>()` extension method simplifies this process.
 
 ```csharp
 // Program.cs
-builder.Services.AddOpenApi(options =>
-{
-    options.AddPolymorphismDocumentTransformer<ErrorResponse>(new()
+builder.Services.AddOpenApiDocumentTransformer(new PolymorphismDocumentTransformer(
+    polymorphismPropertyName: "Error", // The name of the base schema
+    typesToInclude: new() // A dictionary of derived types
     {
         { "NotFound", typeof(NotFoundResponse) },
         { "Conflict", typeof(ConflictResponse) },
-    });
-});
+    }
+));
 ```
 
 ## Configuration

@@ -1,0 +1,27 @@
+---
+title: Extensions
+sidebar_position: 3
+---
+
+The primary goal of this namespace is to enhance the developer experience by providing convenient "shortcut" and "setup" methods.
+These extension methods reduce boilerplate code and simplify common API development tasks in ASP.NET Core.
+They abstract away setup complexity and provide elegant shortcuts, guiding developers toward writing cleaner, more organized, and more maintainable API code.
+
+The namespace contains two key classes, each serving a distinct purpose:
+
+### 1. [EndpointExtensions](.EndpointExtensions.md)
+
+This class is the engine behind your **Endpoint Registration** Helpers feature.
+Its purpose is to declutter your `Program.cs` file by automating the discovery and mapping of API endpoints.
+This is a core pattern for implementing a clean Vertical Slice Architecture.
+
+### 2. [EndpointBuilderExtensions](./EndpointBuilderExtensions.md)
+This class is designed to improve the developer experience when applying validation to Minimal API endpoints.
+It provides a more fluent and readable syntax for adding the [`ValidationEndpointFilter`](../ValidationEndpointFilter.md).
+
+<br />
+<br />
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />
