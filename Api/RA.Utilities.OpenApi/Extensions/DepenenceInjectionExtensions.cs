@@ -102,5 +102,5 @@ public static class DependencyInjectionExtensions
     /// <param name="discriminatorPropertyName"></param>
     /// <returns>The configured <see cref="OpenApiOptions"/> for chaining.</returns>
     public static OpenApiOptions AddPolymorphismDocumentTransformer<T>(this OpenApiOptions options, Dictionary<string, Type> typesToInclude, string discriminatorPropertyName = "Type") =>
-        options.AddDocumentTransformer(new PolymorphismDocumentTransformer(nameof(T), typesToInclude, discriminatorPropertyName));
+        options.AddDocumentTransformer(new PolymorphismDocumentTransformer(typeof(T).Name, typesToInclude, discriminatorPropertyName));
 }
