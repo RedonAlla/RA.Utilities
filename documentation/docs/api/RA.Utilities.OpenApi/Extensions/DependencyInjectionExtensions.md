@@ -77,7 +77,7 @@ builder.Services.AddOpenApi()
 
 ### `AddPolymorphismDocumentTransformer<T>()`
 
-This extension registers the [`PolymorphismDocumentTransformer`](../DocumentTransformers/PolymorphismSchemaFilter.md) to correctly document polymorphic types (a base class with several derived classes) using the `oneOf` and `discriminator` keywords.
+This extension registers the [`PolymorphismDocumentTransformer`](../DocumentTransformers/PolymorphismDocumentTransformer.md) to correctly document polymorphic types (a base class with several derived classes) using the `oneOf` and `discriminator` keywords.
 
 #### Usage
 
@@ -100,7 +100,7 @@ builder.Services.AddOpenApi()
 For more granular control, you can also register each of the default transformers individually.
 
 *   **`AddDocumentInfoTransformer()`**: Registers only the [`DocumentInfoTransformer`](../DocumentTransformers/DocumentInfoTransformer.md).
-*   **`AddBearerSecurityDocumentTransformer()`**: Registers only the [`BearerSecurityDocumentTransformer`](../DocumentTransformers/BearerSecuritySchemeTransformer.md).
+*   **`AddBearerSecurityDocumentTransformer()`**: Registers only the [`BearerSecurityDocumentTransformer`](../DocumentTransformers/BearerSecurityDocumentTransformer.md).
 *   **`AddHeadersParameterTransformer()`**: Registers only the [`HeadersParameterTransformer`](../DocumentTransformers/HeadersParameterTransformer.md).
 
 #### Usage

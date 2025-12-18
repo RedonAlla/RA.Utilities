@@ -17,7 +17,7 @@ Here's a breakdown of the transformers included in this package and their purpos
 This populates the top-level information of your OpenAPI document, such as the title, version, and description, directly from your `appsettings.json` configuration.
 This allows you to update your API's documentation details without changing any code.
 
-### [`BearerSecuritySchemeTransformer`](./BearerSecuritySchemeTransformer.md)
+### [`BearerSecurityDocumentTransformer`](./BearerSecurityDocumentTransformer.md)
 It automatically adds a "Bearer" security scheme to your OpenAPI document if it detects that JWT Bearer authentication is registered in your application.
 This enables the "Authorize" button in the Swagger UI, simplifying the testing of protected endpoints.
 
