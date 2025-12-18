@@ -1,5 +1,5 @@
 ---
-title: BearerSecuritySchemeTransformer
+title: BearerSecurityDocumentTransformer
 sidebar_position: 2
 ---
 
@@ -7,17 +7,17 @@ sidebar_position: 2
 Namespace: RA.Utilities.OpenApi.DocumentTransformers
 ```
 
-The `BearerSecuritySchemeTransformer` is an `IOpenApiDocumentTransformer` that automatically adds a "Bearer" security scheme to your OpenAPI document. This enables the "Authorize" button in the Swagger UI, allowing users to easily test protected endpoints.
+The `BearerSecurityDocumentTransformer` is an `IOpenApiDocumentTransformer` that automatically adds a "Bearer" security scheme to your OpenAPI document. This enables the "Authorize" button in the Swagger UI, allowing users to easily test protected endpoints.
 
 ### 🎯 Purpose
 
-The `BearerSecuritySchemeTransformer` is a smart utility that automates the process of documenting JWT Bearer authentication in your OpenAPI (Swagger) specification.
+The `BearerSecurityDocumentTransformer` is a smart utility that automates the process of documenting JWT Bearer authentication in your OpenAPI (Swagger) specification.
 
 In a typical ASP.NET Core application that uses JWTs for security, you want your Swagger UI to have an "Authorize" button.
 This button allows developers to enter a JWT token, which is then automatically included in the `Authorization` header for subsequent API calls made from the UI.
 
 Manually configuring this involves adding boilerplate code to your `Program.cs` to define the security scheme and apply it to your endpoints.
-The `BearerSecuritySchemeTransformer` eliminates this manual work.
+The `BearerSecurityDocumentTransformer` eliminates this manual work.
 
 ### ⚙️ How It Works
 
@@ -33,7 +33,7 @@ This ensures your API documentation accurately reflects your security setup with
 ### 🚀 Usage
 
 The recommended way to use this transformer is by registering the default set of transformers with the `AddDefaultsDocumentTransformer()` extension method.
-This method includes the `BearerSecuritySchemeTransformer` automatically.
+This method includes the `BearerSecurityDocumentTransformer` automatically.
 
 ```csharp showLineNumbers
 // Program.cs
