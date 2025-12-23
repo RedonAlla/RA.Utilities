@@ -28,6 +28,8 @@ The primary goals are to:
   - `DefaultResponsesOperationTransformer`
 - Schema Filters (as Document Transformers)
   - `PolymorphismDocumentTransformer`
+- Utilities
+  - `OpenApiOperationUtilities`
 - Configuration
   - `OpenApiInfoSettings`
   - `HeadersParameterSettings`
@@ -302,6 +304,22 @@ app.Run();
 ```
 
 With this transformer enabled, your Swagger UI will now show predefined response schemas for 400, 404, 409, and 500 status codes on all endpoints, matching the structure of your `RA.Utilities.Api.Results` models.
+
+
+## Utilities
+### OpenApiOperationUtilities
+The `OpenApiOperationUtilities` class is a static helper that provides methods for programmatically adding examples to requests and responses within an `OpenApiOperation`.
+This is particularly useful when creating custom `IOperationFilter` implementations where you need to add dynamic or complex examples to specific endpoints.
+
+#### Key Functions:
+* **`AddRequestExample(...)`**: Attaches a named example to the request body of an operation for a given media type (defaults to application/json).
+* **`AddResponseExample(...)`**: Attaches a named example to a specific HTTP status code response for an operation. This is great for showing what a successful response looks like or detailing the structure of a specific error.
+* **`AddGeneralErrorResponse(...)`**: A specialized shortcut method that adds a pre-defined example for a 500 Internal Server Error.
+
+#### Example Usage in an IOperationFilter 
+```csharp
+
+```
 
 
 ## Additional documentation

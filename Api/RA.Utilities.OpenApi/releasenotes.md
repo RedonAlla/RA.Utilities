@@ -1,5 +1,18 @@
 # Release Notes for RA.Utilities.OpenApi
 
+## Version 10.0.5
+![Date Badge](https://img.shields.io/badge/Publish-23%20December%202025-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.5-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.OpenApi/10.0.5)
+
+### ✨ New Features
+
+This release enhances the `OpenApiOperationUtilities` class by introducing two new methods for adding multiple examples to an OpenAPI operation at once. These helpers streamline the process of documenting various request or response scenarios, making your API documentation more comprehensive.
+
+- **`AddRequestExamples(...)`**: Adds multiple request examples to the specified OpenApi operation.
+- **`AddResponseExamples(...)`**: Adds multiple response examples to the specified OpenApi operation.
+
+---
+
 ## Version 10.0.3
 ![Date Badge](https://img.shields.io/badge/Publish-117%20December%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.3-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.OpenApi/10.0.3)

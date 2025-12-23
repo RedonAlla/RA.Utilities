@@ -2,8 +2,12 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Net.Mime;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.OpenApi;
+using RA.Utilities.Api.Results;
+using RA.Utilities.Core.Constants;
+using RA.Utilities.OpenApi.Models;
 
 namespace RA.Utilities.OpenApi.Utilities;
 
@@ -12,6 +16,11 @@ namespace RA.Utilities.OpenApi.Utilities;
 /// </summary>
 public static class OpenApiOperationUtilities
 {
+    private static readonly JsonSerializerOptions _jsonSerializerOptions = new()
+    {
+        Converters = { new JsonStringEnumConverter() },
+    };
+
     /// <summary>
     /// Adds a request example to the specified OpenApi operation.
     /// </summary>
@@ -25,6 +34,24 @@ public static class OpenApiOperationUtilities
         {
             openApiMediaType.Examples ??= new Dictionary<string, IOpenApiExample>();
             openApiMediaType.Examples[exampleName] = example;
+        }
+    }
+
+    /// <summary>
+    /// Adds multiple request examples to the specified OpenApi operation.
+    /// </summary>
+    /// <param name="operation">The OpenApi operation to add the examples to.</param>
+    /// <param name="examples">An array of <see cref="OpenApiRequestExample"/> to add.</param>
+    public static void AddRequestExamples(OpenApiOperation operation, OpenApiRequestExample[] examples)
+    {
+        foreach (OpenApiRequestExample example in examples)
+        {
+            AddRequestExample(operation, example.ExampleKey, new OpenApiExample()
+            {
+                Summary = example.Summary,
+                Description = example.Description,
+                Value = JsonSerializer.SerializeToNode(example.Value, _jsonSerializerOptions),
+            }, example.MediaType);
         }
     }
 
@@ -47,22 +74,34 @@ public static class OpenApiOperationUtilities
     }
 
     /// <summary>
+    /// Adds multiple response examples to the specified OpenApi operation.
+    /// </summary>
+    /// <param name="operation">The OpenApi operation to add the examples to.</param>
+    /// <param name="examples">An array of <see cref="OpenApiResponseExample"/> to add.</param>
+    public static void AddResponseExamples(OpenApiOperation operation, OpenApiResponseExample[] examples)
+    {
+        foreach (OpenApiResponseExample example in examples)
+        {
+            AddResponseExample(operation, example.StatusCodes, example.ExampleKey, new OpenApiExample
+            {
+                Summary = example.Summary,
+                Description = example.Description,
+                Value = JsonSerializer.SerializeToNode(new ErrorResponse(), _jsonSerializerOptions)
+            });
+        }
+    }
+
+    /// <summary>
     /// Adds a general error response example (HTTP 500 Internal Server Error) to the specified OpenApi operation.
     /// </summary>
     /// <param name="operation">The OpenApi operation to add the general error response to.</param>
     public static void AddGeneralErrorResponse(OpenApiOperation operation)
     {
-        AddResponseExample(operation, StatusCodes.Status500InternalServerError, "InternalServerError", new OpenApiExample
+        AddResponseExample(operation, StatusCodes.Status500InternalServerError, nameof(BaseResponseCode.InternalServerError), new OpenApiExample
         {
             Summary = "Internal server error",
             Description = "This is an example of a general error.",
-            Value = JsonSerializer.SerializeToNode(new
-            {
-                ResponseCode = 500,
-                ResponseType = "Error",
-                ResponseMessage = "Something happened on our end.",
-                Result = (object?)null
-            })
+            Value = JsonSerializer.SerializeToNode(new ErrorResponse(), _jsonSerializerOptions)
         });
     }
 }
