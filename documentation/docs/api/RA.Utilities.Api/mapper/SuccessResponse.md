@@ -27,6 +27,8 @@ The SuccessResponse class provides helpers for the most common success status co
 * `Created()`: Creates a `201 Created` response.
 * `Created<T>(T result)`: Creates a `201 Created` response with a payload.
 * `Created<T>(string uri, T result)`: Creates a `201 Created` response with a `Location` header and a payload.
+* `CreatedAtRoute<TResult>(string routeName, object routeValues)`: Creates a `201 Created` with the specified route name and route values.
+* `CreatedAtRoute<TResult>(string routeName, object routeValues, TResult results)`: Creates an HTTP `201 Created` response with the specified route name, route values, and result.
 * `Accepted()`: Creates a `202 Accepted` response.
 * `Accepted<T>(string uri, T result)`: Creates a `202 Accepted` response with a `Location` header and a payload.
 * `NoContent()`: Creates a `204 No Content` response.
