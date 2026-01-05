@@ -57,7 +57,7 @@ This release modernizes the `RA.Utilities.Api` package, introducing a suite of t
 
 *   **Standardized Success Response Helpers (`SuccessResponse`)**:
     *   Added a new static `SuccessResponse` class with helper methods (`Ok`, `Created`, `NoContent`, etc.).
-    *   These helpers simplify the creation of successful API responses and automatically wrap the payload in the standard `SuccessResponse<T>` model, ensuring consistency with error responses.
+    *   These helpers simplify the creation of successful API responses (e.g., `Ok`, `Created`, `Accepted`, `NoContent`) and automatically wrap the payload in the standard `SuccessResponse<T>` model, ensuring consistency with error responses.
 
 *   **Seamless `Result<T>` Integration**:
     *   The `SuccessResponse` helpers and the exception handling middleware work together to provide a clean way to handle the `Result<T>` type from `RA.Utilities.Core`.

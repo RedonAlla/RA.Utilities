@@ -59,6 +59,36 @@ public static class SuccessResponse
     }
 
     /// <summary>
+    /// Creates an HTTP 201 Created response with the specified route name, route values, and result.
+    /// </summary>
+    /// <typeparam name="TResult">The type of the result.</typeparam>
+    /// <param name="routeName">The name of the route to use for generating the URL.</param>
+    /// <param name="routeValues">The route data to use for generating the URL.</param>
+    /// <param name="results">The result object.</param>
+    public static IResult CreatedAtRoute<TResult>(string routeName, object routeValues, TResult results) where TResult : new()
+    {
+        return Microsoft.AspNetCore.Http.Results.CreatedAtRoute(
+            routeName: routeName,
+            routeValues: routeValues,
+            value: new SuccessResponse<TResult>(results)
+        );
+    }
+
+    /// <summary>
+    /// Creates an HTTP 201 Created response with the specified route name and route values.
+    /// </summary>
+    /// <typeparam name="TResult">The type of the result.</typeparam>
+    /// <param name="routeName">The name of the route to use for generating the URL.</param>
+    /// <param name="routeValues">The route data to use for generating the URL.</param>
+    public static IResult CreatedAtRoute<TResult>(string routeName, object routeValues) where TResult : new()
+    {
+        return Microsoft.AspNetCore.Http.Results.CreatedAtRoute(
+            routeName: routeName,
+            routeValues: routeValues
+        );
+    }
+
+    /// <summary>
     /// Creates an HTTP 202 Accepted response.
     /// </summary>
     public static IResult Accepted()

@@ -178,9 +178,11 @@ The SuccessResponse class provides helpers for the most common success status co
 * `Ok<T>(T result)`: Creates a `200 OK` response with a payload.
 * `Created()`: Creates a `201 Created` response.
 * `Created<T>(T result)`: Creates a `201 Created` response with a payload.
-* `Created<T>(string uri, T result)`: Creates a `201 Created` response with a `Location` header and a payload.
+* `Created(string uri, T result)`: Creates a `201 Created` response with a `Location` header and a payload.
+* `CreatedAtRoute<TResult>(string routeName, object routeValues)`: Creates a `201 Created` with the specified route name and route values.
+* `CreatedAtRoute<TResult>(string routeName, object routeValues, TResult results)`: Creates an HTTP `201 Created` response with the specified route name, route values, and result.
 * `Accepted()`: Creates a `202 Accepted` response.
-* `Accepted<T>(string uri, T result)`: Creates a `202 Accepted` response with a `Location` header and a payload.
+* `Accepted(string uri, T result)`: Creates a `202 Accepted` response with a `Location` header and a payload.
 * `NoContent()`: Creates a `204 No Content` response.
 
 #### Usage
@@ -207,6 +209,22 @@ app.MapPost("/products", (Product product) =>
 
     // Creates a 201 Created response with a Location header and a structured body
     return SuccessResponse.Created($"/products/{newProduct.Id}", newProduct);
+});
+
+app.MapDelete("/products/{id}", (int id) => 
+{
+    // Logic to start a background job to delete the product...
+
+    // Creates a 202 Accepted response, indicating the request has been accepted for processing
+    return SuccessResponse.Accepted();
+});
+
+app.MapPut("/products/{id}", (int id, Product product) =>
+{
+    // Logic to update the product...
+
+    // Creates a 204 No Content response, indicating success without a body
+    return SuccessResponse.NoContent();
 });
 ```
 
