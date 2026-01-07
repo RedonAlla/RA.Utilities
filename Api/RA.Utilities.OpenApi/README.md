@@ -313,8 +313,10 @@ This is particularly useful when creating custom `IOperationFilter` implementati
 
 #### Key Functions:
 * **`AddRequestExample(...)`**: Attaches a named example to the request body of an operation for a given media type (defaults to application/json).
+* **`AddRequestExamples(...)`**: Attaches multiple named examples to the request body of an operation.
 * **`AddResponseExample(...)`**: Attaches a named example to a specific HTTP status code response for an operation. This is great for showing what a successful response looks like or detailing the structure of a specific error.
 * **`AddGeneralErrorResponse(...)`**: A specialized shortcut method that adds a pre-defined example for a 500 Internal Server Error.
+* **`AddResponseExamples(...)`**: Attaches multiple named examples to a specific HTTP status code response.
 
 #### Example Usage in an IOperationFilter 
 ```csharp
