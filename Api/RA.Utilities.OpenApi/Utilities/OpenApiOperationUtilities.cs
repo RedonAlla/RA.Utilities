@@ -86,7 +86,7 @@ public static class OpenApiOperationUtilities
             {
                 Summary = example.Summary,
                 Description = example.Description,
-                Value = JsonSerializer.SerializeToNode(new ErrorResponse(), _jsonSerializerOptions)
+                Value = JsonSerializer.SerializeToNode(example.Value, _jsonSerializerOptions)
             });
         }
     }
