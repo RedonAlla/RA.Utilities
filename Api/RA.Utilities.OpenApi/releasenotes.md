@@ -1,5 +1,9 @@
 # Release Notes for RA.Utilities.OpenApi
 
+## Version 10.0.6
+![Date Badge](https://img.shields.io/badge/Publish-08%January%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.6-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.OpenApi/10.0.6)
+
 [#e93b779](https://github.com/RedonAlla/RA.Utilities/commit/e93b77985552f1e5400573e9aa792a0d78c996c2) Update version to `10.0.6` and correct example serialization in `OpenApiOperationUtilities`
 
 ## Version 10.0.5
