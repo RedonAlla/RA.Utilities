@@ -12,7 +12,7 @@ namespace RA.Utilities.Data.Abstractions;
 /// Defines a base interface for read-only repository operations on entities.
 /// </summary>
 /// <typeparam name="T">The type of the entity.</typeparam>
-public interface IReadRepositoryBase<T> where T : notnull, CoreEntity
+public interface IReadRepositoryBase<T> : IRepository where T : notnull, CoreEntity
 {
     /// <summary>
     /// Retrieves an entity by its ID asynchronously.

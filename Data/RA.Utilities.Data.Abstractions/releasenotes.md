@@ -1,5 +1,16 @@
 # Release Notes for RA.Utilities.Data.Abstractions
 
+## Version 10.0.2
+![Date Badge](https://img.shields.io/badge/Publish-11%20January%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.2-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.Abstractions/10.0.2)
+
+### ✨ Enhancements
+* ⁠Added a new interface `IRepository`⁠, serving as a marker interface for all repository types in the application.
+
+```csharp
+public interface IRepository;
+```
+
 ## Version 10.0.1
 ![Date Badge](https://img.shields.io/badge/Publish-14%20December%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.Abstractions/10.0.1)
