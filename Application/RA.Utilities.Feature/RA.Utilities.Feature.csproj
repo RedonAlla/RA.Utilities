@@ -18,14 +18,13 @@
 	</ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FluentValidation" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../Core/RA.Utilities.Core.Exceptions/RA.Utilities.Core.Exceptions.csproj" />
     <ProjectReference Include="../../Core/RA.Utilities.Core/RA.Utilities.Core.csproj" />
+    <ProjectReference Include="../RA.Utilities.Application.Validation/RA.Utilities.Application.Validation.csproj" />
   </ItemGroup>
 
 </Project>

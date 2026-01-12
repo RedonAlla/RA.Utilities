@@ -4,17 +4,22 @@ using System.Threading.Tasks;
 using FluentValidation;
 using FluentValidation.Results;
 using RA.Utilities.Core.Exceptions;
-using RA.Utilities.Feature.Abstractions;
 
-namespace RA.Utilities.Feature.Utilities;
+namespace RA.Utilities.Application.Validation.Utilities;
 
 /// <summary>
 /// Provides utility methods for validation using FluentValidation.
 /// </summary>
-internal static class ValidationUtilities
+public static class ValidationUtilities
 {
+    /// <summary>
+    /// Validates a request using a collection of FluentValidation validators.
+    /// </summary>
+    /// <typeparam name="TRequest">The type of the request to validate.</typeparam>
+    /// <param name="request">The request instance to validate.</param>
+    /// <param name="validators">A collection of validators applicable to the request type.</param>
+    /// <returns>An array of <see cref="ValidationFailure"/> if any validation errors occur; otherwise, an empty array.</returns>
     public static async Task<ValidationFailure[]> ValidateAsync<TRequest>(TRequest request, IEnumerable<IValidator<TRequest>> validators)
-        where TRequest : IRequest
     {
         if (!validators.Any())
         {

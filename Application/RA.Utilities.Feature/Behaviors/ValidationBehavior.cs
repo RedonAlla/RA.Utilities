@@ -3,10 +3,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation;
 using FluentValidation.Results;
+using RA.Utilities.Application.Validation.Utilities;
 using RA.Utilities.Core.Results;
 using RA.Utilities.Feature.Abstractions;
 using RA.Utilities.Feature.Models;
-using RA.Utilities.Feature.Utilities;
 
 namespace RA.Utilities.Feature.Behaviors;
 
