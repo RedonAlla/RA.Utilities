@@ -4,7 +4,7 @@
 [![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
 [![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Application.Validation.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Application.Validation/)
-[![Documentation](https://img.shields.io/badge/Documentation-read-brightgreen.svg?logo=readthedocs&logoColor=fff)](https://redonalla.github.io/RA.Utilities/nuget-packages/core/RA.Utilities.Application.Validation/)
+[![Documentation](https://img.shields.io/badge/Documentation-read-brightgreen.svg?logo=readthedocs&logoColor=fff)](https://redonalla.github.io/RA.Utilities/nuget-packages/Application/FeatureValidation/)
 
 
 `RA.Utilities.Application.Validation` package is designed to provide utility validators for incoming requests.
