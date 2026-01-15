@@ -57,4 +57,10 @@ public class ValidationErrors
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string ErrorCode { get; init; }
+
+    /// <summary>
+    /// Gets or sets the expected value.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public object ExpectedValue { get; set; }
 }
