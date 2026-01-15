@@ -26,6 +26,7 @@ public static class ErrorResultMapper
             ErrorMessage = f.ErrorMessage,
             AttemptedValue = f.AttemptedValue,
             ErrorCode = f.ErrorCode,
+            ExpectedValue = f.ExpectedValue
         })];
 
         return new BadRequestResponse(
