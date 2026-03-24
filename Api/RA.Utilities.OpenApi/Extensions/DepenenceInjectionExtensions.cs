@@ -103,4 +103,14 @@ public static class DependencyInjectionExtensions
     /// <returns>The configured <see cref="OpenApiOptions"/> for chaining.</returns>
     public static OpenApiOptions AddPolymorphismDocumentTransformer<T>(this OpenApiOptions options, Dictionary<string, Type> typesToInclude, string discriminatorPropertyName = "Type") =>
         options.AddDocumentTransformer(new PolymorphismDocumentTransformer(typeof(T).Name, typesToInclude, discriminatorPropertyName));
+
+    /// <summary>
+    /// Adds the <see cref="TagOperationTransformer"/> to the OpenAPI options.
+    /// This transformer adds or updates tag descriptions in the OpenAPI document.
+    /// </summary>
+    /// <param name="options">The <see cref="OpenApiOptions"/> to configure.</param>
+    /// <param name="tags">A dictionary where the key is the tag name and the value is the description.</param>
+    /// <returns>The configured <see cref="OpenApiOptions"/> for chaining.</returns>
+    public static OpenApiOptions AddTagOperationTransformer(this OpenApiOptions options, IDictionary<string, string> tags) =>
+        options.AddDocumentTransformer(new TagOperationTransformer(tags));
 }

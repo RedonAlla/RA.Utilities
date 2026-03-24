@@ -95,6 +95,29 @@ builder.Services.AddOpenApi()
 
 ---
 
+### `AddTagOperationTransformer(IDictionary<string, string> tags)`
+
+This extension registers the `TagOperationTransformer`, which enriches your OpenAPI documentation by adding or updating descriptions for tags.
+
+**What it does:**
+*   **Centralizes Documentation**: Allows you to define tag descriptions in `Program.cs` or configuration instead of scattering attributes across controllers.
+*   **Enriches UI**: Populates the description field next to the tag name in Swagger UI.
+
+#### Usage
+```csharp
+// In Program.cs
+builder.Services.AddOpenApi(options =>
+{
+    options.AddTagOperationTransformer(new Dictionary<string, string>
+    {
+        { "Products", "Operations related to product management." },
+        { "Auth", "Authentication endpoints." }
+    });
+});
+```
+
+---
+
 ### Individual Transformer Extensions
 
 For more granular control, you can also register each of the default transformers individually.
