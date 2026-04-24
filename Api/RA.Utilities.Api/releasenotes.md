@@ -1,5 +1,18 @@
 # RA.Utilities.Api Release Notes
 
+## Version 10.0.4
+![Date Badge](https://img.shields.io/badge/Publish-24%20April%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-v10.0.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api.Middlewares/10.0.4)
+
+This patch release focuses on performance optimizations, improved robustness in logging, and code modernization.
+
+### ✨ Improvements
+
+*   **Performance**: Optimized `X-Request-Id` retrieval in `HttpContextExtensions` by switching from LINQ to `TryGetValue`, ensuring efficient case-insensitive lookups.
+*   **Robustness**: Refactored `HttpLoggingMiddleware` to centralize stream position management and added defensive checks for empty or non-JSON body payloads.
+*   **Modernization**: Updated internal array initializations to use C# 12 collection expressions for better readability and performance.
+
+
 ## Version 10.0.2
 ![Date Badge](https://img.shields.io/badge/Publish-04%20Januaryr%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-v10.0.2-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api/10.0.2)
