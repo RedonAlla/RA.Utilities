@@ -18,6 +18,7 @@ public static class OpenApiOperationUtilities
 {
     private static readonly JsonSerializerOptions _jsonSerializerOptions = new()
     {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         Converters = { new JsonStringEnumConverter() },
     };
 
