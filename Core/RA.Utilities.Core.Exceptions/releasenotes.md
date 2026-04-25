@@ -1,5 +1,17 @@
 # Release Notes for RA.Utilities.Core.Exceptions
 
+## Version 10.0.3
+
+![Date Badge](https://img.shields.io/badge/Publish-25%20April%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-v10.0.3-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Exceptions/10.0.3)
+
+This release enhances the `ConflictException` by adding a more flexible constructor.
+
+### ✨ Improvements
+
+*   **`ConflictException`**: Added a new constructor that allows throwing the exception with default conflict messages and codes, without requiring specific entity names or values. This is useful for general conflict scenarios where detailed entity information is not necessary or available.
+
+
 ## Version 10.0.2
 
 ![Date Badge](https://img.shields.io/badge/Publish-25%20April%202026-lightblue?logo=fastly&logoColor=white)
@@ -12,6 +24,7 @@ This release introduces new semantic exceptions to handle authorization and stat
 *   **`ForbiddenException`**: Introduced to represent scenarios where an authenticated user lacks sufficient permissions (maps to **HTTP 403 Forbidden**).
 *   **`UnprocessableException`**: Added to represent operations that are invalid due to the current state of a resource (maps to **HTTP 422 Unprocessable Entity**).
 *   **Documentation**: Updated the package README and added comprehensive documentation files with usage examples for the new exceptions.
+
 
 
 ## Version 10.0.0
