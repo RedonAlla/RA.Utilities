@@ -26,5 +26,6 @@ In short, `BaseResponseCode` is a simple but effective tool for writing cleaner,
 | **Forbidden**           | 403   | Default response code for a forbidden request. |
 | **NotFound**            | 404   | Default response code for a resource not found. |
 | **Conflict**            | 409   | Default response code for a conflict request. |
+| **Unprocessable**       | 422   | Default response code for a Unprocessable entity. |
 | **InternalServerError** | 500   | Default response code for an internal server error. |
 | **ServiceUnavailable**  | 503   | Server Error (5xx) |

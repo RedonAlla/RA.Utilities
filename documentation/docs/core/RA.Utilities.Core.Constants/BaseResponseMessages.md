@@ -27,6 +27,7 @@ This approach offers several significant benefits:
 | **Forbidden**           | "You do not have permission to access this resource."  |
 | **NotFound**            | "The requested resource was not found."                |
 | **Conflict**            | "A conflict occurred with the current state of the resource." |
+| **Unprocessable**       | "Unprocessable entity." |
 | **InternalServerError** | "An unexpected error occurred on the server."          |
 
 ## 🚀 Usage Examples

@@ -15,6 +15,13 @@ This exception is used for predictable business-level failures where an operatio
 
 When used with the `Result` pattern, a `ConflictException` is returned inside a `Failure` result. The API layer can then inspect this exception and automatically generate a standardized 409 response, providing clear feedback to the client about the nature of the conflict.
 
+Common scenarios include:
+-  Trying to delete a user who has active orders (State Conflict).
+-  Trying to "Activate" a subscription that is already "Active" or -  "Terminated" (Invalid State Transition).
+-  Optimistic Concurrency failures (Version mismatch).
+
+**The Client's Perspective**: It implies that the client might be able to resolve the issue by inspecting the current state of the resource and trying again with different data or at a different time.
+
 ## Properties
 
 | Property      | Type     | Description                                                          |

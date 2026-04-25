@@ -7,28 +7,25 @@ sidebar_position: 3
 Namespace: RA.Utilities.Api.Results
 ```
 
-The `BadRequestResponse` class is a specialized model for creating standardized `400 Bad Request` responses, typically used to communicate validation failures to the client. It inherits from [`Response<T>`](./Response), with the `Result` property typed as an array of `BadRequestResult` objects.
+The `BadRequestResponse` class is a specialized model for creating standardized `400 Bad Request` responses, typically used to communicate validation failures to the client. It inherits from [`Response<T>`](./Response), with the `Result` property typed as an array of [`BadRequestResult`](#badrequestresult) objects.
 
 ### 🎯 Purpose
 
-The `BadRequestResponse` class is a specialized model designed to create standardized `400 Bad Request `API responses, typically used for validation failures.
+The `BadRequestResponse` class is a specialized model designed to create standardized `400 Bad Request` API responses, typically used for validation failures.
 It inherits from the base [`Response<T>`](./Response) class and streamlines the process of communicating input errors to the client.
 
 Here's why it's so useful:
 
 1. **Standardizes Validation Errors**: It provides a consistent structure for all validation-related errors.
-The `Result` property is specifically typed to hold an array of `BadRequestResult` objects, where each object details a single validation failure (e.g., which property failed, the error message, and the value that was attempted).
+The `Result` property is specifically typed to hold an array of `BadRequestResult` objects, where each object details a single validation failure.
 
 2. **Reduces Boilerplate**: It automatically sets the response properties for a bad request:
 
   * **`ResponseCode`**: Set to `400` (from `BaseResponseCode.BadRequest`).
   * **`ResponseType`**: Set to `ResponseType.BadRequest`.
-  * **ResponseMessage**: Defaults to `"One or more validation errors occurred."`.
+  * **ResponseMessage**: Defaults to `"One or more validation errors occurred."` (from `BaseResponseMessages.BadRequest`).
 
 3. **Provides Clear Client Feedback**: By returning a structured list of errors, you give the client precise, actionable feedback.
-A frontend application can easily parse this list and display the appropriate error message next to each invalid input field.
-
-Using `BadRequestResponse` ensures that your API communicates validation problems clearly and consistently, which is essential for a good developer experience.
 
 ### ⚙️ How It Works
 
@@ -37,11 +34,9 @@ When you create an instance of `BadRequestResponse`, it pre-configures the follo
 - **`ResponseCode`**: Set to `400` (from `BaseResponseCode.BadRequest`).
 - **`ResponseType`**: Set to `ResponseType.BadRequest`.
 - **`ResponseMessage`**: Defaults to `"One or more validation errors occurred."`.
-- **`Result`**: Contains an array of `BadRequestResult` objects, each detailing a specific validation error.
+- **`Result`**: Contains an array of [`BadRequestResult`](#badrequestresult) objects, each detailing a specific validation error.
 
 ### 🚀 Usage in a Controller
-
-You can use this class in your controller actions when input validation fails. Create one or more `BadRequestResult` objects and pass them to the `BadRequestResponse` constructor.
 
 ```csharp showLineNumbers
 using Microsoft.AspNetCore.Mvc;
@@ -58,12 +53,13 @@ public class UsersController : ControllerBase
         if (string.IsNullOrEmpty(request.Email))
         {
             // Create a validation error detail
-            var validationError = new BadRequestResult(
-                propertyName: "Email",
-                errorMessage: "'Email' must not be empty.",
-                attemptedValue: request.Email,
-                errorCode: "NotEmptyValidator"
-            );
+            var validationError = new BadRequestResult
+            {
+                PropertyName = "Email",
+                ErrorMessage = "'Email' must not be empty.",
+                AttemptedValue = request.Email,
+                ErrorCode = "NotEmptyValidator"
+            };
 
             // Return a 400 Bad Request with the structured error
             // highlight-next-line
@@ -76,9 +72,18 @@ public class UsersController : ControllerBase
 }
 ```
 
-### Example JSON Output
+### BadRequestResult
+Inherits from [`ErrorResult`](./ErrorResult).
 
-The code above would produce the following JSON response body if the email was empty:
+| Property | Type | Description |
+| -------- | --- | ------------------------------------------------ |
+| **PropertyName** | `string` | The name of the property that failed validation. |
+| **ErrorMessage** | `string` | The error message (inherited from `ErrorResult`). |
+| **AttemptedValue** | `object` | The value that was sent in the request and caused the failure. |
+| **ExpectedValue** | `object` | The expected value or format for the property. |
+| **ErrorCode** | `string` | The specific error code (inherited from `ErrorResult`). |
+
+### Example JSON Output
 
 ```json showLineNumbers
 {
@@ -90,7 +95,8 @@ The code above would produce the following JSON response body if the email was e
       "propertyName": "Email",
       "errorMessage": "'Email' must not be empty.",
       "attemptedValue": "",
-      "errorCode": "NotEmptyValidator"
+      "errorCode": "NotEmptyValidator",
+      "expectedValue": null
     }
   ]
 }

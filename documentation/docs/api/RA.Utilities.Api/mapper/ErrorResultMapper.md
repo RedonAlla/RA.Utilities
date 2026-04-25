@@ -8,7 +8,7 @@ The `ErrorResultMapper` is a static helper class responsible for the low-level t
 
 The primary purpose of `ErrorResultMapper` is to centralize the logic for converting exception data into structured DTOs (Data Transfer Objects).
 For example, it takes a [`NotFoundException`](../../../core/RA.Utilities.Core.Exceptions/NotFoundException.md) and creates a
-[`NotFoundResponse`](../../RA.Utilities.Api.Results/NotFoundResponse.md) object, correctly populating the `EntityName` and `EntityValue` fields.
+[`NotFoundResponse`](../../RA.Utilities.Api.Results/NotFoundResponse.md) object, correctly populating the `Entity` and `Value` fields.
 
 This class acts as an internal "factory" for error response bodies.
 It is consumed by other helpers, most notably the [`ErrorResultResponse`](./ErrorResultResponse.md) class, to ensure that all error responses are created consistently.
@@ -39,7 +39,7 @@ public static IResult Result(Exception exception) => exception switch
     NotFoundException notFoundException => Microsoft.AspNetCore.Http.Results.Json(
         // highlight-next-line
         ErrorResultMapper.MapToNotFoundResponse(notFoundException), // Creates the response body
-        statusCode: 404
+        statusCode: notFoundException.ResponseCode
     ),
 
     // ... other cases
@@ -58,12 +58,17 @@ The class provides a dedicated mapping method for each custom exception type:
 - **`MapToConflictResponse(ConflictException ex)`**:
   Maps a `ConflictException` to a `ConflictResponse`, populating the `ConflictResult` with the entity name and value.
 
+- **`MapToNotFoundResponse(NotFoundException ex)`**:
+  Maps a `NotFoundException` to a `NotFoundResponse`, populating the `NotFoundResult` with the entity name and value.
+
 - **`MapToUnauthorizedResponse(UnauthorizedException ex)`**:
-  Maps a `UnauthorizedException` to a `UnauthorizedResponse`, populating the `UnauthorizedResult` and generating a descriptive message.
+  Maps an `UnauthorizedException` to an `UnauthorizedResponse`, populating the `ErrorResult` with the error code and message.
+
+- **`MapToForbiddenResponse(ForbiddenException ex)`**:
+  Maps a `ForbiddenException` to a `ForbiddenResponse`, populating the `ErrorResult` with the error code and message.
+
+- **`MapToUnprocessableResponse(UnprocessableException ex)`**:
+  Maps an `UnprocessableException` to an `UnprocessableResponse`, populating the `ErrorResult` with the error code and message.
 
 - **`ToGeneralErrorResponse(RaBaseException ex)`**:
   Maps any other `RaBaseException` to a generic `ErrorResponse`, using the exception's message and error code.
-
-- **`ToGeneralErrorResponse(RaBaseException ex)`**:
-  Maps any other `RaBaseException` to a generic `ErrorResponse`, using the exception's message and error code.
-

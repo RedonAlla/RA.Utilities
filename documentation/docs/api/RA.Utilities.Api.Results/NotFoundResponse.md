@@ -8,7 +8,7 @@ Namespace: RA.Utilities.Api.Results
 ```
 
 The `NotFoundResponse` class is a specialized model for creating standardized `404 Not Found` responses.
-It is used when a requested resource cannot be found at the specified URI. It inherits from [`Response<T>`](./Response), with the `Result` property typed as a `NotFoundResult` object.
+It is used when a requested resource cannot be found. It inherits from [`Response<T>`](./Response), with the `Result` property typed as a [`NotFoundResult`](#notfoundresult) object.
 
 ### 🎯 Purpose
 
@@ -20,26 +20,12 @@ Here's a breakdown of its key functions:
 1. **Simplifies 404 Responses**: It reduces boilerplate code by automatically setting the response properties for a "not found" scenario:
 
   * **ResponseCode**: Set to `404` (from `BaseResponseCode.NotFound`).
-  * **ResponseType**: Set to   * **ResponseType.NotFound  * **.
-  * **ResponseMessage**: Generates a clear, dynamic message like `"Product with value '123' not found."`.
+  * **ResponseType**: Set to `ResponseType.NotFound`.
+  * **ResponseMessage**: Defaults to `"The requested resource was not found."` (from `BaseResponseMessages.NotFound`).
 
-2. **Provides Structured Context**: Unlike a simple text response, `NotFoundResponse` uses a [`NotFoundResult`](#notfoundresult) object as its payload.
-This object contains two key pieces of information:
+2. **Provides Structured Context**: It uses a [`NotFoundResult`](#notfoundresult) object as its payload, containing the entity name and the identifier used in the search.
 
-  * **EntityName**: The type of resource that was being looked for (e.g., "Product", "User").
-  * **EntityValue**: The identifier that was used in the search (e.g., `123`, `"john.doe@example.com"`).
-
-3. **Improves Client-Side Handling**: This structured response allows clients to provide more intelligent feedback to the user. For example, a frontend application could parse this response and display a message like, "We couldn't find a product with the ID '123'."
-
-Using `NotFoundResponse` ensures that all "not found" errors across your API are consistent, structured, and informative.
-
-### NotFoundResult
-Represent an entity not found searched by given value.
-
-| Property        | Type     | Description     |
-| --------------- | -------- | --------------- |
-| **EntityName**  | `string` | The type of resource that was being looked for (e.g., "Product", "User"). |
-| **EntityValue** | `object` | The identifier that was used in the search (e.g., `123`, `"john.doe@example.com"`). |
+3. **Improves Client-Side Handling**: This structured response allows clients to provide more intelligent feedback to the user.
 
 ### ⚙️ How It Works
 
@@ -47,12 +33,10 @@ When you create an instance of `NotFoundResponse`, it pre-configures the followi
 
 - **`ResponseCode`**: Set to `404` (from `BaseResponseCode.NotFound`).
 - **`ResponseType`**: Set to `ResponseType.NotFound`.
-- **`ResponseMessage`**: A dynamically generated message, such as `"Product with value '123' not found."`.
-- **`Result`**: A `NotFoundResult` object containing the `EntityName` and `EntityValue` that were searched for.
+- **`ResponseMessage`**: Defaults to `"The requested resource was not found."`.
+- **`Result`**: A [`NotFoundResult`](#notfoundresult) object containing the `Entity` name and `Value` that were searched for.
 
 ### 🚀 Usage in a Controller
-
-You can use this class in your controller actions when a database query or service call returns no result for a given identifier.
 
 ```csharp showLineNumbers
 using Microsoft.AspNetCore.Mvc;
@@ -66,14 +50,13 @@ public class ProductsController : ControllerBase
     [HttpGet("{id}")]
     public IActionResult GetProduct(int id)
     {
-        // Assume product is fetched from a service
         var product = _productService.GetById(id);
 
         if (product == null)
         {
             // Return a 404 Not Found with structured details
             // highlight-next-line
-            return NotFound(new NotFoundResponse("Product", id));
+            return NotFound(new NotFoundResponse(new NotFoundResult("Product", id)));
         }
 
         return Ok(new SuccessResponse<Product>(product));
@@ -81,18 +64,28 @@ public class ProductsController : ControllerBase
 }
 ```
 
-### Example JSON Output
+### NotFoundResult
+Inherits from [`ErrorResult`](./ErrorResult).
 
-A request to `/api/products/999` (where product 999 does not exist) would produce the following JSON response body:
+| Property | Type | Description |
+| --------------- | -------- | --------------- |
+| **Entity** | `string` | The type of resource that was being looked for (e.g., "Product", "User"). |
+| **Value** | `object` | The identifier that was used in the search (e.g., `123`, `"john.doe@example.com"`). |
+| **ErrorCode** | `string` | The specific error code (inherited from `ErrorResult`). |
+| **ErrorMessage** | `string` | The error message (inherited from `ErrorResult`). |
+
+### Example JSON Output
 
 ```json showLineNumbers
 {
   "responseCode": 404,
   "responseType": "NotFound",
-  "responseMessage": "Product with value '999' not found.",
+  "responseMessage": "The requested resource was not found.",
   "result": {
-    "entityName": "Product",
-    "entityValue": 999
+    "entity": "Product",
+    "value": 999,
+    "errorCode": "NotFound",
+    "errorMessage": "The requested resource was not found."
   }
 }
 ```

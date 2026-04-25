@@ -3,9 +3,9 @@ title: RA.Utilities.Api.Middlewares
 authors: [RedonAlla]
 ---
 
-## Version 10.0.4
-![Date Badge](https://img.shields.io/badge/Publish-24%20April%202026-lightblue?logo=fastly&logoColor=white)
-[![NuGet version](https://img.shields.io/badge/NuGet-v10.0.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api.Middlewares/10.0.4)
+## Version 10.0.1
+![Date Badge](https://img.shields.io/badge/Publish-25%20April%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-v10.0.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api.Middlewares/10.0.1)
 
 This patch release focuses on performance optimizations, improved robustness in logging, and code modernization.
 

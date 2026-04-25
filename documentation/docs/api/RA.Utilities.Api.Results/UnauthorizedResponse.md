@@ -1,36 +1,72 @@
 ---
 title: UnauthorizedResponse
+sidebar_position: 8
 ---
 
-```bash
+```powershell
 Namespace: RA.Utilities.Api.Results
 ```
 
-The `UnauthorizedResponse` class is a specialized Data Transfer Object (DTO) designed to create a standardized and consistent JSON response body whenever your API needs to return an HTTP 401 Unauthorized error.
+The `UnauthorizedResponse` class is a specialized model for creating standardized `401 Unauthorized` responses.
+It is used when the request requires user authentication.
+It inherits from [`Response<T>`](./Response), with the `Result` property typed as an [`ErrorResult`](./ErrorResult) object.
 
-Its main goals are:
+### 🎯 Purpose
 
-#### 1. Standardization:
-It ensures that every 401 error response from your API has the exact same structure.
-It inherits from the base `Response<T>` class, so it includes common fields like `ResponseCode`, `ResponseMessage`, and `ResponseType`.
+The `UnauthorizedResponse` class is a specialized model for creating standardized `401 Unauthorized` API responses.
+It is used to signal that the request lacks valid authentication credentials for the target resource.
 
-#### 2. Semantic Meaning:
-It sets the ResponseType property to `ResponseType.Unauthorized`.
-As shown in your documentation, this provides a clear, machine-readable signal in the JSON payload that goes beyond the HTTP status code, telling the client exactly what kind of error occurred.
+Its primary functions are:
 
-#### 3. Simplicity:
-It encapsulates the logic for creating a 401 response body, so your error handling code doesn't need to build it manually.
+1. **Standardizes Authentication Errors**: It ensures that every `401 Unauthorized` error response has the exact same structure.
 
+2. **Reduces Boilerplate**: It automatically sets the response properties for an unauthorized request:
 
-## 🛠️ How It's Used in Your Application
-The class is a key part of your API's exception handling pipeline:
+  * **ResponseCode**: Set to `401` (from `BaseResponseCode.Unauthorized`).
+  * **ResponseType**: Set to `ResponseType.Unauthorized`.
+  * **ResponseMessage**: Defaults to `"The request requires user authentication."` (from `BaseResponseMessages.Unauthorized`).
 
-1. Some part of your application throws an `UnauthorizedException`.
-2. The `GlobalExceptionHandler` (not shown, but implied by the structure) catches this exception.
-3. It calls `ErrorResultResponse.Result(exception)`.
-4. The switch expression in `ErrorResultResponse` matches the `UnauthorizedException` and calls `ErrorResultMapper.MapToUnauthorizedResponse(exception)`.
-5. This mapper creates an instance of your `UnauthorizedResponse` class, populating it with the correct code (401) and message.
-6. Finally, this `UnauthorizedResponse` object is serialized into a JSON string and sent to the client with an HTTP 401 status code.
+3. **Provides Structured Context**: It can include an [`ErrorResult`](./ErrorResult) payload to provide specific details about why the authentication failed (e.g., "Invalid token", "Token expired").
+
+### ⚙️ How It Works
+
+When you create an instance of `UnauthorizedResponse`, it pre-configures the following properties:
+
+- **`ResponseCode`**: Set to `401` (from `BaseResponseCode.Unauthorized`).
+- **`ResponseType`**: Set to `ResponseType.Unauthorized`.
+- **`ResponseMessage`**: Defaults to `"The request requires user authentication."`.
+- **`Result`**: An optional [`ErrorResult`](./ErrorResult) object containing the error code and message.
+
+### 🚀 Usage in a Controller
+
+You can use this class in your controller actions or middleware when authentication fails.
+
+```csharp showLineNumbers
+using Microsoft.AspNetCore.Mvc;
+// highlight-next-line
+using RA.Utilities.Api.Results;
+
+[ApiController]
+[Route("api/[controller]")]
+public class ProfileController : ControllerBase
+{
+    [HttpGet]
+    public IActionResult GetProfile()
+    {
+        if (!User.Identity.IsAuthenticated)
+        {
+            // highlight-next-line
+            return Unauthorized(new UnauthorizedResponse(new ErrorResult 
+            { 
+                ErrorCode = "Unauthorized", 
+                ErrorMessage = "User is not authenticated." 
+            }));
+        }
+
+        return Ok(new SuccessResponse<UserProfile>(_service.GetProfile(User)));
+    }
+}
+```
 
 ### Example JSON Output
 
@@ -38,7 +74,10 @@ The class is a key part of your API's exception handling pipeline:
 {
   "responseCode": 401,
   "responseType": "Unauthorized",
-  "responseMessage": "User is not authorized to perform this action.",
-  "result": null
+  "responseMessage": "The request requires user authentication.",
+  "result": {
+    "errorCode": "Unauthorized",
+    "errorMessage": "User is not authenticated."
+  }
 }
 ```

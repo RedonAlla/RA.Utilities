@@ -9,7 +9,7 @@ Namespace: RA.Utilities.Api.Results
 
 The `ErrorResponse` class is a specialized model for creating standardized `500 Internal Server Error` responses.
 It is designed to be a "catch-all" for any unexpected or unhandled exceptions that occur within your application.
-It inherits from [`Response<T>`](./Response), with the `Result` property typed as an `ErrorResult` object.
+It inherits from [`Response<T>`](./Response), with the `Result` property typed as an [`ErrorResult`](./ErrorResult) object.
 
 ### 🎯 Purpose
 
@@ -21,19 +21,15 @@ Its primary functions are:
 
 1. **Handles Unexpected Failures**: It provides a consistent and safe way to respond when something goes wrong on the server that wasn't anticipated by a more specific exception (like `NotFoundException` or `ConflictException`).
 
-2. **Prevents Information Leaks**: By default, it returns a generic error message.
-In a production environment, it avoids sending sensitive details like exception messages or stack traces to the client, which could be a security risk.
+2. **Prevents Information Leaks**: By default, it returns a generic error message. In a production environment, it avoids sending sensitive details to the client.
 
-3. **Provides Rich Debugging Info**: In a development environment, it can be configured to include detailed information in its `ErrorResult` payload, such as the exception type, the full exception message, and the stack trace.
-This is invaluable for developers during debugging.
+3. **Standardized Error Payload**: It uses [`ErrorResult`](./ErrorResult) to provide a machine-readable error code and a human-friendly error message.
 
 4. **Reduces Boilerplate**: It automatically sets the response properties for a server error:
 
   * **ResponseCode**: Set to `500` (from `BaseResponseCode.InternalServerError`).
   * **ResponseType**: Set to `ResponseType.Error`.
-  * **ResponseMessage**: Defaults to `"An unexpected error occurred on the server."`.
-
-The `GlobalExceptionHandler` in the `RA.Utilities.Api` package is designed to automatically catch unhandled exceptions and generate this `ErrorResponse`, ensuring your API always returns a structured JSON response, even when things go wrong.
+  * **ResponseMessage**: Defaults to `"A general error occurred during the operation."` (from `BaseResponseMessages.Error`).
 
 ### ⚙️ How It Works
 
@@ -41,70 +37,54 @@ When you create an instance of `ErrorResponse`, it pre-configures the following 
 
 - **`ResponseCode`**: Set to `500` (from `BaseResponseCode.InternalServerError`).
 - **`ResponseType`**: Set to `ResponseType.Error`.
-- **`ResponseMessage`**: Defaults to `"An unexpected error occurred on the server."`.
-- **`Result`**: An `ErrorResult` object containing details about the exception.
+- **`ResponseMessage`**: Defaults to `"A general error occurred during the operation."`.
+- **`Result`**: An [`ErrorResult`](./ErrorResult) object containing the error code and message.
 
-### 🚀 Usage with `GlobalExceptionHandler`
+### 🚀 Usage in a Controller
 
-The most common use case for `ErrorResponse` is in conjunction with a global exception handler. The `GlobalExceptionHandler` provided in the `RA.Utilities.Api` package automatically catches any unhandled exceptions and uses `ErrorResponse` to generate the final output.
-
-You typically do not need to create an `ErrorResponse` manually.
+You can use this class in your controller actions or within a global exception handler to return a standardized error response.
 
 ```csharp showLineNumbers
-// Program.cs
-var builder = WebApplication.CreateBuilder(args);
-
+using Microsoft.AspNetCore.Mvc;
 // highlight-next-line
-builder.Services.AddRaExceptionHandling(); // Registers the handler
+using RA.Utilities.Api.Results;
 
-var app = builder.Build();
-
-// highlight-next-line
-app.UseRaExceptionHandling(); // Adds the handler to the pipeline
-
-app.MapGet("/test-error", () =>
+[ApiController]
+[Route("api/[controller]")]
+public class ProductsController : ControllerBase
 {
-    // This will be caught by the GlobalExceptionHandler
-    throw new InvalidOperationException("Something went wrong!");
-});
-
-app.Run();
+    [HttpPost]
+    public IActionResult ProcessProduct(Product product)
+    {
+        try 
+        {
+            // ... some processing logic that might throw
+            _service.Process(product);
+            return Ok(new SuccessResponse<string>("Processed"));
+        }
+        catch (Exception ex)
+        {
+            // highlight-next-line
+            return StatusCode(500, new ErrorResponse(new ErrorResult 
+            { 
+                ErrorCode = "InternalServerError", 
+                ErrorMessage = "An unexpected error occurred while processing the product." 
+            }));
+        }
+    }
+}
 ```
 
 ### Example JSON Output
 
-The response format depends on the environment.
-
-#### Production Environment
-
-In production, the stack trace is omitted to prevent leaking sensitive information.
-
 ```json showLineNumbers
 {
   "responseCode": 500,
   "responseType": "Error",
-  "responseMessage": "An unexpected error occurred on the server.",
+  "responseMessage": "A general error occurred during the operation.",
   "result": {
-    "exceptionType": "System.InvalidOperationException",
-    "message": "An error occurred while processing your request.",
-    "stackTrace": null
-  }
-}
-```
-
-#### Development Environment
-
-In development, the full exception details are included for easier debugging.
-
-```json showLineNumbers
-{
-  "responseCode": 500,
-  "responseType": "Error",
-  "responseMessage": "An unexpected error occurred on the server.",
-  "result": {
-    "exceptionType": "System.InvalidOperationException",
-    "message": "Something went wrong!",
-    "stackTrace": "at Program.<>c... in /path/to/Program.cs:line 15"
+    "errorCode": "InternalServerError",
+    "errorMessage": "An unexpected error occurred on the server."
   }
 }
 ```
