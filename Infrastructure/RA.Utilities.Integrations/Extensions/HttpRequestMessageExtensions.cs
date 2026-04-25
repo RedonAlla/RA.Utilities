@@ -14,30 +14,6 @@ public static class HttpRequestMessageExtensions
     private const string RemoteEndpointMessage = "System.ServiceModel.Channels.RemoteEndpointMessageProperty";
 
     /// <summary>
-    ///  Add a new value in to <see cref="HttpRequestHeaders"/>.
-    ///  If key do not exist add a new one, else update the value of the given key.
-    /// </summary>
-    /// <param name="headers"><see cref="HttpRequestHeaders"/></param>
-    /// <param name="name"><see cref="string"/></param>
-    /// <param name="value"><see cref="string"/></param>
-    /// <returns></returns>
-    public static HttpRequestHeaders AddSafe(this HttpRequestHeaders headers, string name, string value)
-    {
-        if (string.IsNullOrEmpty(value))
-        {
-            return headers;
-        }
-
-        if (headers.Contains(name))
-        {
-            headers.Remove(name);
-        }
-
-        headers.Add(name, value);
-        return headers;
-    }
-
-    /// <summary>
     /// Get client IP Address.
     /// </summary>
     /// <param name="httpRequestOptions"></param>

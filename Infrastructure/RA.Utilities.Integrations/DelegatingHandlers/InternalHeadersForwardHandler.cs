@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using RA.Utilities.Core.Constants;
-using RA.Utilities.Integrations.Extensions;
 
 namespace RA.Utilities.Integrations.DelegatingHandlers;
 
@@ -66,8 +65,8 @@ public class InternalHeadersForwardHandler : DelegatingHandler
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        request.Headers.AddSafe(HeaderParameters.Authorization, Token);
-        request.Headers.AddSafe(HeaderParameters.XRequestId, RequestId);
+        request.Headers.TryAddWithoutValidation(HeaderParameters.Authorization, Token);
+        request.Headers.TryAddWithoutValidation(HeaderParameters.XRequestId, RequestId);
 
         return await base.SendAsync(request, cancellationToken);
     }

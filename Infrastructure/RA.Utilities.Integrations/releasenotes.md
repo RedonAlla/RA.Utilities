@@ -1,5 +1,18 @@
 # RA.Utilities.Integrations Release Notes
 
+## Version 10.0.1
+![Date Badge](https://img.shields.io/badge/Publish-24%20April%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-v10.0.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Integrations/10.0.1)
+
+This release focuses on internal dependency updates and version synchronization within the RA.Utilities ecosystem.
+
+### ✨ Improvements
+
+*   **Ecosystem Alignment**: Updated internal project references to `RA.Utilities.Core.Constants` and `RA.Utilities.Logging.Shared` to version 10.0.1.
+*   **Consistency**: Synchronized the package version to maintain parity with the core components following the introduction of new semantic exceptions.
+
+---
+
 ## Version 10.0.0
 ![Date Badge](https://img.shields.io/badge/Publish-23%20November%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Integrations/10.0.0-rc.2)
