@@ -1,5 +1,4 @@
 using System.Text.RegularExpressions;
-using FluentValidation;
 
 namespace RA.Utilities.Application.Validation.Extensions;
 
