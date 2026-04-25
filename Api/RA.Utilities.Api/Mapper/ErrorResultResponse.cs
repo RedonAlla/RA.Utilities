@@ -14,29 +14,41 @@ public static class ErrorResultResponse
     /// <summary>
     /// Creates an <see cref="IResult"/> for problem details based on an <see cref="Exception"/> object.
     /// </summary>
+    /// <remarks>
+    /// This method acts as a central dispatcher, using pattern matching to map custom domain exceptions 
+    /// to their corresponding standardized API response models.
+    /// </remarks>
     /// <param name="exception">The <see cref="Exception"/> object containing the error information.</param>
     /// <returns>An <see cref="IResult"/> representing the problem details.</returns>
     public static IResult Result(Exception exception) => exception switch
     {
         BadRequestException badRequestException => Microsoft.AspNetCore.Http.Results.Json(
             data: ErrorResultMapper.ToBadRequestResponse(badRequestException),
-            statusCode: BaseResponseCode.BadRequest
+            statusCode: badRequestException.ResponseCode
         ),
         ConflictException conflictException => Microsoft.AspNetCore.Http.Results.Json(
             ErrorResultMapper.MapToConflictResponse(conflictException),
-            statusCode: BaseResponseCode.Conflict
+            statusCode: conflictException.ResponseCode
+        ),
+        UnprocessableException unprocessableException => Microsoft.AspNetCore.Http.Results.Json(
+            ErrorResultMapper.MapToUnprocessableResponse(unprocessableException),
+            statusCode: unprocessableException.ResponseCode
         ),
         NotFoundException notFoundException => Microsoft.AspNetCore.Http.Results.Json(
             ErrorResultMapper.MapToNotFoundResponse(notFoundException),
-            statusCode: BaseResponseCode.NotFound
+            statusCode: notFoundException.ResponseCode
         ),
         UnauthorizedException baseException => Microsoft.AspNetCore.Http.Results.Json(
             data: ErrorResultMapper.MapToUnauthorizedResponse(baseException),
-            statusCode: BaseResponseCode.Unauthorized
+            statusCode: baseException.ResponseCode
+        ),
+        ForbiddenException forbiddenException => Microsoft.AspNetCore.Http.Results.Json(
+            data: ErrorResultMapper.MapToForbiddenResponse(forbiddenException),
+            statusCode: forbiddenException.ResponseCode
         ),
         RaBaseException baseException => Microsoft.AspNetCore.Http.Results.Json(
             data: ErrorResultMapper.ToGeneralErrorResponse(baseException),
-            statusCode: BaseResponseCode.InternalServerError
+            statusCode: baseException.ResponseCode
         ),
         _ => Microsoft.AspNetCore.Http.Results.Json(new ErrorResponse(), statusCode: BaseResponseCode.InternalServerError)
     };

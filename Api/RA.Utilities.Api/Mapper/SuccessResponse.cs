@@ -15,7 +15,7 @@ public static class SuccessResponse
     /// <typeparam name="TResult">The type of the payload.</typeparam>
     /// <param name="result">The payload to include in the response body.</param>
     /// <returns>An <see cref="IResult"/> representing a 200 OK response with the specified payload.</returns>
-    public static IResult Ok<TResult>(TResult result) where TResult : new()
+    public static IResult Ok<TResult>(TResult result)
     {
         return Microsoft.AspNetCore.Http.Results.Ok(new SuccessResponse<TResult>(result));
     }

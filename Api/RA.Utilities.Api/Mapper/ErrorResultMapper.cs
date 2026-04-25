@@ -31,7 +31,7 @@ public static class ErrorResultMapper
 
         return new BadRequestResponse(
             errors: result,
-            responseCode: exception.ErrorCode,
+            responseCode: exception.ResponseCode,
             responseMessage: BaseResponseMessages.BadRequest
         );
     }
@@ -45,14 +45,34 @@ public static class ErrorResultMapper
     {
         ArgumentNullException.ThrowIfNull(exception);
 
-        var result = new ConflictResult
-        (
-            exception.EntityName ?? string.Empty,
-            exception.EntityValue?.ToString() ?? string.Empty
-        );
-
         return new ConflictResponse(
-            result
+            new ConflictResult
+            (
+                exception.EntityName,
+                exception.EntityValue,
+                exception.ErrorCode,
+                exception.Message
+            ),
+            exception.ResponseCode
+        );
+    }
+
+    /// <summary>
+    /// Maps an <see cref="UnprocessableException"/> to an <see cref="UnprocessableResponse"/>.
+    /// </summary>
+    /// <param name="exception">The <see cref="UnprocessableException"/> instance to map from.</param>
+    /// <returns>An <see cref="UnprocessableResponse"/> representing the mapped exception.</returns>
+    public static UnprocessableResponse MapToUnprocessableResponse(UnprocessableException exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+
+        return new UnprocessableResponse(
+            new ErrorResult
+            {
+                ErrorCode = exception.ErrorCode,
+                ErrorMessage = exception.Message
+            },
+            exception.ResponseCode
         );
     }
 
@@ -65,15 +85,16 @@ public static class ErrorResultMapper
     {
         ArgumentNullException.ThrowIfNull(exception);
 
-        var result = new NotFoundResult
-        (
-            exception.EntityName ?? string.Empty,
-            exception.EntityValue?.ToString() ?? string.Empty
-        );
-
         return new NotFoundResponse(
-            result,
-            responseMessage: $"{exception.EntityName} with value: '{exception.EntityValue}' not found."
+            new NotFoundResult
+            (
+                exception.EntityName,
+                exception.EntityValue,
+                exception.ErrorCode,
+                exception.Message
+            ),
+            responseCode: exception.ResponseCode,
+            responseMessage: BaseResponseMessages.NotFound
         );
     }
 
@@ -87,8 +108,33 @@ public static class ErrorResultMapper
         ArgumentNullException.ThrowIfNull(exception);
 
         return new UnauthorizedResponse(
-            responseCode: exception.ErrorCode,
-            responseMessage: exception.Message
+            new ErrorResult
+            {
+                ErrorCode = exception.ErrorCode,
+                ErrorMessage = exception.Message
+            },
+            responseCode: exception.ResponseCode,
+            responseMessage: BaseResponseMessages.Unauthorized
+        );
+    }
+
+    /// <summary>
+    /// Maps a <see cref="ForbiddenException"/> to a <see cref="ForbiddenResponse"/>.
+    /// </summary>
+    /// <param name="exception">The <see cref="ForbiddenException"/> instance to map from.</param>
+    /// <returns>A <see cref="ForbiddenResponse"/> representing the mapped exception.</returns>
+    public static ForbiddenResponse MapToForbiddenResponse(ForbiddenException exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+
+        return new ForbiddenResponse(
+            new ErrorResult
+            {
+                ErrorCode = exception.ErrorCode,
+                ErrorMessage = exception.Message
+            },
+            responseCode: exception.ResponseCode,
+            responseMessage: BaseResponseMessages.Unauthorized
         );
     }
 
@@ -102,8 +148,12 @@ public static class ErrorResultMapper
         ArgumentNullException.ThrowIfNull(exception);
 
         return new ErrorResponse(
-            responseCode: exception.ErrorCode,
-            responseMessage: exception.Message
+            new ErrorResult
+            {
+                ErrorCode = exception.ErrorCode,
+                ErrorMessage = exception.Message
+            },
+            responseCode: exception.ResponseCode
         );
     }
 }

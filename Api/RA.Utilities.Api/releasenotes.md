@@ -1,5 +1,16 @@
 # RA.Utilities.Api Release Notes
 
+## Version 10.0.5
+![Date Badge](https://img.shields.io/badge/Publish-25%20April%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-v10.0.5-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api/10.0.5)
+
+### ✨ Improvements & Fixes
+
+*   **Dynamic Error Mapping**: Updated `ErrorResultResponse` to utilize the `ResponseCode` directly from `RaBaseException`. This allows domain-level exceptions to dictate the HTTP status code returned by the API.
+*   **Observability**: Enhanced the global exception fallback to log unhandled exception messages and stack traces to the error console, aiding in production debugging.
+*   **Clarity**: Added internal documentation to the central error dispatcher to explain the pattern-matching logic.
+
+
 ## Version 10.0.4
 ![Date Badge](https://img.shields.io/badge/Publish-24%20April%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-v10.0.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api.Middlewares/10.0.4)
