@@ -77,6 +77,11 @@ public class HttpLoggingMiddleware : IMiddleware
 
     private async Task LogRequestAsync(HttpContext context)
     {
+        if (!_logger.IsEnabled(LogLevel.Information))
+        {
+            return;
+        }
+
         context.Request.EnableBuffering();
 
         var requestLog = new HttpRequestLogTemplate
@@ -97,6 +102,11 @@ public class HttpLoggingMiddleware : IMiddleware
 
     private async Task LogResponseAsync(HttpContext context, MemoryStream responseBody, TimeSpan duration)
     {
+        if (!_logger.IsEnabled(LogLevel.Information))
+        {
+            return;
+        }
+
         var responseLog = new HttpResponseLogTemplate
         {
             TraceIdentifier = context.TraceIdentifier,
