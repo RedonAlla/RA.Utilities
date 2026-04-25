@@ -59,4 +59,9 @@ public static class BaseResponseMessages
     /// Default message for a general error response.
     /// </summary>
     public const string Error = "Something happened on our end.";
+
+    /// <summary>
+    /// Default message for a general error response.
+    /// </summary>
+    public const string Unprocessable = "Unprocessable entity.";
 }

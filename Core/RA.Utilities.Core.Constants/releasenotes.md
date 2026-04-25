@@ -1,5 +1,18 @@
 # Release Notes 
 
+## Version 10.0.1
+![Date Badge](https://img.shields.io/badge/Publish-24%20April%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-v10.0.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Constants/10.0.1)
+
+This release focuses on maintaining consistency within the RA.Utilities ecosystem and refining documentation for core constant values.
+
+### ✨ Improvements
+
+*   **Alignment**: Version alignment with `RA.Utilities.Core.Exceptions` to support a coordinated release of core building blocks.
+*   **Documentation**: Updated the constants documentation to ensure clear mapping for the newly introduced semantic exceptions (Conflict/Forbidden).
+
+---
+
 ## Version 10.0.0
 ![Date Badge](https://img.shields.io/badge/Publish-23%20November%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Constants/10.0.0)

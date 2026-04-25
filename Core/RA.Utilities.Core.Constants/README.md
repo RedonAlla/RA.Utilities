@@ -37,6 +37,7 @@ Contains integer constants for common HTTP status codes, aligning with standard 
 | `Forbidden`           | 403   | Client Error (4xx) |
 | `NotFound`            | 404   | Client Error (4xx) |
 | `Conflict`            | 409   | Client Error (4xx) |
+| `Unprocessable`       | 422   | Client Error (4xx) |
 | `InternalServerError` | 500   | Server Error (5xx) |
 
 
@@ -55,6 +56,7 @@ Contains default string messages for common API responses. This helps maintain a
 | `Forbidden`         | "You do not have permission to access this resource."  | Error    |
 | `NotFound`          | "The requested resource was not found."                | Error    |
 | `Conflict`          | "A conflict occurred with the current state of the resource." | Error    |
+| `Unprocessable`     | "Unprocessable entity." | Error    |
 | `InternalServerError` | "An unexpected error occurred on the server."          | Error    |
 
 ### `HeaderParameters`

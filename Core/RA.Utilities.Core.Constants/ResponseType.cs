@@ -57,5 +57,15 @@ public enum ResponseType
     /// <summary>
     /// The server cannot or will not process the request due to something that is perceived to be a client error.
     /// </summary>
-    BadRequest = 9
+    BadRequest = 9,
+
+    /// <summary>
+    /// The server understands the content type of the request entity, but was unable to process the contained instructions.
+    /// </summary>
+    Unprocessable = 10,
+
+    /// <summary>
+    /// The server understood the request but refuses to authorize it.
+    /// </summary>
+    Forbidden = 11
 }

@@ -16,16 +16,6 @@ public static class BaseResponseCode
     public const int BadRequest = 400;
 
     /// <summary>
-    /// Default response code for a resource not found.
-    /// </summary>
-    public const int NotFound = 404;
-
-    /// <summary>
-    /// Default response code for an internal server error.
-    /// </summary>
-    public const int InternalServerError = 500;
-
-    /// <summary>
     /// Default response code for an unauthorized request.
     /// </summary>
     public const int Unauthorized = 401;
@@ -36,7 +26,22 @@ public static class BaseResponseCode
     public const int Forbidden = 403;
 
     /// <summary>
+    /// Default response code for a resource not found.
+    /// </summary>
+    public const int NotFound = 404;
+
+    /// <summary>
     /// Default response code for a conflict request.
     /// </summary>
     public const int Conflict = 409;
+
+    /// <summary>
+    /// Default response code for a Unprocessable entity.
+    /// </summary>
+    public const int Unprocessable = 422;
+
+    /// <summary>
+    /// Default response code for an internal server error.
+    /// </summary>
+    public const int InternalServerError = 500;
 }
