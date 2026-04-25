@@ -1,8 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Options; // Add this using directive for JsonSerializer.
+using Microsoft.Extensions.Options;
 using RA.Utilities.Api.Middlewares.Extensions;
 using RA.Utilities.Api.Middlewares.Options;
 using RA.Utilities.Api.Middlewares.Utilities;
@@ -49,8 +50,8 @@ public class DefaultHeadersMiddleware : IMiddleware
                 }
             };
 
-            context.Response.Headers.AddSafe(HeaderParameters.Location, context.Request.Path!);
-            context.Response.Headers.AddSafe(HeaderParameters.XRequestId, Guid.NewGuid().ToString());
+            context.Response.Headers.TryAdd(HeaderParameters.Location, context.Request.Path!.ToString());
+            context.Response.Headers.TryAdd(HeaderParameters.XRequestId, Guid.NewGuid().ToString());
 
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
             context.Response.ContentType = "application/json; charset=utf-8";
@@ -61,7 +62,7 @@ public class DefaultHeadersMiddleware : IMiddleware
             return;
         }
 
-        context.Response.Headers.AddSafe(HeaderParameters.XRequestId, xRequestId);
+        context.Response.Headers.TryAdd(HeaderParameters.XRequestId, xRequestId);
         await next(context);
     }
 }

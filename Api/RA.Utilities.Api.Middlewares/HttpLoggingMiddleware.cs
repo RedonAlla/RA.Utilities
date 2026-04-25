@@ -93,14 +93,10 @@ public class HttpLoggingMiddleware : IMiddleware
         };
 
         _logger.LogInformation("HTTP Request: {@RequestLog}", requestLog);
-
-        context.Request.Body.Position = 0;
     }
 
     private async Task LogResponseAsync(HttpContext context, MemoryStream responseBody, TimeSpan duration)
     {
-        context.Response.Body.Seek(0, SeekOrigin.Begin);
-
         var responseLog = new HttpResponseLogTemplate
         {
             TraceIdentifier = context.TraceIdentifier,
@@ -127,15 +123,18 @@ public class HttpLoggingMiddleware : IMiddleware
             return $"[Body larger than {_options.MaxBodyLogLength} bytes. Truncated.]";
         }
 
-        stream.Position = 0;
+        stream.Seek(0, SeekOrigin.Begin);
+
         using var reader = new StreamReader(stream, leaveOpen: true);
         string bodyAsString = await reader.ReadToEndAsync();
-        stream.Position = 0;
+        stream.Seek(0, SeekOrigin.Begin);
 
         // Try to parse as JSON for structured logging
         try
         {
-            return JsonSerializer.Deserialize<object>(bodyAsString, HttpLoggingJsonContext.Default.Object);
+            return string.IsNullOrWhiteSpace(bodyAsString)
+                ? null
+                : JsonSerializer.Deserialize<object>(bodyAsString, HttpLoggingJsonContext.Default.Object);
         }
         catch
         {

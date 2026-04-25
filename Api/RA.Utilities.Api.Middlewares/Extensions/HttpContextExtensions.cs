@@ -1,5 +1,6 @@
 using System.Linq;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Primitives;
 using RA.Utilities.Core.Constants;
 
 namespace RA.Utilities.Api.Middlewares.Extensions;
@@ -16,21 +17,13 @@ internal static class HttpContextExtensions
     /// <returns>
     /// The value of the <c>X-Request-Id</c> header if present; otherwise, <c>null</c>.
     /// </returns>
-    public static string? GetXRequestId(this IHeaderDictionary headers) =>
-        headers?.FirstOrDefault(k => k.Key == HeaderParameters.XRequestId)!.Value;
-
-    /// <summary>
-    /// Adds new header value in to <see cref="IHeaderDictionary"/>.
-    /// </summary>
-    /// <param name="headers">The headers.</param>
-    /// <param name="key">Key to add on header.</param>
-    /// <param name="value">The value of header for the given key.</param>
-    /// <returns><see cref="IHeaderDictionary"/></returns>
-    public static IHeaderDictionary AddSafe(this IHeaderDictionary headers, string key, string value)
+    public static string? GetXRequestId(this IHeaderDictionary headers)
     {
-        headers.Remove(key);
-        headers.Append(key, value);
+        if (headers == null)
+        {
+            return null;
+        }
 
-        return headers;
+        return headers.TryGetValue(HeaderParameters.XRequestId, out StringValues value) ? value.ToString() : null;
     }
 }
