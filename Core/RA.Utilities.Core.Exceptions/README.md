@@ -6,7 +6,7 @@
 [![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Core.Exceptions.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Exceptions/)
 [![Documentation](https://img.shields.io/badge/documentation-view-brightgreen.svg?logo=readthedocs&logoColor=fff)](https://redonalla.github.io/RA.Utilities/nuget-packages/core/RA.Utilities.Core.Exceptions/)
 
-`RA.Utilities.Core.Exceptions` provides a set of standardized, semantic exceptions like `NotFoundException` and `ConflictException`. It solves the problem of using generic exceptions (e.g., `Exception` or `InvalidOperationException`) for predictable business rule failures.
+`RA.Utilities.Core.Exceptions` provides a set of standardized, semantic exceptions like `NotFoundException` and `ConflictException`. It solves the problem of using generic exceptions (e.g., `Exception` or `UnprocessableException`) for predictable business rule failures.
 
 By throwing exceptions that describe *what* went wrong (e.g., a resource was not found), you can create cleaner, more maintainable code. This allows other parts of your system, like API middleware, to catch specific exception types and produce standardized, meaningful error responses automatically.
 - **Clear Intent**: Throwing a `NotFoundException` is more descriptive than a generic exception with a "not found" message.
@@ -24,6 +24,8 @@ By throwing exceptions that describe *what* went wrong (e.g., a resource was not
   - `NotFoundException`
   - `ConflictException`
   - `BadRequestException`
+  - `UnprocessableException`
+  - `ForbiddenException`
 - Best Practices
 - Additional documentation
 - Contributing
@@ -127,6 +129,66 @@ public void UpdateOrderStatus(int orderId, string newStatus)
 ```
 
 This will typically be translated into an **HTTP 400 Bad Request** response.
+
+---
+
+### UnprocessableException
+Inherits from `RaBaseException`.
+Use this when an operation cannot be performed due to the current state of a resource. This is for state-based conflicts, not general business rule violations.
+
+**Usage:**
+```csharp
+public async Task<Result> CancelOrderAsync(Guid orderId)
+{
+    var order = await _orderRepository.GetByIdAsync(orderId);
+
+    if (order == null)
+    {
+        return new NotFoundException(nameof(Order), orderId);
+    }
+
+    // Business Rule: Shipped orders cannot be cancelled.
+    if (order.Status == OrderStatus.Shipped)
+    {
+        return new UnprocessableException(
+            "ORDER_ALREADY_SHIPPED",
+            "Cannot cancel an order that has already been shipped."
+        );
+    }
+
+    order.Status = OrderStatus.Cancelled;
+    await _orderRepository.UpdateAsync(order);
+    return Result.Success();
+}
+```
+
+---
+
+### ForbiddenException
+Inherits from `RaBaseException`.
+Use this when an authenticated user lacks the necessary permissions to perform an action or access a resource.
+
+**Usage:**
+
+```csharp
+public async Task<Result> UpdateSensitiveDataAsync(Guid resourceId, User currentUser)
+{
+    var resource = await _repository.GetByIdAsync(resourceId);
+
+    // Business Rule: Only the 'Owner' or 'SuperAdmin' can edit this specific resource.
+    if (resource.OwnerId != currentUser.Id && !currentUser.IsSuperAdmin)
+    {
+        // The user is logged in (authenticated), but they are FORBIDDEN from this action.
+        return new ForbiddenException(
+            "INSUFFICIENT_PERMISSIONS", 
+            "You do not have permission to modify this resource."
+        );
+    }
+
+    // ... proceed with update
+    return Result.Success();
+}
+```
 
 ---
 

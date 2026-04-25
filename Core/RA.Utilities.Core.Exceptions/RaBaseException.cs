@@ -16,32 +16,31 @@ public class RaBaseException : Exception
     /// <summary>
     /// Gets the HTTP status code associated with the exception.
     /// </summary>
-    public int ErrorCode { get; set; }
+    public int ResponseCode { get; set; }
+
+    /// <summary>
+    /// Gets or sets the specific error code associated with the exception.
+    /// </summary>
+    public string ErrorCode { get; set; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RaBaseException"/> class with a default message and error code.
     /// </summary>
     public RaBaseException() : base(DefaultResponseMessage)
     {
-        ErrorCode = BaseResponseCode.InternalServerError;
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="RaBaseException"/> class with a specified error message.
-    /// </summary>
-    /// <param name="message">The message that describes the error.</param>
-    public RaBaseException(string message) : base(message)
-    {
-        ErrorCode = BaseResponseCode.InternalServerError;
+        ResponseCode = BaseResponseCode.InternalServerError;
+        ErrorCode = nameof(BaseResponseCode.InternalServerError);
     }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RaBaseException"/> class with a specified error code and message.
     /// </summary>
-    /// <param name="errorCode">The HTTP status code for the error.</param>
+    /// <param name="errorCode">A specific error code associated with the error.</param>
     /// <param name="message">The message that describes the error.</param>
-    public RaBaseException(int errorCode, string message) : base(message)
+    /// <param name="responseCode">The HTTP status code for the error.</param>
+    public RaBaseException(string errorCode, string message, int responseCode = BaseResponseCode.InternalServerError) : base(message)
     {
         ErrorCode = errorCode;
+        ResponseCode = responseCode;
     }
 }

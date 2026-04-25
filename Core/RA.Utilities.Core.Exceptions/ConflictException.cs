@@ -20,26 +20,21 @@ public class ConflictException : RaBaseException
     /// <summary>
     /// Initializes a new instance of the <see cref="ConflictException"/> class for a resource that already exists.
     /// </summary>
-    /// <param name="entityName">The name of the entity type that caused the conflict.</param>
-    /// <param name="entityValue">The value or identifier of the conflicting entity.</param>
-    /// <param name="code">The HTTP status code. Defaults to 409 (Conflict).</param>
-    public ConflictException(string entityName, object entityValue, int code = BaseResponseCode.Conflict)
-        : base(code, $"{entityName} with value '{entityValue}' already exists.")
-    {
-        EntityName = entityName;
-        EntityValue = entityValue;
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="ConflictException"/> class with a custom message.
-    /// </summary>
+    /// <param name="entity">The name of the entity type that caused the conflict.</param>
+    /// <param name="value">The value or identifier of the conflicting entity.</param>
+    /// <param name="errorCode">A specific error code associated with the error.</param>
     /// <param name="message">The message that describes the error.</param>
-    /// <param name="entityName">The name of the entity type that caused the conflict.</param>
-    /// <param name="entityValue">The value or identifier of the conflicting entity.</param>
-    public ConflictException(string message, string entityName, object entityValue)
-        : base(BaseResponseCode.Conflict, message)
+    /// <param name="responseCode">The HTTP status code. Defaults to 409 (Conflict).</param>
+    public ConflictException(
+        string entity,
+        object value,
+        string errorCode = nameof(BaseResponseCode.Conflict),
+        string message = BaseResponseMessages.Conflict,
+        int responseCode = BaseResponseCode.Conflict
+    )
+        : base(errorCode, message ?? $"{entity} with value '{value}' already exists.", responseCode)
     {
-        EntityName = entityName;
-        EntityValue = entityValue;
+        EntityName = entity;
+        EntityValue = value;
     }
 }

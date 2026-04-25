@@ -9,16 +9,35 @@ namespace RA.Utilities.Core.Exceptions;
 public class BadRequestException : RaBaseException
 {
     /// <summary>
+    /// Initializes a new instance of the <see cref="BadRequestException"/> class with a single validation error.
+    /// </summary>
+    /// <param name="error">The validation error that caused the exception.</param>
+    /// <param name="errorCode">A specific error code associated with the error.</param>
+    /// <param name="responseCode">The error code. Defaults to 400 (Bad Request).</param>
+    /// <param name="message">The error message. Defaults to a standard bad request message.</param>
+    public BadRequestException(
+        ValidationErrors error,
+        string errorCode = nameof(BaseResponseCode.BadRequest),
+        string message = BaseResponseMessages.BadRequest,
+        int responseCode = BaseResponseCode.BadRequest
+    ) : base(errorCode, message, responseCode)
+    {
+        Errors = [error];
+    }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="BadRequestException"/> class with a collection of validation errors.
     /// </summary>
     /// <param name="errors">An array of validation errors that caused the exception.</param>
-    /// <param name="code">The error code. Defaults to 400 (Bad Request).</param>
+    /// <param name="errorCode">A specific error code associated with the error.</param>
+    /// <param name="responseCode">The error code. Defaults to 400 (Bad Request).</param>
     /// <param name="message">The error message. Defaults to a standard bad request message.</param>
     public BadRequestException(
         ValidationErrors[] errors,
-        int code = BaseResponseCode.BadRequest,
-        string message = BaseResponseMessages.BadRequest
-    ) : base(code, message)
+        string errorCode = nameof(BaseResponseCode.BadRequest),
+        string message = BaseResponseMessages.BadRequest,
+        int responseCode = BaseResponseCode.BadRequest
+    ) : base(errorCode, message, responseCode)
     {
         Errors = errors;
     }

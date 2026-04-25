@@ -20,26 +20,18 @@ public class NotFoundException : RaBaseException
     /// <summary>
     /// Initializes a new instance of the <see cref="NotFoundException"/> class for a resource that was not found.
     /// </summary>
-    /// <param name="entityName">The name of the entity type that was not found.</param>
-    /// <param name="entityValue">The value or identifier used to search for the entity.</param>
-    /// <param name="code">The HTTP status code. Defaults to 404 (Not Found).</param>
-    public NotFoundException(string entityName, object entityValue, int code = BaseResponseCode.NotFound)
-        : base(code, $"{entityName} with value '{entityValue}' was not found.")
+    /// <param name="entity">The name of the entity type that was not found.</param>
+    /// <param name="value">The value or identifier used to search for the entity.</param>
+    /// <param name="errorCode">A specific error code associated with the error.</param>
+    /// <param name="responseCode">The HTTP status code. Defaults to 404 (Not Found).</param>
+    public NotFoundException(
+        string entity,
+        object value,
+        string errorCode = nameof(BaseResponseCode.NotFound),
+        int responseCode = BaseResponseCode.NotFound)
+        : base(errorCode, $"{entity} with value '{value}' was not found.", responseCode)
     {
-        EntityName = entityName;
-        EntityValue = entityValue;
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="NotFoundException"/> class with a custom message.
-    /// </summary>
-    /// <param name="message">The message that describes the error.</param>
-    /// <param name="entityName">The name of the entity type that was not found.</param>
-    /// <param name="entityValue">The value or identifier used to search for the entity.</param>
-    public NotFoundException(string message, string entityName, object entityValue)
-        : base(BaseResponseCode.NotFound, message)
-    {
-        EntityName = entityName;
-        EntityValue = entityValue;
+        EntityName = entity;
+        EntityValue = value;
     }
 }
