@@ -5,21 +5,21 @@ namespace RA.Utilities.Api.Results;
 /// <summary>
 /// A class encapsulating API response with success or failure indicators.
 /// </summary>
-/// <typeparam name="T"></typeparam>
+/// <typeparam name="T">The type of the result data contained within the response.</typeparam>
 public class Response<T>
 {
     /// <summary>
-    /// Response code indicates error code for translation purposes.
+    /// The response code. This can be an HTTP status code or a domain-specific error code for client-side processing.
     /// </summary>
     public int ResponseCode { get; set; }
 
     /// <summary>
-    /// Response type for response.
+    /// The semantic type of the response, used to categorize the outcome (e.g., Success, BadRequest, Error).
     /// </summary>
     public ResponseType ResponseType { get; set; }
 
     /// <summary>
-    /// A short and human-friendly message about response.
+    /// A human-friendly message describing the result of the API operation.
     /// </summary>
     public string? ResponseMessage { get; set; }
 

@@ -16,11 +16,11 @@ public sealed class ConflictResponse : Response<ConflictResult>
     public ConflictResponse(
         ConflictResult model,
         int responseCode = BaseResponseCode.Conflict,
-        string? responseMessage = null
+        string responseMessage = BaseResponseMessages.Conflict
     )
     {
         ResponseCode = responseCode;
-        ResponseMessage = responseMessage ?? $"{model.Entity} with value '{model.Value}' already exists.";
+        ResponseMessage = responseMessage;
         ResponseType = ResponseType.Conflict;
         Result = model;
     }
@@ -29,17 +29,35 @@ public sealed class ConflictResponse : Response<ConflictResult>
 /// <summary>
 /// Represents the result of a conflict, typically indicating that an entity with the given name and value already exists.
 /// </summary>
-/// <param name="name">The name of the entity.</param>
-/// <param name="value">The value of the entity.</param>
-public class ConflictResult(string name, object value)
+public class ConflictResult : ErrorResult
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ConflictResult"/> class.
+    /// </summary>
+    /// <param name="entity">The type of resource causing the conflict.</param>
+    /// <param name="value">The specific value that caused the conflict.</param>
+    /// <param name="errorCode">The specific error code.</param>
+    /// <param name="message">The error message.</param>
+    public ConflictResult(
+        string entity,
+        object value,
+        string errorCode = nameof(BaseResponseCode.Conflict),
+        string message = BaseResponseMessages.Conflict
+    )
+    {
+        Entity = entity;
+        Value = value;
+        ErrorCode = errorCode;
+        ErrorMessage = message;
+    }
+
     /// <summary>
     /// The type of resource causing the conflict (e.g., "User").
     /// </summary>
-    public string Entity { get; set; } = name;
+    public string Entity { get; set; }
 
     /// <summary>
     /// The specific value that caused the conflict (e.g., "test@example.com").
     /// </summary>
-    public object Value { get; set; } = value;
+    public object Value { get; set; }
 }

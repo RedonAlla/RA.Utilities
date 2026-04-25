@@ -54,7 +54,12 @@ public class ProductsController : ControllerBase
         if (id <= 0)
         {
             // Return a 400 Bad Request with validation details
-            var validationError = new BadRequestResult("Id", "Product ID must be a positive number.", id);
+            var validationError = new BadRequestResult
+            {
+                PropertyName = "Id",
+                ErrorMessage = "Product ID must be a positive number.",
+                AttemptedValue = id
+            };
             return BadRequest(new BadRequestResponse(new[] { validationError }));
         }
 
@@ -64,7 +69,22 @@ public class ProductsController : ControllerBase
         if (product == null)
         {
             // Return a 404 Not Found
-            return NotFound(new NotFoundResponse("Product", id));
+            return NotFound(new NotFoundResponse(new NotFoundResult("Product", id)));
+        }
+
+        try
+        {
+            // Simulate an operation that might fail
+            product.Process();
+        }
+        catch (Exception ex)
+        {
+            // Return a 500 Internal Server Error
+            return StatusCode(500, new ErrorResponse(new ErrorResult 
+            { 
+                ErrorCode = "PROCESSING_ERROR", 
+                ErrorMessage = ex.Message 
+            }));
         }
 
         // Return a 200 OK with the product data
@@ -80,7 +100,7 @@ The core of the package is the `Response<T>` record, which serves as a universal
 ### `Response<T>`
 
 Namespace: RA.Utilities.Api.Results</br>
-Package: RA.Utilities.Api.Results v1.0.0</br>
+Package: RA.Utilities.Api.Results</br>
 Source: [RA.Utilities.Api.Results](https://github.com/RedonAlla/RA.Utilities.git)
 
 ```csharp
@@ -100,11 +120,11 @@ public class Response<T>
 ### `SuccessResponse<T>`
 
 Namespace: RA.Utilities.Api.Results</br>
-Package: RA.Utilities.Api.Results v1.0.0</br>
+Package: RA.Utilities.Api.Results</br>
 Source: [RA.Utilities.Api.Results](https://github.com/RedonAlla/RA.Utilities.git)
 
 ```csharp
-public sealed class SuccessResponse<T> : Response<T> where T : new()
+public sealed class SuccessResponse<T> : Response<T>
 ```
 
 Creates a `Response<T>` object that produces a `Success` response, typically corresponding to an HTTP 200 OK status.
@@ -121,7 +141,7 @@ Creates a `Response<T>` object that produces a `Success` response, typically cor
 ```json
 {
   "responseCode": 200,
-  "responseType": "Success", // Enum value for Success
+  "responseType": "Success",
   "responseMessage": "Operation completed successfully.",
   "result": {
     // The 'T' payload goes here
@@ -139,37 +159,40 @@ Source: [RA.Utilities.Api.Results](https://github.com/RedonAlla/RA.Utilities.git
 public sealed class BadRequestResponse : Response<BadRequestResult[]>
 ```
 
-Creates a `Response<BadRequestResult>` object for a single validation error, producing a `BadRequest` response (HTTP 400).
+Creates a `Response<BadRequestResult[]>` object for validation errors, producing a `BadRequest` response (HTTP 400).
 
-It inherits from the generic Response<T> class, specifically as Response<BadRequestResult[]>. This means the Result property of the response will contain an array of BadRequestResult objects, where each object details a specific validation failure.
+It inherits from the generic `Response<T>` class, specifically as `Response<BadRequestResult[]>`. This means the `Result` property of the response will contain an array of `BadRequestResult` objects, where each object details a specific validation failure.
 
-It automatically sets the ResponseType to ResponseType.BadRequest and defaults the ResponseCode to 400 (from BaseResponseCode.BadRequest), ensuring consistency across all bad request responses in your application.
+It automatically sets the `ResponseType` to `ResponseType.BadRequest` and defaults the `ResponseCode` to 400 (from `BaseResponseCode.BadRequest`).
 
 #### Properties 
 
 | Property | Value |
 | --------------- | ------------------------------------------------ |
-| ResponseCode | 400 (from BaseResponseCode.BadRequest) |
-| ResponseMessage | "One or more validation errors occurred." (from BaseResponseMessages.BadRequest) |
-| ResponseType | ResponseType.BadRequest |
-| Result | array of [`BadRequestResult`](#badrequestresult) |
+| `ResponseCode` | 400 (from `BaseResponseCode.BadRequest`) |
+| `ResponseMessage` | "One or more validation errors occurred." (from `BaseResponseMessages.BadRequest`) |
+| `ResponseType` | `ResponseType.BadRequest` |
+| `Result` | array of [`BadRequestResult`](#badrequestresult) |
 
-#### BadRequestResult 
+#### `BadRequestResult` 
 
-| Property | Type | Value |
+Inherits from [`ErrorResult`](#errorresult).
+
+| Property | Type | Description |
 | -------- | --- | ------------------------------------------------ |
-| PropertyName | `string` | The name of the property. |
-| ErrorMessage | `string` | The error message |
-| AttemptedValue | `object` | The property value that caused the failure. |
-| ErrorCode | `string` | Gets or sets the error code. |
+| `PropertyName` | `string` | The name of the property. |
+| `ErrorMessage` | `string` | The error message (inherited from `ErrorResult`). |
+| `AttemptedValue` | `object` | The property value that caused the failure. |
+| `ExpectedValue` | `object` | The expected value for the property. |
+| `ErrorCode` | `string` | The specific error code (inherited from `ErrorResult`). |
 
 ####  Example response:
 
 ```json
 {
   "responseCode": 400,
-  "responseType": "BadRequest", // Enum value for BadRequest
-  "responseMessage": "The request is invalid.",
+  "responseType": "BadRequest",
+  "responseMessage": "One or more validation errors occurred.",
   "result": [
     {
       "propertyName": "Email",
@@ -187,10 +210,10 @@ It automatically sets the ResponseType to ResponseType.BadRequest and defaults t
 }
 ```
 
-### ConflictResponse 
+### `ConflictResponse` 
 Namespace: RA.Utilities.Api.Results</br>
-Package: RA.Utilities.Api.Results v1.0.0</br>
-Source: RA.Utilities.Api.Results
+Package: RA.Utilities.Api.Results</br>
+Source: [RA.Utilities.Api.Results](https://github.com/RedonAlla/RA.Utilities.git)
 
 
 ```csharp
@@ -200,33 +223,38 @@ Creates a `Response<ConflictResult>` object that produces a Conflict response, t
 This is used when an action cannot be completed because it conflicts with the current state of a resource, such as trying to create an entity that already exists.
 
 It inherits from `Response<T>`, specifically as `Response<ConflictResult>`.
-The Result property will contain a ConflictResult object detailing the nature of the conflict.
-It automatically sets `ResponseType` to `ResponseType.Conflict` and defaults the ResponseCode to 409 (from `BaseResponseCode.Conflict`).
+The `Result` property will contain a `ConflictResult` object detailing the nature of the conflict.
+It automatically sets `ResponseType` to `ResponseType.Conflict` and defaults the `ResponseCode` to 409 (from `BaseResponseCode.Conflict`).
 
 #### Properties
 | Property | Value |
 | --------------- | ------------------------------------------------------------------ |
-| ResponseCode | 409 (from BaseResponseCode.Conflict) |
-| ResponseMessage | A generated message like "{Entity} with value '{Value}' already exists." |
-| ResponseType | ResponseType.Conflict |
-| Result | [`ConflictResult`](#conflictresult) |
+| `ResponseCode` | 409 (from `BaseResponseCode.Conflict`) |
+| `ResponseMessage` | "The request could not be completed due to a conflict with the current state of the resource." (from `BaseResponseMessages.Conflict`) |
+| `ResponseType` | `ResponseType.Conflict` |
+| `Result` | [`ConflictResult`](#conflictresult) |
 
-#### ConflictResult
+#### `ConflictResult`
+Inherits from [`ErrorResult`](#errorresult).
+
 | Property | Type | Description |
 | -------- | -------- | ---------------------------------------------- |
-| Entity | string | The name of the entity causing the conflict. |
-| Value | object | The value of the entity that caused the conflict. |
+| `Entity` | `string` | The name of the entity causing the conflict. |
+| `Value` | `object` | The value of the entity that caused the conflict. |
 
 #### Example response:
 This response indicates that a User with the email existing@example.com already exists.
 
-```json {
+```json
+{
   "responseCode": 409,
   "responseType": "Conflict",
-  "responseMessage": "User with value 'existing@example.com' already exists.",
+  "responseMessage": "The request could not be completed due to a conflict with the current state of the resource.",
   "result": {
     "entity": "User",
-    "value": "existing@example.com"
+    "value": "existing@example.com",
+    "errorCode": "Conflict",
+    "errorMessage": "The request could not be completed due to a conflict with the current state of the resource."
   }
 }
 ```
@@ -234,16 +262,16 @@ This response indicates that a User with the email existing@example.com already 
 ### `ErrorResponse`
 
 Namespace: RA.Utilities.Api.Results</br>
-Package: RA.Utilities.Api.Results v1.0.0</br>
-Source: RA.Utilities.Api.Results
+Package: RA.Utilities.Api.Results</br>
+Source: [RA.Utilities.Api.Results](https://github.com/RedonAlla/RA.Utilities.git)
 
 ```csharp
-public sealed class ErrorResponse : Response<object>
+public sealed class ErrorResponse : Response<ErrorResult>
 ```
 
-Creates a `Response<object>` that produces a generic `Error` response, typically corresponding to an HTTP 500 Internal Server Error. This response type is used for unexpected server-side errors where a more specific response (like `BadRequest` or `NotFound`) is not appropriate.
+Creates a `Response<ErrorResult>` that produces a generic `Error` response, typically corresponding to an HTTP 500 Internal Server Error. This response type is used for unexpected server-side errors.
 
-It inherits from `Response<T>`, specifically as `Response<object>`. The `Result` property is `null` for this response type.
+It inherits from `Response<T>`, specifically as `Response<ErrorResult>`.
 
 It automatically sets `ResponseType` to `ResponseType.Error` and defaults the `ResponseCode` to 500 (from `BaseResponseCode.InternalServerError`).
 
@@ -251,67 +279,152 @@ It automatically sets `ResponseType` to `ResponseType.Error` and defaults the `R
 
 | Property        | Value                                                              |
 | --------------- | ------------------------------------------------------------------ |
-| `ResponseCode`    | `500` (from `BaseResponseCode.InternalServerError`) or other error code. |
-| `ResponseMessage` | A generic error message like `"An unexpected error occurred on the server."` |
+| `ResponseCode`    | `500` (from `BaseResponseCode.InternalServerError`) |
+| `ResponseMessage` | "A general error occurred during the operation." (from `BaseResponseMessages.Error`) |
 | `ResponseType`  | `ResponseType.Error`                                               |
-| `Result`        | `null`                                                             |
+| `Result`        | [`ErrorResult`](#errorresult)                                      |
 
 #### Example response:
-
-This response indicates a generic server error.
 
 ```json
 {
   "responseCode": 500,
   "responseType": "Error",
-  "responseMessage": "An unexpected error occurred on the server.",
-  "result": null
+  "responseMessage": "A general error occurred during the operation.",
+  "result": {
+    "errorCode": "InternalServerError",
+    "errorMessage": "An unexpected error occurred on the server."
+  }
 }
 ```
 
-### NotFoundResponse
+### `ForbiddenResponse`
+
 Namespace: RA.Utilities.Api.Results</br>
-Package: RA.Utilities.Api.Results v1.0.0</br>
-Source: RA.Utilities.Api.Results
+Package: RA.Utilities.Api.Results</br>
+Source: [RA.Utilities.Api.Results](https://github.com/RedonAlla/RA.Utilities.git)
+
+```csharp
+public class ForbiddenResponse : Response<ErrorResult>
+```
+
+Creates a `Response<ErrorResult>` object for a forbidden request (HTTP 403). Used when the server understands the request but refuses to authorize it.
+
+#### Properties
+
+| Property | Value |
+| --------------- | ------------------------------------------------ |
+| `ResponseCode` | 403 (from `BaseResponseCode.Forbidden`) |
+| `ResponseMessage` | "The server understood the request but refuses to authorize it." (from `BaseResponseMessages.Forbidden`) |
+| `ResponseType` | `ResponseType.Forbidden` |
+| `Result` | [`ErrorResult`](#errorresult) |
+
+### `UnprocessableResponse`
+
+Namespace: RA.Utilities.Api.Results</br>
+Package: RA.Utilities.Api.Results</br>
+Source: [RA.Utilities.Api.Results](https://github.com/RedonAlla/RA.Utilities.git)
+
+```csharp
+public sealed class UnprocessableResponse : Response<ErrorResult>
+```
+
+Creates a `Response<ErrorResult>` object that produces an `Unprocessable` response (HTTP 422). Used when the server understands the content type but was unable to process the contained instructions.
+
+#### Properties
+
+| Property | Value |
+| --------------- | ------------------------------------------------ |
+| `ResponseCode` | 422 (from `BaseResponseCode.Unprocessable`) |
+| `ResponseMessage` | "The server understands the content type of the request entity, but was unable to process the contained instructions." (from `BaseResponseMessages.Unprocessable`) |
+| `ResponseType` | `ResponseType.Unprocessable` |
+| `Result` | [`ErrorResult`](#errorresult) |
+
+### `NotFoundResponse`
+Namespace: RA.Utilities.Api.Results</br>
+Package: RA.Utilities.Api.Results</br>
+Source: [RA.Utilities.Api.Results](https://github.com/RedonAlla/RA.Utilities.git)
 
 ```csharp
 public sealed class NotFoundResponse : Response<NotFoundResult>
 ```
 
-Creates a `Response<NotFoundResult>` object that produces a NotFound response, typically corresponding to an HTTP 404 Not Found status.
-This is used when a requested resource could not be found at the specified URI.
+Creates a `Response<NotFoundResult>` object that produces a `NotFound` response, typically corresponding to an HTTP 404 Not Found status.
+This is used when a requested resource could not be found.
 
 It inherits from `Response<T>`, specifically as `Response<NotFoundResult>`.
-The Result property will contain a `NotFoundResult` object detailing which entity was not found. 
-It automatically sets `ResponseType` to `ResponseType.NotFound` and defaults the ResponseCode to 404 (from `BaseResponseCode.NotFound`).
+The `Result` property will contain a `NotFoundResult` object detailing which entity was not found. 
+It automatically sets `ResponseType` to `ResponseType.NotFound` and defaults the `ResponseCode` to 404 (from `BaseResponseCode.NotFound`).
 
 #### Properties
 | Property | Value |
 | --------------- | ------------------------------------------------------------------ |
-| ResponseCode | 404 (from BaseResponseCode.NotFound) |
-| ResponseMessage | A generated message like "{EntityName} with value '{EntityValue}' not found." or a custom message. |
-| ResponseType | ResponseType.NotFound |
-| Result | [`NotFoundResult`] |
+| `ResponseCode` | 404 (from `BaseResponseCode.NotFound`) |
+| `ResponseMessage` | "The requested resource was not found." (from `BaseResponseMessages.NotFound`) |
+| `ResponseType` | `ResponseType.NotFound` |
+| `Result` | [`NotFoundResult`](#notfoundresult) |
 
-#### NotFoundResult
+#### `NotFoundResult`
+Inherits from [`ErrorResult`](#errorresult).
+
 | Property | Type | Description |
 | ------------- | -------- | ------------------------------------------------------------------ |
-| EntityName | `string` | The name of the entity that was not found (e.g., "Product"). |
-| EntityValue | `object` | The identifier or value used to search for the entity (e.g., 123). |
+| `Entity` | `string` | The name of the entity that was not found (e.g., "Product"). |
+| `Value` | `object` | The identifier or value used to search for the entity (e.g., 123). |
 
 #### Example response:
-This response indicates that a Product with an ID of 999 could not be found.
 
-```json {
+```json
+{
   "responseCode": 404,
   "responseType": "NotFound",
-  "responseMessage": "Product with value '999' not found.",
+  "responseMessage": "The requested resource was not found.",
   "result": {
-  "entityName": "Product",
-  "entityValue": 999
+    "entity": "Product",
+    "value": 999,
+    "errorCode": "NotFound",
+    "errorMessage": "The requested resource was not found."
   } 
 }
 ```
+
+### `UnauthorizedResponse`
+
+Namespace: RA.Utilities.Api.Results</br>
+Package: RA.Utilities.Api.Results</br>
+Source: [RA.Utilities.Api.Results](https://github.com/RedonAlla/RA.Utilities.git)
+
+```csharp
+public class UnauthorizedResponse : Response<ErrorResult>
+```
+
+Creates a `Response<ErrorResult>` object for an unauthorized request (HTTP 401). Used when the request requires user authentication.
+
+#### Properties
+
+| Property | Value |
+| --------------- | ------------------------------------------------ |
+| `ResponseCode` | 401 (from `BaseResponseCode.Unauthorized`) |
+| `ResponseMessage` | "The request requires user authentication." (from `BaseResponseMessages.Unauthorized`) |
+| `ResponseType` | `ResponseType.Unauthorized` |
+| `Result` | [`ErrorResult`](#errorresult) |
+
+### `ErrorResult`
+
+Namespace: RA.Utilities.Api.Results</br>
+Package: RA.Utilities.Api.Results</br>
+Source: [RA.Utilities.Api.Results](https://github.com/RedonAlla/RA.Utilities.git)
+
+```csharp
+public class ErrorResult
+```
+
+Represents a result containing error information.
+
+| Property | Type | Description |
+| -------- | --- | ------------------------------------------------ |
+| `ErrorCode` | `string` | The specific error code associated with the response. |
+| `ErrorMessage` | `string` | The human-friendly error message. |
 
 ---
 

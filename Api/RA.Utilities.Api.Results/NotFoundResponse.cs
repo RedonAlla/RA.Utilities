@@ -16,11 +16,11 @@ public sealed class NotFoundResponse : Response<NotFoundResult>
     public NotFoundResponse(
         NotFoundResult model,
         int responseCode = BaseResponseCode.NotFound,
-        string? responseMessage = null
+        string responseMessage = BaseResponseMessages.NotFound
     )
     {
         ResponseCode = responseCode;
-        ResponseMessage = responseMessage ?? $"{model.EntityName} with value '{model.EntityValue}' not found.";
+        ResponseMessage = responseMessage;
         ResponseType = ResponseType.NotFound;
         Result = model;
     }
@@ -29,17 +29,35 @@ public sealed class NotFoundResponse : Response<NotFoundResult>
 /// <summary>
 /// Represent an entity not found searched by given value.
 /// </summary>
-/// <param name="name"></param>
-/// <param name="value"></param>
-public class NotFoundResult(string name, object value)
+public class NotFoundResult : ErrorResult
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="NotFoundResult"/> class.
+    /// </summary>
+    /// <param name="entity">The type of resource that was being looked for.</param>
+    /// <param name="value">The identifier that was used in the search.</param>
+    /// <param name="errorCode">The specific error code.</param>
+    /// <param name="message">The error message.</param>
+    public NotFoundResult(
+        string entity,
+        object value,
+        string errorCode = nameof(BaseResponseCode.NotFound),
+        string message = BaseResponseMessages.NotFound
+    )
+    {
+        Entity = entity;
+        Value = value;
+        ErrorCode = errorCode;
+        ErrorMessage = message;
+    }
+
     /// <summary>
     /// The type of resource that was being looked for (e.g., "Product", "User")
     /// </summary>
-    public string EntityName { get; set; } = name;
+    public string Entity { get; set; }
 
     /// <summary>
     /// The identifier that was used in the search (e.g., `123`, `"john.doe@example.com"`).
     /// </summary>
-    public object EntityValue { get; set; } = value;
+    public object Value { get; set; }
 }

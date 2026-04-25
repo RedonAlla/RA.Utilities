@@ -9,7 +9,7 @@ namespace RA.Utilities.Api.Results;
 public sealed class BadRequestResponse : Response<BadRequestResult[]>
 {
     /// <summary>
-    /// Create a new Instance of <see cref="Response{BadRequestResult}"/> with success status.
+    /// Initializes a new instance of the <see cref="BadRequestResponse"/> class to represent a client-side validation failure.
     /// </summary>
     /// <param name="errors">Errors type of <see cref="BadRequestResponse"/></param>
     /// <param name="responseCode">Response code.</param>
@@ -30,34 +30,22 @@ public sealed class BadRequestResponse : Response<BadRequestResult[]>
 /// <summary>
 /// Error results for bad response.
 /// </summary>
-public class BadRequestResult
+public class BadRequestResult : ErrorResult
 {
     /// <summary>
-	/// The name of the property.
+	/// The name of the request property that failed validation.
 	/// </summary>
 	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string PropertyName { get; set; }
 
     /// <summary>
-    /// The error message
-    /// </summary>
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string ErrorMessage { get; set; }
-
-    /// <summary>
-    /// The property value that caused the failure.
+    /// The actual value that was provided in the request and caused the validation failure.
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public object AttemptedValue { get; set; }
 
     /// <summary>
-    /// Gets or sets the error code.
-    /// </summary>
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string ErrorCode { get; set; }
-
-    /// <summary>
-    /// Gets or sets the expected value.
+    /// The value or format that was expected for this property.
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public object ExpectedValue { get; set; }
