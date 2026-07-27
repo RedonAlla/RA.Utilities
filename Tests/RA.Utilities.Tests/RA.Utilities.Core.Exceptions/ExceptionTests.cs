@@ -40,7 +40,7 @@ public class ExceptionTests
         string message = "Test message";
 
         // Act
-        var ex = new RaBaseException(message);
+        var ex = new RaBaseException(500, ResponseType.Error, message);
 
         // Assert
         ex.Message.Should().Be(message);
@@ -77,7 +77,7 @@ public class ExceptionTests
         string message = "Custom message for ConflictException";
 
         // Act
-        var ex = new ConflictException(message: message, entityName, value);
+        var ex = new ConflictException(entityName, value, message: message);
 
         // Assert
         ex.Message.Should().Be(message);
@@ -116,7 +116,7 @@ public class ExceptionTests
         string message = "Custom message for NotFoundException";
 
         // Act
-        var ex = new NotFoundException(message, entityName, entityValue);
+        var ex = new NotFoundException(entityName, entityValue, message: message);
 
         // Assert
         ex.Message.Should().Be(message);
@@ -145,7 +145,7 @@ public class ExceptionTests
     public void UnauthorizedException_WithMessage_ShouldSetCustomMessage()
     {
         // Act
-        var ex = new UnauthorizedException("You shall not pass!");
+        var ex = new UnauthorizedException(message: "You shall not pass!");
 
         // Assert
         ex.Message.Should().Be("You shall not pass!");
@@ -159,12 +159,11 @@ public class ExceptionTests
     public void BadRequestException_Constructor_ShouldSetDefaultProperties()
     {
         // Arrange
-        ValidationErrors[] validationErrors =
+        ValidationError[] validationErrors =
         [
-            new ValidationErrors
+            new ValidationError("Email is not in a valid format.")
             {
                 PropertyName = "Email",
-                ErrorMessage = "Email is not in a valid format.",
                 AttemptedValue = "not-an-email",
                 ErrorCode = "InvalidFormat"
             }
@@ -186,7 +185,7 @@ public class ExceptionTests
     public void BadRequestException_Constructor_WithCustomValues_ShouldSetProperties()
     {
         // Arrange
-        ValidationErrors[] validationErrors = [new ValidationErrors { ErrorMessage = "An error" }];
+        ValidationError[] validationErrors = [new ValidationError("An error")];
         const string customMessage = "A custom error occurred.";
         const int customCode = 499;
 
@@ -197,5 +196,113 @@ public class ExceptionTests
         ex.Errors.Should().BeEquivalentTo(validationErrors);
         ex.ErrorCode.Should().Be(customCode);
         ex.Message.Should().Be(customMessage);
+    }
+
+    // =================================================================
+    // Tests for TooManyRequestsException
+    // =================================================================
+
+    /// <summary>
+    /// Tests the default constructor of TooManyRequestsException.
+    /// </summary>
+    [Fact]
+    public void TooManyRequestsException_DefaultConstructor_ShouldSetDefaultValues()
+    {
+        // Act
+        var ex = new TooManyRequestsException();
+
+        // Assert
+        ex.Message.Should().Be(BaseResponseMessages.TooManyRequests);
+        ex.ErrorCode.Should().Be(BaseResponseCode.TooManyRequests);
+        ex.ResponseType.Should().Be(ResponseType.TooManyRequests);
+    }
+
+    /// <summary>
+    /// Tests the constructor of TooManyRequestsException with a custom message.
+    /// </summary>
+    [Fact]
+    public void TooManyRequestsException_WithMessage_ShouldSetCustomMessage()
+    {
+        // Arrange
+        const string message = "Rate limit of 100 requests per hour exceeded.";
+
+        // Act
+        var ex = new TooManyRequestsException(message);
+
+        // Assert
+        ex.Message.Should().Be(message);
+        ex.ErrorCode.Should().Be(BaseResponseCode.TooManyRequests);
+    }
+
+    /// <summary>
+    /// Tests the constructor of TooManyRequestsException with a custom error code and message.
+    /// </summary>
+    [Fact]
+    public void TooManyRequestsException_WithErrorCodeAndMessage_ShouldSetProperties()
+    {
+        // Arrange
+        const int errorCode = 429;
+        const string message = "Tenant quota exceeded. Upgrade your plan.";
+
+        // Act
+        var ex = new TooManyRequestsException(errorCode, message);
+
+        // Assert
+        ex.ErrorCode.Should().Be(errorCode);
+        ex.Message.Should().Be(message);
+    }
+
+    // =================================================================
+    // Tests for ServiceUnavailableException
+    // =================================================================
+
+    /// <summary>
+    /// Tests the default constructor of ServiceUnavailableException.
+    /// </summary>
+    [Fact]
+    public void ServiceUnavailableException_DefaultConstructor_ShouldSetDefaultValues()
+    {
+        // Act
+        var ex = new ServiceUnavailableException();
+
+        // Assert
+        ex.Message.Should().Be(BaseResponseMessages.ServiceUnavailable);
+        ex.ErrorCode.Should().Be(BaseResponseCode.ServiceUnavailable);
+        ex.ResponseType.Should().Be(ResponseType.ServiceUnavailable);
+    }
+
+    /// <summary>
+    /// Tests the constructor of ServiceUnavailableException with a custom message.
+    /// </summary>
+    [Fact]
+    public void ServiceUnavailableException_WithMessage_ShouldSetCustomMessage()
+    {
+        // Arrange
+        const string message = "Database cluster is currently failing over.";
+
+        // Act
+        var ex = new ServiceUnavailableException(message);
+
+        // Assert
+        ex.Message.Should().Be(message);
+        ex.ErrorCode.Should().Be(BaseResponseCode.ServiceUnavailable);
+    }
+
+    /// <summary>
+    /// Tests the constructor of ServiceUnavailableException with a custom error code and message.
+    /// </summary>
+    [Fact]
+    public void ServiceUnavailableException_WithErrorCodeAndMessage_ShouldSetProperties()
+    {
+        // Arrange
+        const int errorCode = 503;
+        const string message = "Scheduled maintenance in progress.";
+
+        // Act
+        var ex = new ServiceUnavailableException(errorCode, message);
+
+        // Assert
+        ex.ErrorCode.Should().Be(errorCode);
+        ex.Message.Should().Be(message);
     }
 }
