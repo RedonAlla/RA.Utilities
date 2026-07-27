@@ -8,17 +8,31 @@ namespace RA.Utilities.Core.Exceptions;
 public class UnauthorizedException : RaBaseException
 {
     /// <summary>
+    /// Initializes a new instance of the <see cref="UnauthorizedException"/> class with a default message and error code.
+    /// </summary>
+    public UnauthorizedException()
+        : base(BaseResponseCode.Unauthorized, ResponseType.Unauthorized, BaseResponseMessages.Unauthorized)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UnauthorizedException"/> class with a default message and error code.
+    /// </summary>
+    public UnauthorizedException(string message)
+        : base(BaseResponseCode.Unauthorized, ResponseType.Unauthorized, message)
+    {
+    }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="UnauthorizedException"/> class with a custom message.
     /// </summary>
     /// <param name="errorCode">A specific error code associated with the error.</param>
     /// <param name="message">The message that describes the error.</param>
-    /// <param name="responseCode">The HTTP status code for the error.</param>
     public UnauthorizedException(
-        string errorCode = nameof(BaseResponseMessages.Unauthorized),
-        string message = BaseResponseMessages.Unauthorized,
-        int responseCode = BaseResponseCode.Unauthorized
+        int errorCode,
+        string message = BaseResponseMessages.Unauthorized
     )
-        : base(errorCode, message, responseCode)
+        : base(errorCode, ResponseType.Unauthorized, message)
     {
     }
 }

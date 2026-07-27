@@ -9,38 +9,37 @@ namespace RA.Utilities.Core.Exceptions;
 public class RaBaseException : Exception
 {
     /// <summary>
-    /// The default error message used when no specific message is provided.
+    /// Error type associated with the exception (e.g., "NotFound").
     /// </summary>
-    private const string DefaultResponseMessage = BaseResponseMessages.Error;
+    public ResponseType ResponseType { get; init; }
 
     /// <summary>
-    /// Gets the HTTP status code associated with the exception.
+    /// Error code associated with the exception.
     /// </summary>
-    public int ResponseCode { get; set; }
-
-    /// <summary>
-    /// Gets or sets the specific error code associated with the exception.
-    /// </summary>
-    public string ErrorCode { get; set; }
+    public int ErrorCode { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RaBaseException"/> class with a default message and error code.
     /// </summary>
-    public RaBaseException() : base(DefaultResponseMessage)
+    public RaBaseException() : base(BaseResponseMessages.Error)
     {
-        ResponseCode = BaseResponseCode.InternalServerError;
-        ErrorCode = nameof(BaseResponseCode.InternalServerError);
+        ErrorCode = BaseResponseCode.InternalServerError;
+        ResponseType = ResponseType.Error;
     }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RaBaseException"/> class with a specified error code and message.
     /// </summary>
     /// <param name="errorCode">A specific error code associated with the error.</param>
+    /// <param name="errorType">The error type associated with the exception (e.g., "NotFound").</param>
     /// <param name="message">The message that describes the error.</param>
-    /// <param name="responseCode">The HTTP status code for the error.</param>
-    public RaBaseException(string errorCode, string message, int responseCode = BaseResponseCode.InternalServerError) : base(message)
+    public RaBaseException(
+        int errorCode,
+        ResponseType errorType,
+        string message = BaseResponseMessages.Error
+    ) : base(message)
     {
         ErrorCode = errorCode;
-        ResponseCode = responseCode;
+        ResponseType = errorType;
     }
 }

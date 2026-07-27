@@ -10,25 +10,23 @@ public class ConflictException : RaBaseException
     /// <summary>
     /// Gets the name of the entity that caused the conflict (e.g., "User").
     /// </summary>
-    public string EntityName { get; }
+    public string EntityName { get; init; }
 
     /// <summary>
     /// Gets the value or identifier of the entity that caused the conflict.
     /// </summary>
-    public object EntityValue { get; }
+    public object EntityValue { get; init; }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ConflictException"/> class for a resource that already exists.
+    /// Initializes a new instance of the <see cref="ConflictException"/> class for a generic conflict.
     /// </summary>
     /// <param name="errorCode">A specific error code associated with the error.</param>
     /// <param name="message">The message that describes the error.</param>
-    /// <param name="responseCode">The HTTP status code. Defaults to 409 (Conflict).</param>
     public ConflictException(
-        string errorCode = nameof(BaseResponseCode.Conflict),
-        string message = BaseResponseMessages.Conflict,
-        int responseCode = BaseResponseCode.Conflict
+        int errorCode = BaseResponseCode.Conflict,
+        string message = BaseResponseMessages.Conflict
     )
-        : base(errorCode, message, responseCode)
+        : base(errorCode, ResponseType.Conflict, message)
     {
     }
 
@@ -39,15 +37,13 @@ public class ConflictException : RaBaseException
     /// <param name="value">The value or identifier of the conflicting entity.</param>
     /// <param name="errorCode">A specific error code associated with the error.</param>
     /// <param name="message">The message that describes the error.</param>
-    /// <param name="responseCode">The HTTP status code. Defaults to 409 (Conflict).</param>
     public ConflictException(
         string entity,
         object value,
-        string errorCode = nameof(BaseResponseCode.Conflict),
-        string message = BaseResponseMessages.Conflict,
-        int responseCode = BaseResponseCode.Conflict
+        int errorCode = BaseResponseCode.Conflict,
+        string? message = null
     )
-        : base(errorCode, message ?? $"{entity} with value '{value}' already exists.", responseCode)
+        : base(errorCode, ResponseType.Conflict, message ?? $"{entity} with value '{value}' already exists.")
     {
         EntityName = entity;
         EntityValue = value;

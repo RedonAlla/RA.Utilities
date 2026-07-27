@@ -1,5 +1,41 @@
 # Release Notes for RA.Utilities.Core.Exceptions
 
+## Version 10.0.4
+
+![Date Badge](https://img.shields.io/badge/Publish-27%20July%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-v10.0.4-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Exceptions/10.0.4)
+
+This release modernizes the exception base class and aligns the entire exception hierarchy with the new `ResponseType` record from `RA.Utilities.Core.Constants` v10.0.2. The changes improve type safety, extensibility, and developer ergonomics.
+
+### ⚠️ Breaking Changes
+
+*   **`RaBaseException.ErrorCode` type changed from `string` to `int`**: The error code is now an integer, aligning with HTTP status code conventions and the constants defined in `BaseResponseCode`. **Migration**: Replace any string-based error code assignments (e.g., `nameof(BaseResponseCode.NotFound)`) with the corresponding integer constant (e.g., `BaseResponseCode.NotFound`).
+*   **`RaBaseException.ResponseCode` removed; replaced by `ResponseType`**: The `ResponseCode` property (an `int`) has been removed and replaced with `ResponseType ResponseType` (the new `record` type from `RA.Utilities.Core.Constants`). This provides richer semantic meaning for error categorization. **Migration**: Replace references to `ex.ResponseCode` with `ex.ErrorCode` for the HTTP status code, and use `ex.ResponseType` for the semantic type label.
+*   **`RaBaseException` constructor signature changed**: The constructor now accepts `(int errorCode, ResponseType errorType, string message)` instead of the previous `(string errorCode, string message, int responseCode)`. All derived exception constructors have been updated accordingly.
+*   **`ValidationErrors` renamed to `ValidationError`**: The class representing a single validation error has been renamed from `ValidationErrors` (plural) to `ValidationError` (singular) to better reflect that it represents a single error. **Migration**: Rename all usages of `ValidationErrors` to `ValidationError`.
+*   **`ValidationError` properties are now nullable**: `PropertyName`, `ErrorMessage`, `ErrorCode`, `AttemptedValue`, and `ExpectedValue` are now nullable (`string?` / `object?`). A new constructor `ValidationError(string errorMessage)` has been added for simple error creation.
+
+### ✨ New Features
+
+*   **`TooManyRequestsException`**: A new exception class for HTTP 429 Too Many Requests scenarios, such as rate limiting, throttling, and quota enforcement.
+*   **`ServiceUnavailableException`**: A new exception class for HTTP 503 Service Unavailable scenarios, such as maintenance mode, circuit breaker trips, and dependency outages.
+*   **`GatewayTimeoutException`**: A new exception class for HTTP 504 Gateway Timeout scenarios, such as when an upstream server fails to respond in time. Provides parameterless, `string message`, and `(int errorCode, string message)` constructors, consistent with the other exception types.
+*   **Parameterless constructors added to all exception types**: `ForbiddenException`, `UnauthorizedException`, `UnprocessableException`, `GatewayTimeoutException`, `TooManyRequestsException`, and `ServiceUnavailableException` now have parameterless constructors that use sensible defaults from `BaseResponseCode` and `BaseResponseMessages`. `NotFoundException` and `ConflictException` gained generic constructors that accept only `errorCode` and `message` without requiring entity details.
+*   **`string message` constructors added**: `ForbiddenException`, `UnauthorizedException`, `UnprocessableException`, `GatewayTimeoutException`, `TooManyRequestsException`, and `ServiceUnavailableException` now have single-parameter constructors accepting a custom message while using default error codes and response types.
+
+### 📝 Improvements
+
+*   **Properties use `init` accessors**: All exception properties (`EntityName`, `EntityValue`, `ErrorCode`, `ResponseType`, `Errors`) now use `{ get; init; }` instead of `{ get; }` or `{ get; set; }`, making exceptions immutable after construction.
+*   **`UnprocessableException` XML doc corrected**: The class summary previously referenced HTTP 409 (Conflict) but now correctly documents HTTP 422 (Unprocessable Entity).
+*   **XML Documentation**: All XML doc comments across the exception hierarchy have been reviewed and improved for clarity.
+*   **`ValidationError` constructor**: Added a constructor accepting only `errorMessage` for the common case where only a message is needed.
+
+### 🔗 Dependency Update
+
+*   **`RA.Utilities.Core.Constants`**: Updated to consume v10.0.2, which introduces the `ResponseType` record and `GatewayTimeout` constants.
+
+---
+
 ## Version 10.0.3
 
 ![Date Badge](https://img.shields.io/badge/Publish-25%20April%202026-lightblue?logo=fastly&logoColor=white)

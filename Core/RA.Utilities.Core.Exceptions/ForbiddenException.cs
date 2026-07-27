@@ -8,17 +8,31 @@ namespace RA.Utilities.Core.Exceptions;
 public class ForbiddenException : RaBaseException
 {
     /// <summary>
+    /// Initializes a new instance of the <see cref="ForbiddenException"/> class with a default message and error code.
+    /// </summary>
+    public ForbiddenException()
+        : base(BaseResponseCode.Forbidden, ResponseType.Forbidden, BaseResponseMessages.Forbidden)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ForbiddenException"/> class with a default message and error code.
+    /// </summary>
+    public ForbiddenException(string message)
+        : base(BaseResponseCode.Forbidden, ResponseType.Forbidden, message)
+    {
+    }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="ForbiddenException"/> class with a custom message.
     /// </summary>
     /// <param name="errorCode">A specific error code associated with the error.</param>
     /// <param name="message">The message that describes the error.</param>
-    /// <param name="responseCode">The HTTP status code for the error.</param>
     public ForbiddenException(
-        string errorCode = nameof(BaseResponseCode.Forbidden),
-        string message = BaseResponseMessages.Forbidden,
-        int responseCode = BaseResponseCode.Forbidden
+        int errorCode,
+        string message = BaseResponseMessages.Forbidden
     )
-        : base(errorCode, message, responseCode)
+        : base(errorCode, ResponseType.Forbidden, message)
     {
     }
 }

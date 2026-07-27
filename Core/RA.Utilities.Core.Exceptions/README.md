@@ -25,7 +25,11 @@ By throwing exceptions that describe *what* went wrong (e.g., a resource was not
   - `ConflictException`
   - `BadRequestException`
   - `UnprocessableException`
+  - `UnauthorizedException`
   - `ForbiddenException`
+  - `GatewayTimeoutException`
+  - `TooManyRequestsException`
+  - `ServiceUnavailableException`
 - Best Practices
 - Additional documentation
 - Contributing
@@ -58,7 +62,7 @@ This decouples your business logic from API concerns and standardizes error resp
 
 ### `NotFoundException`
 
-Inherits from `Exception`. Use this when a specific resource or entity cannot be found.
+Inherits from `RaBaseException`. Use this when a specific resource or entity cannot be found.
 
 **Usage:**
 
@@ -78,7 +82,7 @@ When caught by the `RA.Utilities.Api` middleware, this will typically be transla
 
 ### `ConflictException`
 
-Inherits from `Exception`. Use this when an action cannot be completed due to a conflict with the current state of a resource, such as trying to create a duplicate item.
+Inherits from `RaBaseException`. Use this when an action cannot be completed due to a conflict with the current state of a resource, such as trying to create a duplicate item.
 
 **Usage:**
 
@@ -97,7 +101,7 @@ This will typically be translated into an **HTTP 409 Conflict** response.
 
 ### `BadRequestException`
 
-Inherits from `Exception`. Use this for client-side errors, such as invalid input or validation failures that are discovered in the business layer.
+Inherits from `RaBaseException`. Use this for client-side errors, such as invalid input or validation failures that are discovered in the business layer.
 
 **Usage:**
 
@@ -111,11 +115,10 @@ public void UpdateOrderStatus(int orderId, string newStatus)
     }
     catch (ValidationException ex)
     {
-        // Convert FluentValidation errors to our custom ValidationErrors
-        var validationErrors = ex.Errors.Select(e => new ValidationErrors
+        // Convert FluentValidation errors to our custom ValidationError
+        var validationErrors = ex.Errors.Select(e => new ValidationError(e.ErrorMessage)
         {
             PropertyName = e.PropertyName,
-            ErrorMessage = e.ErrorMessage,
             AttemptedValue = e.AttemptedValue,
             ErrorCode = e.ErrorCode
         }).ToArray();
@@ -151,13 +154,45 @@ public async Task<Result> CancelOrderAsync(Guid orderId)
     if (order.Status == OrderStatus.Shipped)
     {
         return new UnprocessableException(
-            "ORDER_ALREADY_SHIPPED",
-            "Cannot cancel an order that has already been shipped."
+            errorCode: BaseResponseCode.Unprocessable,
+            message: "Cannot cancel an order that has already been shipped."
         );
     }
 
     order.Status = OrderStatus.Cancelled;
     await _orderRepository.UpdateAsync(order);
+    return Result.Success();
+}
+```
+
+---
+
+---
+
+### UnauthorizedException
+Inherits from `RaBaseException`.
+Use this when a request lacks valid authentication credentials (HTTP 401).
+
+**Usage:**
+
+```csharp
+public async Task<Result> AuthenticateUserAsync(string token)
+{
+    if (string.IsNullOrWhiteSpace(token))
+    {
+        return new UnauthorizedException("No authentication token provided.");
+    }
+
+    var isValid = await _authService.ValidateTokenAsync(token);
+
+    if (!isValid)
+    {
+        return new UnauthorizedException(
+            errorCode: 401,
+            message: "The provided authentication token is invalid or has expired."
+        );
+    }
+
     return Result.Success();
 }
 ```
@@ -180,12 +215,91 @@ public async Task<Result> UpdateSensitiveDataAsync(Guid resourceId, User current
     {
         // The user is logged in (authenticated), but they are FORBIDDEN from this action.
         return new ForbiddenException(
-            "INSUFFICIENT_PERMISSIONS", 
-            "You do not have permission to modify this resource."
+            errorCode: BaseResponseCode.Forbidden, 
+            message: "You do not have permission to modify this resource."
         );
     }
 
     // ... proceed with update
+    return Result.Success();
+}
+```
+
+---
+
+---
+
+### GatewayTimeoutException
+Inherits from `RaBaseException`.
+Use this when the server, acting as a gateway or proxy, did not receive a timely response from an upstream server (HTTP 504).
+
+**Usage:**
+
+```csharp
+public async Task<Result<Order>> ProcessPaymentAsync(Guid orderId)
+{
+    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+
+    try
+    {
+        var paymentResult = await _paymentGateway.ProcessAsync(orderId, cts.Token);
+        return paymentResult;
+    }
+    catch (TaskCanceledException)
+    {
+        return new GatewayTimeoutException(
+            errorCode: 504,
+            message: "The payment gateway did not respond in time. Please try again later."
+        );
+    }
+}
+```
+
+---
+
+### TooManyRequestsException
+Inherits from `RaBaseException`.
+Use this when a client has exceeded a rate limit or throttling threshold (HTTP 429).
+
+**Usage:**
+
+```csharp
+public async Task<Result> EnforceRateLimitAsync(string clientId)
+{
+    var requestCount = await _rateLimitStore.GetCountAsync(clientId);
+
+    if (requestCount >= _maxRequestsPerMinute)
+    {
+        return new TooManyRequestsException(
+            errorCode: BaseResponseCode.TooManyRequests,
+            message: $"Rate limit exceeded. Maximum {_maxRequestsPerMinute} requests per minute allowed."
+        );
+    }
+
+    await _rateLimitStore.IncrementAsync(clientId);
+    return Result.Success();
+}
+```
+
+---
+
+### ServiceUnavailableException
+Inherits from `RaBaseException`.
+Use this when the service is temporarily unable to handle requests (HTTP 503).
+
+**Usage:**
+
+```csharp
+public async Task<Result> ProcessRequestAsync()
+{
+    if (_maintenanceModeService.IsActive())
+    {
+        return new ServiceUnavailableException(
+            "The service is currently undergoing scheduled maintenance. Please try again in a few minutes."
+        );
+    }
+
+    // ... process the request
     return Result.Success();
 }
 ```
