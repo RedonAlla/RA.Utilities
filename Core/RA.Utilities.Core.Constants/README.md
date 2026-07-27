@@ -32,13 +32,18 @@ Contains integer constants for common HTTP status codes, aligning with standard 
 |-----------------------|-------|--------------------|
 | `Success`             | 200   | Success (2xx)      |
 | `Created`             | 201   | Success (2xx)      |
+| `Accepted`            | 202   | Success (2xx)      |
+| `NoContent`           | 204   | Success (2xx)      |
 | `BadRequest`          | 400   | Client Error (4xx) |
 | `Unauthorized`        | 401   | Client Error (4xx) |
 | `Forbidden`           | 403   | Client Error (4xx) |
 | `NotFound`            | 404   | Client Error (4xx) |
 | `Conflict`            | 409   | Client Error (4xx) |
 | `Unprocessable`       | 422   | Client Error (4xx) |
+| `TooManyRequests`     | 429   | Client Error (4xx) |
 | `InternalServerError` | 500   | Server Error (5xx) |
+| `ServiceUnavailable`  | 503   | Server Error (5xx) |
+| `GatewayTimeout`      | 504   | Server Error (5xx) |
 
 
 ### `BaseResponseMessages`
@@ -51,13 +56,19 @@ Contains default string messages for common API responses. This helps maintain a
 | `Created`           | "Resource created successfully."                       | Success  |
 | `Updated`           | "Resource updated successfully."                       | Success  |
 | `Deleted`           | "Resource deleted successfully."                       | Success  |
+| `Accepted`          | "The request has been accepted for processing."        | Success  |
+| `NoContent`         | "No content."                                          | Success  |
 | `BadRequest`        | "The request is invalid."                              | Error    |
 | `Unauthorized`      | "Authentication failed or is missing."                 | Error    |
 | `Forbidden`         | "You do not have permission to access this resource."  | Error    |
 | `NotFound`          | "The requested resource was not found."                | Error    |
 | `Conflict`          | "A conflict occurred with the current state of the resource." | Error    |
 | `Unprocessable`     | "Unprocessable entity." | Error    |
+| `TooManyRequests`   | "Too many requests. Please try again later."           | Error    |
+| `Error`               | "Something happened on our end."                       | Error    |
 | `InternalServerError` | "An unexpected error occurred on the server."          | Error    |
+| `ServiceUnavailable`  | "The service is temporarily unavailable. Please try again later." | Error    |
+| `GatewayTimeout`      | "The server, while acting as a gateway or proxy, did not receive a timely response from the upstream server." | Error    |
 
 ### `HeaderParameters`
 
@@ -70,27 +81,37 @@ Contains constant strings for common HTTP header names, ensuring consistency whe
 | `Location`      | `"location"`     | Used in responses to redirect or indicate the location of a new resource.|
 | `Authorization` | `"Authorization"`| Used for sending authentication credentials.                             |
 
-### `ResponseType` (enum)
+### `ResponseType` (record)
 
-This enum provides a standardized, machine-readable vocabulary for the outcome of an API operation. It is used within the JSON response body to give clients a specific, semantic context that is more detailed than an HTTP status code.
+The `ResponseType` is an implementation of the **type-safe enum pattern** using a `record` instead of a traditional C# `enum`. Its primary purpose is to create a strongly-typed, extensible, and descriptive vocabulary for the outcomes of your API operations. Unlike a traditional enum, `ResponseType` can be extended by consuming projects via inheritance.
 
-| Enum Member    | Description                                                                 | Typical HTTP Status |
-|----------------|-----------------------------------------------------------------------------|---------------------|
-| `Success`      | The operation was successful.                                               | 200 OK              |
-| `Validation`   | The request failed due to invalid input data.                               | 400 Bad Request     |
-| `Problem`      | An unexpected problem occurred, often used for RFC 7807 problem details.    | 500 Internal Server |
-| `NotFound`     | The requested resource was not found.                                       | 404 Not Found       |
-| `Conflict`     | The request conflicts with the current state of the resource.               | 409 Conflict        |
-| `Unauthorized` | The request requires user authentication.                                   | 401 Unauthorized    |
-| `Error`        | A general, non-specific error occurred during the operation.                | 500 Internal Server |
-| `BadRequest`   | The request was malformed or could not be processed for reasons other than validation. | 400 Bad Request     |
+| Field              | Description                                                                     | Typical HTTP Status |
+|--------------------|---------------------------------------------------------------------------------|---------------------|
+| `Success`          | The operation was successful.                                                   | 200 OK              |
+| `Created`          | A resource was successfully created.                                            | 201 Created         |
+| `Updated`          | A resource was successfully updated.                                            | 200 OK              |
+| `Deleted`          | A resource was successfully deleted.                                            | 200 OK              |
+| `NoContent`        | The request succeeded with no content to return.                                | 204 No Content      |
+| `Accepted`         | The request was accepted for processing but is not yet complete.                | 202 Accepted        |
+| `Validation`       | The request failed due to invalid input data.                                   | 400 Bad Request     |
+| `Problem`          | An unexpected problem occurred, often used for RFC 7807 problem details.        | 500 Internal Server |
+| `NotFound`         | The requested resource was not found.                                           | 404 Not Found       |
+| `Conflict`         | The request conflicts with the current state of the resource.                   | 409 Conflict        |
+| `Unauthorized`     | The request requires user authentication.                                       | 401 Unauthorized    |
+| `Error`            | A general, non-specific error occurred during the operation.                    | 500 Internal Server |
+| `BadRequest`       | The request was malformed or could not be processed for reasons other than validation. | 400 Bad Request     |
+| `Unprocessable`    | The request was semantically incorrect and could not be processed.              | 422 Unprocessable   |
+| `Forbidden`        | The server understood the request but refuses to authorize it.                  | 403 Forbidden       |
+| `TooManyRequests`  | The client has sent too many requests in a given amount of time.                | 429 Too Many Requests |
+| `ServiceUnavailable`| The service is temporarily unavailable.                                         | 503 Service Unavailable |
+| `GatewayTimeout`   | The server, acting as a gateway, did not receive a timely response.             | 504 Gateway Timeout |
 
 #### Example JSON Response
 
 ```json
 {
   "responseCode": 404,
-  "responseType": "NotFound", // From the ResponseType enum
+  "responseType": "NotFound", // From the ResponseType record
   "responseMessage": "Product with value '99' not found."
 }
 ```

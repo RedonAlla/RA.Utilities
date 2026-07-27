@@ -1,5 +1,27 @@
 # Release Notes 
 
+## Version 10.0.2
+![Date Badge](https://img.shields.io/badge/Publish-27%20July%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-v10.0.2-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Constants/10.0.2)
+
+This release delivers a significant architectural improvement to `ResponseType` while expanding the constant catalog with gateway timeout support.
+
+### ⚠️ Breaking Changes
+
+*   **`ResponseType` is now a `record`, not an `enum`**: The `ResponseType` type has been converted from a traditional C# `enum` to a **type-safe enum pattern** using a `record`. This enables consuming projects to extend `ResponseType` with custom values via inheritance. The built-in values (`Success`, `Validation`, `Problem`, `NotFound`, `Conflict`, `Unauthorized`, `Error`, `BadRequest`, `Unprocessable`, `Forbidden`, `GatewayTimeout`) remain available as `public static readonly` fields. A custom `ResponseTypeJsonConverter` handles JSON serialization to/from plain strings. **Migration**: Replace any `ResponseType.SomeValue` usage in switch expressions or enum-specific APIs with the equivalent record field access; serialization behavior is unchanged.
+
+### ✨ New Features
+
+*   **`BaseResponseCode.GatewayTimeout`**: Added `GatewayTimeout = 504` constant for HTTP 504 Gateway Timeout responses.
+*   **`BaseResponseMessages.GatewayTimeout`**: Added a default message for gateway timeout scenarios.
+*   **`ResponseType.GatewayTimeout`**: Added a new built-in response type field for gateway timeout outcomes.
+
+### 📝 Improvements
+
+*   **XML Documentation**: All XML doc comments in `BaseResponseCode`, `BaseResponseMessages`, and `ResponseType` have been revised for consistency and clarity, explicitly referencing the HTTP status code each constant represents.
+
+---
+
 ## Version 10.0.1
 ![Date Badge](https://img.shields.io/badge/Publish-24%20April%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-v10.0.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Constants/10.0.1)

@@ -1,71 +1,178 @@
+using System;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace RA.Utilities.Core.Constants;
 
 /// <summary>
-/// Defines the various types of responses that can be returned from a service operation.
+/// Represents a strongly-typed response type that can be extended by consuming projects.
+/// Built-in values cover common HTTP response categories, and additional values
+/// are created by inheriting from this record.
 /// </summary>
-[JsonConverter(typeof(JsonStringEnumConverter<ResponseType>))]
-public enum ResponseType
+/// <example>
+/// // Using a built-in value:
+/// throw new RaBaseException(400, ResponseType.Validation, "Invalid input.");
+///
+/// // Defining custom response types in a consuming project:
+/// <code>
+/// public record PaymentRequiredResponseType : ResponseType
+/// {
+///     private PaymentRequiredResponseType(string value) : base(value) { }
+///     public static readonly PaymentRequiredResponseType Instance = new("PaymentRequired");
+/// }
+/// </code>
+/// </example>
+[JsonConverter(typeof(ResponseTypeJsonConverter))]
+public record ResponseType
 {
+    /// <summary>
+    /// Gets the string value of this response type.
+    /// </summary>
+    public string Value { get; }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ResponseType"/> class.
+    /// Accessible to derived types and types within the same assembly.
+    /// </summary>
+    /// <param name="value">The string value for the response type.</param>
+    protected internal ResponseType(string value)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        Value = value;
+    }
+
+    // ── Built-in values ──────────────────────────────────────────
+
     /// <summary>
     /// The operation was successful.
     /// </summary>
-    Success = 0,
+    public static readonly ResponseType Success = new("Success");
 
     /// <summary>
-    /// The request failed due to validation errors.
+    /// A resource was created. Corresponds to HTTP 201.
     /// </summary>
-    Validation = 1,
+    public static readonly ResponseType Created = new("Created");
+
+    /// <summary>
+    /// A resource was updated. Corresponds to HTTP 200.
+    /// </summary>
+    public static readonly ResponseType Updated = new("Updated");
+
+    /// <summary>
+    /// A resource was deleted. Corresponds to HTTP 200.
+    /// </summary>
+    public static readonly ResponseType Deleted = new("Deleted");
+
+    /// <summary>
+    /// The request succeeded with no content to return.
+    /// Corresponds to HTTP 204.
+    /// </summary>
+    public static readonly ResponseType NoContent = new("NoContent");
+
+    /// <summary>
+    /// The request was accepted for processing but is not yet complete.
+    /// Corresponds to HTTP 202.
+    /// </summary>
+    public static readonly ResponseType Accepted = new("Accepted");
+
+    /// <summary>
+    /// The request failed validation.
+    /// Corresponds to HTTP 400.
+    /// </summary>
+    public static readonly ResponseType Validation = new("Validation");
 
     /// <summary>
     /// An unexpected problem occurred.
-    /// This is often used for RFC 7807 problem details.
+    /// Corresponds to HTTP 500.
     /// </summary>
-    Problem = 2,
+    public static readonly ResponseType Problem = new("Problem");
 
     /// <summary>
     /// The requested resource was not found.
+    /// Corresponds to HTTP 404.
     /// </summary>
-    NotFound = 3,
+    public static readonly ResponseType NotFound = new("NotFound");
 
     /// <summary>
-    /// The request could not be completed due to a conflict with the current state of the resource.
+    /// A conflict with the current state occurred.
+    /// Corresponds to HTTP 409.
     /// </summary>
-    Conflict = 4,
+    public static readonly ResponseType Conflict = new("Conflict");
 
     /// <summary>
-    /// An error occurred while interacting with the database.
+    /// Authentication is required.
+    /// Corresponds to HTTP 401.
     /// </summary>
-    Database = 5,
+    public static readonly ResponseType Unauthorized = new("Unauthorized");
 
     /// <summary>
-    /// The request requires user authentication.
+    /// A general, unspecified error occurred.
     /// </summary>
-    Unauthorized = 6,
+    public static readonly ResponseType Error = new("Error");
 
     /// <summary>
-    /// An unknown or unexpected error occurred.
+    /// The request was malformed.
+    /// Corresponds to HTTP 400.
     /// </summary>
-    Unknown = 7,
+    public static readonly ResponseType BadRequest = new("BadRequest");
 
     /// <summary>
-    /// A general error occurred during the operation.
+    /// The request was semantically incorrect.
+    /// Corresponds to HTTP 422.
     /// </summary>
-    Error = 8,
+    public static readonly ResponseType Unprocessable = new("Unprocessable");
 
     /// <summary>
-    /// The server cannot or will not process the request due to something that is perceived to be a client error.
+    /// Insufficient permissions.
+    /// Corresponds to HTTP 403.
     /// </summary>
-    BadRequest = 9,
+    public static readonly ResponseType Forbidden = new("Forbidden");
 
     /// <summary>
-    /// The server understands the content type of the request entity, but was unable to process the contained instructions.
+    /// Too many requests.
+    /// Corresponds to HTTP 429.
     /// </summary>
-    Unprocessable = 10,
+    public static readonly ResponseType TooManyRequests = new("TooManyRequests");
 
     /// <summary>
-    /// The server understood the request but refuses to authorize it.
+    /// The service is temporarily unavailable.
+    /// Corresponds to HTTP 503.
     /// </summary>
-    Forbidden = 11
+    public static readonly ResponseType ServiceUnavailable = new("ServiceUnavailable");
+
+    /// <summary>
+    /// Gateway timeout. Corresponds to HTTP 504.
+    /// </summary>
+    public static readonly ResponseType GatewayTimeout = new("GatewayTimeout");
+
+    /// <inheritdoc />
+    public override string ToString() => Value;
+
+    /// <summary>
+    /// Implicitly converts a <see cref="ResponseType"/> to its string <see cref="Value"/>.
+    /// </summary>
+    /// <param name="type">The <see cref="ResponseType"/> to convert.</param>
+    /// <returns>The string value of the response type.</returns>
+    public static implicit operator string(ResponseType type) => type.Value;
+}
+
+/// <summary>
+/// JSON converter for <see cref="ResponseType"/> that serializes it as a plain string.
+/// </summary>
+public sealed class ResponseTypeJsonConverter : JsonConverter<ResponseType>
+{
+    /// <inheritdoc />
+    public override ResponseType? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        string? value = reader.GetString();
+        return string.IsNullOrWhiteSpace(value)
+            ? ResponseType.Error
+            : new ResponseType(value);
+    }
+
+    /// <inheritdoc />
+    public override void Write(Utf8JsonWriter writer, ResponseType value, JsonSerializerOptions options)
+    {
+        writer.WriteStringValue(value.Value);
+    }
 }

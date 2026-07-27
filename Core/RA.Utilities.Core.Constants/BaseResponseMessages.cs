@@ -26,6 +26,16 @@ public static class BaseResponseMessages
     public const string Deleted = "Resource deleted successfully.";
 
     /// <summary>
+    /// Default message for an accepted response (HTTP 202).
+    /// </summary>
+    public const string Accepted = "The request has been accepted for processing.";
+
+    /// <summary>
+    /// Default message for a no content response (HTTP 204).
+    /// </summary>
+    public const string NoContent = "No content.";
+
+    /// <summary>
     /// Default message for a bad request response.
     /// </summary>
     public const string BadRequest = "The request is invalid.";
@@ -56,12 +66,27 @@ public static class BaseResponseMessages
     public const string InternalServerError = "An unexpected error occurred on the server.";
 
     /// <summary>
-    /// Default message for a general error response.
+    /// Default message for a generic, unspecified error.
     /// </summary>
     public const string Error = "Something happened on our end.";
 
     /// <summary>
-    /// Default message for a general error response.
+    /// Default message for an unprocessable entity response (HTTP 422).
     /// </summary>
     public const string Unprocessable = "Unprocessable entity.";
+
+    /// <summary>
+    /// Default message for a gateway timeout response (HTTP 504).
+    /// </summary>
+    public const string GatewayTimeout = "The server, while acting as a gateway or proxy, did not receive a timely response from the upstream server.";
+
+    /// <summary>
+    /// Default message for a too many requests response (HTTP 429).
+    /// </summary>
+    public const string TooManyRequests = "Too many requests. Please try again later.";
+
+    /// <summary>
+    /// Default message for a service unavailable response (HTTP 503).
+    /// </summary>
+    public const string ServiceUnavailable = "The service is temporarily unavailable. Please try again later.";
 }
