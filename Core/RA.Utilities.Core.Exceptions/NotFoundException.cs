@@ -41,7 +41,7 @@ public class NotFoundException : RaBaseException
         string entity,
         object value,
         int errorCode = BaseResponseCode.NotFound,
-        string message = ""
+        string? message = null
     )
         : base(
             errorCode,
