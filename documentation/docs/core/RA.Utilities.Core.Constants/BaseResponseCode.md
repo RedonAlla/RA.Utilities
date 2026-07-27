@@ -21,11 +21,16 @@ In short, `BaseResponseCode` is a simple but effective tool for writing cleaner,
 | Constant Name           | Value | Category           |
 |-------------------------|-------|--------------------|
 | **Success**             | 200   | Default response code for success. |
+| **Created**             | 201   | Default response code for a resource created. |
+| **Accepted**            | 202   | Default response code for an accepted request. |
+| **NoContent**           | 204   | Default response code for no content. |
 | **BadRequest**          | 400   | Default response code for a bad request. |
-| **Unauthorized**        | 401   | CDefault response code for an unauthorized request. |
+| **Unauthorized**        | 401   | Default response code for an unauthorized request. |
 | **Forbidden**           | 403   | Default response code for a forbidden request. |
 | **NotFound**            | 404   | Default response code for a resource not found. |
 | **Conflict**            | 409   | Default response code for a conflict request. |
 | **Unprocessable**       | 422   | Default response code for a Unprocessable entity. |
+| **TooManyRequests**     | 429   | Default response code for too many requests. |
 | **InternalServerError** | 500   | Default response code for an internal server error. |
-| **ServiceUnavailable**  | 503   | Server Error (5xx) |
+| **ServiceUnavailable**  | 503   | Default response code for a service unavailable error. |
+| **GatewayTimeout**      | 504   | Default response code for a gateway timeout error. |

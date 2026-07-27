@@ -38,7 +38,7 @@ public async Task<Result> CancelOrderAsync(Guid orderId)
     if (order.Status == OrderStatus.Shipped)
     {
         return new UnprocessableException(
-            "ORDER_ALREADY_SHIPPED",
+            422,
             "Cannot cancel an order that has already been shipped."
         );
     }
@@ -58,8 +58,8 @@ When the API layer handles a Failure Result containing an `UnprocessableExceptio
     "responseType": "Unprocessable",
     "responseMessage": "Cannot cancel an order that has already been shipped.",
     "result": {
-        "errorCode": "ORDER_ALREADY_SHIPPED",
-        "message": "Cannot cancel an order that has already been shipped."
+        "errorCode": "422",
+        "errorMessage": "Cannot cancel an order that has already been shipped."
     }
 }
 ```

@@ -1,0 +1,96 @@
+---
+title: Troubleshooting & FAQ
+---
+
+# Troubleshooting & FAQ
+
+## Common Issues
+
+### My `ValidationError` won't compile — "There is no argument given that corresponds to the required parameter 'errorMessage'"
+
+**Cause**: In v10.0.4, `ValidationError` (formerly `ValidationErrors`) requires a constructor argument for `errorMessage`. You can no longer use object initializer syntax without passing the message first.
+
+**Fix**: Pass the error message as the constructor argument:
+
+```csharp
+// ❌ Does not compile in v10.0.4
+var error = new ValidationError { PropertyName = "Email" };
+
+// ✅ Correct
+var error = new ValidationError("Email is invalid.") { PropertyName = "Email" };
+```
+
+### `RaBaseException` does not contain a definition for `ResponseCode`
+
+**Cause**: In v10.0.4, `ResponseCode` (int) was removed and replaced by `ResponseType` (record).
+
+**Fix**: Use `ErrorCode` for the HTTP status code and `ResponseType.Value` for the semantic label:
+
+```csharp
+// ❌ v10.0.3
+int status = ex.ResponseCode;
+
+// ✅ v10.0.4
+int status = ex.ErrorCode;
+string type = ex.ResponseType.Value;
+```
+
+### `ErrorCode` is `int` but my old code used it as `string`
+
+**Cause**: `ErrorCode` changed from `string` to `int` in v10.0.4.
+
+**Fix**: Replace string-based error codes with integer constants from `BaseResponseCode`:
+
+```csharp
+// ❌ v10.0.3
+new ConflictException(errorCode: nameof(BaseResponseCode.Conflict))
+
+// ✅ v10.0.4
+new ConflictException(errorCode: BaseResponseCode.Conflict)
+```
+
+### When should I use `throw` vs `return` with exceptions?
+
+Both work — the choice depends on your error handling style:
+
+- **`throw`**: Use when you have global exception handling middleware (e.g., `GlobalExceptionHandler` in `RA.Utilities.Api`). The exception propagates up and the middleware catches it.
+
+- **`return` with `Result`**: Use when you prefer the `Result` pattern from `RA.Utilities.Core`. The exception is implicitly converted to `Result.Failure` and flows through your pipeline without throwing.
+
+```csharp
+// throw style (with middleware)
+throw new NotFoundException(nameof(Product), id);
+
+// Result style (functional)
+return new NotFoundException(nameof(Product), id); // implicit conversion to Result.Failure
+```
+
+### Which exception type should I use?
+
+| Scenario | Exception | HTTP |
+|---|---|---|
+| Resource doesn't exist | `NotFoundException` | 404 |
+| Duplicate / uniqueness violation | `ConflictException` | 409 |
+| Invalid input / validation | `BadRequestException` | 400 |
+| Missing or invalid auth | `UnauthorizedException` | 401 |
+| Authenticated but not permitted | `ForbiddenException` | 403 |
+| Valid request but invalid state | `UnprocessableException` | 422 |
+| Rate limit exceeded | `TooManyRequestsException` | 429 |
+| Temporary outage / maintenance | `ServiceUnavailableException` | 503 |
+| Upstream timeout | `GatewayTimeoutException` | 504 |
+
+---
+
+## Known Limitations
+
+- **No localization support**: Exception messages are English-only. For multi-language support, use the `ErrorCode` for lookup and implement your own localization layer.
+- **`ValidationError` requires constructor argument**: Unlike v10.0.3 where you could use object initializers alone, you must now pass the error message as a constructor argument.
+- **`ErrorCode` is HTTP-focused**: The `ErrorCode` property is an `int` designed to hold HTTP status codes. If you need custom business error codes beyond HTTP codes, consider encoding them elsewhere (e.g., in the message or a custom property on a derived exception).
+
+---
+
+## Performance Tips
+
+- **Use parameterless constructors for default cases**: `new ForbiddenException()` has zero allocation overhead beyond the exception itself — all defaults come from `const` fields.
+- **Pass entities by name**: Use `nameof(Product)` instead of `"Product"` to avoid magic strings and get compile-time safety.
+- **Avoid excessive exception throwing in hot paths**: For high-throughput validation, consider using the `Result` pattern with `ValidationError` directly rather than throwing.

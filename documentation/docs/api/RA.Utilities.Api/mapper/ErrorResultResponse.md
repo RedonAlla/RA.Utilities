@@ -82,8 +82,10 @@ app.MapGet("/products/{id}", (int id, ProductService service) =>
   "responseType": "NotFound",
   "responseMessage": "Product with value '99' not found.",
   "result": {
-    "entityName": "Product",
-    "entityValue": 99
+    "entity": "Product",
+    "value": 99,
+    "errorCode": "NotFound",
+    "errorMessage": "Product with value '99' not found."
   }
 }
 ```

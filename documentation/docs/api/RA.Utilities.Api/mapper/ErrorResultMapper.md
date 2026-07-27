@@ -39,7 +39,7 @@ public static IResult Result(Exception exception) => exception switch
     NotFoundException notFoundException => Microsoft.AspNetCore.Http.Results.Json(
         // highlight-next-line
         ErrorResultMapper.MapToNotFoundResponse(notFoundException), // Creates the response body
-        statusCode: notFoundException.ResponseCode
+        statusCode: notFoundException.ErrorCode
     ),
 
     // ... other cases

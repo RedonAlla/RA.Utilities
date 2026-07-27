@@ -102,7 +102,7 @@ internal sealed class EnumXmlSchemaTransformer : IOpenApiSchemaTransformer
     /// Lazily loads and caches the XML documentation from the file path.
     /// This method is thread-safe.
     /// </summary>
-    /// <returns>The loaded <see cref="XDocument"/>, or <c>null</c> if the file does not exist.</returns>
+    /// <returns>The loaded <see cref="XDocument"/>, or <see langword="null"/> if the file does not exist.</returns>
     private XDocument GetOrLoadXmlDoc()
     {
         // Use local variable to avoid CA1508 false positive
@@ -137,7 +137,7 @@ internal sealed class EnumXmlSchemaTransformer : IOpenApiSchemaTransformer
     /// </summary>
     /// <param name="members">The collection of member elements from the XML documentation.</param>
     /// <param name="memberName">The name of the member to find (e.g., "F:MyNamespace.MyEnum.MyValue").</param>
-    /// <returns>The <see cref="XElement"/> for the member, or <c>null</c> if not found.</returns>
+    /// <returns>The <see cref="XElement"/> for the member, or <see langword="null"/> if not found.</returns>
     private static XElement? FindMemberElement(IEnumerable<XElement> members, string memberName) =>
         members.FirstOrDefault(m => m.Attribute("name")?.Value == memberName);
 }

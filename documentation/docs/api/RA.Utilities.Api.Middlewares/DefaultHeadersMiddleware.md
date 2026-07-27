@@ -70,7 +70,7 @@ A request without the `X-Request-Id` header will receive a response like this:
 {
   "responseCode": 400,
   "responseType": "BadRequest",
-  "responseMessage": "One or more validation errors occurred.",
+  "responseMessage": "The request is invalid.",
   "result": [
     {
       "propertyName": "X-Request-Id",

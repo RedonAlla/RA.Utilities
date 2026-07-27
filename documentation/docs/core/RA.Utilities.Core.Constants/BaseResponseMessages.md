@@ -22,13 +22,19 @@ This approach offers several significant benefits:
 | **Created**             | "Resource created successfully."                       |
 | **Updated**             | "Resource updated successfully."                       |
 | **Deleted**             | "Resource deleted successfully."                       |
+| **Accepted**            | "The request has been accepted for processing."        |
+| **NoContent**           | "No content."                                          |
 | **BadRequest**          | "The request is invalid."                              |
 | **Unauthorized**        | "Authentication failed or is missing."                 |
 | **Forbidden**           | "You do not have permission to access this resource."  |
 | **NotFound**            | "The requested resource was not found."                |
 | **Conflict**            | "A conflict occurred with the current state of the resource." |
 | **Unprocessable**       | "Unprocessable entity." |
+| **TooManyRequests**     | "Too many requests. Please try again later."           |
 | **InternalServerError** | "An unexpected error occurred on the server."          |
+| **Error**               | "Something happened on our end."                       |
+| **ServiceUnavailable**  | "The service is temporarily unavailable. Please try again later." |
+| **GatewayTimeout**      | "The server, while acting as a gateway or proxy, did not receive a timely response from the upstream server." |
 
 ## 🚀 Usage Examples
 

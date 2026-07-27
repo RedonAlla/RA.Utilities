@@ -18,7 +18,7 @@ It inherits from the base [`Response<T>`](./Response) class and is designed to r
 Its primary purpose is to simplify the creation of a `200 OK` response by pre-configuring the standard response properties for you:
 
 1. **Sets `ResponseCode` to 200**: It automatically sets the `ResponseCode` to `200` (using `BaseResponseCode.Success`).
-2. **Sets [`ResponseType`](./Response) to `Success`**: It sets the [`ResponseType`](./Response) enum to `ResponseType.Success`.
+2. **Sets [`ResponseType`](./Response) to `Success`**: It sets the [`ResponseType`](./Response) to `ResponseType.Success`.
 3. **Provides a Default Message**: It assigns a default `ResponseMessage` of `"Operation completed successfully."` (from `BaseResponseMessages.Success`), which you can override if needed.
 4. **Accepts the Payload**: Its constructor takes the data payload (`T`) that you want to send back to the client.
 

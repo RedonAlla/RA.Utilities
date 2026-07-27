@@ -47,7 +47,7 @@ These base classes include built-in logging for the start and end of a request, 
 
 ### 2. Validation Pipeline Behavior
 
-The `ValidationBehavior<TRequest, TResponse>` is a MediatR pipeline behavior that intercepts incoming requests, finds the corresponding `FluentValidation` validator, and executes it.
+The `ValidationBehavior<TRequest, TResponse>` is a pipeline behavior that intercepts incoming requests, finds the corresponding `FluentValidation` validator, and executes it.
 
 -   If validation passes, the request proceeds to the handler.
 -   If validation fails, the pipeline is short-circuited, and a `Result.Failure` containing a `ValidationException` is returned immediately. This prevents invalid data from ever reaching your business logic.
@@ -88,7 +88,6 @@ Next, create the handler by inheriting from `IRequestHandler<TRequest, TResponse
 
 ```csharp
 // Features/Products/CreateProduct.cs (continued)
-using MediatR;
 using RA.Utilities.Feature.Abstractions;
 using Microsoft.Extensions.Logging;
 using RA.Utilities.Core;
@@ -134,12 +133,12 @@ using RA.Utilities.Feature.Behaviors;
 
 var builder = WebApplication.CreateBuilder(args);
 
-_ = services.AddCustomMediator();
+builder.Services.AddMediator();
 
- _ = services
-      .AddFeature<CreateProductCommand, CreateProductHandler>()
-      .AddDecoration<LoggingBehavior<CreateProductCommand>>()
-      .AddValidator<CreateProductCommandValidator>();
+builder.Services
+    .AddFeature<CreateProductCommand, Result<int>, CreateProductHandler>()
+    .AddDecoration<LoggingBehavior<CreateProductCommand>>()
+    .AddValidator<CreateProductCommandValidator>();
 
 var app = builder.Build();
 

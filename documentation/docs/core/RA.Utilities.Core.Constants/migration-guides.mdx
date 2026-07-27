@@ -1,0 +1,130 @@
+---
+title: Migration Guides
+---
+
+# Migration Guides
+
+## v10.0.1 → v10.0.2
+
+### Breaking Change: `ResponseType` converted from `enum` to `record`
+
+In v10.0.2, `ResponseType` was changed from a traditional C# `enum` to a **type-safe enum pattern** using a `record`. This enables consuming projects to define custom response types via inheritance, but it requires code changes.
+
+### Why this change?
+
+- Traditional `enum` types cannot be extended by consuming projects
+- The `record` pattern allows custom response types (e.g., `PaymentRequired`, `RateLimited`) while retaining strong typing
+- JSON serialization still produces plain strings (e.g., `"NotFound"`) via the built-in `ResponseTypeJsonConverter`
+
+### What changed
+
+| Aspect | v10.0.1 (enum) | v10.0.2 (record) |
+|---|---|---|
+| Type | `enum ResponseType` | `record ResponseType` |
+| Members | `Success = 0`, `NotFound = 3`, etc. | `public static readonly ResponseType Success = new("Success")` |
+| Removed members | - | `Database`, `Unknown` |
+| New members | - | `GatewayTimeout` |
+| JSON | `JsonStringEnumConverter` | `ResponseTypeJsonConverter` |
+| Extensible | ❌ No | ✅ Yes, via inheritance |
+| Switch expressions | ✅ Yes (enum constant patterns) | ⚠️ Partial (use property patterns: `{ Value: "NotFound" } =>`) |
+| `ToString()` | Returns enum name | Returns `Value` string |
+
+### Migration Steps
+
+#### 1. Replace enum-specific patterns
+
+**Before (v10.0.1):**
+
+```csharp
+// Switch expression
+var label = responseType switch
+{
+    ResponseType.NotFound => "Not Found",
+    ResponseType.Conflict => "Conflict",
+    _ => "Unknown"
+};
+
+// Enum parsing
+var type = Enum.Parse<ResponseType>("NotFound");
+
+// Default value
+ResponseType defaultType = default; // Was ResponseType.Success (0)
+```
+
+**After (v10.0.2):**
+
+```csharp
+// Use property pattern matching (switch still works on the record itself)
+var label = responseType switch
+{
+    { Value: "NotFound" } => "Not Found",
+    { Value: "Conflict" } => "Conflict",
+    _ => "Unknown"
+};
+
+// Or switch on the Value string directly
+var label = responseType.Value switch
+{
+    "NotFound" => "Not Found",
+    "Conflict" => "Conflict",
+    _ => "Unknown"
+};
+
+// Use the static fields directly; parse via the JSON converter or constructor
+ResponseType type = new("NotFound");
+
+// No default value — always use an explicit static field
+ResponseType defaultType = ResponseType.Error;
+```
+
+#### 2. Remove references to removed members
+
+`Database` and `Unknown` were removed. Replace them:
+
+```csharp
+// Before
+ResponseType.Database  // Removed
+
+// After
+ResponseType.Error     // Use Error for general failures
+```
+
+```csharp
+// Before
+ResponseType.Unknown   // Removed
+
+// After
+ResponseType.Error     // Use Error instead
+```
+
+#### 3. Update `RaBaseException` usage
+
+If you use `RA.Utilities.Core.Exceptions` v10.0.4+ (which depends on this version), the `RaBaseException` constructor now accepts `ResponseType` directly:
+
+```csharp
+// Before (v10.0.3)
+throw new RaBaseException("NotFound", "Product not found.", 404);
+
+// After (v10.0.4)
+throw new RaBaseException(404, ResponseType.NotFound, "Product not found.");
+```
+
+#### 4. Serialization is unchanged
+
+JSON output is identical. Custom response types also serialize as plain strings:
+
+```json
+{
+  "responseCode": 404,
+  "responseType": "NotFound",
+  "responseMessage": "Product with value '99' not found."
+}
+```
+
+No changes needed to API clients.
+
+---
+
+## Full Changelog
+
+See the [package release notes](https://github.com/RedonAlla/RA.Utilities/blob/main/Core/RA.Utilities.Core.Constants/releasenotes.md) for a complete version history.

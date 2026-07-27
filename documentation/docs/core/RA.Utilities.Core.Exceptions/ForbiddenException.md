@@ -1,5 +1,5 @@
 ---
-title: ConflictException
+title: ForbiddenException
 ---
 
 ```bash
@@ -23,7 +23,7 @@ public async Task<Result> UpdateSensitiveDataAsync(Guid resourceId, User current
     {
         // The user is logged in (authenticated), but they are FORBIDDEN from this action.
         return new ForbiddenException(
-            "INSUFFICIENT_PERMISSIONS", 
+            403,
             "You do not have permission to modify this resource."
         );
     }

@@ -3,6 +3,42 @@ title: RA.Utilities.Core.Exceptions
 authors: [RedonAlla]
 ---
 
+## Version 10.0.4
+
+![Date Badge](https://img.shields.io/badge/Publish-27%20July%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-v10.0.4-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Exceptions/10.0.4)
+
+This release modernizes the exception base class and aligns the entire exception hierarchy with the new `ResponseType` record from `RA.Utilities.Core.Constants` v10.0.2.
+
+<!-- truncate -->
+
+### ⚠️ Breaking Changes
+
+*   **`RaBaseException.ErrorCode` type changed from `string` to `int`**: The error code is now an integer, aligning with HTTP status code conventions. **Migration**: Replace string-based error codes (e.g., `nameof(BaseResponseCode.NotFound)`) with integer constants (e.g., `BaseResponseCode.NotFound`).
+*   **`RaBaseException.ResponseCode` removed; replaced by `ResponseType`**: Use `ex.ErrorCode` for the HTTP status code and `ex.ResponseType` for the semantic type label. See the [Migration Guide](../docs/core/RA.Utilities.Core.Exceptions/migration-guides) for detailed before/after examples.
+*   **`RaBaseException` constructor signature changed**: Now accepts `(int errorCode, ResponseType errorType, string message)` instead of `(string errorCode, string message, int responseCode)`.
+*   **`ValidationErrors` renamed to `ValidationError`**: The class now represents a single error (singular). A constructor argument `errorMessage` is now required. Properties are nullable (`string?` / `object?`).
+
+### ✨ New Features
+
+*   **`GatewayTimeoutException`**: A new exception class for HTTP 504 Gateway Timeout scenarios, such as when an upstream server fails to respond in time.
+*   **Parameterless constructors**: `ForbiddenException`, `UnauthorizedException`, `UnprocessableException`, and `GatewayTimeoutException` now have parameterless constructors with sensible defaults.
+*   **`string message` constructors**: These exception types now accept a single `string message` parameter for concise usage.
+*   **`NotFoundException` and `ConflictException` generic constructors**: New constructors that accept only `errorCode` and `message` without requiring entity details.
+
+### 📝 Improvements
+
+*   **Properties use `init` accessors**: All exception properties (`EntityName`, `EntityValue`, `ErrorCode`, `ResponseType`, `Errors`) now use `{ get; init; }` for immutability after construction.
+*   **`UnprocessableException` XML doc corrected**: Class summary now correctly documents HTTP 422 (was incorrectly referencing HTTP 409).
+*   **`ValidationError` constructor**: Added a constructor accepting only `errorMessage` for simple error creation.
+*   **XML Documentation**: All XML doc comments across the exception hierarchy have been reviewed and improved.
+
+### 🔗 Dependency Update
+
+*   **`RA.Utilities.Core.Constants`**: Updated to consume v10.0.2, which introduces the `ResponseType` record and `GatewayTimeout` constants.
+
+---
+
 ## Version 10.0.3
 
 ![Date Badge](https://img.shields.io/badge/Publish-25%20April%202026-lightblue?logo=fastly&logoColor=white)

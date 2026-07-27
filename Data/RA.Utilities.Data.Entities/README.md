@@ -84,9 +84,9 @@ public class Product : BaseEntity
 
 When you create an instance of this `Product` class, it will have the following properties:
 
-*   `Id` (int)
-*   `CreatedDate` (DateTime)
-*   `UpdatedDate` (DateTime?)
+*   `Id` (Guid)
+*   `CreatedAt` (DateTime)
+*   `LastModifiedAt` (DateTime?)
 *   `Name` (string)
 *   `Description` (string?)
 *   `Price` (decimal)

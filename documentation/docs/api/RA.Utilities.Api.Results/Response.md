@@ -24,7 +24,7 @@ They can write generic handling logic to parse the response wrapper before deali
 This simplifies client-side code and makes it more robust.
 
 3. **Clear Communication**: The wrapper explicitly communicates the outcome of the API call.
-The ResponseType enum (e.g., `Success`, `BadRequest`, `NotFound`) and the ResponseMessage provide immediate, clear context about what happened.
+The `ResponseType` (e.g., `Success`, `BadRequest`, `NotFound`) and the `ResponseMessage` provide immediate, clear context about what happened.
 
 4. **Extensibility**: It serves as the base class for more specific, semantic response types like `SuccessResponse<T>`, `BadRequestResponse`, and `NotFoundResponse`.
 These derived classes pre-configure the `Response<T>` properties for common scenarios, reducing boilerplate code in your controllers.
@@ -48,7 +48,7 @@ public class Response<T>
 | Property          | Type                                       | Description                                                              |
 | ----------------- | ------------------------------------------ | ------------------------------------------------------------------------ |
 | **ResponseCode**    | `int`                                      | A code for the response, often mapping to an HTTP status code.           |
-| **ResponseType**    | `RA.Utilities.Core.Constants.ResponseType` | An enum indicating the type of response (e.g., `Success`, `Error`, `NotFound`). |
+| **ResponseType**    | `RA.Utilities.Core.Constants.ResponseType` | A record indicating the type of response (e.g., `Success`, `Error`, `NotFound`). Extensible via inheritance. |
 | **ResponseMessage** | `string?`                                  | A human-friendly message describing the outcome of the operation.        |
 | **Result**          | `T?`                                       | The actual data payload of the response. Can be `null` for error responses. |
 

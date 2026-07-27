@@ -27,43 +27,104 @@ This package helps streamline development, improve code readability, and reduce 
 The primary goal of this package is to ensure consistency across different projects and services. By using these predefined constants, you can:
 
 - **Avoid Typos**: Prevent hard-to-find bugs caused by typos in strings or numbers.
-- **Improve Readability**: Make your code more self-documenting (e.g., `HttpStatusCodes.NotFound` is clearer than `404`).
+- **Improve Readability**: Make your code more self-documenting (e.g., `BaseResponseCode.NotFound` is clearer than `404`).
 - **Simplify Maintenance**: Update a constant in one place, and the change propagates everywhere it's used.
 
-## 🛠️ Installation
+### ✨ Key Features
 
-You can install the package via the .NET CLI:
+- **HTTP Status Codes** — `BaseResponseCode` provides named constants for all common HTTP status codes (200–504)
+- **Standardized Messages** — `BaseResponseMessages` delivers consistent, production-ready API response text
+- **Semantic Response Types** — `ResponseType` is an extensible type-safe enum pattern for API outcome classification
+- **HTTP Header Names** — `HeaderParameters` centralizes common header name strings for tracing, auth, and location
+- **Zero Dependencies** — No external package dependencies; pairs seamlessly with `RA.Utilities.Core.Exceptions`
+- **No Configuration** — Pure constants with no DI registration, no options, and no setup required
+
+---
+
+## 🛠️ Getting Started
+
+### Prerequisites
+
+- **.NET 10.0** or later
+
+### Installation
+
+**.NET CLI**
 
 ```bash
 dotnet add package RA.Utilities.Core.Constants
 ```
 
-Or through the NuGet Package Manager console:
+**Package Manager Console**
 
 ```powershell
 Install-Package RA.Utilities.Core.Constants
 ```
 
-Or through the NuGet Package Manager in Visual Studio.
+**PackageReference (csproj)**
+
+```xml
+<PackageReference Include="RA.Utilities.Core.Constants" Version="10.0.2" />
+```
+
+### Hello World
+
+The simplest possible usage — replace a magic number with a named constant:
+
+```csharp showLineNumbers
+using RA.Utilities.Core.Constants;
+
+// Before: magic number
+return StatusCode(404, "The requested resource was not found.");
+
+// After: self-documenting constants
+return StatusCode(BaseResponseCode.NotFound, BaseResponseMessages.NotFound);
+```
+
+No DI registration, no setup, no configuration. Just add the `using` directive and reference the constants.
 
 ---
 
-## ✨ Available Constants
+## 🧠 Core Concepts
 
-* [`BaseResponseCode`](./BaseResponseCode)
-* [`BaseResponseMessages`](./BaseResponseMessages)
-* [`HeaderParameters`](./HeaderParameters)
-* [`ResponseType`](./ResponseType)
+The package provides four static classes, each serving a distinct role in your API layer:
 
+| Class | Role | Example |
+|---|---|---|
+| [`BaseResponseCode`](./BaseResponseCode) | HTTP status codes as `int` constants | `BaseResponseCode.NotFound` → `404` |
+| [`BaseResponseMessages`](./BaseResponseMessages) | Human-readable response messages as `string` constants | `BaseResponseMessages.NotFound` → `"The requested resource was not found."` |
+| [`ResponseType`](./ResponseType) | Semantic outcome labels using a type-safe enum pattern (`record`) | `ResponseType.NotFound` → `"NotFound"` |
+| [`HeaderParameters`](./HeaderParameters) | HTTP header name strings | `HeaderParameters.XRequestId` → `"x-request-id"` |
 
-## 🚀 Usage Examples
+### How they work together
 
-Here’s how you can use these constants within an ASP.NET Core controller to create clean and consistent API endpoints.
+`BaseResponseCode` and `BaseResponseMessages` handle the transport-level concerns (what HTTP code and what message), while `ResponseType` adds a machine-readable semantic label inside the JSON response body. `HeaderParameters` ensures header access is consistent across middleware, endpoints, and HTTP clients.
+
+```
+HTTP Response
+├─ Status Code: BaseResponseCode.NotFound (404)
+├─ Body:
+│   ├─ responseCode: 404
+│   ├─ responseType: "NotFound"    ← ResponseType record
+│   └─ responseMessage: "Product with value '99' not found."
+└─ Headers:
+    └─ x-request-id: "abc-123"     ← HeaderParameters.XRequestId
+```
+
+### Terminology
+
+- **Magic strings/numbers**: Hard-coded literals scattered throughout code. Replacing them with named constants improves readability and prevents typos.
+- **Type-safe enum pattern**: Using a `record` instead of a C# `enum` so consuming projects can extend the set of values via inheritance. See [`ResponseType`](./ResponseType) for details.
+
+---
+
+## 📖 How-To Guides
+
+### Return a 404 with consistent messaging
 
 ```csharp showLineNumbers
 using Microsoft.AspNetCore.Mvc;
-// highlight-next-line
-using RA.Utilities.Core.Constants; // Import the constants namespace
+using RA.Utilities.Core.Constants;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -76,32 +137,87 @@ public class ProductsController : ControllerBase
 
         if (product == null)
         {
-            // Use constants for both the status code and the response message
             // highlight-next-line
-            return NotFound(ResponseMessages.NotFound);
+            return NotFound(BaseResponseMessages.NotFound);
         }
 
         return Ok(product);
     }
-
-    [HttpPost]
-    public IActionResult CreateProduct([FromBody] Product newProduct)
-    {
-        if (!ModelState.IsValid)
-        {
-            // Use constants for a bad request
-            return BadRequest(ResponseMessages.BadRequest);
-        }
-
-        var createdProduct = _productService.Create(newProduct);
-
-        // Use constants for a 'Created' response
-        return StatusCode(HttpStatusCodes.Created, createdProduct);
-    }
 }
 ```
 
-<br />
-<br />
+### Return a 400 for invalid input
+
+```csharp showLineNumbers
+[HttpPost]
+public IActionResult CreateProduct([FromBody] Product newProduct)
+{
+    if (!ModelState.IsValid)
+    {
+        // highlight-next-line
+        return BadRequest(BaseResponseMessages.BadRequest);
+    }
+
+    var createdProduct = _productService.Create(newProduct);
+    return CreatedAtAction(nameof(GetProduct), new { id = createdProduct.Id }, createdProduct);
+}
+```
+
+### Use consistent header names
+
+```csharp showLineNumbers
+[HttpGet("trace")]
+public IActionResult GetTraceId()
+{
+    // highlight-next-line
+    if (Request.Headers.TryGetValue(HeaderParameters.XRequestId, out var requestId))
+    {
+        return Ok(new { requestId });
+    }
+
+    return BadRequest(BaseResponseMessages.BadRequest);
+}
+```
+
+### Create a custom ResponseType
+
+See the full walkthrough in [`ResponseType` → Extending ResponseType](./ResponseType#extending-responsetype).
+
+---
+
+## ⚙️ Configuration
+
+This package has **no configuration options**. There is no DI registration, no `appsettings.json` entries, and no options classes. All values are compile-time `const` or `static readonly` fields — reference them directly.
+
+---
+
+## ✨ Available Constants
 
 <DocCardList />
+
+---
+
+## 🙌 Contributing & Support
+
+### Found a bug or have a suggestion?
+
+- **GitHub Issues**: [Report a bug or request a feature](https://github.com/RedonAlla/RA.Utilities/issues)
+- **Discussions**: [Ask questions or start a discussion](https://github.com/RedonAlla/RA.Utilities/discussions)
+
+### Contributing
+
+Contributions are welcome! Please follow the standard workflow:
+
+1. **Fork** the [RA.Utilities repository](https://github.com/RedonAlla/RA.Utilities)
+2. **Create a branch** from `main` with a descriptive name (e.g., `feature/add-new-constant`)
+3. **Make your changes** — ensure XML doc comments are included for any new public API
+4. **Submit a pull request** to the `main` branch with a clear description
+
+### Links
+
+| Resource | URL |
+|---|---|
+| **NuGet** | [RA.Utilities.Core.Constants](https://www.nuget.org/packages/RA.Utilities.Core.Constants/) |
+| **Source** | [GitHub — RedonAlla/RA.Utilities](https://github.com/RedonAlla/RA.Utilities) |
+| **License** | [MIT](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file) |
+| **Build Status** | [GitHub Actions](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml) |

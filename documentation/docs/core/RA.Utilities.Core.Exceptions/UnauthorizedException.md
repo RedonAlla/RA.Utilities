@@ -18,10 +18,10 @@ Anyone reading the code immediately understands the nature of the error.
 
 #### 2. Standardized Error Code:
 As seen in its constructors, it always calls the base constructor with `BaseResponseCode.Unauthorized` (which is 401). 
-his hard-codes the link between this exception type and the HTTP 401 Unauthorized status code.
+This hard-codes the link between this exception type and the HTTP 401 Unauthorized status code.
 
 #### 3. Enables Automated API Responses: 
-his is the most critical part. Your API's error handling infrastructure, specifically the `ErrorResultResponse` class, is built to recognize this specific exception type.
+This is the most critical part. Your API's error handling infrastructure, specifically the `ErrorResultResponse` class, is built to recognize this specific exception type.
 
 ```csharp showLineNumbers
 public static IResult Result(Exception exception) => exception switch
@@ -30,7 +30,7 @@ public static IResult Result(Exception exception) => exception switch
     // highlight-next-line
     UnauthorizedException baseException => Microsoft.AspNetCore.Http.Results.Json(
         data: ErrorResultMapper.MapToUnauthorizedResponse(baseException),
-        statusCode: BaseResponseCode.Unauthorized
+        statusCode: baseException.ErrorCode
     ),
     // ... other cases
 };

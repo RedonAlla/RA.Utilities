@@ -29,7 +29,7 @@ Its primary functions are:
 
   * **ResponseCode**: Set to `500` (from `BaseResponseCode.InternalServerError`).
   * **ResponseType**: Set to `ResponseType.Error`.
-  * **ResponseMessage**: Defaults to `"A general error occurred during the operation."` (from `BaseResponseMessages.Error`).
+  * **ResponseMessage**: Defaults to `"Something happened on our end."` (from `BaseResponseMessages.Error`).
 
 ### ⚙️ How It Works
 
@@ -37,7 +37,7 @@ When you create an instance of `ErrorResponse`, it pre-configures the following 
 
 - **`ResponseCode`**: Set to `500` (from `BaseResponseCode.InternalServerError`).
 - **`ResponseType`**: Set to `ResponseType.Error`.
-- **`ResponseMessage`**: Defaults to `"A general error occurred during the operation."`.
+- **`ResponseMessage`**: Defaults to `"Something happened on our end."`.
 - **`Result`**: An [`ErrorResult`](./ErrorResult) object containing the error code and message.
 
 ### 🚀 Usage in a Controller
@@ -81,7 +81,7 @@ public class ProductsController : ControllerBase
 {
   "responseCode": 500,
   "responseType": "Error",
-  "responseMessage": "A general error occurred during the operation.",
+  "responseMessage": "Something happened on our end.",
   "result": {
     "errorCode": "InternalServerError",
     "errorMessage": "An unexpected error occurred on the server."

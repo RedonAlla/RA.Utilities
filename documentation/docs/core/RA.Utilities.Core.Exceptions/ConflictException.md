@@ -69,8 +69,10 @@ When the API layer (using `ErrorResultResponse`) handles the `Failure` `Result` 
   "responseType": "Conflict",
   "responseMessage": "User with value 'test@example.com' already exists.",
   "result": {
-    "entityName": "User",
-    "entityValue": "test@example.com"
+    "entity": "User",
+    "value": "test@example.com",
+    "errorCode": "Conflict",
+    "errorMessage": "User with value 'test@example.com' already exists."
   }
 }
 ```

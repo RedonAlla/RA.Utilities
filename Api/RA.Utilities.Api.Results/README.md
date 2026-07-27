@@ -13,7 +13,7 @@ This package includes generic wrappers for success, error, and validation failur
 ## Purpose
 
 When building APIs, it's crucial to have a consistent and predictable response structure.
-This package provides a set of ready-to-use C# records that can be returned from your ASP.NET Core controller actions.
+This package provides a set of ready-to-use C# classes that can be returned from your ASP.NET Core controller actions.
 These models ensure that every response—whether it's a success, a generic error, or a detailed validation failure—has the same shape, making it easier for clients to parse and handle.
 
 This library is designed to work seamlessly with the other `RA.Utilities` packages, such as`RA.Utilities.Core.Constants` for status codes and messages.
@@ -112,7 +112,7 @@ public class Response<T>
 | Property        | Type           | Required | Description                                                 |
 | --------------- | -------------- | -------- | ----------------------------------------------------------- |
 | `ResponseCode`  | `int`          | **true** | A code for the response, often mapping to HTTP status codes. |
-| `ResponseType`  | `ResponseType` | **true** | An enum indicating the type of response (e.g., Success, Error). |
+| `ResponseType`  | `ResponseType` | **true** | A record indicating the type of response (e.g., Success, Error). |
 | `ResponseMessage` | `string?`    | **false**| A human-friendly message describing the response.             |
 | `Result`        | `T?`           | **false**| The actual data payload of the response.                    |
 
@@ -134,7 +134,7 @@ Creates a `Response<T>` object that produces a `Success` response, typically cor
 | Property        | Value                         |
 | --------------- | ----------------------------- |
 | `ResponseCode`    | `200` (from `BaseResponseCode.Success`) |
-| `ResponseMessage` | `"OK"` (default from `BaseResponseMessages.Success`) |
+| `ResponseMessage` | `"Operation completed successfully."` (default from `BaseResponseMessages.Success`) |
 | `ResponseType`  | `ResponseType.Success`        |
 
 
@@ -170,7 +170,7 @@ It automatically sets the `ResponseType` to `ResponseType.BadRequest` and defaul
 | Property | Value |
 | --------------- | ------------------------------------------------ |
 | `ResponseCode` | 400 (from `BaseResponseCode.BadRequest`) |
-| `ResponseMessage` | "One or more validation errors occurred." (from `BaseResponseMessages.BadRequest`) |
+| `ResponseMessage` | `"The request is invalid."` (from `BaseResponseMessages.BadRequest`) |
 | `ResponseType` | `ResponseType.BadRequest` |
 | `Result` | array of [`BadRequestResult`](#badrequestresult) |
 
@@ -192,7 +192,7 @@ Inherits from [`ErrorResult`](#errorresult).
 {
   "responseCode": 400,
   "responseType": "BadRequest",
-  "responseMessage": "One or more validation errors occurred.",
+  "responseMessage": "The request is invalid.",
   "result": [
     {
       "propertyName": "Email",
@@ -280,7 +280,7 @@ It automatically sets `ResponseType` to `ResponseType.Error` and defaults the `R
 | Property        | Value                                                              |
 | --------------- | ------------------------------------------------------------------ |
 | `ResponseCode`    | `500` (from `BaseResponseCode.InternalServerError`) |
-| `ResponseMessage` | "A general error occurred during the operation." (from `BaseResponseMessages.Error`) |
+| `ResponseMessage` | `"Something happened on our end."` (from `BaseResponseMessages.Error`) |
 | `ResponseType`  | `ResponseType.Error`                                               |
 | `Result`        | [`ErrorResult`](#errorresult)                                      |
 
@@ -290,7 +290,7 @@ It automatically sets `ResponseType` to `ResponseType.Error` and defaults the `R
 {
   "responseCode": 500,
   "responseType": "Error",
-  "responseMessage": "A general error occurred during the operation.",
+  "responseMessage": "Something happened on our end.",
   "result": {
     "errorCode": "InternalServerError",
     "errorMessage": "An unexpected error occurred on the server."

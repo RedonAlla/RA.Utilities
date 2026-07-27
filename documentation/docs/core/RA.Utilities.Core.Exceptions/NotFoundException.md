@@ -65,8 +65,10 @@ When the API layer (using `ErrorResultResponse`) handles the `Failure` `Result` 
   "responseType": "NotFound",
   "responseMessage": "Product with value '99' was not found.",
   "result": {
-    "entityName": "Product",
-    "entityValue": 99
+    "entity": "Product",
+    "value": 99,
+    "errorCode": "NotFound",
+    "errorMessage": "Product with value '99' was not found."
   }
 }
 ```

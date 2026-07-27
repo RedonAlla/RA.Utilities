@@ -23,7 +23,7 @@ The `Result` property is specifically typed to hold an array of `BadRequestResul
 
   * **`ResponseCode`**: Set to `400` (from `BaseResponseCode.BadRequest`).
   * **`ResponseType`**: Set to `ResponseType.BadRequest`.
-  * **ResponseMessage**: Defaults to `"One or more validation errors occurred."` (from `BaseResponseMessages.BadRequest`).
+  * **ResponseMessage**: Defaults to `"The request is invalid."` (from `BaseResponseMessages.BadRequest`).
 
 3. **Provides Clear Client Feedback**: By returning a structured list of errors, you give the client precise, actionable feedback.
 
@@ -33,7 +33,7 @@ When you create an instance of `BadRequestResponse`, it pre-configures the follo
 
 - **`ResponseCode`**: Set to `400` (from `BaseResponseCode.BadRequest`).
 - **`ResponseType`**: Set to `ResponseType.BadRequest`.
-- **`ResponseMessage`**: Defaults to `"One or more validation errors occurred."`.
+- **`ResponseMessage`**: Defaults to `"The request is invalid."`.
 - **`Result`**: Contains an array of [`BadRequestResult`](#badrequestresult) objects, each detailing a specific validation error.
 
 ### 🚀 Usage in a Controller
@@ -89,7 +89,7 @@ Inherits from [`ErrorResult`](./ErrorResult).
 {
   "responseCode": 400,
   "responseType": "BadRequest",
-  "responseMessage": "One or more validation errors occurred.",
+  "responseMessage": "The request is invalid.",
   "result": [
     {
       "propertyName": "Email",

@@ -3,19 +3,19 @@
  */
 
 :root {
-  --ifm-color-primary: #e50d00;
-  --ifm-color-primary-dark: #cf0c00;
-  --ifm-color-primary-darker: #c40b00;
-  --ifm-color-primary-darkest: #a20900;
-  --ifm-color-primary-light: #fb0e00;
-  --ifm-color-primary-lighter: #ff180f;
-  --ifm-color-primary-lightest: #ff3c33;
+  --ifm-color-primary: #512bd4;
+  --ifm-color-primary-dark: #4122aa;
+  --ifm-color-primary-darker: #391e94;
+  --ifm-color-primary-darkest: #201155;
+  --ifm-color-primary-light: #7455dd;
+  --ifm-color-primary-lighter: #856be1;
+  --ifm-color-primary-lightest: #b9aaee;
 
   //--ifm-global-shadow-lw: none;
   --docusaurus-highlighted-code-line-bg: #dfe7ff;
   --doc-sidebar-width: 385px !important;
-  --ifm-menu-color-background-hover: #e50d001c;
-  --ifm-menu-color-background-active: #e50d001c;
+  --ifm-menu-color-background-hover: #512bd41c;
+  --ifm-menu-color-background-active: #512bd41c;
 
   // -------- Search ----------
   --search-local-hit-shadow: none;
@@ -25,17 +25,17 @@
 }
 
 [data-theme='dark'] {
-  --ifm-color-primary: #ff3c33;
-  --ifm-color-primary-dark: #ff180f;
-  --ifm-color-primary-darker: #fb0e00;
-  --ifm-color-primary-darkest: #cf0c00;
-  --ifm-color-primary-light: #ff6059;
-  --ifm-color-primary-lighter: #ff6b66;
-  --ifm-color-primary-lightest: #ff948f;
+  --ifm-color-primary: #ac99ea;
+  --ifm-color-primary-dark: #9279e3;
+  --ifm-color-primary-darker: #8569e0;
+  --ifm-color-primary-darkest: #5e39d6;
+  --ifm-color-primary-light: #c6b9f1;
+  --ifm-color-primary-lighter: #d3c9f4;
+  --ifm-color-primary-lightest: #faf9fe;
 
   --docusaurus-highlighted-code-line-bg: #053ad92e;
-  --ifm-menu-color-background-hover: #e50d003b;
-  --ifm-menu-color-background-active: #e50d003b;
+  --ifm-menu-color-background-hover: #d600ab26;
+  --ifm-menu-color-background-active: #d600ab26;
 }
 
 .cardContainer_fWXF {
@@ -309,8 +309,8 @@ li {
 
 /* ------------------- START Announcement Bar ---------------------- */
 .theme-announcement-bar {
-  --site-announcement-bar-stripe-color1: #ff6358;
-  --site-announcement-bar-stripe-color2: #ff635887;
+  --site-announcement-bar-stripe-color1: #512bd4;
+  --site-announcement-bar-stripe-color2: #dcd5f6;
   z-index: 100;
   color: var(--ifm-heading-color);
   letter-spacing: 2px;

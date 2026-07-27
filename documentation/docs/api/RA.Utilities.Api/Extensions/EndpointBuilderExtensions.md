@@ -16,7 +16,7 @@ On failure, the filter returns an [**HTTP `400 Bad Request`**](../../RA.Utilitie
 {
   "responseCode": 400,
   "responseType": "BadRequest",
-  "responseMessage": "One or more validation errors occurred.",
+  "responseMessage": "The request is invalid.",
   "result": [
     {
       "propertyName": "Email",

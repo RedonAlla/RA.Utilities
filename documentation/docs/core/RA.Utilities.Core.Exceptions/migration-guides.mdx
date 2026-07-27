@@ -1,0 +1,125 @@
+---
+title: Migration Guides
+---
+
+# Migration Guides
+
+## v10.0.3 → v10.0.4
+
+This release modernizes the exception base class and aligns the entire exception hierarchy with the new `ResponseType` record from `RA.Utilities.Core.Constants` v10.0.2.
+
+### Breaking Change: `ErrorCode` changed from `string` to `int`
+
+The error code property and constructor parameter is now an `int` (typically an HTTP status code), not a `string`.
+
+**Before (v10.0.3):**
+
+```csharp
+throw new ConflictException(
+    errorCode: nameof(BaseResponseCode.Conflict),  // string
+    message: "A conflict occurred."
+);
+```
+
+**After (v10.0.4):**
+
+```csharp
+throw new ConflictException(
+    errorCode: BaseResponseCode.Conflict,  // int = 409
+    message: "A conflict occurred."
+);
+```
+
+### Breaking Change: `RaBaseException` constructor signature changed
+
+The base constructor now accepts `(int errorCode, ResponseType errorType, string message)` instead of `(string errorCode, string message, int responseCode)`.
+
+**Before (v10.0.3):**
+
+```csharp
+public class PaymentFailedException : RaBaseException
+{
+    public PaymentFailedException(string reason)
+        : base("PAYMENT_FAILED", $"Payment failed: {reason}", 400)
+    {
+    }
+}
+```
+
+**After (v10.0.4):**
+
+```csharp
+public class PaymentFailedException : RaBaseException
+{
+    public PaymentFailedException(string reason)
+        : base(400, ResponseType.BadRequest, $"Payment failed: {reason}")
+    {
+    }
+}
+```
+
+### Breaking Change: `ResponseCode` removed, `ResponseType` added
+
+`RaBaseException.ResponseCode` (an `int`) has been removed and replaced with `ResponseType` (a `record`).
+
+**Before (v10.0.3):**
+
+```csharp
+catch (RaBaseException ex)
+{
+    int statusCode = ex.ResponseCode;    // e.g., 404
+    string errorCode = ex.ErrorCode;     // e.g., "NotFound"
+}
+```
+
+**After (v10.0.4):**
+
+```csharp
+catch (RaBaseException ex)
+{
+    int statusCode = ex.ErrorCode;              // e.g., 404
+    string responseType = ex.ResponseType.Value; // e.g., "NotFound"
+}
+```
+
+### Breaking Change: `ValidationErrors` renamed to `ValidationError`
+
+The class representing a single validation error has been renamed from `ValidationErrors` (plural) to `ValidationError` (singular).
+
+**Before (v10.0.3):**
+
+```csharp
+var error = new ValidationErrors
+{
+    PropertyName = "Email",
+    ErrorMessage = "Invalid email format."
+};
+
+throw new BadRequestException(new[] { error });
+```
+
+**After (v10.0.4):**
+
+```csharp
+var error = new ValidationError("Invalid email format.")
+{
+    PropertyName = "Email"
+};
+
+throw new BadRequestException(new[] { error });
+```
+
+Note: `ValidationError` now requires `errorMessage` as a constructor argument. Properties `PropertyName`, `ErrorCode`, `AttemptedValue`, and `ExpectedValue` are now nullable (`string?` / `object?`).
+
+### New Features in v10.0.4
+
+- **`GatewayTimeoutException`**: New exception class for HTTP 504 Gateway Timeout scenarios.
+- **Parameterless constructors**: `ForbiddenException`, `UnauthorizedException`, `UnprocessableException`, and `GatewayTimeoutException` now have parameterless constructors with sensible defaults.
+- **`string message` constructors**: These exceptions now accept a single `string message` parameter.
+- **`init` accessors**: All exception properties now use `{ get; init; }` for immutability after construction.
+
+---
+
+## Full Changelog
+
+See the [package release notes](https://github.com/RedonAlla/RA.Utilities/blob/main/Core/RA.Utilities.Core.Exceptions/releasenotes.md) for a complete version history.

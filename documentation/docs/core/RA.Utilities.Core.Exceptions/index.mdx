@@ -18,38 +18,270 @@ import LogoSvg from '../../../../Assets/Images/error.svg';
 [![Publish NuGet](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml/badge.svg)](https://github.com/RedonAlla/RA.Utilities/actions/runs/19610657217)
 [![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?label=License&logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
 
-`RA.Utilities.Core.Exceptions` provides a set of standardized, semantic exceptions for use across the RA.Utilities ecosystem. These exceptions, such as `NotFoundException` and `ConflictException`, allow for clear, intent-driven error handling in your business logic.
+`RA.Utilities.Core.Exceptions` provides a set of standardized, semantic exceptions like [`NotFoundException`](./NotFoundException.md) and [`ConflictException`](./ConflictException.md). It solves the problem of using generic exceptions for predictable business rule failures by giving you exceptions that describe *what* went wrong.
 
 ## 🎯 Purpose
 
-Instead of throwing generic `Exception` or `ArgumentException` types, this package provides exceptions that carry semantic meaning about what went wrong. This approach has several key benefits:
+Instead of throwing generic `Exception` or `ArgumentException` types, this package provides exceptions that carry semantic meaning. This approach has several key benefits:
 
 - **Clear Intent**: Throwing a [`NotFoundException`](./NotFoundException.md) is more descriptive than a generic exception with a "not found" message.
-- **Standardized Error Handling**: Middleware (like in `RA.Utilities.Api`) can catch these specific exception types and automatically map them to the correct HTTP status codes and structured error responses (e.g., 404 Not Found, 409 Conflict).
+- **Standardized Error Handling**: Middleware (like in `RA.Utilities.Api`) can catch specific exception types and automatically map them to the correct HTTP status codes and structured error responses (e.g., 404 Not Found, 409 Conflict).
 - **Decoupled Logic**: Your domain or application layer can focus on business rules and throw semantic exceptions without needing to know about HTTP details. The web layer handles the translation.
 - **Reduced Boilerplate**: Eliminates the need for repetitive `try-catch` blocks in your controllers for common error scenarios.
 
-## 🛠️ Installation
+### ✨ Key Features
 
-You can install the package via the .NET CLI:
+- **9 semantic exception types** — `NotFoundException`, `ConflictException`, `BadRequestException`, `UnauthorizedException`, `ForbiddenException`, `UnprocessableException`, `GatewayTimeoutException`, `TooManyRequestsException`, `ServiceUnavailableException`
+- **Structured validation errors** — `ValidationError` class with property name, error message, attempted value, and error code
+- **Extensible base class** — `RaBaseException` with `ErrorCode` (int) and `ResponseType` (record) for consistent error contracts
+- **Auto-mapping to HTTP** — Pairs with `RA.Utilities.Api` middleware for automatic exception-to-JSON-response translation
+- **Result pattern compatible** — All exceptions implicitly convert to `Result.Failure` via `RA.Utilities.Core`
+
+---
+
+## 🛠️ Getting Started
+
+### Prerequisites
+
+- **.NET 10.0** or later
+- **`RA.Utilities.Core.Constants`** (included as a dependency)
+
+### Installation
+
+**.NET CLI**
 
 ```bash
 dotnet add package RA.Utilities.Core.Exceptions
 ```
 
-Or through the NuGet Package Manager console:
+**Package Manager Console**
 
 ```powershell
 Install-Package RA.Utilities.Core.Exceptions
 ```
 
-Or through the NuGet Package Manager in Visual Studio.
+**PackageReference (csproj)**
+
+```xml
+<PackageReference Include="RA.Utilities.Core.Exceptions" Version="10.0.4" />
+```
+
+### Hello World
+
+The simplest usage — throw a semantic exception from your business logic:
+
+```csharp showLineNumbers
+using RA.Utilities.Core.Exceptions;
+
+public Product GetProductById(int id)
+{
+    var product = _repository.Find(id);
+
+    if (product is null)
+    {
+        // highlight-next-line
+        throw new NotFoundException(nameof(Product), id);
+    }
+
+    return product;
+}
+```
+
+No DI registration needed. If you use the `Result` pattern from `RA.Utilities.Core`, you can return exceptions as `Failure` results via implicit conversion:
+
+```csharp
+return new NotFoundException(nameof(Product), id); // Implicitly becomes Result.Failure
+```
+
+---
+
+## 🧠 Core Concepts
+
+### Exception Hierarchy
+
+All exceptions inherit from `RaBaseException`, which extends `System.Exception`:
+
+```
+System.Exception
+ └─ RaBaseException                  ← ErrorCode (int) + ResponseType (record)
+      ├─ NotFoundException           ← EntityName + EntityValue
+      ├─ ConflictException           ← EntityName + EntityValue
+      ├─ BadRequestException         ← ValidationError[]
+      ├─ UnauthorizedException       ← HTTP 401
+      ├─ ForbiddenException          ← HTTP 403
+      ├─ UnprocessableException      ← HTTP 422
+      ├─ GatewayTimeoutException     ← HTTP 504
+      ├─ TooManyRequestsException   ← HTTP 429
+      └─ ServiceUnavailableException ← HTTP 503
+```
+
+### How exceptions flow through the system
+
+```
+Business Layer                        API Layer
+─────────────                         ─────────
+Service throws                        GlobalExceptionHandler
+NotFoundException               →     catches and maps to
+                                      404 JSON response
+
+Service throws                        ErrorResultMapper
+ConflictException               →     catches and maps to
+                                      409 JSON response
+
+Service returns                       Endpoint filter
+Result.Failure                  →     calls .Match() to produce
+(with exception)                      appropriate IResult
+```
+
+### Terminology
+
+- **Semantic exception**: An exception whose *type* communicates meaning (e.g., `NotFoundException` = "the thing doesn't exist"), rather than relying on message text.
+- **ErrorCode**: An `int` property (typically an HTTP status code) for machine-readable error identification.
+- **ResponseType**: A record from `RA.Utilities.Core.Constants` that categorizes the outcome (e.g., `"NotFound"`, `"Conflict"`) in the JSON response body.
+- **Implicit conversion to Result**: When using `RA.Utilities.Core`, throwing or returning an `RaBaseException` automatically converts to `Result.Failure`.
+
+---
+
+## 📖 How-To Guides
+
+### Return a 404 when a resource is missing
+
+```csharp showLineNumbers
+public async Task<Result<ProductDto>> GetProductAsync(int id)
+{
+    var product = await _repository.FindByIdAsync(id);
+
+    if (product is null)
+    {
+        // highlight-next-line
+        return new NotFoundException(nameof(Product), id);
+    }
+
+    return _mapper.Map<ProductDto>(product);
+}
+```
+
+### Return a 409 when a duplicate is detected
+
+```csharp showLineNumbers
+public async Task<Result> CreateUserAsync(string email)
+{
+    if (await _userRepository.ExistsAsync(email))
+    {
+        // highlight-next-line
+        return new ConflictException(nameof(User), email);
+    }
+
+    // ... creation logic
+    return Result.Success();
+}
+```
+
+### Return validation errors with a 400
+
+```csharp showLineNumbers
+try
+{
+    await _validator.ValidateAndThrowAsync(command);
+}
+catch (ValidationException ex)
+{
+    var errors = ex.Errors.Select(e => new ValidationError(e.ErrorMessage)
+    {
+        PropertyName = e.PropertyName,
+        AttemptedValue = e.AttemptedValue,
+        ErrorCode = e.ErrorCode
+    }).ToArray();
+
+    // highlight-next-line
+    return new BadRequestException(errors);
+}
+```
+
+### Signal insufficient permissions with a 403
+
+```csharp showLineNumbers
+if (resource.OwnerId != currentUser.Id)
+{
+    // highlight-next-line
+    return new ForbiddenException("You do not have permission to modify this resource.");
+}
+```
+
+### Handle gateway timeouts with a 504
+
+```csharp showLineNumbers
+try
+{
+    var result = await _paymentGateway.ProcessAsync(cts.Token);
+    return result;
+}
+catch (TaskCanceledException)
+{
+    // highlight-next-line
+    return new GatewayTimeoutException("The payment gateway did not respond in time.");
+}
+```
+
+### Enforce rate limits with a 429
+
+```csharp showLineNumbers
+if (requestCount >= _maxRequestsPerMinute)
+{
+    // highlight-next-line
+    return new TooManyRequestsException(
+        $"Rate limit exceeded. Maximum {_maxRequestsPerMinute} requests per minute allowed."
+    );
+}
+```
+
+### Signal a temporary outage with a 503
+
+```csharp showLineNumbers
+if (_maintenanceModeService.IsActive())
+{
+    // highlight-next-line
+    return new ServiceUnavailableException(
+        "The service is currently undergoing scheduled maintenance. Please try again in a few minutes."
+    );
+}
+```
+
+---
+
+## ⚙️ Configuration
+
+This package has **no configuration options**. There is no DI registration, no `appsettings.json` entries, and no options classes. Exceptions are thrown or returned directly — the API layer's `GlobalExceptionHandler` and `ErrorResultMapper` handle translation to HTTP responses automatically when you use `RA.Utilities.Api`.
+
+---
 
 ## ✨ Available Exceptions
-* [`RaBaseException`](./RaBaseException.md)
-* [`NotFoundException`](./NotFoundException.md)
-* [`ConflictException`](./ConflictException.md)
-* [`BadRequestException`](./BadRequestException.md)
-* [`UnauthorizedException`](./UnauthorizedException.md)
-* [`ForbiddenException`](./ForbiddenException.md)
-* [`UnprocessableException`](./UnprocessableException.md)
+
+<DocCardList />
+
+---
+
+## 🙌 Contributing & Support
+
+### Found a bug or have a suggestion?
+
+- **GitHub Issues**: [Report a bug or request a feature](https://github.com/RedonAlla/RA.Utilities/issues)
+- **Discussions**: [Ask questions or start a discussion](https://github.com/RedonAlla/RA.Utilities/discussions)
+
+### Contributing
+
+Contributions are welcome! Please follow the standard workflow:
+
+1. **Fork** the [RA.Utilities repository](https://github.com/RedonAlla/RA.Utilities)
+2. **Create a branch** from `main` with a descriptive name (e.g., `feature/add-new-exception`)
+3. **Make your changes** — new exceptions must inherit from `RaBaseException` and include XML doc comments
+4. **Submit a pull request** to the `main` branch with a clear description
+
+### Links
+
+| Resource | URL |
+|---|---|
+| **NuGet** | [RA.Utilities.Core.Exceptions](https://www.nuget.org/packages/RA.Utilities.Core.Exceptions/) |
+| **Source** | [GitHub — RedonAlla/RA.Utilities](https://github.com/RedonAlla/RA.Utilities) |
+| **License** | [MIT](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file) |
+| **Build Status** | [GitHub Actions](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml) |

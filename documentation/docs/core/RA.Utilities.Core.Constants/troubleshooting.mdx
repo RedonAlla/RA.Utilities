@@ -1,0 +1,103 @@
+---
+title: Troubleshooting & FAQ
+---
+
+# Troubleshooting & FAQ
+
+## Common Issues
+
+### My `ResponseType` is serializing as an object instead of a string
+
+**Cause**: The `[JsonConverter(typeof(ResponseTypeJsonConverter))]` attribute is missing or your custom JSON serializer options aren't picking it up.
+
+**Fix**: Ensure the attribute is present on the `ResponseType` record (it's built into the package). If using custom `JsonSerializerOptions`, make sure you're not overriding the converter list in a way that removes it. The converter is applied via the attribute, so it should work with default `System.Text.Json` serialization.
+
+### Can I use `ResponseType` in a `switch` expression?
+
+**Yes, with limitations.** Since `ResponseType` is a `record`, not an `enum`, you can't use compile-time constant patterns (e.g., `ResponseType.NotFound =>` directly as a case). However, C# **property pattern matching** works because `Value` is a property of the record:
+
+```csharp
+// ✅ Property pattern matching (preferred)
+var label = responseType switch
+{
+    { Value: "Success" } => "OK",
+    { Value: "NotFound" } => "Not Found",
+    { Value: "Conflict" } => "Conflict",
+    { Value: "BadRequest" } => "Bad Request",
+    { Value: "Unauthorized" } => "Unauthorized",
+    _ => "Unknown"
+};
+
+// ✅ Switch on the Value string directly (simpler, less type-safe)
+var label = responseType.Value switch
+{
+    "NotFound" => "Not Found",
+    "Conflict" => "Conflict",
+    _ => "Unknown"
+};
+
+// ❌ Does not compile — static readonly fields are not compile-time constants
+var label = responseType switch
+{
+    ResponseType.NotFound => "Not Found",
+    _ => "Unknown"
+};
+```
+
+**Trade-off**: Unlike an `enum`, the compiler cannot verify exhaustiveness — the `_` discard is always required. For exhaustive matching, use `if`/`else` chains or consider adding a custom `Match<T>(...)` method to your derived response types.
+
+### How do I compare two `ResponseType` values?
+
+The `record` type provides value-based equality out of the box — `==` and `.Equals()` compare the `Value` string:
+
+```csharp
+ResponseType a = ResponseType.NotFound;
+ResponseType b = ResponseType.NotFound;
+ResponseType c = new("NotFound");
+
+bool sameByField = a == b;     // true — same static field
+bool sameByValue = a == c;     // true — same Value string (records use value equality)
+bool sameByEquals = a.Equals(c); // true
+```
+
+### Can I create a `ResponseType` from a string at runtime?
+
+Yes, but only within the `RA.Utilities.Core.Constants` assembly or derived types, because the constructor is `protected internal`:
+
+```csharp
+// ✅ Works in consuming code (via derived record or JSON deserialization)
+ResponseType type = new("CustomType");  // Only if you define a derived record
+
+// ❌ Does not compile directly
+ResponseType type = new("NotFound");    // Constructor is protected internal
+
+// ✅ Use the built-in static fields instead
+ResponseType type = ResponseType.NotFound;
+```
+
+### `BaseResponseCode.Created` doesn't exist — what should I use?
+
+`Created = 201` was intentionally omitted from `BaseResponseCode` because the package focuses on response codes commonly used in _error_ and _generic success_ scenarios. For a `201 Created` response, use the ASP.NET Core built-in helper:
+
+```csharp
+return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, product);
+```
+
+If you need the integer constant, define it in your own project or use `201` directly.
+
+---
+
+## Known Limitations
+
+- **No implicit conversion from `string`**: Unlike some type-safe enum implementations, `ResponseType` does not provide an implicit conversion from `string`. Use the static fields (`ResponseType.NotFound`) or define a derived record.
+- **Switch expression exhaustiveness**: Property pattern matching works (e.g., `{ Value: "NotFound" } =>`), but the compiler cannot verify exhaustiveness — a `_` discard is always required.
+- **Custom response types require inheritance**: To add a new response type (e.g., `PaymentRequired`), you must create a derived `record` class. See [Extending ResponseType](./ResponseType#extending-responsetype).
+- **No localization support**: `BaseResponseMessages` provides English-only strings. For multi-language support, use these as fallback defaults and implement your own localization layer.
+
+---
+
+## Performance Tips
+
+- **Use static fields directly**: `ResponseType.NotFound` is a `static readonly` field — accessing it has zero allocation overhead.
+- **Avoid repeated `new ResponseType("...")` calls**: If you need a custom response type, create it once as a `static readonly` field rather than constructing it per request.
+- **Constants are inlined**: `BaseResponseCode` and `BaseResponseMessages` use `const`, so the values are inlined at compile time with zero runtime cost.

@@ -16,16 +16,17 @@ This exception is the primary tool for handling validation errors discovered wit
 
 When used with the `Result` pattern, a `BadRequestException` is placed inside a `Failure` result. The API layer can then use this structured information to provide a rich, informative error response to the client, making it easy for developers and end-users to understand and correct the problem.
 
-## `ValidationErrors` Class
+## `ValidationError` Class
 
-The power of `BadRequestException` comes from its `Errors` property, which is an array of `ValidationErrors` objects. Each `ValidationErrors` object provides context about a single validation failure.
+The power of `BadRequestException` comes from its `Errors` property, which is an array of `ValidationError` objects. Each `ValidationError` object provides context about a single validation failure.
 
 | Property         | Type     | Description                                                              |
 |------------------|----------|--------------------------------------------------------------------------|
-| **PropertyName**   | `string` | The name of the property that failed validation (e.g., "EmailAddress").  |
-| **ErrorMessage**   | `string` | A user-friendly message describing the error (e.g., "Email is not valid."). |
-| **AttemptedValue** | `object` | The actual value that was provided and caused the failure.               |
-| **ErrorCode**      | `string` | A custom, machine-readable error code (e.g., "INVALID_FORMAT").          |
+| **PropertyName**   | `string?` | The name of the property that failed validation (e.g., "EmailAddress").  |
+| **ErrorMessage**   | `string`  | A user-friendly message describing the error (e.g., "Email is not valid."). |
+| **AttemptedValue** | `object?` | The actual value that was provided and caused the failure.               |
+| **ErrorCode**      | `string?` | A custom, machine-readable error code (e.g., "INVALID_FORMAT").          |
+| **ExpectedValue**  | `object?` | The expected value, if applicable.                                       |
 
 ## 🚀 How to Use
 
@@ -51,11 +52,10 @@ public async Task<Result<UserDto>> CreateUserAsync(CreateUserCommand command)
     }
     catch (ValidationException ex)
     {
-        // Convert FluentValidation errors to our custom ValidationErrors
-        var validationErrors = ex.Errors.Select(e => new ValidationErrors
+        // Convert FluentValidation errors to our custom ValidationError
+        var validationErrors = ex.Errors.Select(e => new ValidationError(e.ErrorMessage)
         {
             PropertyName = e.PropertyName,
-            ErrorMessage = e.ErrorMessage,
             AttemptedValue = e.AttemptedValue,
             ErrorCode = e.ErrorCode
         }).ToArray();
