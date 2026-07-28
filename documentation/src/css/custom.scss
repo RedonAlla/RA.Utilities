@@ -309,22 +309,39 @@ li {
 
 /* ------------------- START Announcement Bar ---------------------- */
 .theme-announcement-bar {
-  --site-announcement-bar-stripe-color1: #512bd4;
-  --site-announcement-bar-stripe-color2: #dcd5f6;
   z-index: 100;
-  color: var(--ifm-heading-color);
-  letter-spacing: 2px;
-  background: repeating-linear-gradient(
-    35deg,
-    var(--site-announcement-bar-stripe-color1),
-    var(--site-announcement-bar-stripe-color1) 20px,
-    var(--site-announcement-bar-stripe-color2) 10px,
-    var(--site-announcement-bar-stripe-color2) 40px
-  );
-  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  font-size: 0.9rem;
+  background: linear-gradient(135deg, #512bd4 0%, #6d47e0 50%, #512bd4 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+  a {
+    color: #fff;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    font-weight: 700;
+
+    &:hover {
+      color: #e0d6ff;
+    }
+  }
+
+  /* Close button */
+  button {
+    color: rgba(255, 255, 255, 0.85) !important;
+    opacity: 1;
+
+    &:hover {
+      color: #fff !important;
+      background: rgba(255, 255, 255, 0.12);
+    }
+  }
 }
 
-.closeButton_node_modules-\@docusaurus-theme-classic-lib-theme-AnnouncementBar-CloseButton-styles-module {
-  color: var(--ifm-font-color-base);
+[data-theme='dark'] .theme-announcement-bar {
+  background: linear-gradient(135deg, #3a1fa0 0%, #512bd4 50%, #3a1fa0 100%);
+  border-bottom-color: rgba(255, 255, 255, 0.06);
 }
 /* ------------------- END Announcement Bar ---------------------- */
