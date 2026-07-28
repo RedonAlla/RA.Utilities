@@ -22,6 +22,13 @@ const config: Config = {
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/RA.Utilities/',
 
+  stylesheets: [
+    {
+      href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
+      type: 'text/css',
+    },
+  ],
+
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
   organizationName: 'RedonAlla', // Usually your GitHub org/user name.
@@ -145,7 +152,7 @@ const config: Config = {
   themeConfig: {
     image: 'img/social-card.jpg',
     metadata: [
-      {name: 'theme-color', content: '#e50d00'},
+      {name: 'theme-color', content: '#512bd4'},
       {name: 'color-scheme', content: 'light dark'},
       {name: 'keywords', content: '.NET, API, framework, clean architecture, utilities, error handling, Result type'},
     ],
