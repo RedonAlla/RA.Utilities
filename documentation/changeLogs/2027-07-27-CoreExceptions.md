@@ -15,7 +15,7 @@ This release modernizes the exception base class and aligns the entire exception
 ### ⚠️ Breaking Changes
 
 *   **`RaBaseException.ErrorCode` type changed from `string` to `int`**: The error code is now an integer, aligning with HTTP status code conventions. **Migration**: Replace string-based error codes (e.g., `nameof(BaseResponseCode.NotFound)`) with integer constants (e.g., `BaseResponseCode.NotFound`).
-*   **`RaBaseException.ResponseCode` removed; replaced by `ResponseType`**: Use `ex.ErrorCode` for the HTTP status code and `ex.ResponseType` for the semantic type label. See the [Migration Guide](../docs/core/RA.Utilities.Core.Exceptions/migration-guides) for detailed before/after examples.
+*   **`RaBaseException.ResponseCode` removed; replaced by `ResponseType`**: Use `ex.ErrorCode` for the HTTP status code and `ex.ResponseType` for the semantic type label. See the [Migration Guide](/RA.Utilities/nuget-packages/core/RA.Utilities.Core.Exceptions/migration-guides) for detailed before/after examples.
 *   **`RaBaseException` constructor signature changed**: Now accepts `(int errorCode, ResponseType errorType, string message)` instead of `(string errorCode, string message, int responseCode)`.
 *   **`ValidationErrors` renamed to `ValidationError`**: The class now represents a single error (singular). A constructor argument `errorMessage` is now required. Properties are nullable (`string?` / `object?`).
 

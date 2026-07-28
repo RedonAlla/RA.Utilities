@@ -31,7 +31,7 @@ All other custom exceptions in this library, such as `NotFoundException` and `Co
 | Property       | Type                                       | Description                                                                                             |
 |----------------|--------------------------------------------|---------------------------------------------------------------------------------------------------------|
 | **ErrorCode**    | `int`                                      | The error code associated with the exception. By default, this is `500` (Internal Server Error).          |
-| **ResponseType** | [`ResponseType`](../../RA.Utilities.Core.Constants/ResponseType.md) | A record categorizing the semantic outcome of the operation (e.g., "NotFound", "Conflict"). |
+| **ResponseType** | [`ResponseType`](../RA.Utilities.Core.Constants/ResponseType) | A record categorizing the semantic outcome of the operation (e.g., "NotFound", "Conflict"). |
 | **Message**      | `string`                                   | (Inherited from `Exception`) A human-readable message describing the error.                             |
 
 ## 🚀 How to Use
