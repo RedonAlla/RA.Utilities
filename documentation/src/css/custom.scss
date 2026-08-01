@@ -34,8 +34,8 @@
   --ifm-color-primary-lightest: #faf9fe;
 
   --docusaurus-highlighted-code-line-bg: #053ad92e;
-  --ifm-menu-color-background-hover: #d600ab26;
-  --ifm-menu-color-background-active: #d600ab26;
+  --ifm-menu-color-background-hover: #ac99ea1c;
+  --ifm-menu-color-background-active: ##ac99ea;
 }
 
 .cardContainer_fWXF {
@@ -160,6 +160,7 @@ li {
     & > div,
     &.session_icon {
       & > a.menu__link--active::before {
+        color: #fff;
         background-color: var(--ifm-color-primary);
         transition: background-color var(--ifm-color-primary)
         var(--ifm-transition-timing-default);
