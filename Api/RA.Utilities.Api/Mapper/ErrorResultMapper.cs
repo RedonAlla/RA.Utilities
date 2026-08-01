@@ -124,6 +124,51 @@ public static class ErrorResultMapper
     }
 
     /// <summary>
+    /// Maps a <see cref="TooManyRequestsException"/> to a <see cref="TooManyRequestsResponse"/>.
+    /// </summary>
+    /// <param name="exception">The <see cref="TooManyRequestsException"/> instance to map from.</param>
+    /// <returns>A <see cref="TooManyRequestsResponse"/> representing the mapped exception.</returns>
+    public static TooManyRequestsResponse ToResponse(TooManyRequestsException exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+
+        return new TooManyRequestsResponse(
+            exception.ErrorCode,
+            exception.Message
+        );
+    }
+
+    /// <summary>
+    /// Maps a <see cref="ServiceUnavailableException"/> to a <see cref="ServiceUnavailableResponse"/>.
+    /// </summary>
+    /// <param name="exception">The <see cref="ServiceUnavailableException"/> instance to map from.</param>
+    /// <returns>A <see cref="ServiceUnavailableResponse"/> representing the mapped exception.</returns>
+    public static ServiceUnavailableResponse ToResponse(ServiceUnavailableException exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+
+        return new ServiceUnavailableResponse(
+            exception.ErrorCode,
+            exception.Message
+        );
+    }
+
+    /// <summary>
+    /// Maps a <see cref="GatewayTimeoutException"/> to a <see cref="GatewayTimeoutResponse"/>.
+    /// </summary>
+    /// <param name="exception">The <see cref="GatewayTimeoutException"/> instance to map from.</param>
+    /// <returns>A <see cref="GatewayTimeoutResponse"/> representing the mapped exception.</returns>
+    public static GatewayTimeoutResponse ToResponse(GatewayTimeoutException exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+
+        return new GatewayTimeoutResponse(
+            exception.ErrorCode,
+            exception.Message
+        );
+    }
+
+    /// <summary>
     /// Maps a <see cref="RaBaseException"/> to an <see cref="ErrorResponse"/>.
     /// </summary>
     /// <param name="exception">The <see cref="RaBaseException"/> instance to map from.</param>

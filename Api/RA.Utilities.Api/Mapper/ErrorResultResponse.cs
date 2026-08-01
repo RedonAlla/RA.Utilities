@@ -46,6 +46,18 @@ public static class ErrorResultResponse
             data: ErrorResultMapper.ToResponse(forbiddenException),
             statusCode: BaseResponseCode.Forbidden
         ),
+        TooManyRequestsException tooManyRequestsException => Microsoft.AspNetCore.Http.Results.Json(
+            data: ErrorResultMapper.ToResponse(tooManyRequestsException),
+            statusCode: BaseResponseCode.TooManyRequests
+        ),
+        ServiceUnavailableException serviceUnavailableException => Microsoft.AspNetCore.Http.Results.Json(
+            data: ErrorResultMapper.ToResponse(serviceUnavailableException),
+            statusCode: BaseResponseCode.ServiceUnavailable
+        ),
+        GatewayTimeoutException gatewayTimeoutException => Microsoft.AspNetCore.Http.Results.Json(
+            data: ErrorResultMapper.ToResponse(gatewayTimeoutException),
+            statusCode: BaseResponseCode.GatewayTimeout
+        ),
         RaBaseException baseException => Microsoft.AspNetCore.Http.Results.Json(
             data: ErrorResultMapper.ToResponse(baseException),
             statusCode: BaseResponseCode.InternalServerError
