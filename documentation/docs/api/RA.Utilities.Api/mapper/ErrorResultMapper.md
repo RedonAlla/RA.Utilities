@@ -70,5 +70,14 @@ The class provides a dedicated mapping method for each custom exception type:
 - **`MapToUnprocessableResponse(UnprocessableException ex)`**:
   Maps an `UnprocessableException` to an `UnprocessableResponse`, populating the `ErrorResult` with the error code and message.
 
+- **`ToResponse(TooManyRequestsException ex)`**:
+  Maps a `TooManyRequestsException` to a [`TooManyRequestsResponse`](../../RA.Utilities.Api.Results/TooManyRequestsResponse.md) (HTTP 429), populating the `ErrorResult` with the error code and message.
+
+- **`ToResponse(ServiceUnavailableException ex)`**:
+  Maps a `ServiceUnavailableException` to a [`ServiceUnavailableResponse`](../../RA.Utilities.Api.Results/ServiceUnavailableResponse.md) (HTTP 503), populating the `ErrorResult` with the error code and message.
+
+- **`ToResponse(GatewayTimeoutException ex)`**:
+  Maps a `GatewayTimeoutException` to a [`GatewayTimeoutResponse`](../../RA.Utilities.Api.Results/GatewayTimeoutResponse.md) (HTTP 504), populating the `ErrorResult` with the error code and message.
+
 - **`ToGeneralErrorResponse(RaBaseException ex)`**:
   Maps any other `RaBaseException` to a generic `ErrorResponse`, using the exception's message and error code.

@@ -70,7 +70,7 @@ public IResult Delete(int id)
         return ErrorResultResponse.Result(result.Exception);
     }
 
-    return SuccessResponse.NoContent(); // HTTP 204
+    return SuccessResult.NoContent(); // HTTP 204
 }
 ```
 
@@ -124,7 +124,7 @@ public IResult Get(int id)
     // The Match method elegantly handles both outcomes
     // highlight-start
     return result.Match<IResult>(
-        success: userDto => SuccessResponse.Ok(userDto),
+        success: userDto => SuccessResult.Ok(userDto),
         failure: ErrorResultResponse.Result
     );
     // highlight-end

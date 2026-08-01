@@ -123,7 +123,7 @@ app.MapGet("/users/{id}", (int id) =>
     // highlight-start
     return GetSubscribedUser(id) // This returns a Result<User>
         .Match<IResult>(
-            success: user => SuccessResponse.Ok(user),
+            success: user => SuccessResult.Ok(user),
             failure: ErrorResultResponse.Result
         );
     // highlight-end

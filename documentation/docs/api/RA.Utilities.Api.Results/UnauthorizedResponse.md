@@ -24,7 +24,7 @@ Its primary functions are:
 
   * **ResponseCode**: Set to `401` (from `BaseResponseCode.Unauthorized`).
   * **ResponseType**: Set to `ResponseType.Unauthorized`.
-  * **ResponseMessage**: Defaults to `"The request requires user authentication."` (from `BaseResponseMessages.Unauthorized`).
+  * **ResponseMessage**: Defaults to `"Authentication failed or is missing."` (from `BaseResponseMessages.Unauthorized`).
 
 3. **Provides Structured Context**: It can include an [`ErrorResult`](./ErrorResult) payload to provide specific details about why the authentication failed (e.g., "Invalid token", "Token expired").
 
@@ -34,7 +34,7 @@ When you create an instance of `UnauthorizedResponse`, it pre-configures the fol
 
 - **`ResponseCode`**: Set to `401` (from `BaseResponseCode.Unauthorized`).
 - **`ResponseType`**: Set to `ResponseType.Unauthorized`.
-- **`ResponseMessage`**: Defaults to `"The request requires user authentication."`.
+- **`ResponseMessage`**: Defaults to `"Authentication failed or is missing."`.
 - **`Result`**: An optional [`ErrorResult`](./ErrorResult) object containing the error code and message.
 
 ### 🚀 Usage in a Controller
@@ -48,7 +48,7 @@ using RA.Utilities.Api.Results;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ProfileController : ControllerBase
+public sealed class ProfileController : ControllerBase
 {
     [HttpGet]
     public IActionResult GetProfile()
@@ -74,7 +74,7 @@ public class ProfileController : ControllerBase
 {
   "responseCode": 401,
   "responseType": "Unauthorized",
-  "responseMessage": "The request requires user authentication.",
+  "responseMessage": "Authentication failed or is missing.",
   "result": {
     "errorCode": "Unauthorized",
     "errorMessage": "User is not authenticated."

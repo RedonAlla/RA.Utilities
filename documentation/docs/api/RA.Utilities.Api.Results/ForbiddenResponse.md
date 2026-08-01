@@ -24,7 +24,7 @@ Its primary functions are:
 
   * **ResponseCode**: Set to `403` (from `BaseResponseCode.Forbidden`).
   * **ResponseType**: Set to `ResponseType.Forbidden`.
-  * **ResponseMessage**: Defaults to `"The server understood the request but refuses to authorize it."` (from `BaseResponseMessages.Forbidden`).
+  * **ResponseMessage**: Defaults to `"You do not have permission to access this resource."` (from `BaseResponseMessages.Forbidden`).
 
 3. **Provides Structured Context**: It uses an [`ErrorResult`](./ErrorResult) payload to provide specific details about why the request was forbidden.
 
@@ -34,7 +34,7 @@ When you create an instance of `ForbiddenResponse`, it pre-configures the follow
 
 - **`ResponseCode`**: Set to `403` (from `BaseResponseCode.Forbidden`).
 - **`ResponseType`**: Set to `ResponseType.Forbidden`.
-- **`ResponseMessage`**: Defaults to `"The server understood the request but refuses to authorize it."`.
+- **`ResponseMessage`**: Defaults to `"You do not have permission to access this resource."`.
 - **`Result`**: An [`ErrorResult`](./ErrorResult) object containing the error code and message.
 
 ### 🚀 Usage in a Controller
@@ -48,7 +48,7 @@ using RA.Utilities.Api.Results;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AdminController : ControllerBase
+public sealed class AdminController : ControllerBase
 {
     [HttpGet("secure-data")]
     public IActionResult GetSecureData()
@@ -74,7 +74,7 @@ public class AdminController : ControllerBase
 {
   "responseCode": 403,
   "responseType": "Forbidden",
-  "responseMessage": "The server understood the request but refuses to authorize it.",
+  "responseMessage": "You do not have permission to access this resource.",
   "result": {
     "errorCode": "AccessDenied",
     "errorMessage": "You do not have the 'Admin' role required to access this resource."

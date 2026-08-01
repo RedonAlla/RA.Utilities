@@ -11,14 +11,14 @@ and the [`IResult`](../../../core/RA.Utilities.Core/Results.md) objects that ASP
 
 #### Let's break down the purpose of each class in that namespace.
 
-#### 1. [`SuccessResponse`](./SuccessResponse)
+#### 1. [`SuccessResult`](./SuccessResult)
 * **Purpose**: This class is a factory for creating consistent, successful [`IResult`](../../../core/RA.Utilities.Core/Results.md) objects.
 * **How it works**: It provides simple static methods like `Ok()`, `Ok<T>()`, `Created()`, and `Accepted()`
-that wrap your data in a standardized [`SuccessResponse`](./SuccessResponse) object and return the correct HTTP status code (200, 201, 202, etc.).
+that wrap your data in a standardized [`SuccessResult`](./SuccessResult) object and return the correct HTTP status code (200, 201, 202, etc.).
 This keeps your endpoint logic clean and ensures all success responses from your API have a uniform structure.
 
 ```csharp
-public static class SuccessResponse
+public static class SuccessResult
 {
     // Creates an HTTP 200 OK with a body
     public static IResult Ok<TResult>(TResult results) where TResult : new()
@@ -98,7 +98,7 @@ The mapper classes in `RA.Utilities.Api.Mapper` are designed to work together se
 
 The core pattern is to have your application/service layer return a `Result<T>` object,
 and then use the `.Match()` method in your Minimal API endpoint to map the success and
-failure outcomes to the appropriate HTTP response using [`SuccessResponse`](SuccessResponse.md) and [`ErrorResultResponse`](./ErrorResultResponse.md).
+failure outcomes to the appropriate HTTP response using [`SuccessResult`](./SuccessResult) and [`ErrorResultResponse`](./ErrorResultResponse.md).
 
 Here is a complete, step-by-step example based on the documentation you provided.
 
@@ -156,7 +156,7 @@ app.MapGet("/products/{id}", (int id, ProductService service) =>
     // The Match method maps the outcome to an IResult.
     // It's clean, declarative, and handles all cases.
     return result.Match<IResult>(
-        success: product => SuccessResponse.Ok(product),
+        success: product => SuccessResult.Ok(product),
         failure: ErrorResultResponse.Result 
     );
 })
@@ -166,10 +166,10 @@ app.MapGet("/products/{id}", (int id, ProductService service) =>
 ### How It Works
 Let's break down the Match call:
 
-#### 1 `success: product => SuccessResponse.Ok(product)`:
+#### 1 `success: product => SuccessResult.Ok(product)`:
 
   * If the `result` is a success, this lambda is executed.
-  * The `product` object inside the `Result` is passed to `SuccessResponse.Ok()`.
+  * The `product` object inside the `Result` is passed to `SuccessResult.Ok()`.
   * This helper wraps the product in a standard `SuccessResponse<Product>` body and returns an `HTTP 200 OK` result.
 
 #### `failure: ErrorResultResponse.Result`:
@@ -218,7 +218,7 @@ delegating all the response-creation logic to these reusable mapper classes.
 ## 🧠 Summary: How They Work Together
 1. Your application logic returns a `Result<T>` object.
 1. In your API endpoint, you call `.Match()` on the result.
-1. If the result is a **success**, you use `SuccessResponse.Ok(data)` to generate a `200 OK` response.
+1. If the result is a **success**, you use `SuccessResult.Ok(data)` to generate a `200 OK` response.
 1. If the result is a **failure**, you pass the `ErrorResultResponse.Result` method to the failure delegate.
 `ErrorResultResponse` inspects the exception, uses `ErrorResultMapper` to build a standardized error body,
 and returns the final IResult with the correct HTTP error code.

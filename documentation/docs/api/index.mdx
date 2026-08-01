@@ -13,7 +13,7 @@ This is the central package for the API layer. It acts as the glue, providing:
 
 * **Global Exception Handling**: A middleware that catches specific exceptions (like `NotFoundException`) and automatically converts them into standardized, structured JSON error responses.
 * **Endpoint Registration**: An `IEndpoint` interface and extension methods to help you organize your API routes into separate files, keeping `Program.cs` clean.
-* **Standardized Success Responses**: Helper methods (`SuccessResponse.Ok()`, `SuccessResponse.Created()`) to easily create consistent success responses that match the structure of the error responses.
+* **Standardized Success Responses**: Helper methods (`SuccessResult.Ok()`, `SuccessResult.Created()`) to easily create consistent success responses that match the structure of the error responses.
 
 ## `RA.Utilities.Api.Results`
 This package contains the C# models for the standardized API responses.

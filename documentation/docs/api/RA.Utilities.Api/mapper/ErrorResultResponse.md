@@ -13,6 +13,26 @@ When your application logic returns a [`Result<T>`](../../RA.Utilities.Api.Resul
 
 This allows you to handle all expected business-level failures in a single, declarative line of code within your API endpoints, keeping them clean and free of repetitive error-handling logic.
 
+## 📦 Supported Exceptions
+
+The `Result(Exception)` method uses a switch expression to map each supported exception type to its corresponding response model and HTTP status code:
+
+| Exception | Response Model | HTTP Status |
+| --- | --- | --- |
+| `BadRequestException` | [`BadRequestResponse`](../../RA.Utilities.Api.Results/BadRequestResponse.md) | 400 Bad Request |
+| `UnauthorizedException` | [`UnauthorizedResponse`](../../RA.Utilities.Api.Results/UnauthorizedResponse.md) | 401 Unauthorized |
+| `ForbiddenException` | [`ForbiddenResponse`](../../RA.Utilities.Api.Results/ForbiddenResponse.md) | 403 Forbidden |
+| `NotFoundException` | [`NotFoundResponse`](../../RA.Utilities.Api.Results/NotFoundResponse.md) | 404 Not Found |
+| `ConflictException` | [`ConflictResponse`](../../RA.Utilities.Api.Results/ConflictResponse.md) | 409 Conflict |
+| `UnprocessableException` | [`UnprocessableResponse`](../../RA.Utilities.Api.Results/UnprocessableResponse.md) | 422 Unprocessable Content |
+| `TooManyRequestsException` | [`TooManyRequestsResponse`](../../RA.Utilities.Api.Results/TooManyRequestsResponse.md) | 429 Too Many Requests |
+| `ServiceUnavailableException` | [`ServiceUnavailableResponse`](../../RA.Utilities.Api.Results/ServiceUnavailableResponse.md) | 503 Service Unavailable |
+| `GatewayTimeoutException` | [`GatewayTimeoutResponse`](../../RA.Utilities.Api.Results/GatewayTimeoutResponse.md) | 504 Gateway Timeout |
+| Any other `RaBaseException` | [`ErrorResponse`](../../RA.Utilities.Api.Results/ErrorResponse.md) | 500 Internal Server Error |
+| Any other `Exception` | [`ErrorResponse`](../../RA.Utilities.Api.Results/ErrorResponse.md) | 500 Internal Server Error |
+
+Any exception that is not one of the known semantic exceptions is treated as an unexpected server error and returns a generic `500 Internal Server Error` response, avoiding leakage of sensitive implementation details.
+
 ## 🚀 How to Use
 
 The primary use case for `ErrorResultResponse` is within the `Match` method of a [`Result<T>`](../../RA.Utilities.Api.Results/index.mdx) object. The `ErrorResultResponse.Result` method has the signature `Func<Exception, IResult>`, which perfectly matches the signature required by the `failure` delegate of `Match`.
@@ -64,7 +84,7 @@ app.MapGet("/products/{id}", (int id, ProductService service) =>
     // The `ErrorResultResponse.Result` method is passed directly to the failure delegate.
     // highlight-start
     return result.Match<IResult>(
-        success: product => SuccessResponse.Ok(product),
+        success: product => SuccessResult.Ok(product),
         failure: ErrorResultResponse.Result 
     );
     // highlight-end

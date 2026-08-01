@@ -2,7 +2,7 @@
 Namespace: RA.Utilities.Api.Mapper
 ```
 
-The `SuccessResponse` static class, located in the `RA.Utilities.Api` package, is a set of helper methods designed to streamline the creation of standardized, successful API responses.
+The `SuccessResult` static class, located in the `RA.Utilities.Api` package, is a set of helper methods designed to streamline the creation of standardized, successful API responses.
 
 Its primary goals are:
 
@@ -12,7 +12,7 @@ This provides a predictable JSON structure (`responseCode`, `responseType`, `res
 
 **2. Reduce Boilerplate**:
 It provides simple, expressive static methods that are much cleaner to use than manually constructing the response.
-For example, writing return `SuccessResponse.Ok(product);` is more concise and readable than `return Results.Ok(new SuccessResponse<Product>(product));`.
+For example, writing return `SuccessResult.Ok(product);` is more concise and readable than `return Results.Ok(new SuccessResponse<Product>(product));`.
 
 **3. Simplify HTTP Compliance**:
 It offers convenient overloads for common HTTP success statuses (`200`, `201`, `202`, `204`), handling details like setting the `Location` header for `201 Created` responses automatically.
@@ -20,7 +20,7 @@ It offers convenient overloads for common HTTP success statuses (`200`, `201`, `
 In short, this class is a key part of the "batteries-included" developer experience, helping you write clean, consistent, and maintainable API endpoints with minimal effort.
 
 ## Available Helpers
-The SuccessResponse class provides helpers for the most common success status codes:
+The SuccessResult class provides helpers for the most common success status codes:
 
 * `Ok()`: Creates a `200 OK` response.
 * `Ok<T>(T result)`: Creates a `200 OK` response with a payload.
@@ -50,7 +50,7 @@ app.MapGet("/products/{id}", (int id) =>
 
     // You can write this:
     // highlight-next-line
-    return SuccessResponse.Ok(product);
+    return SuccessResult.Ok(product);
 });
 
 app.MapPost("/products", (Product product) => 
@@ -60,7 +60,7 @@ app.MapPost("/products", (Product product) =>
 
     // Creates a 201 Created response with a Location header and a structured body
     // highlight-next-line
-    return SuccessResponse.Created($"/products/{newProduct.Id}", newProduct);
+    return SuccessResult.Created($"/products/{newProduct.Id}", newProduct);
 });
 ```
 
@@ -129,14 +129,14 @@ public class ProductEndpoints : IEndpoint
             // highlight-start
             return result.Match<IResult>(
                 // Use the new helper for a clean success response
-                success: product => SuccessResponse.Ok(product),
+                success: product => SuccessResult.Ok(product),
                 failure: ErrorResultResponse.Result // Use the error mapper for a consistent failure response
             );
             // highlight-end
 
             // OR Short
             // highlight-next-line
-            //return result.Match<IResult>(SuccessResponse.Ok(product), ErrorResultResponse.Result);
+            //return result.Match<IResult>(SuccessResult.Ok(product), ErrorResultResponse.Result);
         }).WithTags("Products");
     }
 }
