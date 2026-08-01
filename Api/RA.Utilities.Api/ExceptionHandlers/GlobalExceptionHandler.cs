@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using RA.Utilities.Api.Mapper;
+using RA.Utilities.Core.Exceptions;
 
 namespace RA.Utilities.Api.ExceptionHandlers;
 
@@ -39,11 +40,38 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
     /// </remarks>
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
-        logger.LogError(exception, "An exception has occurred: {Message}", exception.Message);
+        LogException(exception);
 
         IResult problemResult = ErrorResultResponse.Result(exception);
         await problemResult.ExecuteAsync(httpContext);
 
         return true;
     }
+
+    /// <summary>
+    /// Logs the exception at the appropriate level. Client errors (4xx) are logged as warnings;
+    /// server errors (5xx) and unrecognized exceptions are logged as errors.
+    /// </summary>
+    private void LogException(Exception exception)
+    {
+        if (IsClientError(exception))
+        {
+            logger.LogWarning(exception, "A client error occurred: {Message}", exception.Message);
+        }
+        else
+        {
+            logger.LogError(exception, "An exception has occurred: {Message}", exception.Message);
+        }
+    }
+
+    private static bool IsClientError(Exception exception) => exception switch
+    {
+        BadRequestException
+            or ConflictException
+            or UnprocessableException
+            or NotFoundException
+            or UnauthorizedException
+            or ForbiddenException => true,
+        _ => false,
+    };
 }

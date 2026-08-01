@@ -19,18 +19,11 @@ public static class EndpointExtensions
     /// and registers them as transient services in the <see cref="IServiceCollection"/>. This method is the first step
     /// in the endpoint registration process, making the endpoint definitions available for dependency injection.
     /// </summary>
-    /// <remarks>
-    /// <strong>
-    /// This registers automatically all endpoints that implement the <see cref="IEndpoint"/> interface
-    /// to use Features flag needs to rethink.
-    /// </strong>
-    /// </remarks>
     /// <param name="services">The <see cref="IServiceCollection"/> to add the services to.</param>
     /// <param name="assembly">The assembly to scan. If null, the calling assembly is used.</param>
     /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
     public static IServiceCollection AddEndpoints(this IServiceCollection services, Assembly assembly)
     {
-        // TODO Refactor the `IEndpoint` registration to allow for feature flagging.
         ServiceDescriptor[] serviceDescriptors = [.. assembly
             .DefinedTypes
             .Where(type => type is { IsAbstract: false, IsInterface: false } &&
@@ -47,16 +40,10 @@ public static class EndpointExtensions
     /// retrieves all services registered via <see cref="AddEndpoints(IServiceCollection, Assembly)"/> and executes
     /// their <see cref="IEndpoint.MapEndpoint(IEndpointRouteBuilder)"/> method.
     /// </summary>
-    /// <remarks>
-    /// <strong>
-    /// This registers automatically all endpoints that implement the <see cref="IEndpoint"/> interface
-    /// to use Features flag needs to rethink.
-    /// </strong>
-    /// </remarks>
     /// <param name="app">The <see cref="WebApplication"/> to map the endpoints to.</param>
     /// <param name="routeGroupBuilder">An optional <see cref="RouteGroupBuilder"/> to group the discovered endpoints under a common prefix and/or with shared configuration.</param>
-    /// <returns>The <see cref="IApplicationBuilder"/> to allow for fluent chaining.</returns>
-    public static IApplicationBuilder MapEndpoints(this WebApplication app, RouteGroupBuilder? routeGroupBuilder = null)
+    /// <returns>The <see cref="WebApplication"/> to allow for fluent chaining.</returns>
+    public static WebApplication MapEndpoints(this WebApplication app, RouteGroupBuilder? routeGroupBuilder = null)
     {
         IEnumerable<IEndpoint> endpoints = app.Services.GetRequiredService<IEnumerable<IEndpoint>>();
         IEndpointRouteBuilder builder = routeGroupBuilder is null ? app : routeGroupBuilder;

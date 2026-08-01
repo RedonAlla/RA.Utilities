@@ -18,14 +18,14 @@ public sealed class ErrorResponse : Response<ErrorResult>
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ErrorResponse"/> class with a custom error code and message.
+    /// Initializes a new instance of the <see cref="ErrorResponse"/> class with a custom response code and message.
     /// </summary>
-    /// <param name="errorCode">The response code.</param>
-    /// <param name="errorMessage">The response message.</param>
-    public ErrorResponse(int errorCode, string errorMessage)
+    /// <param name="responseCode">The response code.</param>
+    /// <param name="responseMessage">The response message.</param>
+    public ErrorResponse(int responseCode, string responseMessage)
     {
-        ResponseCode = errorCode;
-        ResponseMessage = errorMessage;
+        ResponseCode = responseCode;
+        ResponseMessage = responseMessage;
         ResponseType = ResponseType.Error;
         Result = null;
     }

@@ -11,20 +11,20 @@ public class Response<T>
     /// <summary>
     /// The response code. This can be an HTTP status code or a domain-specific error code for client-side processing.
     /// </summary>
-    public int ResponseCode { get; set; }
+    public int ResponseCode { get; init; }
 
     /// <summary>
     /// The semantic type of the response, used to categorize the outcome (e.g., Success, BadRequest, Error).
     /// </summary>
-    public ResponseType ResponseType { get; set; }
+    public ResponseType ResponseType { get; init; }
 
     /// <summary>
     /// A human-friendly message describing the result of the API operation.
     /// </summary>
-    public string? ResponseMessage { get; set; }
+    public string? ResponseMessage { get; init; }
 
     /// <summary>
     /// Actual API response of type <typeparamref name="T"/>.
     /// </summary>
-    public T? Result { get; set; }
+    public T? Result { get; init; }
 }

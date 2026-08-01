@@ -11,24 +11,11 @@
 *   **Clarity**: Added internal documentation to the central error dispatcher to explain the pattern-matching logic.
 
 
-## Version 10.0.4
-![Date Badge](https://img.shields.io/badge/Publish-24%20April%202026-lightblue?logo=fastly&logoColor=white)
-[![NuGet version](https://img.shields.io/badge/NuGet-v10.0.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api.Middlewares/10.0.4)
-
-This patch release focuses on performance optimizations, improved robustness in logging, and code modernization.
-
-### ✨ Improvements
-
-*   **Performance**: Optimized `X-Request-Id` retrieval in `HttpContextExtensions` by switching from LINQ to `TryGetValue`, ensuring efficient case-insensitive lookups.
-*   **Robustness**: Refactored `HttpLoggingMiddleware` to centralize stream position management and added defensive checks for empty or non-JSON body payloads.
-*   **Modernization**: Updated internal array initializations to use C# 12 collection expressions for better readability and performance.
-
-
 ## Version 10.0.2
 ![Date Badge](https://img.shields.io/badge/Publish-04%20Januaryr%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-v10.0.2-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api/10.0.2)
 
-Add `CreatedAtRoute` methods to `SuccessResponse` for enhanced API response handling.
+Add `CreatedAtRoute` methods to `SuccessResult` for enhanced API response handling.
 
 
 ## Version 10.0.1
@@ -49,7 +36,7 @@ Chain the `.Validate<TModel>()` extension method to your endpoint registration.
 // In your endpoint definition
 app.MapPost("/users", (CreateUserRequest user) => {
     // Handler logic here...
-    return SuccessResponse.Created(user);
+    return SuccessResult.Created(user);
 })
 .Validate<CreateUserRequest>(); // This enables automatic validation
 ```
@@ -67,7 +54,7 @@ Changed project version from a release candidate to final version `10.0.0` for p
 Revised XML documentation comments to improve clarity and detail.
 Improved the documentation in `IEndpoint` to clarify its purpose in grouping related API endpoints.
 Adjusted parameter and return type descriptions in `EndpointExtensions` for better understanding of default assembly behavior.
-Enhanced comments in SuccessResponse to explicitly state response wrapping behavior.
+Enhanced comments in SuccessResult to explicitly state response wrapping behavior.
 
 ## Version 10.0.100-rc.2
 ![Date Badge](https://img.shields.io/badge/Publish-18%20Octomber%202025-lightblue?logo=fastly&logoColor=white)

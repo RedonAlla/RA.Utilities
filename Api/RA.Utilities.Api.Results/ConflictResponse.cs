@@ -42,8 +42,8 @@ public class ConflictResult : ErrorResult
     public ConflictResult(
         string entity,
         object value,
-        string errorMessage,
-        string? errorCode = null
+        string? errorCode = null,
+        string errorMessage = BaseResponseMessages.Conflict
     )
     {
         Entity = entity;

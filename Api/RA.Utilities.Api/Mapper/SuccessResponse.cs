@@ -7,7 +7,7 @@ namespace RA.Utilities.Api.Mapper;
 /// Provides static helper methods for creating standardized, successful API responses
 /// wrapped in the <see cref="RA.Utilities.Api.Results.SuccessResponse{T}"/> model.
 /// </summary>
-public static class SuccessResponse
+public static class SuccessResult
 {
     /// <summary>
     /// Creates a new <see cref="IResult"/> object that represents a 200 OK response with a payload.
@@ -36,7 +36,7 @@ public static class SuccessResponse
     /// </summary>
     /// <typeparam name="TResult">The type of the result.</typeparam>
     /// <param name="results">The result object.</param>
-    public static IResult Created<TResult>(TResult results) where TResult : new() =>
+    public static IResult Created<TResult>(TResult results) =>
         Microsoft.AspNetCore.Http.Results.Created(string.Empty, new SuccessResponse<TResult>(results));
 
     /// <summary>
@@ -45,7 +45,7 @@ public static class SuccessResponse
     /// <typeparam name="TResult">The type of the result.</typeparam>
     /// <param name="route">The URI at which the content has been created.</param>
     /// <param name="results">The result object.</param>
-    public static IResult Created<TResult>(string route, TResult results) where TResult : new() =>
+    public static IResult Created<TResult>(string route, TResult results) =>
         Microsoft.AspNetCore.Http.Results.Created(route, new SuccessResponse<TResult>(results));
 
     /// <summary>
@@ -55,7 +55,7 @@ public static class SuccessResponse
     /// <param name="routeName">The name of the route to use for generating the URL.</param>
     /// <param name="routeValues">The route data to use for generating the URL.</param>
     /// <param name="results">The result object.</param>
-    public static IResult CreatedAtRoute<TResult>(string routeName, object routeValues, TResult results) where TResult : new() =>
+    public static IResult CreatedAtRoute<TResult>(string routeName, object routeValues, TResult results) =>
         Microsoft.AspNetCore.Http.Results.CreatedAtRoute(
             routeName: routeName,
             routeValues: routeValues,
@@ -68,7 +68,7 @@ public static class SuccessResponse
     /// <typeparam name="TResult">The type of the result.</typeparam>
     /// <param name="routeName">The name of the route to use for generating the URL.</param>
     /// <param name="routeValues">The route data to use for generating the URL.</param>
-    public static IResult CreatedAtRoute<TResult>(string routeName, object routeValues) where TResult : new() =>
+    public static IResult CreatedAtRoute<TResult>(string routeName, object routeValues) =>
         Microsoft.AspNetCore.Http.Results.CreatedAtRoute(
             routeName: routeName,
             routeValues: routeValues
@@ -93,7 +93,7 @@ public static class SuccessResponse
     /// </summary>
     /// <typeparam name="TResult">The type of the result.</typeparam>
     /// <param name="results">The result object.</param>
-    public static IResult Accepted<TResult>(TResult results) where TResult : new() =>
+    public static IResult Accepted<TResult>(TResult results) =>
         Microsoft.AspNetCore.Http.Results.Accepted(string.Empty, new SuccessResponse<TResult>(results));
 
     /// <summary>
@@ -103,7 +103,7 @@ public static class SuccessResponse
     /// <param name="route">The URI with the location at which the status of requested content can be monitored.</param>
     /// <param name="results">The result object.</param>
     /// <returns>An <see cref="IResult"/> representing the HTTP 202 Accepted response.</returns>
-    public static IResult Accepted<TResult>(string route, TResult results) where TResult : new() =>
+    public static IResult Accepted<TResult>(string route, TResult results) =>
         Microsoft.AspNetCore.Http.Results.Accepted(route, new SuccessResponse<TResult>(results));
 
     /// <summary>

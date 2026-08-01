@@ -169,12 +169,12 @@ This keeps your `Program.cs` clean and your endpoint definitions organized by fe
 
 ### 3. Standardized Success Response Helpers
 
-To complement the standardized error responses, this package provides the `SuccessResponse` static class. It offers convenient helper methods for creating consistent success `IResult` objects (like `200 OK` and `201 Created`) that are automatically wrapped in the `SuccessResponse<T>` model from `RA.Utilities.Api.Results`.
+To complement the standardized error responses, this package provides the `SuccessResult` static class. It offers convenient helper methods for creating consistent success `IResult` objects (like `200 OK` and `201 Created`) that are automatically wrapped in the `SuccessResponse<T>` model from `RA.Utilities.Api.Results`.
 
 This ensures that your successful API responses follow the same structured format as your error responses, providing a predictable contract for your API consumers.
 
 #### Available Helpers
-The SuccessResponse class provides helpers for the most common success status codes:
+The SuccessResult class provides helpers for the most common success status codes:
 
 * `Ok()`: Creates a `200 OK` response.
 * `Ok<T>(T result)`: Creates a `200 OK` response with a payload.
@@ -201,7 +201,7 @@ app.MapGet("/products/{id}", (int id) =>
     // return Results.Ok(new SuccessResponse<Product>(product));
 
     // You can write this:
-    return SuccessResponse.Ok(product);
+    return SuccessResult.Ok(product);
 });
 
 app.MapPost("/products", (Product product) => 
@@ -210,7 +210,7 @@ app.MapPost("/products", (Product product) =>
     var newProduct = new Product { Id = 123, Name = product.Name };
 
     // Creates a 201 Created response with a Location header and a structured body
-    return SuccessResponse.Created($"/products/{newProduct.Id}", newProduct);
+    return SuccessResult.Created($"/products/{newProduct.Id}", newProduct);
 });
 
 app.MapDelete("/products/{id}", (int id) => 
@@ -218,7 +218,7 @@ app.MapDelete("/products/{id}", (int id) =>
     // Logic to start a background job to delete the product...
 
     // Creates a 202 Accepted response, indicating the request has been accepted for processing
-    return SuccessResponse.Accepted();
+    return SuccessResult.Accepted();
 });
 
 app.MapPut("/products/{id}", (int id, Product product) =>
@@ -226,7 +226,7 @@ app.MapPut("/products/{id}", (int id, Product product) =>
     // Logic to update the product...
 
     // Creates a 204 No Content response, indicating success without a body
-    return SuccessResponse.NoContent();
+    return SuccessResult.NoContent();
 });
 ```
 
@@ -299,7 +299,7 @@ public class ProductEndpoints : IEndpoint
             Result<Product> result = service.GetProductById(id);
             
             // Match the result to an appropriate HTTP response
-            return result.Match(SuccessResponse.Ok, ErrorResultResponse.Result);
+            return result.Match(SuccessResult.Ok, ErrorResultResponse.Result);
         }).WithTags("Products");
     }
 }

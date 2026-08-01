@@ -50,7 +50,7 @@ public static class ErrorResultMapper
             (
                 exception.EntityName,
                 exception.EntityValue,
-                exception.Message
+                errorMessage: exception.Message
             ),
             exception.ErrorCode,
             exception.Message
