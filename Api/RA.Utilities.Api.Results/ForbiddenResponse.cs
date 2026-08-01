@@ -8,6 +8,19 @@ namespace RA.Utilities.Api.Results;
 public class ForbiddenResponse : Response<ErrorResult>
 {
     /// <summary>
+    /// Initializes a new instance of the <see cref="ForbiddenResponse"/> class with a custom error code and message.
+    /// </summary>
+    /// <param name="errorCode">The response code.</param>
+    /// <param name="errorMessage">The response message.</param>
+    public ForbiddenResponse(int errorCode, string errorMessage)
+    {
+        ResponseCode = errorCode;
+        ResponseMessage = errorMessage;
+        ResponseType = ResponseType.Forbidden;
+        Result = null;
+    }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="ForbiddenResponse"/> class.
     /// </summary>
     /// <param name="result">The error result details.</param>

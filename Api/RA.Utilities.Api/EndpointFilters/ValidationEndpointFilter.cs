@@ -82,8 +82,8 @@ public class ValidationEndpointFilter<TModel> : IEndpointFilter where TModel : c
     /// <returns>A new instance of <see cref="BadRequestException"/> containing the details of the validation errors.</returns>
     private static BadRequestException CreateValidationErrorResult(ValidationFailure[] validationFailures)
     {
-        ValidationErrors[] validationErrors = [.. validationFailures.Select(f => new ValidationErrors
-        {
+        ValidationError[] validationErrors = [.. validationFailures.Select(f => new ValidationError
+        (f.ErrorMessage) {
             PropertyName = f.PropertyName,
             ErrorMessage = f.ErrorMessage,
             AttemptedValue = f.AttemptedValue,

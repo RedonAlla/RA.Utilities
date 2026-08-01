@@ -8,6 +8,22 @@ namespace RA.Utilities.Api.Results;
 public sealed class UnprocessableResponse : Response<ErrorResult>
 {
     /// <summary>
+    /// Initializes a new instance of the <see cref="UnprocessableResponse"/> class with default unprocessable entity details.
+    /// </summary>
+    /// <param name="responseCode">The response code, defaulting to <see cref="BaseResponseCode.Unprocessable"/>.</param>
+    /// <param name="responseMessage">The response message, defaulting to a generic unprocessable message.</param>
+    public UnprocessableResponse(
+        int responseCode = BaseResponseCode.Unprocessable,
+        string responseMessage = BaseResponseMessages.Unprocessable
+    )
+    {
+        ResponseCode = responseCode;
+        ResponseMessage = responseMessage;
+        ResponseType = ResponseType.Unprocessable;
+        Result = default;
+    }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="UnprocessableResponse"/> class.
     /// </summary>
     /// <param name="result">The error result details.</param>

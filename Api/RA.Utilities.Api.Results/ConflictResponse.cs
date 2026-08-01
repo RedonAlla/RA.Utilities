@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using RA.Utilities.Core.Constants;
 
 namespace RA.Utilities.Api.Results;
@@ -36,28 +37,30 @@ public class ConflictResult : ErrorResult
     /// </summary>
     /// <param name="entity">The type of resource causing the conflict.</param>
     /// <param name="value">The specific value that caused the conflict.</param>
-    /// <param name="errorCode">The specific error code.</param>
-    /// <param name="message">The error message.</param>
+    /// <param name="errorCode">The machine-readable error code associated with this specific error.</param>
+    /// <param name="errorMessage">The human-readable description of the error.</param>
     public ConflictResult(
         string entity,
         object value,
-        string errorCode = nameof(BaseResponseCode.Conflict),
-        string message = BaseResponseMessages.Conflict
+        string errorMessage,
+        string? errorCode = null
     )
     {
         Entity = entity;
         Value = value;
         ErrorCode = errorCode;
-        ErrorMessage = message;
+        ErrorMessage = errorMessage;
     }
 
     /// <summary>
     /// The type of resource causing the conflict (e.g., "User").
     /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string Entity { get; set; }
 
     /// <summary>
     /// The specific value that caused the conflict (e.g., "test@example.com").
     /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public object Value { get; set; }
 }

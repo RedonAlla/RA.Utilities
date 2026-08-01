@@ -23,33 +23,33 @@ public static class ErrorResultResponse
     public static IResult Result(Exception exception) => exception switch
     {
         BadRequestException badRequestException => Microsoft.AspNetCore.Http.Results.Json(
-            data: ErrorResultMapper.ToBadRequestResponse(badRequestException),
-            statusCode: badRequestException.ResponseCode
+            data: ErrorResultMapper.ToResponse(badRequestException),
+            statusCode: StatusCodes.Status400BadRequest
         ),
         ConflictException conflictException => Microsoft.AspNetCore.Http.Results.Json(
-            ErrorResultMapper.MapToConflictResponse(conflictException),
-            statusCode: conflictException.ResponseCode
+            ErrorResultMapper.ToResponse(conflictException),
+            statusCode: StatusCodes.Status409Conflict
         ),
         UnprocessableException unprocessableException => Microsoft.AspNetCore.Http.Results.Json(
-            ErrorResultMapper.MapToUnprocessableResponse(unprocessableException),
-            statusCode: unprocessableException.ResponseCode
+            ErrorResultMapper.ToResponse(unprocessableException),
+            statusCode: StatusCodes.Status422UnprocessableEntity
         ),
         NotFoundException notFoundException => Microsoft.AspNetCore.Http.Results.Json(
-            ErrorResultMapper.MapToNotFoundResponse(notFoundException),
-            statusCode: notFoundException.ResponseCode
+            ErrorResultMapper.ToResponse(notFoundException),
+            statusCode: StatusCodes.Status404NotFound
         ),
         UnauthorizedException baseException => Microsoft.AspNetCore.Http.Results.Json(
-            data: ErrorResultMapper.MapToUnauthorizedResponse(baseException),
-            statusCode: baseException.ResponseCode
+            data: ErrorResultMapper.ToResponse(baseException),
+            statusCode: StatusCodes.Status401Unauthorized
         ),
         ForbiddenException forbiddenException => Microsoft.AspNetCore.Http.Results.Json(
-            data: ErrorResultMapper.MapToForbiddenResponse(forbiddenException),
-            statusCode: forbiddenException.ResponseCode
+            data: ErrorResultMapper.ToResponse(forbiddenException),
+            statusCode: StatusCodes.Status403Forbidden
         ),
         RaBaseException baseException => Microsoft.AspNetCore.Http.Results.Json(
-            data: ErrorResultMapper.ToGeneralErrorResponse(baseException),
-            statusCode: baseException.ResponseCode
+            data: ErrorResultMapper.ToResponse(baseException),
+            statusCode: StatusCodes.Status500InternalServerError
         ),
-        _ => Microsoft.AspNetCore.Http.Results.Json(new ErrorResponse(), statusCode: BaseResponseCode.InternalServerError)
+        _ => Microsoft.AspNetCore.Http.Results.Json(new ErrorResponse(), statusCode: StatusCodes.Status500InternalServerError)
     };
 }

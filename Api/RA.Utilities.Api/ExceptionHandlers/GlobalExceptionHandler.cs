@@ -39,7 +39,7 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
     /// </remarks>
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
-        logger.LogError(exception, "An unhandled exception has occurred: {Message}", exception.Message);
+        logger.LogError(exception, "An exception has occurred: {Message}", exception.Message);
 
         IResult problemResult = ErrorResultResponse.Result(exception);
         await problemResult.ExecuteAsync(httpContext);

@@ -8,6 +8,19 @@ namespace RA.Utilities.Api.Results;
 public class UnauthorizedResponse : Response<ErrorResult>
 {
     /// <summary>
+    /// Initializes a new instance of the <see cref="UnauthorizedResponse"/> class with a custom error code and message.
+    /// </summary>
+    /// <param name="errorCode">The response code.</param>
+    /// <param name="errorMessage">The response message.</param>
+    public UnauthorizedResponse(int errorCode, string errorMessage)
+    {
+        ResponseCode = errorCode;
+        ResponseMessage = errorMessage;
+        ResponseType = ResponseType.Unauthorized;
+        Result = null;
+    }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="UnauthorizedResponse"/> class.
     /// </summary>
     public UnauthorizedResponse()
@@ -22,16 +35,12 @@ public class UnauthorizedResponse : Response<ErrorResult>
     /// Initializes a new instance of the <see cref="UnauthorizedResponse"/> class with custom response code and message.
     /// </summary>
     /// <param name="result">The error result details.</param>
-    /// <param name="responseCode">The response code.</param>
-    /// <param name="responseMessage">The response message.</param>
     public UnauthorizedResponse(
-        ErrorResult? result,
-        int responseCode = BaseResponseCode.Unauthorized,
-        string responseMessage = BaseResponseMessages.Unauthorized
+        ErrorResult? result
     )
     {
-        ResponseCode = responseCode;
-        ResponseMessage = responseMessage;
+        ResponseCode = BaseResponseCode.Unauthorized;
+        ResponseMessage = BaseResponseMessages.Unauthorized;
         ResponseType = ResponseType.Unauthorized;
         Result = result;
     }

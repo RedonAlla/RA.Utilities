@@ -11,7 +11,7 @@ public class ErrorResult
     /// The machine-readable error code associated with this specific error.
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string ErrorCode { get; set; }
+    public string? ErrorCode { get; set; }
 
     /// <summary>
     /// The human-readable description of the error.

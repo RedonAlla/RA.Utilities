@@ -99,8 +99,10 @@ A request to `/products/0` would automatically return a 404 response with the fo
   "responseType": "NotFound",
   "responseMessage": "Product with value '0' not found.",
   "result": {
-    "entityName": "Product",
-    "entityValue": 0
+    "entity": "Product",
+    "value": 0,
+    "errorCode": "NotFound",
+    "errorMessage": "Product with value '0' not found."
   }
 }
 ```
