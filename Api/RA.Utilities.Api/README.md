@@ -115,7 +115,7 @@ As your API grows, defining all routes in `Program.cs` can become messy. This pa
 
 1.  **Create an Endpoint Class**: Create a class that implements the `IEndpoint` interface.
 2.  **Define Routes**: Inside the `MapEndpoint` method, define your routes just as you would in `Program.cs`.
-3.  **Register Services**: In `Program.cs`, use the `AddEndpoints()` extension method to scan your assembly and register all `IEndpoint` implementations with the DI container.
+3.  **Register Services**: In `Program.cs`, use the `AddEndpoints(assembly)` extension method to scan your assembly and register all `IEndpoint` implementations with the DI container.
 4.  **Map Endpoints**: After building the app, use the `MapEndpoints()` extension method to execute the route mapping for all registered endpoints.
 
 #### Usage
@@ -155,7 +155,7 @@ The `MapEndpoints` method scans the specified assembly (or the calling assembly 
 var builder = WebApplication.CreateBuilder(args);
 
 // Scans the assembly and registers all IEndpoint implementations with DI
-builder.Services.AddEndpoints();
+builder.Services.AddEndpoints(typeof(Program).Assembly);
 
 var app = builder.Build();
 

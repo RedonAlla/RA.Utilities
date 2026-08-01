@@ -1,5 +1,27 @@
 # RA.Utilities.Api Release Notes
 
+## Version 10.0.6
+![Date Badge](https://img.shields.io/badge/Publish-02%20August%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-v10.0.6-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api/10.0.6)
+
+### ✨ New Features & Improvements
+
+*   **New Exception Mappings**: `ErrorResultMapper` and `ErrorResultResponse` now handle `TooManyRequestsException` (429), `ServiceUnavailableException` (503), and `GatewayTimeoutException` (504) with their dedicated response types.
+
+*   **Extension Methods Added**: `AddRaExceptionHandling()` and `UseRaExceptionHandling()` are now available as convenience extension methods on `IServiceCollection` and `IApplicationBuilder`, matching the documented API.
+
+*   **Improved Logging**: `GlobalExceptionHandler` now logs client errors (4xx) at `Warning` level and server errors (5xx) at `Error` level, reducing log noise from expected client behavior.
+
+*   **Consistency & Polish**:
+    *   Renamed static helper class `SuccessResponse` → `SuccessResult` to resolve the naming collision with `SuccessResponse<T>` from `RA.Utilities.Api.Results`.
+    *   Removed unnecessary `where TResult : new()` constraints on `SuccessResult` helper methods.
+    *   `MapEndpoints` now returns `WebApplication` instead of `IApplicationBuilder` for better fluent chaining.
+    *   Error dispatcher now uses `BaseResponseCode` constants instead of hardcoded `StatusCodes` literals.
+    *   Removed stale TODO comments and `<remarks>` blocks from `EndpointExtensions`.
+
+*   **Refined Documentation**: Updated `README.md` to reflect all API changes, including corrected method signatures and new response type mappings.
+
+
 ## Version 10.0.5
 ![Date Badge](https://img.shields.io/badge/Publish-25%20April%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-v10.0.5-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api/10.0.5)
@@ -73,13 +95,13 @@ This release modernizes the `RA.Utilities.Api` package, introducing a suite of t
     *   Provides a clean pattern for organizing API endpoints into separate files using the `IEndpoint` interface.
     *   Keeps `Program.cs` clean and maintainable by automatically discovering and registering all endpoint implementations in your project.
 
-*   **Standardized Success Response Helpers (`SuccessResponse`)**:
-    *   Added a new static `SuccessResponse` class with helper methods (`Ok`, `Created`, `NoContent`, etc.).
+*   **Standardized Success Response Helpers (`SuccessResult`)**:
+    *   Added a new static `SuccessResult` class with helper methods (`Ok`, `Created`, `NoContent`, etc.).
     *   These helpers simplify the creation of successful API responses (e.g., `Ok`, `Created`, `Accepted`, `NoContent`) and automatically wrap the payload in the standard `SuccessResponse<T>` model, ensuring consistency with error responses.
 
 *   **Seamless `Result<T>` Integration**:
-    *   The `SuccessResponse` helpers and the exception handling middleware work together to provide a clean way to handle the `Result<T>` type from `RA.Utilities.Core`.
-    *   Use the `Match` method on a `Result` to map success outcomes to `SuccessResponse.Ok()` and failure outcomes directly to an exception that the middleware will handle.
+    *   The `SuccessResult` helpers and the exception handling middleware work together to provide a clean way to handle the `Result<T>` type from `RA.Utilities.Core`.
+    *   Use the `Match` method on a `Result` to map success outcomes to `SuccessResult.Ok()` and failure outcomes to `ErrorResultResponse.Result()`.
 
 *   **Comprehensive Documentation**:
     *   The `README.md` has been completely rewritten to provide clear, step-by-step instructions and usage examples for all major features.
@@ -92,7 +114,7 @@ Register the services in your `Program.cs`:
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRaExceptionHandling();
-builder.Services.AddEndpoints();
+builder.Services.AddEndpoints(typeof(Program).Assembly);
 
 var app = builder.Build();
 
