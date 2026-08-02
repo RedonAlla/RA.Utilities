@@ -1,8 +1,15 @@
 # RA.Utilities.Api.Results Release Notes
 
+> [!IMPORTANT]
+> This package is deprecated and has been moved to [RA.Utilities.Api](https://www.nuget.org/packages/RA.Utilities.Api/). All response model types are now available in the `RA.Utilities.Api.Results` namespace within the `RA.Utilities.Api` package.
+
 ## Version 10.0.3
 ![Date Badge](https://img.shields.io/badge/Publish-02%20August%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-v10.0.3-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api.Results/10.0.3)
+
+### ⚠️ Deprecation Notice
+
+*   **Package Deprecated**: This package is deprecated. All response model types have been moved to [RA.Utilities.Api](https://www.nuget.org/packages/RA.Utilities.Api/) and are available under the `RA.Utilities.Api.Results` namespace. Please migrate to `RA.Utilities.Api` for future updates.
 
 ### ✨ New Features & Improvements
 

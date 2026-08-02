@@ -22,8 +22,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="../../Core/RA.Utilities.Core.Constants/RA.Utilities.Core.Constants.csproj" />
 		<ProjectReference Include="../../Core/RA.Utilities.Core.Exceptions/RA.Utilities.Core.Exceptions.csproj" />
-		<ProjectReference Include="../RA.Utilities.Api.Results/RA.Utilities.Api.Results.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

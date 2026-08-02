@@ -15,9 +15,12 @@ This is the central package for the API layer. It acts as the glue, providing:
 * **Endpoint Registration**: An `IEndpoint` interface and extension methods to help you organize your API routes into separate files, keeping `Program.cs` clean.
 * **Standardized Success Responses**: Helper methods (`SuccessResult.Ok()`, `SuccessResult.Created()`) to easily create consistent success responses that match the structure of the error responses.
 
-## `RA.Utilities.Api.Results`
-This package contains the C# models for the standardized API responses.
-It defines the structure for both success (`SuccessResponse<T>`) and various error responses (`BadRequestResponse`, `NotFoundResponse`, `ConflictResponse`). Its purpose is to ensure every response from your API has a predictable and consistent format.
+## `RA.Utilities.Api.Results` ⚠️ Deprecated
+
+> [!IMPORTANT]
+> This package is deprecated and has been moved to [RA.Utilities.Api](https://www.nuget.org/packages/RA.Utilities.Api/). All response model types are now available in the `RA.Utilities.Api.Results` namespace within the `RA.Utilities.Api` package.
+
+This section is kept for historical reference. New projects should use `RA.Utilities.Api` which now includes all response model types.
 
 ## `RA.Utilities.Api.Middlewares`
 As the name suggests, this project holds reusable ASP.NET Core middleware.

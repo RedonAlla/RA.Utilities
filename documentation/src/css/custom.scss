@@ -210,8 +210,25 @@ li {
 
   &.nav_session.ra_utilities_api_results {
     & > div {
-      & > a::before {
-        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 2048 2048'%3E%3Cpath d='M384 1792v-128h1664v128H384zM0 384V256h128v128H0zm0 1024v-128h128v128H0zm384 0v-128h1664v128H384zm0-1152h1664v128H384V256zm0 512V640h1664v128H384z'/%3E%3C/svg%3E");
+      & > a {
+        text-decoration: line-through;
+        &::before {
+          mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 2048 2048'%3E%3Cpath d='M384 1792v-128h1664v128H384zM0 384V256h128v128H0zm0 1024v-128h128v128H0zm384 0v-128h1664v128H384zm0-1152h1664v128H384V256zm0 512V640h1664v128H384z'/%3E%3C/svg%3E");
+        }
+        & > span {
+        &::after {
+          content: 'Deprecated';
+          font-size: 0.7rem;
+          font-weight: 600;
+          background: #ef4444;
+          color: #fff;
+          padding: 0.05rem 0.35rem;
+          border-radius: 3px;
+          margin-left: 0.5rem;
+          vertical-align: middle;
+          float: right; 
+        }
+      }
       }
     }
   }

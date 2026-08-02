@@ -6,6 +6,9 @@
 [![Documentation](https://img.shields.io/badge/Documentation-read-brightgreen.svg?logo=readthedocs&logoColor=fff)](https://redonalla.github.io/RA.Utilities/nuget-packages/api/RA.Utilities.Api.Results/)
 [![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
 
+> [!IMPORTANT]
+> This package is deprecated and has been moved to [RA.Utilities.Api](https://www.nuget.org/packages/RA.Utilities.Api/). All response model types are now available in the `RA.Utilities.Api.Results` namespace within the `RA.Utilities.Api` package.
+
 `RA.Utilities.Api.Results` provides a standardized set of models for creating consistent API responses within the RA.Utilities ecosystem.
 This package includes generic wrappers for success, error, and domain-specific failure scenarios, helping to streamline API development and improve client-side handling.
 

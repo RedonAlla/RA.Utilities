@@ -4,6 +4,10 @@
 ![Date Badge](https://img.shields.io/badge/Publish-02%20August%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-v10.0.6-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api/10.0.6)
 
+### ⚠️ Breaking Changes
+
+*   **Response Models Consolidated**: All response model types from the now-deprecated `RA.Utilities.Api.Results` package have been merged into this package under the `RA.Utilities.Api.Results` namespace. The `RA.Utilities.Api.Results` NuGet package is no longer a dependency — update your package references and remove any direct dependency on `RA.Utilities.Api.Results`.
+
 ### ✨ New Features & Improvements
 
 *   **New Exception Mappings**: `ErrorResultMapper` and `ErrorResultResponse` now handle `TooManyRequestsException` (429), `ServiceUnavailableException` (503), and `GatewayTimeoutException` (504) with their dedicated response types.
@@ -13,13 +17,13 @@
 *   **Improved Logging**: `GlobalExceptionHandler` now logs client errors (4xx) at `Warning` level and server errors (5xx) at `Error` level, reducing log noise from expected client behavior.
 
 *   **Consistency & Polish**:
-    *   Renamed static helper class `SuccessResponse` → `SuccessResult` to resolve the naming collision with `SuccessResponse<T>` from `RA.Utilities.Api.Results`.
+    *   Renamed static helper class `SuccessResponse` → `SuccessResult` to resolve the naming collision with `SuccessResponse<T>`.
     *   Removed unnecessary `where TResult : new()` constraints on `SuccessResult` helper methods.
     *   `MapEndpoints` now returns `WebApplication` instead of `IApplicationBuilder` for better fluent chaining.
     *   Error dispatcher now uses `BaseResponseCode` constants instead of hardcoded `StatusCodes` literals.
     *   Removed stale TODO comments and `<remarks>` blocks from `EndpointExtensions`.
 
-*   **Refined Documentation**: Updated `README.md` to reflect all API changes, including corrected method signatures and new response type mappings.
+*   **Refined Documentation**: Updated `README.md` to reflect all API changes, including corrected method signatures, new response type mappings, and the consolidation of response models.
 
 
 ## Version 10.0.5

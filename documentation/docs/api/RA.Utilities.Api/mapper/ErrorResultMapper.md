@@ -2,13 +2,13 @@
 Namespace: RA.Utilities.Api.Mapper
 ```
 
-The `ErrorResultMapper` is a static helper class responsible for the low-level task of **transforming** specific exception types from the [`RA.Utilities.Core.Exceptions`](../../../core/RA.Utilities.Core.Exceptions/index.mdx) package into their corresponding standardized response models from [`RA.Utilities.Api.Results`](../../RA.Utilities.Api.Results/index.mdx).
+The `ErrorResultMapper` is a static helper class responsible for the low-level task of **transforming** specific exception types from the [`RA.Utilities.Core.Exceptions`](../../../core/RA.Utilities.Core.Exceptions/index.mdx) package into their corresponding standardized response models from `RA.Utilities.Api` ([`RA.Utilities.Api.Results`](../Results/index.mdx) namespace).
 
 ## 🎯 Purpose
 
 The primary purpose of `ErrorResultMapper` is to centralize the logic for converting exception data into structured DTOs (Data Transfer Objects).
 For example, it takes a [`NotFoundException`](../../../core/RA.Utilities.Core.Exceptions/NotFoundException.md) and creates a
-[`NotFoundResponse`](../../RA.Utilities.Api.Results/NotFoundResponse.md) object, correctly populating the `Entity` and `Value` fields.
+[`NotFoundResponse`](../Results/NotFoundResponse.md) object, correctly populating the `Entity` and `Value` fields.
 
 This class acts as an internal "factory" for error response bodies.
 It is consumed by other helpers, most notably the [`ErrorResultResponse`](./ErrorResultResponse.md) class, to ensure that all error responses are created consistently.
@@ -71,13 +71,13 @@ The class provides a dedicated mapping method for each custom exception type:
   Maps an `UnprocessableException` to an `UnprocessableResponse`, populating the `ErrorResult` with the error code and message.
 
 - **`ToResponse(TooManyRequestsException ex)`**:
-  Maps a `TooManyRequestsException` to a [`TooManyRequestsResponse`](../../RA.Utilities.Api.Results/TooManyRequestsResponse.md) (HTTP 429), populating the `ErrorResult` with the error code and message.
+  Maps a `TooManyRequestsException` to a [`TooManyRequestsResponse`](../Results/TooManyRequestsResponse.md) (HTTP 429), populating the `ErrorResult` with the error code and message.
 
 - **`ToResponse(ServiceUnavailableException ex)`**:
-  Maps a `ServiceUnavailableException` to a [`ServiceUnavailableResponse`](../../RA.Utilities.Api.Results/ServiceUnavailableResponse.md) (HTTP 503), populating the `ErrorResult` with the error code and message.
+  Maps a `ServiceUnavailableException` to a [`ServiceUnavailableResponse`](../Results/ServiceUnavailableResponse.md) (HTTP 503), populating the `ErrorResult` with the error code and message.
 
 - **`ToResponse(GatewayTimeoutException ex)`**:
-  Maps a `GatewayTimeoutException` to a [`GatewayTimeoutResponse`](../../RA.Utilities.Api.Results/GatewayTimeoutResponse.md) (HTTP 504), populating the `ErrorResult` with the error code and message.
+  Maps a `GatewayTimeoutException` to a [`GatewayTimeoutResponse`](../Results/GatewayTimeoutResponse.md) (HTTP 504), populating the `ErrorResult` with the error code and message.
 
 - **`ToGeneralErrorResponse(RaBaseException ex)`**:
   Maps any other `RaBaseException` to a generic `ErrorResponse`, using the exception's message and error code.

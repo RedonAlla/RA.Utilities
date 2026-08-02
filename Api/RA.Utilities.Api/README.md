@@ -40,9 +40,10 @@ Or through the NuGet Package Manager in Visual Studio.
 
 ## 🔗 Dependencies
 
--   [`RA.Utilities.Api.Results`](https://redonalla.github.io/RA.Utilities/nuget-packages/api/RA.Utilities.Api.Results/)
+-   [`RA.Utilities.Core.Constants`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/RA.Utilities.Core.Constants/)
 -   [`RA.Utilities.Core.Exceptions`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/CoreExceptions/)
 -   [`Microsoft.AspNetCore.App`](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/metapackage-app)
+-   [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/)
 
 ---
 
@@ -55,7 +56,7 @@ The `GlobalExceptionHandler` intercepts any unhandled exceptions thrown within y
 **How it works:**
 
 - It catches `NotFoundException`, `ConflictException`, and `BadRequestException` from the `RA.Utilities.Core.Exceptions` package.
-- It maps them to `NotFoundResponse`, `ConflictResponse`, and `BadRequestResponse` from the `RA.Utilities.Api.Results` package.
+- It maps them to the built-in `NotFoundResponse`, `ConflictResponse`, and `BadRequestResponse` types (namespace `RA.Utilities.Api.Results`).
 - For any other unhandled exception, it returns a generic `ErrorResponse` (HTTP 500) to avoid leaking sensitive information.
 - It logs every exception for debugging purposes.
 
@@ -169,7 +170,7 @@ This keeps your `Program.cs` clean and your endpoint definitions organized by fe
 
 ### 3. Standardized Success Response Helpers
 
-To complement the standardized error responses, this package provides the `SuccessResult` static class. It offers convenient helper methods for creating consistent success `IResult` objects (like `200 OK` and `201 Created`) that are automatically wrapped in the `SuccessResponse<T>` model from `RA.Utilities.Api.Results`.
+To complement the standardized error responses, this package provides the `SuccessResult` static class. It offers convenient helper methods for creating consistent success `IResult` objects (like `200 OK` and `201 Created`) that are automatically wrapped in the built-in `SuccessResponse<T>` model.
 
 This ensures that your successful API responses follow the same structured format as your error responses, providing a predictable contract for your API consumers.
 

@@ -41,9 +41,9 @@ const packages: Package[] = [
   },
   {
     name: 'RA.Utilities.Api.Results',
-    shortName: 'Api.Results',
-    description: 'Pre-built typed JSON responses (Success, Error, NotFound, Conflict...) with consistent envelope format.',
-    link: '/nuget-packages/api/RA.Utilities.Api.Results/',
+    shortName: 'Api.Results ⚠️',
+    description: 'Deprecated — merged into RA.Utilities.Api. All response types now available under the RA.Utilities.Api.Results namespace.',
+    link: '/nuget-packages/api/RA.Utilities.Api/',
     layer: 'api',
   },
   {

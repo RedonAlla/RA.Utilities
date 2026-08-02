@@ -10,7 +10,7 @@ Instead of the more verbose `AddEndpointFilter<ValidationEndpointFilter<TModel>>
 
 This extension method for `RouteHandlerBuilder` adds an endpoint filter that automatically validates a model of type `TModel` using `FluentValidation`. If validation fails, the request is short-circuited, and a standardized validation error is returned before the endpoint handler is ever executed.
 
-On failure, the filter returns an [**HTTP `400 Bad Request`**](../../RA.Utilities.Api.Results/BadRequestResponse.md) with a structured JSON body containing the validation errors, providing a consistent and predictable error-handling experience for your API consumers.
+On failure, the filter returns an [**HTTP `400 Bad Request`**](../Results/BadRequestResponse.md) with a structured JSON body containing the validation errors, providing a consistent and predictable error-handling experience for your API consumers.
 
 ```json showLineNumbers
 {

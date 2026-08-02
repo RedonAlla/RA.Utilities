@@ -18,7 +18,6 @@ const treeData = {
       children: [
         { name: 'RA.Utilities.Api', icon: 'csproj', children: [] },
         { name: 'RA.Utilities.Api.Middlewares', icon: 'csproj', children: [] },
-        { name: 'RA.Utilities.Api.Results', icon: 'csproj', children: [] },
         { name: 'RA.Utilities.Authentication.JwtBearer', icon: 'csproj', children: [] },
         { name: 'RA.Utilities.Authorization', icon: 'csproj', children: [] },
         { name: 'RA.Utilities.OpenApi', icon: 'csproj', children: [] },
