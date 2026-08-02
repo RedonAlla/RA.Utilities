@@ -1,6 +1,6 @@
 ---
 title: RA.Utilities.Api
-slug: /api/RA.Utilities.Api
+slug: /api/RA.Utilities.Api/
 sidebar_position: 1
 sidebar_class_name: nav_session ra_utilities_api
 ---
@@ -32,7 +32,7 @@ This package is designed to solve two common challenges in API development:
 1.  **Consistent Error Handling**: It provides a middleware that automatically catches custom exceptions from
 [`RA.Utilities.Core.Exceptions`](../../core/RA.Utilities.Core.Exceptions/index.mdx)
 (like [`NotFoundException`](../../core/RA.Utilities.Core.Exceptions/NotFoundException.md), [`ConflictException`](../../core/RA.Utilities.Core.Exceptions/ConflictException.md))
-and transforms them into standardized JSON responses using the built-in response models (see [Results](../RA.Utilities.Api/Results)).
+and transforms them into standardized JSON responses using the built-in response models (see [Results](./Results)).
 2.  **Clean Endpoint Organization**: It offers a simple pattern for organizing API endpoints into separate files, keeping your `Program.cs` clean and your routes maintainable as the application grows.
 
 By using this package, you can significantly reduce boilerplate code and enforce consistency across all your API endpoints.

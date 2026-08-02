@@ -1,0 +1,32 @@
+---
+title: Response Models
+sidebar_class_name: nav_session
+---
+
+import DocCardList from '@theme/DocCardList';
+
+# Response Models
+
+The `RA.Utilities.Api.Results` namespace contains a comprehensive set of standardized response models for ASP.NET Core APIs. These types are included directly in the `RA.Utilities.Api` package (v10.0.6+) and were previously available as a separate `RA.Utilities.Api.Results` NuGet package.
+
+## Available Response Types
+
+All response types inherit from `Response<T>` and provide a consistent JSON envelope with `responseCode`, `responseType`, `responseMessage`, and `result` properties.
+
+| Response Class | HTTP Code | ResponseType | Result Type |
+|---|---|---|---|
+| `SuccessResponse<T>` | 200 | `Success` | `T` |
+| `BadRequestResponse` | 400 | `BadRequest` | `BadRequestResult[]` |
+| `UnauthorizedResponse` | 401 | `Unauthorized` | `ErrorResult` |
+| `ForbiddenResponse` | 403 | `Forbidden` | `ErrorResult` |
+| `NotFoundResponse` | 404 | `NotFound` | `NotFoundResult` |
+| `ConflictResponse` | 409 | `Conflict` | `ConflictResult` |
+| `UnprocessableResponse` | 422 | `Unprocessable` | `ErrorResult` |
+| `TooManyRequestsResponse` | 429 | `TooManyRequests` | `ErrorResult` |
+| `ErrorResponse` | 500 | `Error` | `ErrorResult` |
+| `ServiceUnavailableResponse` | 503 | `ServiceUnavailable` | `ErrorResult` |
+| `GatewayTimeoutResponse` | 504 | `GatewayTimeout` | `ErrorResult` |
+
+<br />
+
+<DocCardList />
