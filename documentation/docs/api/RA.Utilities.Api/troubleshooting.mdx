@@ -1,0 +1,177 @@
+---
+title: Troubleshooting & FAQ
+sidebar_position: 99
+---
+
+# Troubleshooting & FAQ
+
+## Common Issues
+
+### After upgrading, I get "The type or namespace name 'SuccessResponse' does not exist"
+
+**Cause**: In v10.0.6, the static helper class `SuccessResponse` was renamed to `SuccessResult` to avoid collision with the generic response model `SuccessResponse<T>`.
+
+**Fix**: Update your using directives and method calls:
+
+```csharp
+// ❌ v10.0.5 and earlier
+using RA.Utilities.Api.Mapper;
+return SuccessResponse.Ok(product);
+
+// ✅ v10.0.6
+using RA.Utilities.Api.Mapper;
+return SuccessResult.Ok(product);
+```
+
+### I removed the `RA.Utilities.Api.Results` NuGet package and now my code won't compile
+
+**Cause**: In v10.0.6, all response model types were merged from `RA.Utilities.Api.Results` into `RA.Utilities.Api`. The types are now in the same namespace (`RA.Utilities.Api.Results`) but ship with the `RA.Utilities.Api` package.
+
+**Fix**: Remove the `RA.Utilities.Api.Results` package reference and ensure `RA.Utilities.Api` (v10.0.6+) is referenced. No code changes are needed — the `using RA.Utilities.Api.Results;` directive still works.
+
+```bash
+# Remove the old package
+dotnet remove package RA.Utilities.Api.Results
+
+# Ensure you have the latest Api package
+dotnet add package RA.Utilities.Api --version 10.0.6
+```
+
+### GlobalExceptionHandler is not catching my exceptions
+
+**Cause**: Either the handler wasn't registered, the middleware is ordered incorrectly, or an earlier middleware swallowed the exception.
+
+**Fix**: Ensure both registration calls are present and the exception handler is placed **early** in the pipeline:
+
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+
+// ✅ Must be called to register the handler with DI
+builder.Services.AddRaExceptionHandling();
+
+var app = builder.Build();
+
+// ✅ Must be called early — before other middleware that might swallow exceptions
+app.UseRaExceptionHandling();
+
+// Other middleware and endpoint mappings go here...
+app.MapEndpoints();
+
+app.Run();
+```
+
+### `MapEndpoints()` is not discovering my endpoint classes
+
+**Cause**: The assembly scanning isn't finding your `IEndpoint` implementations. This usually happens when:
+- You forgot to call `AddEndpoints()` before `MapEndpoints()`
+- The assembly containing your endpoints wasn't passed to `AddEndpoints()`
+- Your endpoint class doesn't implement `IEndpoint` correctly
+
+**Fix**:
+
+```csharp
+// ✅ Pass the assembly that contains your IEndpoint implementations
+builder.Services.AddEndpoints(typeof(Program).Assembly);
+
+// Later, after building the app:
+app.MapEndpoints();
+```
+
+If your endpoints are in a different project, pass that project's assembly:
+
+```csharp
+builder.Services.AddEndpoints(typeof(MyFeatureProject.SomeEndpoint).Assembly);
+```
+
+### `Validate<T>()` filter returns 500 instead of 400 on validation failure
+
+**Cause**: The FluentValidation validators are not registered in the DI container.
+
+**Fix**: Register your validators with the DI container. The `ValidationEndpointFilter<T>` resolves `IValidator<T>` from DI:
+
+```csharp
+// Register all validators in the assembly
+builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
+```
+
+### My error response always returns 500 even though I'm throwing a specific exception
+
+**Cause**: The `GlobalExceptionHandler` only knows about exceptions that inherit from `RaBaseException`. If you're throwing a standard .NET exception, it will return a generic 500.
+
+**Fix**: Use the semantic exception types from `RA.Utilities.Core.Exceptions`:
+
+```csharp
+// ❌ Returns generic 500
+throw new Exception("Product not found");
+
+// ✅ Returns structured 404
+throw new NotFoundException(nameof(Product), productId);
+```
+
+### I get a NU1903 vulnerability warning for Microsoft.OpenApi
+
+**Cause**: The `RA.Utilities.OpenApi` package depends on `Microsoft.OpenApi 2.0.0` which has a known vulnerability.
+
+**Fix**: Add a `NoWarn` to your project file or suppress the specific warning:
+
+```xml
+<PropertyGroup>
+  <NoWarn>NU1903</NoWarn>
+</PropertyGroup>
+```
+
+Or update the `Microsoft.OpenApi` package to the latest patched version.
+
+---
+## FAQ
+
+### What's the difference between `throw` and `return` with exceptions?
+
+Both approaches work depending on your error handling style:
+
+- **`throw`**: Best when using `GlobalExceptionHandler` middleware. The exception propagates up and the handler catches it, logs it, and returns a structured response.
+
+- **`return` with `Result<T>`**: Best when using the functional `Result` pattern from `RA.Utilities.Core`. Use `.Match()` to map success/failure to `IResult`:
+
+```csharp
+return result.Match<IResult>(
+    success: product => SuccessResult.Ok(product),
+    failure: ErrorResultResponse.Result
+);
+```
+
+### Where can I find the response model types?
+
+All response model types live in the `RA.Utilities.Api.Results` namespace within the `RA.Utilities.Api` package:
+
+- `SuccessResponse<T>` — HTTP 200
+- `BadRequestResponse` — HTTP 400
+- `UnauthorizedResponse` — HTTP 401
+- `ForbiddenResponse` — HTTP 403
+- `NotFoundResponse` — HTTP 404
+- `ConflictResponse` — HTTP 409
+- `UnprocessableResponse` — HTTP 422
+- `TooManyRequestsResponse` — HTTP 429
+- `ErrorResponse` — HTTP 500
+- `ServiceUnavailableResponse` — HTTP 503
+- `GatewayTimeoutResponse` — HTTP 504
+
+### How do I add custom exception-to-response mappings?
+
+Extend the `ErrorResultResponse.Result` method or the `GlobalExceptionHandler`. For custom exceptions that inherit from `RaBaseException`, the existing switch expression maps them to `ErrorResponse` (500) by default. You can add a new case for your custom exception type.
+
+### Can I use RA.Utilities.Api without the GlobalExceptionHandler?
+
+Yes. Every feature is opt-in. You can use `IEndpoint` + `MapEndpoints` for endpoint organization, `SuccessResult` for consistent responses, and `Validate<T>()` for request validation — all independently of the exception handler.
+
+### Does the exception handler work with controller-based APIs?
+
+Yes. `GlobalExceptionHandler` implements `IExceptionHandler` (introduced in .NET 8) which works with both Minimal APIs and controller-based APIs. Call `AddRaExceptionHandling()` and `UseRaExceptionHandling()` as shown in the usage guide.
+
+---
+## Known Limitations
+
+- **No localization support**: Error messages are English-only. Use `ErrorCode` values for client-side lookup tables if you need multi-language support.
+- **Minimal API focused**: The `IEndpoint` registration pattern and `Validate<T>()` filter are designed for Minimal APIs. Controller-based apps can still use the exception handler and `SuccessResult` helpers.
+- **Request body can only be read once**: The `ValidationEndpointFilter` reads and buffers the request body. If another middleware also needs to read the body, ensure `EnableBuffering` is called first.
+- **Assembly scanning is eager**: `AddEndpoints()` discovers and registers all `IEndpoint` implementations at startup. For very large assemblies with thousands of endpoints, this may have a measurable startup cost.
