@@ -4,15 +4,37 @@
 ![Date Badge](https://img.shields.io/badge/Publish-02%20August%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-v10.0.6-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api/10.0.6)
 
+This release reorganizes the extension method classes for better discoverability and adds dynamic required header configuration to the default headers middleware.
+
+<!-- truncate -->
+
 ### ⚠️ Breaking Changes
 
 *   **Response Models Consolidated**: All response model types from the now-deprecated `RA.Utilities.Api.Results` package have been merged into this package under the `RA.Utilities.Api.Results` namespace. The `RA.Utilities.Api.Results` NuGet package is no longer a dependency — update your package references and remove any direct dependency on `RA.Utilities.Api.Results`.
+*   **Extension methods reorganized into feature-specific classes**: The generic classes `ApplicationBuilderExtensions`, `ServiceCollectionExtensions`, and `EndpointBuilderExtensions` have been replaced:
+    *   `AddHttpLoggingMiddleware` and `UseHttpLoggingMiddleware` moved into **`HttpLoggingExtensions`**.
+    *   `Validate<TModel>()` moved from `EndpointBuilderExtensions` into **`ValidationExtensions`**.
+    *   `AddEndpoints` and `MapEndpoints` remain in **`EndpointExtensions`**.
+    *   All classes are still in the same namespace (`RA.Utilities.Api.Extensions`). Since these are extension methods resolved by target type, no code changes are required in consuming projects — the old class names simply no longer exist.
 
-### ✨ New Features & Improvements
+### ✨ New Features
 
 *   **New Exception Mappings**: `ErrorResultMapper` and `ErrorResultResponse` now handle `TooManyRequestsException` (429), `ServiceUnavailableException` (503), and `GatewayTimeoutException` (504) with their dedicated response types.
 
 *   **Extension Methods Added**: `AddRaExceptionHandling()` and `UseRaExceptionHandling()` are now available as convenience extension methods on `IServiceCollection` and `IApplicationBuilder`, matching the documented API.
+
+*   **`DefaultHeadersOptions.RequiredHeaders`**: The default headers middleware now supports dynamic configuration of required HTTP headers via a `RequiredHeaders` collection. Each entry (`RequiredHeaderDefinition`) defines:
+    *   `Name` — the header name to enforce.
+    *   `AutoGenerate` — generate a GUID when the header is missing instead of rejecting the request.
+    *   `EchoInResponse` — add the resolved header value to the response.
+    *   `ErrorMessage` — optional custom error message when the header is missing.
+*   **`RequiredHeaderDefinition` model**: New POCO class in `RA.Utilities.Api.Options` for defining per-header behavior.
+
+### 📝 Improvements
+
+*   **`DefaultHeadersMiddleware` updated**: Now iterates over `DefaultHeadersOptions.RequiredHeaders` instead of hardcoding `x-request-id`. Multiple missing headers are collected and returned in a single 400 response. Default configuration preserves backward compatibility (requires `x-request-id` with auto-generation and response echoing).
+*   **`HttpLoggingExtensions` class**: `AddHttpLoggingMiddleware` and `UseHttpLoggingMiddleware` are now paired in a single feature-focused class, following the pattern established by `RaExceptionHandlingExtensions`.
+*   **`EndpointExtensions` cleaned**: The `Validate<TModel>()` method was extracted from this class, keeping it focused on endpoint discovery and mapping.
 
 *   **Improved Logging**: `GlobalExceptionHandler` now logs client errors (4xx) at `Warning` level and server errors (5xx) at `Error` level, reducing log noise from expected client behavior.
 
@@ -38,7 +60,7 @@
 
 
 ## Version 10.0.2
-![Date Badge](https://img.shields.io/badge/Publish-04%20Januaryr%202026-lightblue?logo=fastly&logoColor=white)
+![Date Badge](https://img.shields.io/badge/Publish-04%20January%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-v10.0.2-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api/10.0.2)
 
 Add `CreatedAtRoute` methods to `SuccessResult` for enhanced API response handling.
@@ -82,8 +104,8 @@ Improved the documentation in `IEndpoint` to clarify its purpose in grouping rel
 Adjusted parameter and return type descriptions in `EndpointExtensions` for better understanding of default assembly behavior.
 Enhanced comments in SuccessResult to explicitly state response wrapping behavior.
 
-## Version 10.0.100-rc.2
-![Date Badge](https://img.shields.io/badge/Publish-18%20Octomber%202025-lightblue?logo=fastly&logoColor=white)
+## Version 10.0.0-rc.2
+![Date Badge](https://img.shields.io/badge/Publish-18%20October%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.0--rc.2-orange?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api/10.0.0-rc.2)
 
 This release modernizes the `RA.Utilities.Api` package, introducing a suite of tools to build robust, consistent, and maintainable ASP.NET Core APIs. Key features include a .NET 8 global exception handler, helpers for standardized success responses, and a clean pattern for endpoint registration.

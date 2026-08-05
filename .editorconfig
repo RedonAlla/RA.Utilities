@@ -59,7 +59,7 @@ csharp_prefer_braces = true:error
 csharp_style_namespace_declarations = file_scoped:error
 csharp_style_prefer_method_group_conversion = true:silent
 csharp_style_prefer_top_level_statements = true:silent
-csharp_style_prefer_primary_constructors = true:none
+csharp_style_prefer_primary_constructors = true:none # dotnet_diagnostic.IDE0290.severity = none
 csharp_style_expression_bodied_methods = false:silent
 csharp_style_expression_bodied_constructors = false:silent
 csharp_style_expression_bodied_operators = true:error
@@ -112,7 +112,7 @@ csharp_style_prefer_switch_expression = true:error
 csharp_style_conditional_delegate_call = true:error
 
 # Modifier preferences
-csharp_prefer_static_local_function = true:error
+csharp_prefer_static_local_function = true:error # dotnet_diagnostic.IDE0062.severity = error
 csharp_preferred_modifier_order = public,private,protected,internal,static,extern,new,virtual,abstract,sealed,override,readonly,unsafe,volatile,async
 
 # Code-block preferences
@@ -126,7 +126,7 @@ csharp_style_inlined_variable_declaration = true:error
 csharp_style_pattern_local_over_anonymous_function = true:error
 csharp_style_prefer_index_operator = true:suggestion
 csharp_style_prefer_range_operator = true:suggestion
-csharp_style_throw_expression = true:suggestion
+csharp_style_throw_expression = true:suggestion # dotnet_diagnostic.IDE0016.severity = suggestion
 csharp_style_unused_value_assignment_preference = discard_variable:silent
 csharp_style_unused_value_expression_statement_preference = discard_variable:none
 csharp_style_prefer_method_group_conversion = true:silent
@@ -134,6 +134,9 @@ csharp_style_prefer_top_level_statements = true:silent
 
 # 'using' directive preferences
 csharp_using_directive_placement = outside_namespace:error
+
+# Code-block preferences
+csharp_prefer_braces = false:suggestion
 
 #### C# Formatting Rules ####
 

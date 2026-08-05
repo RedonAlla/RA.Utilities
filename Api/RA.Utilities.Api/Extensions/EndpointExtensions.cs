@@ -10,7 +10,7 @@ using RA.Utilities.Api.Abstractions;
 namespace RA.Utilities.Api.Extensions;
 
 /// <summary>
-/// Provides extension methods for discovering and registering <see cref="IEndpoint"/> implementations.
+/// Provides extension methods for discovering, registering, and mapping <see cref="IEndpoint"/> implementations.
 /// </summary>
 public static class EndpointExtensions
 {

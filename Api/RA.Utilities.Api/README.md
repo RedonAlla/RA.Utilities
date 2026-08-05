@@ -12,11 +12,14 @@ By using this package, you can significantly reduce boilerplate code, enforce co
 
 ## 📚 Table of Contents
 
-- Getting started
+- Getting Started
 - Dependencies
 - Features
   - Global Exception Handling
   - Endpoint Registration Helpers
+  - Request Validation with FluentValidation
+  - HTTP Request/Response Logging
+  - Required Header Enforcement
   - Standardized Success Response Helpers
   - Using the `Result` Type with Endpoints
 - Contributing
@@ -26,7 +29,7 @@ By using this package, you can significantly reduce boilerplate code, enforce co
 
 ---
 
-## Getting started
+## Getting Started
 
 You can install the package via the .NET CLI:
 
@@ -41,7 +44,7 @@ Or through the NuGet Package Manager in Visual Studio.
 ## 🔗 Dependencies
 
 -   [`RA.Utilities.Core.Constants`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/RA.Utilities.Core.Constants/)
--   [`RA.Utilities.Core.Exceptions`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/CoreExceptions/)
+-   [`RA.Utilities.Core.Exceptions`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/RA.Utilities.Core.Exceptions/)
 -   [`Microsoft.AspNetCore.App`](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/metapackage-app)
 -   [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/)
 
@@ -160,7 +163,7 @@ builder.Services.AddEndpoints(typeof(Program).Assembly);
 
 var app = builder.Build();
 
-// Scans the assembly and registers all IEndpoint implementations
+// Maps all registered IEndpoint implementations to their routes
 app.MapEndpoints();
 
 app.Run();
@@ -168,7 +171,130 @@ app.Run();
 
 This keeps your `Program.cs` clean and your endpoint definitions organized by feature.
 
-### 3. Standardized Success Response Helpers
+### 3. Request Validation with FluentValidation
+
+This package integrates with FluentValidation to provide automatic request validation for Minimal API endpoints. Simply chain `.Validate<TModel>()` to your endpoint definition.
+
+**How it works:**
+
+- The `Validate<TModel>()` extension method adds a `ValidationEndpointFilter<TModel>` to the endpoint.
+- When a request arrives, the filter resolves `IValidator<TModel>` from the DI container and executes validation.
+- If validation fails, a structured `400 Bad Request` response is returned with detailed error information before your handler executes.
+- If validation passes, the request proceeds to your handler as normal.
+
+#### Usage
+
+**Step 1: Register your validators with DI**
+
+```csharp
+// Program.cs
+builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
+```
+
+**Step 2: Chain `.Validate<TModel>()` to your endpoints**
+
+```csharp
+app.MapPost("/products", (CreateProductRequest request) =>
+{
+    return SuccessResult.Created($"/products/{request.Id}", request);
+}).Validate<CreateProductRequest>();
+```
+
+On validation failure, the API returns:
+
+```json
+{
+  "responseCode": 400,
+  "responseType": "BadRequest",
+  "responseMessage": "The request is invalid.",
+  "result": [
+    {
+      "propertyName": "Name",
+      "errorMessage": "'Name' must not be empty.",
+      "attemptedValue": "",
+      "errorCode": "NotEmptyValidator"
+    }
+  ]
+}
+```
+
+### 4. HTTP Request/Response Logging
+
+The `HttpLoggingMiddleware` provides automatic structured logging of every HTTP request and response, including headers, body content, and duration.
+
+**How it works:**
+
+- Captures the incoming request (method, path, headers, body).
+- Buffers the response stream to capture response details (status code, headers, body).
+- Logs both using structured Serilog templates for easy querying and analysis.
+- Logs at `Warning` level when the request duration exceeds a configurable threshold.
+
+#### Usage
+
+```csharp
+// Program.cs
+var builder = WebApplication.CreateBuilder(args);
+
+// Register the middleware services with optional configuration
+builder.Services.AddHttpLoggingMiddleware(options =>
+{
+    options.MaxBodyLogLength = 8192;          // Truncate bodies larger than 8KB
+    options.WarningThresholdMilliseconds = 500; // Log slow requests at Warning
+    options.PathsToIgnore.Add("/health");     // Skip health check endpoints
+    options.ExcludedHeaders.Add("Authorization"); // Redact sensitive headers
+});
+
+var app = builder.Build();
+
+// Add to the pipeline early to capture all requests
+app.UseHttpLoggingMiddleware();
+
+app.Run();
+```
+
+### 5. Required Header Enforcement
+
+The `DefaultHeadersMiddleware` enforces the presence of required HTTP headers on incoming requests. By default, it requires the `x-request-id` header (auto-generated if missing, echoed in the response). You can configure additional headers, custom error messages, and per-header behavior via `DefaultHeadersOptions`.
+
+**How it works:**
+
+- Checks each configured required header against the incoming request.
+- For headers with `AutoGenerate = true`, generates a GUID when missing.
+- For headers with `AutoGenerate = false`, returns a `400 Bad Request` listing all missing headers.
+- Headers with `EchoInResponse = true` are added to the response.
+
+#### Usage
+
+```csharp
+// Program.cs
+builder.Services.Configure<DefaultHeadersOptions>(options =>
+{
+    // Require an API key (400 if missing, no auto-generation)
+    options.RequiredHeaders.Add(new RequiredHeaderDefinition
+    {
+        Name = "x-api-key",
+        ErrorMessage = "API key is required for this endpoint.",
+    });
+
+    // Add a correlation ID (auto-generates if missing, echoes in response)
+    options.RequiredHeaders.Add(new RequiredHeaderDefinition
+    {
+        Name = "x-correlation-id",
+        AutoGenerate = true,
+        EchoInResponse = true,
+    });
+
+    // Exclude health checks from header enforcement
+    options.PathsToIgnore.Add("/health");
+});
+
+var app = builder.Build();
+
+// Register the middleware in the pipeline
+app.UseMiddleware<DefaultHeadersMiddleware>();
+```
+
+### 6. Standardized Success Response Helpers
 
 To complement the standardized error responses, this package provides the `SuccessResult` static class. It offers convenient helper methods for creating consistent success `IResult` objects (like `200 OK` and `201 Created`) that are automatically wrapped in the built-in `SuccessResponse<T>` model.
 
@@ -245,7 +371,7 @@ A request that returns a product would yield the following JSON body, wrapped in
 }
 ```
 
-### 4. Using the `Result` Type with Endpoints
+### 7. Using the `Result` Type with Endpoints
 
 While the exception middleware is great for handling unexpected errors, the `Result` type from `RA.Utilities.Core` is perfect for handling expected business-level failures (e.g., validation errors, resource not found) without throwing exceptions.
 
@@ -334,7 +460,7 @@ Thank you for contributing!
 ---
 
 
-## Additional documentation
+## Additional Documentation
 
 For more information on how this package fits into the larger RA.Utilities ecosystem, please see the main repository [documentation](https://redonalla.github.io/RA.Utilities/nuget-packages/api/RA.Utilities.Api/).
 

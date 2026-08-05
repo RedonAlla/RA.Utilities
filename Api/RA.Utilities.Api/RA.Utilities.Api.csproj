@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-		<Version>10.0.5</Version>
+		<Version>10.0.6</Version>
 		<Title>Api Utilities</Title>
 		<Description>Provides a collection of essential utilities for building robust and consistent ASP.NET Core APIs. This package includes endpoint registration helpers, standardized response models, and exception handling middleware to streamline development and promote best practices.</Description>
 		<PackageTags>RA;Utilities;API;Web;AspNetCore;Endpoints;Helpers;Middleware;Exceptions;Responses;Standardization</PackageTags>
@@ -19,11 +19,13 @@
 
 	<ItemGroup>
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+		<PackageReference Include="Microsoft.IO.RecyclableMemoryStream" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="../../Core/RA.Utilities.Core.Constants/RA.Utilities.Core.Constants.csproj" />
 		<ProjectReference Include="../../Core/RA.Utilities.Core.Exceptions/RA.Utilities.Core.Exceptions.csproj" />
+		<ProjectReference Include="../../Logging/RA.Utilities.Logging.Shared/RA.Utilities.Logging.Shared.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
