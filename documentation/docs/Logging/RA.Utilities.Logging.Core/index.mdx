@@ -26,22 +26,24 @@ solution in a modern .NET application.
 Instead of manually configuring sinks, enrichers, and performance settings,
 developers can call a single extension method to get a "batteries-included" logger.
 
-## 🔑 Here are the key features it provides out of the box:
+## 🎯 Purpose
 
-  * **Structured Logging**:
-  It configures Serilog to write logs in a structured format (like JSON),
-  which is essential for effective querying and analysis in log management systems.
-  * **Pre-configured Sinks**:
-  It sets up common logging destinations:
-    * **A Console sink** for easy viewing during development.
-    * **A rolling File** sink for persistent log storage.
-  * **Asynchronous Performance**:
-  It wraps the sinks in `Serilog.Sinks.Async` to minimize the performance impact of logging on your application's main threads.
-  * **Rich Enrichment**: It automatically includes valuable context in every log message:
-    * **Exception Details**: Destructures exceptions to include full stack traces.
-    * **Sensitive Data Masking**:
-    Automatically finds and masks sensitive data (like passwords or credit card numbers) before they are written to the logs.
-  * **Configuration-Driven**: It reads settings from the `Serilog` section of `appsettings.json`, allowing log levels to be adjusted without code changes.
+Calling `builder.AddLoggingWithConfiguration()` in `Program.cs` configures these capabilities **automatically**:
+
+* **Configuration-driven**: Reads Serilog settings from `appsettings.json` via `ReadFrom.Configuration`.
+* **Request ID enrichment**: Adds `XRequestId` and `TraceId` properties to every log event via `RequestIdEnricher`, sourced from the `x-request-id` header, `HttpContext.TraceIdentifier`, or the current `Activity`.
+* **Exception details enrichment**: Uses `Serilog.Exceptions` to destructure exceptions with full stack trace detail.
+* **System.Text.Json destructuring**: Uses `Destructurama.SystemTextJson` so `JsonElement` and related types log as readable values.
+* **DI integration**: Registers `IHttpContextAccessor` as a singleton so the enricher can access the HTTP context at runtime.
+
+## 📦 Included Dependencies
+
+These Serilog packages ship with `RA.Utilities.Logging.Core` and are available for declarative configuration via `appsettings.json` — no additional NuGet installs required:
+
+* **`Serilog.Sinks.Console`** — for easy viewing during development.
+* **`Serilog.Sinks.File`** — for persistent log storage with rolling and size limits.
+* **`Serilog.Sinks.Async`** — wraps sinks to minimize logging impact on request threads.
+* **`Serilog.Enrichers.Sensitive`** — automatically masks sensitive data (passwords, credit cards, etc.) in log output.
 
 ## 🧠 Summary
 In short, `RA.Utilities.Logging.Core` is the implementation engine that makes logging easy.

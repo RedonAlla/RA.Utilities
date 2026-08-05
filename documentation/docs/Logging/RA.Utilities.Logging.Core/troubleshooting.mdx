@@ -1,0 +1,146 @@
+---
+title: Troubleshooting & FAQ
+---
+
+# Troubleshooting & FAQ
+
+## Common Issues
+
+### `XRequestId` is always empty in my log output
+
+**Cause**: The `RequestIdEnricher` reads the `x-request-id` header from the current HTTP request. If the header is not present, `XRequestId` will not be added to log events. Additionally, in v10.0.0 the enricher captured `HttpContext` at construction time (always `null`), making the header branch dead code.
+
+**Fix**: Upgrade to v10.0.1, where the enricher resolves `HttpContext` lazily on each `Enrich()` call. Also verify that:
+
+1. `AddLoggingWithConfiguration()` is called in `Program.cs` (it registers the enricher and `IHttpContextAccessor`).
+2. Your client or upstream proxy sends the `x-request-id` header.
+
+If you need the `XRequestId` property even without the header, the enricher cannot fabricate one — consider setting the header in your own middleware before the log event is emitted.
+
+### `TraceId` is missing from background job / startup logs
+
+**Cause**: This is by design as of v10.0.1. When there is no `HttpContext` and no `Activity.Current`, the enricher skips adding the `TraceId` property instead of generating a random `Guid` for each event. In v10.0.0, every non-request log event received a unique random GUID, which actively defeated log correlation.
+
+**Fix**: If you need trace IDs in background jobs, create an `Activity` in your job code:
+
+```csharp
+using var activity = new Activity("background-job").Start();
+// All log events within this scope will have a TraceId
+```
+
+Or use `ActivitySource` with OpenTelemetry for automatic trace context propagation.
+
+### `AddRaSerilog()` does not exist — which method should I use?
+
+**Cause**: Some older documentation and release notes referenced a method called `AddRaSerilog`. This name was never shipped — the actual method is `AddLoggingWithConfiguration`.
+
+**Fix**: Use `builder.AddLoggingWithConfiguration()` in your `Program.cs`:
+
+```csharp
+using RA.Utilities.Logging.Core.Extensions;
+
+var builder = WebApplication.CreateBuilder(args);
+builder.AddLoggingWithConfiguration();
+```
+
+### My Console / File sinks aren't writing any logs
+
+**Cause**: `AddLoggingWithConfiguration` does not configure sinks in code — it reads configuration from `appsettings.json` via `ReadFrom.Configuration`. If your `appsettings.json` has no `Serilog` section with sinks, logs have nowhere to go.
+
+**Fix**: Add a `Serilog` section to your `appsettings.json` that configures at least one sink. The package includes `Serilog.Sinks.Console`, `Serilog.Sinks.File`, and `Serilog.Sinks.Async` as dependencies, so no additional NuGet installs are needed:
+
+```json
+{
+  "Serilog": {
+    "MinimumLevel": {
+      "Default": "Information"
+    },
+    "WriteTo:Async": {
+      "Name": "Async",
+      "Args": {
+        "configure": [
+          {
+            "Name": "Console",
+            "Args": {
+              "outputTemplate": "{Timestamp:G} [{Level}] ({XRequestId})({TraceId}) {Message:lj}{NewLine}{Exception}"
+            }
+          }
+        ]
+      }
+    }
+  }
+}
+```
+
+### `GetActivityId()` returns `null` after upgrading to v10.0.1
+
+**Cause**: The return type changed from `string` to `string?` in v10.0.1. When no `Activity` is present or the format is `Unknown`, the method now returns `null` instead of a random `Guid`.
+
+**Fix**: Update any code that assigns the result to a non-nullable `string`:
+
+```csharp
+// ❌ v10.0.0
+string traceId = Activity.Current?.GetActivityId(); // may be a random GUID
+
+// ✅ v10.0.1
+string? traceId = Activity.Current?.GetActivityId(); // null when no trace context
+```
+
+### `IHttpContextAccessor` is not registered — enricher throws NullReferenceException
+
+**Cause**: The `RequestIdEnricher` depends on `IHttpContextAccessor`. If you're registering the enricher manually (not via `AddLoggingWithConfiguration`), the accessor may not be in the DI container.
+
+**Fix Option 1** — Use `AddLoggingWithConfiguration()` which registers the accessor automatically.
+
+**Fix Option 2** — Register it manually if you're configuring Serilog by hand:
+
+```csharp
+builder.Services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
+Log.Logger = new LoggerConfiguration()
+    .Enrich.WithRequestIdEnricher()
+    .WriteTo.Console()
+    .CreateLogger();
+```
+
+### Sensitive data masking isn't working
+
+**Cause**: `Serilog.Enrichers.Sensitive` is included as a package dependency, but it must be configured in your `appsettings.json` — it is not enabled automatically by `AddLoggingWithConfiguration`.
+
+**Fix**: Add the `WithSensitiveDataMasking` enricher to your `Serilog` → `Enrich` section:
+
+```json
+{
+  "Serilog": {
+    "Enrich": [
+      {
+        "Name": "WithSensitiveDataMasking",
+        "Args": {
+          "options": {
+            "MaskValue": "***SECRET***",
+            "Mode": "Globally"
+          }
+        }
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Known Limitations
+
+- **`RequestIdEnricher` requires `IHttpContextAccessor`**: The enricher cannot add `XRequestId` or `TraceId` outside an HTTP request context. For non-HTTP applications, consider using a custom enricher or `Activity`-based tracing.
+- **No built-in log sampling or filtering**: The package does not provide log sampling, filtering, or level-override-per-endpoint. These must be configured via Serilog's `Filter` configuration or a custom enricher.
+- **`appsettings.serilog.json` is a sample, not a default**: The file `appsettings.serilog.json` in the package repository is a usage example. It is not automatically loaded — you must merge its contents into your own `appsettings.json` or load it explicitly via `builder.Configuration.AddJsonFile("appsettings.serilog.json")`.
+- **Package dependency versions are centralised**: Sink and enricher versions are managed by the package; consumers cannot upgrade individual Serilog packages independently without potential compatibility issues.
+
+---
+
+## Performance Tips
+
+- **Call `AddLoggingWithConfiguration()` early in `Program.cs`**: Place it as one of the first calls to ensure startup logs (including DI registration failures) are captured by Serilog rather than the default .NET logger.
+- **Use `Serilog.Sinks.Async` for production**: The sample config in `appsettings.serilog.json` wraps all sinks in the Async sink. This offloads I/O from the request thread — strongly recommended for any non-trivial workload.
+- **Minimize `outputTemplate` complexity**: The `{XRequestId}` and `{TraceId}` properties are resolved once per event. Adding many enrichers with complex logic can impact throughput in high-volume scenarios. Only enrich with what you need.
+- **Use configuration-driven log levels per namespace**: Override `Microsoft.AspNetCore` to `Warning` in production to suppress noisy framework logs without losing your application's `Information`-level messages.
