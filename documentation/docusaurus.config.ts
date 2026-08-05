@@ -179,6 +179,7 @@ const config: Config = {
       logo: {
         alt: 'RA.Utilities Logo',
         src: 'img/logo.svg',
+        srcDark: 'img/logo-dark.svg'
       },
       items: [
         {

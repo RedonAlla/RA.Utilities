@@ -1,0 +1,96 @@
+---
+title: Troubleshooting & FAQ
+---
+
+# Troubleshooting & FAQ
+
+## Common Issues
+
+### `Schema` does not compile after upgrading to v10.0.1
+
+**Cause**: The property `Schema` on `HttpRequestLogTemplate` was misspelled and has been renamed to `Scheme` (the correct HTTP term) in v10.0.1.
+
+**Fix**: Rename all references from `Schema` to `Scheme`:
+
+```csharp
+// ❌ v10.0.0
+var requestLog = new HttpRequestLogTemplate
+{
+    Schema = context.Request.Scheme,
+};
+
+// ✅ v10.0.1
+var requestLog = new HttpRequestLogTemplate
+{
+    Scheme = context.Request.Scheme,
+};
+```
+
+### `Duration` is a number now — my string formatting is broken
+
+**Cause**: `HttpResponseLogTemplate.Duration` changed from `string` to `double?` (milliseconds) in v10.0.1. The property now holds a raw numeric value instead of a pre-formatted string.
+
+**Fix**: Assign the raw numeric value instead of a formatted string. Formatting moves to the display/output layer:
+
+```csharp
+// ❌ v10.0.0
+var responseLog = new HttpResponseLogTemplate
+{
+    Duration = $"{duration.TotalMilliseconds:0.00} ms",
+};
+
+// ✅ v10.0.1
+var responseLog = new HttpResponseLogTemplate
+{
+    Duration = duration.TotalMilliseconds,
+};
+```
+
+### `RequestId` is always blank in my log templates
+
+**Cause**: The built-in middleware and delegating handler consumers in the RA.Utilities ecosystem populate `RequestId` from the `x-request-id` HTTP header. If your client or upstream service doesn't send this header, `RequestId` will be `null`.
+
+**Fix**: Ensure the initial caller or any intermediate proxy sends the `x-request-id` header. If you're writing a custom consumer, read the header yourself:
+
+```csharp
+var requestLog = new HttpRequestLogTemplate
+{
+    RequestId = context.Request.Headers["x-request-id"].FirstOrDefault(),
+    // ... other properties
+};
+```
+
+The constant `LoggingConstants.XRequestId` (value `"x-request-id"`) is available from `RA.Utilities.Logging.Shared.Constants` for consistent header name references.
+
+### Request and response logs show different `RequestedOn` timestamps
+
+**Cause**: In v10.0.0, `RequestedOn` was a computed property (`=> DateTime.UtcNow`) that evaluated at serialization time, so request and response logs got different timestamps.
+
+**Fix**: Upgrade to v10.0.1 where `RequestedOn` is a settable property that defaults to `DateTime.UtcNow` at construction time. If you need the exact request time, set it explicitly when creating the log template.
+
+### `LoggingConstants` type or namespace not found
+
+**Cause**: The `LoggingConstants` class (in namespace `RA.Utilities.Logging.Shared.Constants`) was added in v10.0.1 and provides the canonical header name `XRequestId`. If your project isn't referencing it, you may get a compile error.
+
+**Fix**: Add the using directive:
+
+```csharp
+using RA.Utilities.Logging.Shared.Constants;
+```
+
+---
+
+## Known Limitations
+
+- **Multi-valued HTTP headers are flattened**: `RequestHeaders` and `ResponseHeaders` use `IDictionary<string, string>`, which collapses multi-valued headers (e.g., `Set-Cookie`) into a single `string` via `.ToString()`. The original array of values is not preserved.
+- **`RequestBody`/`ResponseBody` is `object?`**: The body type is untyped, and the content type (e.g., `application/json`, `text/plain`) is not captured on the log template. If you need the content type in your logs, capture it separately.
+- **`ToString()` may fail on cyclic object graphs**: `BaseHttpLogTemplate.ToString()` calls `JsonSerializer.Serialize(this)` with default options. If a request or response body contains a cyclic reference, serialization will throw. Consider logging via Serilog's `{@LogTemplate}` destructuring instead, which handles cycles gracefully.
+- **No built-in body truncation**: Large request or response bodies are logged in their entirety. The built-in consumers buffer the full body into memory via `EnableBuffering()` / `ReadBodyAsync()`. For high-throughput APIs with large payloads, consider implementing body size limits or sampling in your own middleware.
+
+---
+
+## Performance Tips
+
+- **Use `ILogger.IsEnabled()` guards**: The built-in `HttpLoggingMiddleware` checks `_logger.IsEnabled(logLevel)` before constructing log templates. Follow this pattern in custom consumers to avoid allocating log objects when the log level is disabled.
+- **Prefer `{@LogTemplate}` destructuring over `.ToString()`**: Serilog's structured logging with `{@RequestLog}` captures the object graph natively without the intermediate JSON string allocation.
+- **`LoggingConstants.XRequestId` is a `const`**: It is inlined at compile time with zero runtime cost. Use it instead of the magic string `"x-request-id"`.
