@@ -17,10 +17,26 @@
   --ifm-menu-color-background-hover: #512bd41c;
   --ifm-menu-color-background-active: #512bd41c;
 
+  // -------- Typography ----------
+  // Secondary text darkened for readability (Infima default #525860 fails WCAG AA at small sizes).
+  // --ifm-font-color-secondary is an alias; components read --ifm-color-content-secondary directly.
+  --ifm-color-content-secondary: #2d323a;
+  --ifm-font-color-secondary: #2d323a;
+  // Slightly looser line-height for long-form reading
+  --ifm-line-height-base: 1.7;
+  // Table text: ensure it inherits the darker secondary, not the lighter emphasis-600
+  --ifm-table-cell-color: var(--ifm-font-color-base);
+  --ifm-table-head-color: var(--ifm-font-color-base);
+  // TOC links should never be lighter than secondary text
+  --ifm-toc-link-color: var(--ifm-font-color-secondary);
+
   // -------- Search ----------
   --search-local-hit-shadow: none;
   --search-local-modal-shadow: none;
   --search-local-modal-background: var(--ifm-navbar-search-input-background-color);
+  // Override #969faf default — invisible against most backgrounds
+  --search-local-muted-color: var(--ifm-font-color-secondary);
+  --search-local-hit-color: var(--ifm-font-color-base);
   // -------- Search ----------
 }
 
@@ -35,11 +51,108 @@
 
   --docusaurus-highlighted-code-line-bg: #053ad92e;
   --ifm-menu-color-background-hover: #ac99ea1c;
-  --ifm-menu-color-background-active: ##ac99ea;
+  --ifm-menu-color-background-active: #ac99ea1c;
+
+  // Dark mode secondary text: brighter for contrast on dark backgrounds
+  --ifm-color-content-secondary: #c8cdd3;
+  --ifm-font-color-secondary: #c8cdd3;
+
+  // Dark mode search overrides
+  --search-local-muted-color: #c8cdd3;
+  --search-local-hit-color: var(--ifm-font-color-base);
 }
 
 .cardContainer_fWXF {
   box-shadow: none !important;
+}
+
+/* ------- Global Typography: improve readability of smaller/lighter text ------- */
+
+/* Card descriptions in DocCardList */
+article .card h2,
+article .card h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+article .card p {
+  font-size: 0.92rem;
+  line-height: 1.65;
+  color: var(--ifm-font-color-secondary);
+}
+
+/* Ensure code inside cards remains crisp */
+article .card code {
+  font-size: 0.85em;
+}
+
+/* Table cells — base color so they never wash out */
+table td,
+table th {
+  color: var(--ifm-font-color-base);
+}
+
+/* Blockquote text on the subtle gray background */
+blockquote {
+  color: var(--ifm-font-color-secondary);
+}
+
+/* Breadcrumb active item (current page) — use base, not washed-out secondary */
+.breadcrumbs__item--active .breadcrumbs__link {
+  color: var(--ifm-font-color-base);
+}
+
+/* Pagination nav labels ("Next" / "Previous") */
+.pagination-nav__label {
+  color: var(--ifm-font-color-base);
+}
+
+/* Admonition body text — ensure readability on tinted backgrounds */
+.alert p {
+  color: var(--ifm-font-color-base);
+}
+
+/* ------- Interactive Element Consistency ------- */
+
+/* Focus ring — match search bar style so every interactive element signals focus the same way */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible:not(.navbar__search-input),
+select:focus-visible,
+textarea:focus-visible,
+[role='button']:focus-visible,
+details:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Card hover — subtle border + shadow shift using the brand color */
+article .card {
+  transition: border-color var(--ifm-transition-fast) var(--ifm-transition-timing-default),
+              box-shadow var(--ifm-transition-fast) var(--ifm-transition-timing-default);
+}
+
+article .card:hover {
+  border-color: var(--ifm-color-primary-lighter);
+  box-shadow: 0 2px 12px rgba(81, 43, 212, 0.10);
+}
+
+/* TOC links — visibly react on hover like body links do */
+.table-of-contents__link:hover {
+  color: var(--ifm-color-primary);
+}
+
+/* Pagination nav — border react on hover */
+.pagination-nav__link:hover {
+  border-color: var(--ifm-color-primary);
+}
+
+/* Navbar search input — align focus ring */
+.navbar__search-input:focus {
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: 0;
 }
 
 @media (min-width: 996px) {
@@ -136,7 +249,7 @@ li {
     display: flex;
     margin-right: 1rem;
     background-color: var(--ifm-navbar-link-color);
-    transition: background-color var(--ifm-color-primary)
+    transition: background-color var(--ifm-transition-fast)
     var(--ifm-transition-timing-default);
   }
 
@@ -150,7 +263,7 @@ li {
         display: flex;
         margin-right: 0.5rem;
         background-color: var(--ifm-menu-color);
-        transition: background-color var(--ifm-color-primary)
+        transition: background-color var(--ifm-transition-fast)
         var(--ifm-transition-timing-default);
       }
     }
@@ -162,7 +275,7 @@ li {
       & > a.menu__link--active::before {
         color: #fff;
         background-color: var(--ifm-color-primary);
-        transition: background-color var(--ifm-color-primary)
+        transition: background-color var(--ifm-transition-fast)
         var(--ifm-transition-timing-default);
       }
     }
