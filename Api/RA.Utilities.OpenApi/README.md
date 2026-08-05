@@ -17,27 +17,31 @@ The primary goals are to:
 
 ## 📚 Table of Contents
 
-- [Getting started](#getting-started)
+- [Getting Started](#getting-started)
 - [Dependencies](#-dependencies)
 - [Document Transformers](#document-transformers)
   - [`DocumentInfoTransformer`](#documentinfotransformer)
-  - `BearerSecuritySchemeTransformer`
-  - `HeadersParameterTransformer`
-  - `BearerSecurityDocumentTransformer`
-- Operation Transformers
-  - `DefaultResponsesOperationTransformer`
-- Schema Filters (as Document Transformers)
-  - `PolymorphismDocumentTransformer`
-- Utilities
-  - `OpenApiOperationUtilities`
-- Configuration
-  - `OpenApiInfoSettings`
-  - `HeadersParameterSettings`
-  - Example `appsettings.json`
-- Usage
-- Contributing
+  - [`BearerSecuritySchemeTransformer`](#bearersecurityschemetransformer)
+  - [`HeadersParameterTransformer`](#headersparametertransformer)
+  - [`ResponsesDocumentTransformer`](#responsesdocumenttransformer)
+- [Operation Transformers](#operation-transformers)
+  - [`DefaultResponsesOperationTransformer`](#defaultresponsesoperationtransformer)
+- [Schema Transformers](#schema-transformers)
+  - [`FluentValidationSchemaTransformer`](#fluentvalidationschematransformer)
+  - [`EnumXmlSchemaTransformer`](#enumxmlschematransformer)
+  - [`TagOperationTransformer`](#tagoperationtransformer)
+- [Schema Filters (as Document Transformers)](#schema-filters-as-document-transformers)
+  - [`PolymorphismDocumentTransformer`](#polymorphismdocumenttransformer)
+- [Utilities](#utilities)
+  - [`OpenApiOperationUtilities`](#openapioperationutilities)
+- [Configuration](#configuration)
+  - [`OpenApiInfoSettings`](#openapiinfosettings)
+  - [`HeadersParameterSettings`](#headersparametersettings)
+  - [Example `appsettings.json`](#example-appsettingsjson)
+- [Usage](#usage)
+- [Contributing](#contributing)
 
-## Getting started
+## Getting Started
 
 Install the package via the .NET CLI:
 
@@ -50,9 +54,9 @@ Or through the NuGet Package Manager in Visual Studio.
 ---
 
 
-## Default Transformers
+## Document Transformers
 
-This package includes a set of default transformers that can be registered with a single extension method, `AddDefaultsDocumentTransformer()`.
+This package includes a set of document transformers that can be registered with a single extension method, `AddDefaultsDocumentTransformer()`.
 
 ### `DocumentInfoTransformer`
 
@@ -87,7 +91,7 @@ Both the request and response headers are configurable via `HeadersParameterSett
 
 ### `ResponsesDocumentTransformer`
 
-This transformer automatically adds standardized OpenAPI responses for common HTTP status codes like `400`, `404`, `409`, and `500`. It uses the response models from `RA.Utilities.Api.Results` to generate the schema for these error responses.
+This transformer automatically adds standardized OpenAPI responses for common HTTP status codes like `400`, `404`, `409`, and `500`. It uses the response models from `RA.Utilities.Api` to generate the schema for these error responses.
 
 **What it does:**
 
@@ -101,7 +105,7 @@ This transformer automatically adds standardized OpenAPI responses for common HT
 ### `DefaultResponsesOperationTransformer`
 
 This operation transformer automatically adds standardized OpenAPI responses for common HTTP status codes for  `500`.
-It uses the response models from `RA.Utilities.Api.Results` to generate the schema for these error responses.
+It uses the response models from `RA.Utilities.Api` to generate the schema for these error responses.
 
 This transformer is an `IOpenApiOperationTransformer`, meaning it applies to each API operation individually.
 It is a more targeted alternative to the `ResponsesDocumentTransformer`.
@@ -110,7 +114,7 @@ It is a more targeted alternative to the `ResponsesDocumentTransformer`.
 
 1.  **Standardizes Error Responses**: Ensures that your OpenAPI documentation accurately reflects the structured error responses (`ErrorResponse`) that your API produces.
 2.  **Reduces Annotations**: Eliminates the need to manually add `[ProducesResponseType]` attributes for these common errors on every single endpoint.
-3.  **Operation-Level Granularity**: As an `IOpenApiOperationTransformer`, it integrates seamlessly with Swashbuckle's operation-level processing pipeline.
+3.  **Operation-Level Granularity**: As an `IOpenApiOperationTransformer`, it integrates seamlessly with ASP.NET Core's native operation-level processing pipeline.
 
 ## Schema Filters (as Document Transformers)
 
@@ -139,6 +143,58 @@ builder.Services.AddOpenApiDocumentTransformer(new PolymorphismDocumentTransform
         { "Conflict", typeof(ConflictResponse) },
     }
 ));
+```
+
+## Schema Transformers
+
+### `FluentValidationSchemaTransformer`
+
+This transformer enriches your OpenAPI schema by applying constraints from your FluentValidation validators. It inspects registered `IValidator<T>` implementations and adds corresponding constraints (required, length, pattern, range) to the generated schema properties.
+
+**Supported Rules:**
+
+* `NotNull` / `NotEmpty` → marks property as required
+* `Length` / `MinimumLength` / `MaximumLength` → sets `minLength` / `maxLength`
+* `Matches` → sets `pattern`
+* `GreaterThan` / `LessThan` → sets `minimum` / `maximum` with exclusive flags
+* `InclusiveBetween` / `ExclusiveBetween` → sets `minimum` / `maximum` range
+* `EmailAddress` → sets format to `email`
+* `CreditCard` → sets format to `credit-card`
+
+```csharp
+builder.Services.AddOpenApi(options =>
+{
+    options.AddFluentValidationRules();
+});
+```
+
+### `EnumXmlSchemaTransformer`
+
+Enhances enum definitions in the OpenAPI schema by reading XML documentation comments and appending a markdown table with value descriptions. Requires your project to generate an XML documentation file.
+
+```csharp
+var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+
+builder.Services.AddOpenApi(options =>
+{
+    options.AddEnumXmlDescriptionTransformer(xmlPath);
+});
+```
+
+### `TagOperationTransformer`
+
+Allows you to add or update descriptions for OpenAPI tags, which is useful for documenting controller groups without cluttering the code with attributes.
+
+```csharp
+builder.Services.AddOpenApi(options =>
+{
+    options.AddTagOperationTransformer(new Dictionary<string, string>
+    {
+        { "Products", "Operations related to product management." },
+        { "Orders", "Operations for processing customer orders." }
+    });
+});
 ```
 
 ## Configuration
@@ -184,8 +240,8 @@ Used by `HeadersParameterTransformer` to add common headers to requests and resp
 
 | Property          | Type                     | Description                                                                 |
 | ----------------- | ------------------------ | --------------------------------------------------------------------------- |
-| RequestHeaders    | `List<[HeaderDefinition](#eaderdefinition)>` | A list of header definitions to add to all API requests.  |
-| ResponseHeaders   | `List<[HeaderDefinition](#eaderdefinition)>` | A list of header definitions to add to all API responses. |
+| RequestHeaders    | `List<[HeaderDefinition](#headerdefinition)>` | A list of header definitions to add to all API requests.  |
+| ResponseHeaders   | `List<[HeaderDefinition](#headerdefinition)>` | A list of header definitions to add to all API responses. |
 
 #### `HeaderDefinition`
 
@@ -204,7 +260,7 @@ Represents a single header to be added to the OpenAPI specification.
 
 ```json
 {
-  "OpenApiInfoSettings": {
+  "OpenApi": {
     "Info": {
       "Title": "My Awesome API",
       "Version": "v1.0.0",
@@ -238,7 +294,7 @@ Represents a single header to be added to the OpenAPI specification.
 
 -   [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/)
 -   [`Microsoft.AspNetCore.OpenApi`](https://www.nuget.org/packages/Microsoft.AspNetCore.OpenApi)
--   [`RA.Utilities.Api.Results`](https://redonalla.github.io/RA.Utilities/nuget-packages/api/RA.Utilities.Api.Results/)
+-   [`RA.Utilities.Api`](https://redonalla.github.io/RA.Utilities/nuget-packages/api/RA.Utilities.Api/)
 
 
 ## Usage
@@ -250,11 +306,7 @@ The easiest way to get started is by using the provided extension methods to reg
 ```csharp
 // Program.cs
 
-using Microsoft.OpenApi.Models;
-using RA.Utilities.OpenApi.DocumentTransformers;
 using RA.Utilities.OpenApi.Extensions;
-using RA.Utilities.OpenApi.OperationTransformers;
-using RA.Utilities.OpenApi.SchemaFilters;
 using RA.Utilities.OpenApi.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -263,25 +315,23 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 
 // 1. (Optional) Configure settings from appsettings.json for the transformers.
-builder.Services.Configure<OpenApiInfoSettings>(builder.Configuration.GetSection(OpenApiInfoSettings.AppSettingsKey));
-builder.Services.Configure<HeadersParameterSettings>(builder.Configuration.GetSection(HeadersParameterSettings.AppSettingsKey));
+builder.Services.Configure<OpenApiInfoSettings>(builder.Configuration.GetSection("OpenApi:Info"));
+builder.Services.Configure<HeadersParameterSettings>(builder.Configuration.GetSection("OpenApiHeaders"));
 
-// 2. Add OpenAPI services.
-// Use AddSwaggerGen() for controller-based APIs or more advanced scenarios.
+// 2. Add OpenAPI services with default transformers (DocumentInfo, BearerSecurity, Headers).
 builder.Services.AddOpenApi()
     .AddDefaultsDocumentTransformer();
 
-// 3. Register additional document transformers individually.
+// 3. Register additional transformers individually.
 builder.Services.AddOpenApiDocumentTransformer<BearerSecurityDocumentTransformer>();
 
 // 4. Register operation transformers for more granular control.
 builder.Services.AddOpenApiOperationTransformer<DefaultResponsesOperationTransformer>();
 
-// 5. If using Swashbuckle (AddSwaggerGen), you can add schema filters.
-// This is shown for completeness. AddSwaggerGen() is needed for this to work.
-builder.Services.AddSwaggerGen(options =>
+// 5. Register FluentValidation schema enrichment.
+builder.Services.AddOpenApi(options =>
 {
-    options.SchemaFilter<PolymorphismDocumentTransformer>();
+    options.AddFluentValidationRules();
 });
 
 var app = builder.Build();
@@ -303,7 +353,7 @@ app.MapGet("/weatherforecast", () => "Hello World!")
 app.Run();
 ```
 
-With this transformer enabled, your Swagger UI will now show predefined response schemas for 400, 404, 409, and 500 status codes on all endpoints, matching the structure of your `RA.Utilities.Api.Results` models.
+With these transformers enabled, your Swagger UI will show predefined response schemas for common status codes and standardized request headers on all endpoints.
 
 
 ## Utilities
@@ -318,13 +368,19 @@ This is particularly useful when creating custom `IOperationFilter` implementati
 * **`AddGeneralErrorResponse(...)`**: A specialized shortcut method that adds a pre-defined example for a 500 Internal Server Error.
 * **`AddResponseExamples(...)`**: Attaches multiple named examples to a specific HTTP status code response.
 
-#### Example Usage in an IOperationFilter 
+#### Example Usage in an IOperationFilter
 ```csharp
+// Add a single request example
+OpenApiOperationUtilities.AddRequestExample(operation, "CreateProduct",
+    new { Name = "Widget", Price = 9.99m });
 
+// Add a response example for a specific status code
+OpenApiOperationUtilities.AddResponseExample(operation, StatusCodes.Status200OK,
+    "ProductResponse", new { Id = 1, Name = "Widget", Price = 9.99m });
 ```
 
 
-## Additional documentation
+## Additional Documentation
 
 For more information on how this package fits into the larger RA.Utilities ecosystem, please see the main repository [documentation](https://redonalla.github.io/RA.Utilities/nuget-packages/api/OpenApi/).
 

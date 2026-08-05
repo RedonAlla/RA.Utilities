@@ -41,7 +41,7 @@ builder.Services.AddOpenApi(options =>
 ---
 
 ## Version 10.0.6
-![Date Badge](https://img.shields.io/badge/Publish-08%January%202026-lightblue?logo=fastly&logoColor=white)
+![Date Badge](https://img.shields.io/badge/Publish-08%20January%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.6-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.OpenApi/10.0.6)
 
 [#e93b779](https://github.com/RedonAlla/RA.Utilities/commit/e93b77985552f1e5400573e9aa792a0d78c996c2) Update version to `10.0.6` and correct example serialization in `OpenApiOperationUtilities`
@@ -60,7 +60,7 @@ This release enhances the `OpenApiOperationUtilities` class by introducing two n
 ---
 
 ## Version 10.0.3
-![Date Badge](https://img.shields.io/badge/Publish-117%20December%202025-lightblue?logo=fastly&logoColor=white)
+![Date Badge](https://img.shields.io/badge/Publish-17%20December%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.3-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.OpenApi/10.0.3)
 
 ### 🐞 Bug fix
@@ -112,7 +112,7 @@ Changing: `BearerSecurityDocumentTransformer`, `DocumentInfoTransformer`, `Heade
 ---
 
 ## Version 10.0.2
-![Date Badge](https://img.shields.io/badge/Publish-117%20December%202025-lightblue?logo=fastly&logoColor=white)
+![Date Badge](https://img.shields.io/badge/Publish-17%20December%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.2-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.OpenApi/10.0.2)
 
 ### ✨ New Features
@@ -216,7 +216,7 @@ Updated the project version from `10.0.0-rc.2` to `10.0.0`, indicating a transit
 
 
 ## Version 10.0.0-rc.2
-![Date Badge](https://img.shields.io/badge/Publish-18%20Octomber%202025-lightblue?logo=fastly&logoColor=white)
+![Date Badge](https://img.shields.io/badge/Publish-18%20October%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.0--rc.2-orange?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.OpenApi/10.0.0-rc.2)
 
 This release of `RA.Utilities.OpenApi` provides a robust set of tools to enhance and customize OpenAPI (Swagger) documentation in ASP.NET Core applications. It automates common modifications to your generated OpenAPI specification, reducing boilerplate and enforcing consistency.
@@ -229,7 +229,7 @@ This release of `RA.Utilities.OpenApi` provides a robust set of tools to enhance
 
 *   **`HeadersParameterTransformer`**: Adds common, configurable headers (like `x-request-id`) to every API operation, ensuring consistent documentation for tracing and correlation in distributed systems.
 
-*   **`BearerSecurityDocumentTransformer`**: Automatically adds standardized OpenAPI responses for common HTTP status codes (`400`, `404`, `409`, `500`), using schema models from `RA.Utilities.Api.Results` to ensure your error contracts are clearly documented.
+*   **`BearerSecurityDocumentTransformer`**: Automatically adds standardized OpenAPI security scheme for JWT Bearer authentication, enabling the "Authorize" button in Swagger UI for testing protected endpoints.
 
 *   **Simplified Setup**: Includes an `AddDefaultsDocumentTransformer()` extension method to register the most common transformers (`DocumentInfo`, `BearerSecurityScheme`, and `HeadersParameter`) with a single line of code.
 
