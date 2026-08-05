@@ -1,4 +1,3 @@
-
 using System.Collections.Generic;
 
 namespace RA.Utilities.Logging.Shared.Models.HttpLog;
@@ -14,17 +13,17 @@ public class HttpResponseLogTemplate : BaseHttpLogTemplate
     public IDictionary<string, string>? ResponseHeaders { get; set; }
 
     /// <summary>
-    ///The status code of the HTTP response.
+    /// The status code of the HTTP response.
     /// </summary>
     public int? StatusCode { get; set; }
 
     /// <summary>
-    ///HTTP response body.
+    /// HTTP response body.
     /// </summary>
     public object? ResponseBody { get; set; }
 
     /// <summary>
     /// The total time taken to process the request and generate the response.
     /// </summary>
-    public string Duration { get; set; }
+    public double? Duration { get; set; }
 }

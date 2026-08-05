@@ -4,12 +4,13 @@ using System.Text.Json;
 namespace RA.Utilities.Logging.Shared.Models.HttpLog;
 
 /// <summary>
-/// Base containing HTTP request response properties for logging.
+/// Base class containing HTTP request/response properties for logging.
 /// </summary>
 public class BaseHttpLogTemplate
 {
     /// <summary>
-    /// Unique identifier to represent this request in trace logs.
+    /// The value of the <c>x-request-id</c> header from the HTTP request.
+    /// Provides end-to-end correlation across services.
     /// </summary>
     public string? RequestId { get; set; }
 
@@ -25,9 +26,10 @@ public class BaseHttpLogTemplate
     public string? Path { get; set; }
 
     /// <summary>
-    /// Gets the date and time the request was made, in UTC.
+    /// The date and time the request was made, in UTC.
+    /// Defaults to <see cref="DateTime.UtcNow"/> at the time the instance is created.
     /// </summary>
-    public DateTime RequestedOn => DateTime.UtcNow;
+    public DateTime RequestedOn { get; set; } = DateTime.UtcNow;
 
     /// <summary>
     /// The host name requested.

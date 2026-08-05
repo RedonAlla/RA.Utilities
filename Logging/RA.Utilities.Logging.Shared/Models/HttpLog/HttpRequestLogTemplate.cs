@@ -8,9 +8,9 @@ namespace RA.Utilities.Logging.Shared.Models.HttpLog;
 public class HttpRequestLogTemplate : BaseHttpLogTemplate
 {
     /// <summary>
-    /// Scheme string of request Uri used by the request message.
+    /// The URI scheme used by the request message (e.g., "http", "https").
     /// </summary>
-    public string? Schema { get; set; }
+    public string? Scheme { get; set; }
 
     /// <summary>
     /// The HTTP method used by the request message.

@@ -45,53 +45,56 @@ This package provides the data models used to structure log information for HTTP
 public class BaseHttpLogTemplate
 ```
 
-This is the primary model used to capture a complete picture of an HTTP request-response cycle.
+Base class containing HTTP request/response properties for logging. Both `HttpRequestLogTemplate` and `HttpResponseLogTemplate` inherit from this class.
 
 #### Properties
-Base containing HTTP request response properties for logging.
 
 | Name | Type | Required | Description |
 | ---- | ---- | -------- | ----------- |
-| RequestId.            | `string`            | Unique identifier to represent this request in trace logs. |
-| TraceIdentifier | `string` | **false** | Unique identifier to represent this request in trace logs. Value of [`HttpContext.TraceIdentifier`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.httpcontext.traceidentifier?view=aspnetcore-8.0) |
+| RequestId | `string` | **false** | The value of the `x-request-id` header from the HTTP request. Provides end-to-end correlation across services. |
+| TraceIdentifier | `string` | **false** | Unique identifier to represent this request in trace logs. Value of [`HttpContext.TraceIdentifier`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.httpcontext.traceidentifier?view=aspnetcore-8.0). |
 | Path | `string` | **false** | The URI used by the request message. |
-| RequestedOn | `DateTime` | **true** | DateTime requested on. Default value `DateTime.UtcNow` |
+| RequestedOn | `DateTime` | **false** | The date and time the request was made, in UTC. Defaults to `DateTime.UtcNow` when the instance is created. |
 | RemoteAddress | `string` | **false** | The host name requested. This is usually the DNS host name or IP address of the server. |
 
 ### HttpRequestLogTemplate
+
 Model for logging HTTP request.
 
 ```csharp
 public class HttpRequestLogTemplate : BaseHttpLogTemplate
 ```
 
-> [!NOTE]  
-> **HttpRequestLogTemplate** inherits from [BaseHttpLogTemplate] so it will have all properties of [BaseHttpLogTemplate] class.
+> [!NOTE]
+> **HttpRequestLogTemplate** inherits from [BaseHttpLogTemplate](#basehttplogtemplate) so it will have all properties of the `BaseHttpLogTemplate` class.
 
 | Name | Type | Required | Description |
 | ---- | ---- | -------- | ----------- |
-| Schema | `string` | **false** | Scheme string of request Uri used by the request message. |
+| Scheme | `string` | **false** | The URI scheme used by the request message (e.g., "http", "https"). |
 | Method | `string` | **false** | The HTTP method used by the request message. |
+| Host | `string` | **false** | The host name used by the request message. This is usually the DNS host name or IP address of the server. |
 | QueryString | `string` | **false** | The query string used by the request message. |
 | RequestHeaders | [`IDictionary<string, string>`](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.idictionary-2?view=net-8.0) | **false** | Collection of HTTP request headers used by the request message. |
-| RequestBody | `object` | **false** | HTTP Request body. |
-	
+| RequestBody | `object` | **false** | HTTP request body. |
+
 
 ### HttpResponseLogTemplate
+
 Model for logging HTTP response.
 
 ```csharp
 public class HttpResponseLogTemplate : BaseHttpLogTemplate
 ```
 
-> [!NOTE]  
-> **HttpResponseLogTemplate** inherits from [BaseHttpLogTemplate] so it will have all properties of [BaseHttpLogTemplate] class.
+> [!NOTE]
+> **HttpResponseLogTemplate** inherits from [BaseHttpLogTemplate](#basehttplogtemplate) so it will have all properties of the `BaseHttpLogTemplate` class.
 
 | Name | Type | Required | Description |
 | ---- | ---- | -------- | ----------- |
-| StatusCode | `int` | **true** | The status code of the HTTP response. |
+| StatusCode | `int?` | **false** | The status code of the HTTP response. |
 | ResponseHeaders | [`IDictionary<string, string>`](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.idictionary-2?view=net-8.0) | **false** | Collection of HTTP response headers. |
-| ResponseBody | `object` | **false** | HTTP Request body. |
+| ResponseBody | `object` | **false** | HTTP response body. |
+| Duration | `double?` | **false** | The total time taken to process the request and generate the response, in milliseconds. |
 
 ---
 
