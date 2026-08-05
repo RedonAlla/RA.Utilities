@@ -1,0 +1,109 @@
+---
+title: Migration Guides
+---
+
+# Migration Guides
+
+## v10.0.5 → v10.0.6
+
+### Breaking Change:
+
+* Extension methods reorganized into feature-specific classes
+* `SuccessResponse` renamed to `SuccessResult`
+
+The static helper class `SuccessResponse` was renamed to `SuccessResult` to resolve a naming collision with the generic response model `SuccessResponse<T>`.
+The generic extension classes `ApplicationBuilderExtensions`, `ServiceCollectionExtensions`, and `EndpointBuilderExtensions` have been replaced with feature-specific alternatives.
+All classes remain in the same namespace (`RA.Utilities.Api.Extensions`).
+
+### Why this change?
+
+* Having both `SuccessResponse` (static helper class) and `SuccessResponse<T>` (generic response model) in the same namespace caused ambiguity and IDE confusion.
+* `SuccessResult` better describes what the class does — it creates `IResult` objects.
+* The old naming (`ApplicationBuilderExtensions`, `ServiceCollectionExtensions`) was too generic — each class held only one method and provided no hint about what feature it related to.
+The new organization follows the pattern established by `RaExceptionHandlingExtensions`, where each file is a self-contained feature with its `Add`/`Use` pair.
+
+### What changed
+
+| Aspect | v10.0.5 | v10.0.6 |
+|---|---|---|
+| `AddHttpLoggingMiddleware` location | `ServiceCollectionExtensions` | `HttpLoggingExtensions` |
+| `UseHttpLoggingMiddleware` location | `ApplicationBuilderExtensions` | `HttpLoggingExtensions` |
+| `Validate<TModel>` location | `EndpointBuilderExtensions` | `ValidationExtensions` |
+| `AddEndpoints` location | `EndpointExtensions` | `EndpointExtensions` (unchanged) |
+| `MapEndpoints` location | `EndpointExtensions` | `EndpointExtensions` (unchanged) |
+| `AddRaExceptionHandling` location | `RaExceptionHandlingExtensions` | `RaExceptionHandlingExtensions` (unchanged) |
+| `UseRaExceptionHandling` location | `RaExceptionHandlingExtensions` | `RaExceptionHandlingExtensions` (unchanged) |
+
+### Migration Steps
+
+#### 1. No code changes required for consuming projects
+
+These are **extension methods** — they are resolved by the compiler based on the target type (`IServiceCollection`, `IApplicationBuilder`, `RouteHandlerBuilder`, `WebApplication`), not the static class name. The using directive (`using RA.Utilities.Api.Extensions;`) is unchanged.
+Your existing `Program.cs` code continues to compile without modification:
+
+```csharp
+// ✅ This code is unchanged in v10.0.7
+using RA.Utilities.Api.Extensions;
+
+builder.Services.AddHttpLoggingMiddleware();  // Resolved on IServiceCollection
+builder.Services.AddEndpoints(typeof(Program).Assembly); // Resolved on IServiceCollection
+builder.Services.AddRaExceptionHandling();    // Resolved on IServiceCollection
+
+var app = builder.Build();
+
+app.UseHttpLoggingMiddleware();   // Resolved on IApplicationBuilder
+app.UseRaExceptionHandling();     // Resolved on IApplicationBuilder
+app.MapEndpoints();               // Resolved on WebApplication
+```
+
+#### 2. Rename all references
+
+```csharp
+// ❌ v10.0.5
+using RA.Utilities.Api.Mapper;
+return SuccessResponse.Ok(product);
+
+// ✅ v10.0.6
+using RA.Utilities.Api.Mapper;
+return SuccessResult.Ok(product);
+```
+
+#### 3. Response Models Consolidated
+
+All response model types from `RA.Utilities.Api.Results` were merged into `RA.Utilities.Api`. Remove the `RA.Utilities.Api.Results` package reference:
+
+```bash
+dotnet remove package RA.Utilities.Api.Results
+```
+
+No using-directive changes are needed — the types remain in the `RA.Utilities.Api.Results` namespace.
+
+#### 4. Update direct class name references (if any)
+
+If your code directly references the old class names (unlikely for extension methods, but possible in unit tests or custom reflection code), update them:
+
+```csharp
+// ❌ Old class names (removed)
+typeof(ServiceCollectionExtensions)
+typeof(ApplicationBuilderExtensions)
+typeof(EndpointBuilderExtensions)
+
+// ✅ New class names
+typeof(HttpLoggingExtensions)
+typeof(ValidationExtensions)
+// EndpointExtensions is unchanged
+```
+
+#### 5. Test files
+
+If you have test files named after the old classes, rename them for clarity:
+
+| Old test class | New test class |
+|---|---|
+| `EndpointBuilderExtensionsTests` | `ValidationExtensionsTests` |
+
+---
+
+## Full Changelog
+
+See the [package release notes](https://github.com/RedonAlla/RA.Utilities/blob/main/Api/RA.Utilities.Api/releasenotes.md) for a complete version history.

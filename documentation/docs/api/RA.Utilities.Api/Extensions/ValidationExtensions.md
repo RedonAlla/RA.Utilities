@@ -2,7 +2,7 @@
 Namespace: RA.Utilities.Api.Extensions
 ```
 
-The `EndpointBuilderExtensions` class is designed to improve the developer experience when applying validation to Minimal API endpoints. It provides a more fluent and readable syntax for adding the `ValidationEndpointFilter`.
+The `ValidationExtensions` class is designed to improve the developer experience when applying validation to Minimal API endpoints. It provides a more fluent and readable syntax for adding the `ValidationEndpointFilter`.
 
 Instead of the more verbose `AddEndpointFilter<ValidationEndpointFilter<TModel>>`, this class provides a simple and elegant shortcut.
 

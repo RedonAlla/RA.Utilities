@@ -7,7 +7,7 @@ The primary goal of this namespace is to enhance the developer experience by pro
 These extension methods reduce boilerplate code and simplify common API development tasks in ASP.NET Core.
 They abstract away setup complexity and provide elegant shortcuts, guiding developers toward writing cleaner, more organized, and more maintainable API code.
 
-The namespace contains three key classes, each serving a distinct purpose:
+The namespace contains several key classes, each serving a distinct purpose:
 
 ### 1. [EndpointExtensions](./EndpointExtensions.md)
 
@@ -15,7 +15,7 @@ This class is the engine behind your **Endpoint Registration** Helpers feature.
 Its purpose is to declutter your `Program.cs` file by automating the discovery and mapping of API endpoints.
 This is a core pattern for implementing a clean Vertical Slice Architecture.
 
-### 2. [EndpointBuilderExtensions](./EndpointBuilderExtensions.md)
+### 2. [ValidationExtensions](./ValidationExtensions.md)
 This class is designed to improve the developer experience when applying validation to Minimal API endpoints.
 It provides a more fluent and readable syntax for adding the [`ValidationEndpointFilter`](../ValidationEndpointFilter.md).
 
@@ -23,6 +23,10 @@ It provides a more fluent and readable syntax for adding the [`ValidationEndpoin
 This class simplifies the setup of global exception handling.
 It provides a convenient one-liner for registering the [`GlobalExceptionHandler`](../GlobalExceptionHandler.mdx) with the DI container and another for adding its middleware to the request pipeline,
 ensuring every unhandled exception is logged and returned to the client as a structured error response.
+
+### 4. [HttpLoggingExtensions](./HttpLoggingExtensions.md)
+This class provides extension methods for registering and configuring the `HttpLoggingMiddleware`.
+It pairs `AddHttpLoggingMiddleware` (service registration) with `UseHttpLoggingMiddleware` (pipeline registration) in a single, cohesive entry point.
 
 <br />
 <br />

@@ -37,6 +37,28 @@ dotnet remove package RA.Utilities.Api.Results
 dotnet add package RA.Utilities.Api --version 10.0.6
 ```
 
+### `ApplicationBuilderExtensions` or `ServiceCollectionExtensions` no longer compile
+
+**Cause**: These generic extension classes were reorganized into feature-specific classes. `AddHttpLoggingMiddleware` and `UseHttpLoggingMiddleware` now live in `HttpLoggingExtensions`.
+
+**Fix**: Update your using directives — no method name changes are required:
+
+```csharp
+// ❌ Old class names (removed)
+using RA.Utilities.Api.Extensions; // ApplicationBuilderExtensions / ServiceCollectionExtensions
+
+// ✅ Still the same namespace, just different class names
+using RA.Utilities.Api.Extensions; // HttpLoggingExtensions, ValidationExtensions, etc.
+```
+
+The method calls themselves are unchanged (`AddHttpLoggingMiddleware`, `UseHttpLoggingMiddleware`). They are extension methods resolved by the target type (`IServiceCollection`, `IApplicationBuilder`), so the class name change is transparent to consuming code.
+
+### `Validate<T>()` is in `EndpointBuilderExtensions` — where did it go?
+
+**Cause**: `Validate<T>()` was moved from `EndpointBuilderExtensions` into `ValidationExtensions`. The class was renamed to better reflect its purpose (validation, not endpoint building).
+
+**Fix**: No code changes required — the method is still an extension on `RouteHandlerBuilder` in the same namespace (`RA.Utilities.Api.Extensions`). The class name change is transparent to consuming code. Just ensure your project is up to date.
+
 ### GlobalExceptionHandler is not catching my exceptions
 
 **Cause**: Either the handler wasn't registered, the middleware is ordered incorrectly, or an earlier middleware swallowed the exception.
@@ -108,6 +130,84 @@ throw new Exception("Product not found");
 throw new NotFoundException(nameof(Product), productId);
 ```
 
+### `DefaultHeadersMiddleware` only checks `x-request-id` — how do I require other headers?
+
+**Cause**: The middleware uses `DefaultHeadersOptions` to determine which headers are required. By default, only `x-request-id` is configured (with auto-generation enabled).
+
+**Fix**: Add additional required headers via the options:
+
+```csharp
+builder.Services.Configure<DefaultHeadersOptions>(options =>
+{
+    // Add a header that must be provided by the caller (400 if missing)
+    options.RequiredHeaders.Add(new RequiredHeaderDefinition
+    {
+        Name = "x-api-key",
+        ErrorMessage = "API key is required for this endpoint.",
+    });
+
+    // Add a header that auto-generates if missing
+    options.RequiredHeaders.Add(new RequiredHeaderDefinition
+    {
+        Name = "x-correlation-id",
+        AutoGenerate = true,
+        EchoInResponse = true,
+    });
+});
+```
+
+To disable the default `x-request-id` check entirely, clear the collection and add your own:
+
+```csharp
+builder.Services.Configure<DefaultHeadersOptions>(options =>
+{
+    options.RequiredHeaders.Clear();
+    // Add only the headers you need...
+});
+```
+
+### `DefaultHeadersMiddleware` returns 400 for ALL my endpoints — how do I exclude paths?
+
+**Cause**: The `PathsToIgnore` set is empty by default, so all paths are checked.
+
+**Fix**: Add path prefixes to exclude from header enforcement:
+
+```csharp
+builder.Services.Configure<DefaultHeadersOptions>(options =>
+{
+    options.PathsToIgnore.Add("/health");
+    options.PathsToIgnore.Add("/metrics");
+    options.PathsToIgnore.Add("/swagger");
+});
+```
+
+Comparisons are case-insensitive and match by prefix — `/health` also matches `/health/detailed`.
+
+### `HttpLoggingMiddleware` is not logging anything
+
+**Cause**: Either the middleware isn't registered in both DI and the pipeline, or the log level is too high.
+
+**Fix**: Ensure both `Add` and `Use` calls are present:
+
+```csharp
+// Register services
+builder.Services.AddHttpLoggingMiddleware();
+
+var app = builder.Build();
+
+// Add to pipeline (early, to capture all requests)
+app.UseHttpLoggingMiddleware();
+```
+
+Also check your configured log level — `HttpLoggingMiddleware` logs at `Information` by default, switching to `Warning` when the request exceeds `WarningThresholdMilliseconds`:
+
+```csharp
+builder.Services.AddHttpLoggingMiddleware(options =>
+{
+    options.WarningThresholdMilliseconds = 500; // Log slow requests as Warning
+});
+```
+
 ### I get a NU1903 vulnerability warning for Microsoft.OpenApi
 
 **Cause**: The `RA.Utilities.OpenApi` package depends on `Microsoft.OpenApi 2.0.0` which has a known vulnerability.
@@ -123,6 +223,7 @@ throw new NotFoundException(nameof(Product), productId);
 Or update the `Microsoft.OpenApi` package to the latest patched version.
 
 ---
+
 ## FAQ
 
 ### What's the difference between `throw` and `return` with exceptions?
@@ -168,10 +269,39 @@ Yes. Every feature is opt-in. You can use `IEndpoint` + `MapEndpoints` for endpo
 
 Yes. `GlobalExceptionHandler` implements `IExceptionHandler` (introduced in .NET 8) which works with both Minimal APIs and controller-based APIs. Call `AddRaExceptionHandling()` and `UseRaExceptionHandling()` as shown in the usage guide.
 
+### How do I add a `DefaultHeadersMiddleware` to the pipeline?
+
+There are currently no built-in `AddDefaultHeadersMiddleware` / `UseDefaultHeadersMiddleware` extension methods in the `RA.Utilities.Api` package. Register the middleware manually:
+
+```csharp
+builder.Services.Configure<DefaultHeadersOptions>(options => { /* ... */ });
+builder.Services.TryAddSingleton<DefaultHeadersMiddleware>();
+
+var app = builder.Build();
+app.UseMiddleware<DefaultHeadersMiddleware>();
+```
+
+### How do I configure which request bodies the HTTP logging middleware captures?
+
+Use `HttpLoggingOptions`:
+
+```csharp
+builder.Services.AddHttpLoggingMiddleware(options =>
+{
+    options.MaxBodyLogLength = 8192;          // Truncate bodies larger than this
+    options.PathsToIgnore.Add("/health");     // Skip health check endpoints
+    options.ExcludedHeaders.Add("Authorization"); // Redact sensitive headers
+    options.WarningThresholdMilliseconds = 500;   // Log slow requests at Warning
+});
+```
+
 ---
+
 ## Known Limitations
 
 - **No localization support**: Error messages are English-only. Use `ErrorCode` values for client-side lookup tables if you need multi-language support.
 - **Minimal API focused**: The `IEndpoint` registration pattern and `Validate<T>()` filter are designed for Minimal APIs. Controller-based apps can still use the exception handler and `SuccessResult` helpers.
 - **Request body can only be read once**: The `ValidationEndpointFilter` reads and buffers the request body. If another middleware also needs to read the body, ensure `EnableBuffering` is called first.
 - **Assembly scanning is eager**: `AddEndpoints()` discovers and registers all `IEndpoint` implementations at startup. For very large assemblies with thousands of endpoints, this may have a measurable startup cost.
+- **No built-in extension methods for `DefaultHeadersMiddleware`**: The middleware must be registered manually via `UseMiddleware<T>()` and `Configure<T>()`. See the FAQ for the registration pattern.
+- **`HttpLoggingMiddleware` buffers full request/response bodies**: Large payloads will be fully read into memory. Use `MaxBodyLogLength` to truncate large bodies and `PathsToIgnore` to skip specific endpoints.
