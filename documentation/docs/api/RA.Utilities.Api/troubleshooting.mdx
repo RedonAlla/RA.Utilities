@@ -271,14 +271,22 @@ Yes. `GlobalExceptionHandler` implements `IExceptionHandler` (introduced in .NET
 
 ### How do I add a `DefaultHeadersMiddleware` to the pipeline?
 
-There are currently no built-in `AddDefaultHeadersMiddleware` / `UseDefaultHeadersMiddleware` extension methods in the `RA.Utilities.Api` package. Register the middleware manually:
+Use the `AddDefaultHeadersMiddleware` / `UseDefaultHeadersMiddleware` extension methods in `RA.Utilities.Api.Extensions`:
 
 ```csharp
-builder.Services.Configure<DefaultHeadersOptions>(options => { /* ... */ });
-builder.Services.TryAddSingleton<DefaultHeadersMiddleware>();
+using RA.Utilities.Api.Extensions;
+
+builder.Services.AddDefaultHeadersMiddleware(options =>
+{
+    options.RequiredHeaders.Add(new RequiredHeaderDefinition
+    {
+        Name = "x-api-key",
+        ErrorMessage = "API key is required.",
+    });
+});
 
 var app = builder.Build();
-app.UseMiddleware<DefaultHeadersMiddleware>();
+app.UseDefaultHeadersMiddleware();
 ```
 
 ### How do I configure which request bodies the HTTP logging middleware captures?
@@ -303,5 +311,5 @@ builder.Services.AddHttpLoggingMiddleware(options =>
 - **Minimal API focused**: The `IEndpoint` registration pattern and `Validate<T>()` filter are designed for Minimal APIs. Controller-based apps can still use the exception handler and `SuccessResult` helpers.
 - **Request body can only be read once**: The `ValidationEndpointFilter` reads and buffers the request body. If another middleware also needs to read the body, ensure `EnableBuffering` is called first.
 - **Assembly scanning is eager**: `AddEndpoints()` discovers and registers all `IEndpoint` implementations at startup. For very large assemblies with thousands of endpoints, this may have a measurable startup cost.
-- **No built-in extension methods for `DefaultHeadersMiddleware`**: The middleware must be registered manually via `UseMiddleware<T>()` and `Configure<T>()`. See the FAQ for the registration pattern.
+- **`DefaultHeadersMiddleware` defaults to requiring `x-request-id` only**: Additional required headers must be configured via `DefaultHeadersOptions.RequiredHeaders`. The default auto-generates `x-request-id` if missing.
 - **`HttpLoggingMiddleware` buffers full request/response bodies**: Large payloads will be fully read into memory. Use `MaxBodyLogLength` to truncate large bodies and `PathsToIgnore` to skip specific endpoints.

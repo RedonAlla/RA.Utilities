@@ -20,19 +20,23 @@ All classes remain in the same namespace (`RA.Utilities.Api.Extensions`).
 * Having both `SuccessResponse` (static helper class) and `SuccessResponse<T>` (generic response model) in the same namespace caused ambiguity and IDE confusion.
 * `SuccessResult` better describes what the class does — it creates `IResult` objects.
 * The old naming (`ApplicationBuilderExtensions`, `ServiceCollectionExtensions`) was too generic — each class held only one method and provided no hint about what feature it related to.
-The new organization follows the pattern established by `RaExceptionHandlingExtensions`, where each file is a self-contained feature with its `Add`/`Use` pair.
+The new organization follows the pattern established by `ExceptionHandlingExtensions`, where each file is a self-contained feature with its `Add`/`Use` pair.
 
 ### What changed
 
 | Aspect | v10.0.5 | v10.0.6 |
 |---|---|---|
-| `AddHttpLoggingMiddleware` location | `ServiceCollectionExtensions` | `HttpLoggingExtensions` |
-| `UseHttpLoggingMiddleware` location | `ApplicationBuilderExtensions` | `HttpLoggingExtensions` |
+| `AddLoggingMiddleware` location | `ServiceCollectionExtensions` | `HttpLoggingExtensions` |
+| `UseLoggingMiddleware` location | `ApplicationBuilderExtensions` | `HttpLoggingExtensions` |
 | `Validate<TModel>` location | `EndpointBuilderExtensions` | `ValidationExtensions` |
 | `AddEndpoints` location | `EndpointExtensions` | `EndpointExtensions` (unchanged) |
 | `MapEndpoints` location | `EndpointExtensions` | `EndpointExtensions` (unchanged) |
-| `AddRaExceptionHandling` location | `RaExceptionHandlingExtensions` | `RaExceptionHandlingExtensions` (unchanged) |
-| `UseRaExceptionHandling` location | `RaExceptionHandlingExtensions` | `RaExceptionHandlingExtensions` (unchanged) |
+| `AddRaExceptionHandling` location | `RaExceptionHandlingExtensions` | `ExceptionHandlingExtensions` |
+| `UseRaExceptionHandling` location | `RaExceptionHandlingExtensions` | `ExceptionHandlingExtensions` |
+| `AddDefaultHeadersMiddleware` location | — | `DefaultHeadersMiddlewareExtensions` (new) |
+| `UseDefaultHeadersMiddleware` location | — | `DefaultHeadersMiddlewareExtensions` (new) |
+| `AddRequestContextLoggingMiddleware` location | — | `RequestContextLoggingMiddlewareExtensions` (new) |
+| `UseRequestContextLoggingMiddleware` location | — | `RequestContextLoggingMiddlewareExtensions` (new) |
 
 ### Migration Steps
 
@@ -42,7 +46,7 @@ These are **extension methods** — they are resolved by the compiler based on t
 Your existing `Program.cs` code continues to compile without modification:
 
 ```csharp
-// ✅ This code is unchanged in v10.0.7
+// ✅ This code is unchanged in v10.0.6
 using RA.Utilities.Api.Extensions;
 
 builder.Services.AddHttpLoggingMiddleware();  // Resolved on IServiceCollection

@@ -19,14 +19,24 @@ This is a core pattern for implementing a clean Vertical Slice Architecture.
 This class is designed to improve the developer experience when applying validation to Minimal API endpoints.
 It provides a more fluent and readable syntax for adding the [`ValidationEndpointFilter`](../ValidationEndpointFilter.md).
 
-### 3. [RaExceptionHandlingExtensions](./RaExceptionHandlingExtensions.md)
+### 3. [ExceptionHandlingExtensions](./ExceptionHandlingExtensions.md)
 This class simplifies the setup of global exception handling.
 It provides a convenient one-liner for registering the [`GlobalExceptionHandler`](../GlobalExceptionHandler.mdx) with the DI container and another for adding its middleware to the request pipeline,
 ensuring every unhandled exception is logged and returned to the client as a structured error response.
 
 ### 4. [HttpLoggingExtensions](./HttpLoggingExtensions.md)
-This class provides extension methods for registering and configuring the `HttpLoggingMiddleware`.
-It pairs `AddHttpLoggingMiddleware` (service registration) with `UseHttpLoggingMiddleware` (pipeline registration) in a single, cohesive entry point.
+This class provides extension methods for registering and configuring the logging middleware.
+It pairs `AddLoggingMiddleware` (service registration) with `UseLoggingMiddleware` (pipeline registration) in a single, cohesive entry point.
+
+### 5. [DefaultHeadersMiddlewareExtensions](./DefaultHeadersMiddlewareExtensions.md)
+This class provides extension methods for registering and configuring the `DefaultHeadersMiddleware`.
+It pairs `AddDefaultHeadersMiddleware` (service registration) with `UseDefaultHeadersMiddleware` (pipeline registration).
+Configure required headers via `DefaultHeadersOptions.RequiredHeaders`.
+
+### 6. [RequestContextLoggingMiddlewareExtensions](./RequestContextLoggingMiddlewareExtensions.md)
+This class provides extension methods for registering and configuring the `RequestContextLoggingMiddleware`.
+It pairs `AddRequestContextLoggingMiddleware` (service registration) with `UseRequestContextLoggingMiddleware` (pipeline registration).
+The middleware enriches log entries with request-scoped context such as the correlation ID.
 
 <br />
 <br />

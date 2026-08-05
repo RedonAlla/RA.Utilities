@@ -29,7 +29,7 @@ A fluent helper that adds the custom `RequestIdEnricher` to the Serilog pipeline
 
 ### 2. `ActivityExtensions`
 Provides extension methods for `System.Diagnostics.Activity`:
-* **[`GetActivityId(this Activity?)`](./LoggingExtensions.md#2-withrequestidenricher)**: Returns the activity's ID as a string based on its format (Hierarchical or W3C). Returns `null` when no activity or format is available, so downstream code can decide whether to add a trace property.
+* **`GetActivityId(this Activity?)`**: Returns the activity's ID as a string based on its format (Hierarchical or W3C). Returns `null` when no activity or format is available, so downstream code can decide whether to add a trace property.
 
 
 ## 🧠 Summary

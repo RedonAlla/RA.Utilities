@@ -2,7 +2,7 @@
 Namespace: RA.Utilities.Api.Extensions
 ```
 
-The `RaExceptionHandlingExtensions` class is a key component of your `RA.Utilities.Api` package.
+The `ExceptionHandlingExtensions` class is a key component of your `RA.Utilities.Api` package.
 Its purpose is to provide a clean, discoverable way to register the [`GlobalExceptionHandler`](../GlobalExceptionHandler.mdx) with your application, giving every unhandled exception a single, standardized error response.
 
 The [`GlobalExceptionHandler`](../GlobalExceptionHandler.mdx) implements the `IExceptionHandler` interface (introduced in .NET 8).
@@ -14,7 +14,7 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 app.UseExceptionHandler();
 ```
 
-`RaExceptionHandlingExtensions` wraps both calls in expressive, discoverable extension methods:
+`ExceptionHandlingExtensions` wraps both calls in expressive, discoverable extension methods:
 
 **1. `AddRaExceptionHandling()`**:
 This method registers the [`GlobalExceptionHandler`](../GlobalExceptionHandler.mdx) with the dependency injection (DI) container by calling `AddExceptionHandler<GlobalExceptionHandler>()`.
