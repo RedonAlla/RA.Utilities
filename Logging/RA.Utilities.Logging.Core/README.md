@@ -6,34 +6,37 @@
 [![Documentation](https://img.shields.io/badge/Documentation-read-brightgreen.svg?logo=readthedocs&logoColor=fff)](https://redonalla.github.io/RA.Utilities/nuget-packages/Logging/RA.Utilities.Logging.Core/)
 [![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
 
-`RA.Utilities.Logging.Core` provides a set of opinionated helpers and configurations for setting up structured logging with Serilog in .NET applications. This package simplifies the integration of common sinks (Console, File), enrichers (Exceptions, Sensitive Data), and performance features like asynchronous logging, enabling a robust and consistent logging strategy out of the box.
+`RA.Utilities.Logging.Core` provides a set of opinionated helpers and configurations for setting up structured logging with Serilog in .NET applications. It ships with pre-wired Serilog packages (Console, File, Async sinks; Exception, Sensitive Data enrichers) so that consumers can configure them declaratively via `appsettings.json` without adding individual NuGet references.
 
 ## 📚 Table of Contents
 
-- Getting Started
-- Dependencies
-- How It Works
-- Usage
+- Purpose
+- Key Features
+- Installation
+- How to Use
 - Contributing
 
 ---
 
 ## Purpose
 
-Setting up a comprehensive logging solution from scratch can be repetitive. This package abstracts away the boilerplate configuration for Serilog by providing a single extension method, `AddRaSerilog`, that configures a production-ready logger with sensible defaults.
+Setting up a comprehensive logging solution from scratch can be repetitive. This package abstracts away the boilerplate Serilog wiring by providing a single extension method, `AddLoggingWithConfiguration`, that bootstraps a production-ready foundation.
 
-**Key Features Configured by Default:**
+## Key Features
 
-- **Structured Logging**: Logs are written in a structured format (JSON), making them easy to query and analyze.
-- **Multiple Sinks**:
-  - **Console Sink**: For easy viewing during development.
-  - **File Sink**: For persistent log storage, with automatic rolling by file size.
-- **Asynchronous Logging**: All sinks are wrapped in `Serilog.Sinks.Async` to minimize the performance impact of logging on your application's request thread.
-- **Rich Enrichment**:
-  - `FromLogContext`: Adds contextual information to logs.
-  - `WithExceptionDetails`: Destructures exceptions to include detailed information like the stack trace.
-  - `WithSensitiveDataMasking`: Automatically finds and masks sensitive data in log messages based on property names (e.g., "Password", "CreditCard").
-- **Configuration-Driven**: Reads settings from `appsettings.json`, allowing you to easily adjust log levels and other parameters without changing code.
+**Configured automatically by `AddLoggingWithConfiguration`:**
+
+- **Configuration-driven**: Reads Serilog settings from `appsettings.json` via `ReadFrom.Configuration`, so log levels, sinks, and enrichers are controlled declaratively.
+- **Request ID enrichment**: Adds `XRequestId` and `TraceId` properties to every log event via `RequestIdEnricher`, sourced from the `x-request-id` header, `HttpContext.TraceIdentifier`, or the current `Activity`.
+- **Exception details**: Uses `Serilog.Exceptions` to destructure exceptions with full stack trace detail.
+- **System.Text.Json destructuring**: Uses `Destructurama.SystemTextJson` so that `JsonElement` and related types log as readable values instead of `ValueKind` enum names.
+
+**Available for `appsettings.json` configuration** (packages are included as dependencies — no additional NuGet install needed):
+
+- **Console sink** — `Serilog.Sinks.Console`
+- **File sink** — `Serilog.Sinks.File` with rolling and size limits
+- **Async wrapper** — `Serilog.Sinks.Async` to offload I/O from the request thread
+- **Sensitive data masking** — `Serilog.Enrichers.Sensitive`
 
 ---
 
@@ -55,7 +58,7 @@ Integrating the logger into your ASP.NET Core application is a two-step process.
 
 ### Step 1: Configure `appsettings.json`
 
-Add a `Serilog` section to your `appsettings.json` file. The `AddRaSerilog` method will automatically read from this section. You can override log levels for different sources as needed.
+Add a `Serilog` section to your `appsettings.json` file. The `AddLoggingWithConfiguration` method reads from this section automatically.
 
 ```json
 {
@@ -64,25 +67,66 @@ Add a `Serilog` section to your `appsettings.json` file. The `AddRaSerilog` meth
       "Default": "Information",
       "Override": {
         "Microsoft": "Warning",
-        "Microsoft.Hosting.Lifetime": "Information"
+        "Microsoft.Hosting.Lifetime": "Information",
+        "System": "Warning"
+      }
+    },
+    "Using": [
+      "Serilog.Sinks.Console",
+      "Serilog.Sinks.File",
+      "Serilog.Sinks.Async",
+      "Serilog.Enrichers.Sensitive",
+      "Serilog.Exceptions"
+    ],
+    "Enrich": [
+      { "Name": "WithExceptionDetails" },
+      {
+        "Name": "WithSensitiveDataMasking",
+        "Args": {
+          "options": {
+            "MaskValue": "***SECRET***",
+            "Mode": "Globally"
+          }
+        }
+      }
+    ],
+    "WriteTo:Async": {
+      "Name": "Async",
+      "Args": {
+        "configure": [
+          {
+            "Name": "File",
+            "Args": {
+              "path": "Logs/app-.log",
+              "rollingInterval": "Day",
+              "rollOnFileSizeLimit": true,
+              "outputTemplate": "{Timestamp:G} [{Level}] ({XRequestId})({TraceId}) {Message:lj} ({SourceContext}){NewLine}{Exception}"
+            }
+          },
+          {
+            "Name": "Console",
+            "Args": {
+              "outputTemplate": "{Timestamp:G} [{Level}] ({XRequestId})({TraceId}) {Message:lj} ({SourceContext}){NewLine}{Exception}"
+            }
+          }
+        ]
       }
     }
-  },
-  "AllowedHosts": "*"
+  }
 }
 ```
 
 ### Step 2: Add the Logger in `Program.cs`
 
-Call the `AddRaSerilog()` extension method on your `WebApplicationBuilder`. This should be one of the first things you do to ensure all application startup events are logged.
+Call `AddLoggingWithConfiguration()` on your `WebApplicationBuilder`. This should be one of the first things you do to ensure all application startup events are logged.
 
 ```csharp
 using RA.Utilities.Logging.Core.Extensions; // Add this using statement
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add the RA Serilog configuration
-builder.AddRaSerilog();
+// Configure Serilog with opinionated defaults
+builder.AddLoggingWithConfiguration();
 
 try
 {
@@ -117,4 +161,3 @@ That's it! Your application is now configured with structured, asynchronous, and
 ## Contributing
 
 Contributions are welcome! If you have a suggestion or find a bug, please open an issue to discuss it. Please follow the contribution guidelines outlined in the other `RA.Utilities` packages.
-

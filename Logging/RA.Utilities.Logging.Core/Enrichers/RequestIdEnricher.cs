@@ -12,7 +12,7 @@ namespace RA.Utilities.Logging.Core.Enrichers;
 /// <list type="number">
 /// <item><description>The <c>x-request-id</c> header from the current HTTP request.</description></item>
 /// <item><description>The <see cref="HttpContext.TraceIdentifier"/> from the current HTTP request.</description></item>
-/// <item><description>The ID from the current <see cref="System.Diagnostics.Activity"/>.</description></item>
+/// <item><description>The ID from the current <see cref="Activity"/>.</description></item>
 /// </list>
 /// This enricher depends on <see cref="IHttpContextAccessor"/> to access the HTTP context
 /// and should be registered in the dependency injection container.
@@ -21,23 +21,20 @@ namespace RA.Utilities.Logging.Core.Enrichers;
 public class RequestIdEnricher : ILogEventEnricher
 {
     /// <summary>
-    /// The property name added to enriched log events.
+    /// The property name added to enriched log events for the trace ID.
     /// </summary>
-    private const string RequestIdPropertyName = "XRequestId";
-
     private const string TraceIdPropertyName = "TraceId";
 
     /// <summary>
     /// The name of the header to check for a request ID.
     /// </summary>
-    private const string HeadersXRequestIdPropertyName = "x-request-id";
+    private const string XRequestIdHeaderName = "x-request-id";
 
-    private readonly HttpContext _httpContext;
+    private readonly IHttpContextAccessor _contextAccessor;
 
     /// <summary>
-    /// Initialize a new instance of <see cref="RequestIdEnricher"/>
-    /// with default <see cref="HttpContextAccessor"/>.
-    /// Initializes a new instance of the <see cref="RequestIdEnricher"/> class.
+    /// Initializes a new instance of the <see cref="RequestIdEnricher"/> class
+    /// with a default <see cref="HttpContextAccessor"/>.
     /// </summary>
     public RequestIdEnricher() : this(new HttpContextAccessor())
     {
@@ -50,7 +47,7 @@ public class RequestIdEnricher : ILogEventEnricher
     /// This is typically injected by the dependency injection container.</param>
     public RequestIdEnricher(IHttpContextAccessor contextAccessor)
     {
-        _httpContext = contextAccessor.HttpContext!;
+        _contextAccessor = contextAccessor;
     }
 
     /// <summary>
@@ -60,15 +57,17 @@ public class RequestIdEnricher : ILogEventEnricher
     /// <param name="propertyFactory">Factory for creating new properties to add to the event.</param>
     public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
     {
-        string? requestId = _httpContext?.Request.Headers[HeadersXRequestIdPropertyName];
+        HttpContext? httpContext = _contextAccessor?.HttpContext;
+
+        string? requestId = httpContext?.Request.Headers[XRequestIdHeaderName];
 
         if (!string.IsNullOrEmpty(requestId))
         {
-            LogEventProperty property = propertyFactory.CreateProperty(RequestIdPropertyName, requestId);
+            LogEventProperty property = propertyFactory.CreateProperty(XRequestIdHeaderName, requestId);
             logEvent.AddPropertyIfAbsent(property);
         }
 
-        string traceId = _httpContext?.TraceIdentifier ?? Activity.Current?.GetActivityId();
+        string? traceId = httpContext?.TraceIdentifier ?? Activity.Current?.GetActivityId();
 
         if (!string.IsNullOrWhiteSpace(traceId))
         {
