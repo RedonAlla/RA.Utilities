@@ -155,6 +155,64 @@ article .card:hover {
   outline-offset: 0;
 }
 
+/* ------- Hero CTA (intro page) ------- */
+.hero-cta {
+  margin: 1.75rem 0;
+  padding: 1.75rem 2rem;
+  border: 2px solid var(--ifm-color-primary-lighter);
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(81, 43, 212, 0.04) 0%, rgba(81, 43, 212, 0.01) 100%);
+}
+
+.hero-cta__content {
+  max-width: 640px;
+}
+
+.cta-button {
+  display: inline-block;
+  padding: 0.7rem 1.6rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff !important;
+  background: var(--ifm-color-primary);
+  border-radius: 6px;
+  text-decoration: none !important;
+  transition: background-color var(--ifm-transition-fast) var(--ifm-transition-timing-default),
+              transform var(--ifm-transition-fast) var(--ifm-transition-timing-default),
+              box-shadow var(--ifm-transition-fast) var(--ifm-transition-timing-default);
+}
+
+.cta-button:hover {
+  color: #fff !important;
+  background: var(--ifm-color-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(81, 43, 212, 0.25);
+}
+
+.cta-button:active {
+  transform: translateY(0);
+}
+
+.hero-cta__hint {
+  margin-top: 0.6rem;
+  margin-bottom: 0;
+  font-size: 0.82rem;
+  color: var(--ifm-font-color-secondary);
+}
+
+[data-theme='dark'] .hero-cta {
+  background: linear-gradient(135deg, rgba(172, 153, 234, 0.08) 0%, rgba(172, 153, 234, 0.02) 100%);
+  border-color: rgba(172, 153, 234, 0.30);
+}
+
+[data-theme='dark'] .cta-button {
+  color: #1c1e21 !important;
+}
+
+[data-theme='dark'] .cta-button:hover {
+  color: #1c1e21 !important;
+}
+
 @media (min-width: 996px) {
   .navbar__item.navbar__link.menu_item_icon {
     display: flex;
