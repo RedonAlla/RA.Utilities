@@ -3,60 +3,103 @@ title: Introduction
 sidebar_position: 1
 ---
 
-[![Packages](https://img.shields.io/badge/Packages-16-%23e50d00?logo=nuget)](https://www.nuget.org/profiles/RedonAlla)
+[![Packages](https://img.shields.io/badge/Packages-17-%23e50d00?logo=nuget)](https://www.nuget.org/profiles/RedonAlla)
 [![Total Downloads](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/RedonAlla/RA.Utilities/main/.github/badges/total-downloads.json&logo=nuget)](https://www.nuget.org/profiles/RedonAlla)
 [![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
 [![GitHub last commit](https://img.shields.io/github/last-commit/RedonAlla/RA.Utilities.svg?logo=fastly&logoColor=white)](https://github.com/RedonAlla/RA.Utilities/commits/main)
 [![GitHub issues](https://img.shields.io/github/issues/RedonAlla/RA.Utilities.svg)](https://github.com/RedonAlla/RA.Utilities/issues)
-[![Publish NuGet](https://github.com/RedonAlla/RA.Utilities/actions/workflows/deploy-docs.yml/badge.svg?logoColor=fff)](https://github.com/RedonAlla/RA.Utilities/actions/workflows/deploy-docs.yml)
+[![Publish NuGet](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml/badge.svg?logoColor=fff)](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml)
 [![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
 {/* [![GitHub stars](https://img.shields.io/github/stars/RedonAlla/RA.Utilities.svg?style=social&label=Star)](https://github.com/RedonAlla/RA.Utilities) */}
 
 
 RA.Utilities provides a set of reusable, opinionated building blocks primarily aimed at solving common problems in web API development. The high-level purpose is to reduce boilerplate code, enforce consistency, promote a clean architecture (specifically Vertical Slice Architecture using the CQRS pattern), and improve the overall developer experience.
-The repository is structured into several solution folders, each mapping to a specific architectural layer:
- * **Api/**: Contains projects related to the web layer, including API setup, custom middlewares, authentication/authorization helpers, and OpenAPI (Swagger) configuration.
- * **Application/**: Holds the RA.Utilities.Feature project, which is the core of the application logic and implements the CQRS pattern.
- * **Core/**: Contains foundational projects with minimal dependencies, such as shared exceptions and constants.
- * **Data/**: Represents the data access layer, with projects for abstractions and a specific implementation using Entity Framework.
- * **Infrastructure/**: Houses projects that interact with external systems, like standardizing calls to other APIs.
- * **Logging/**: Isolates logging as a cross-cutting concern into its own projects.
- * **documentation/**: Includes documentation as a first-class citizen within the solution.
 
+---
 
-The solution is broken down into several NuGet packages, each addressing a specific concern like **API & Web**, **Application Logic**, **Core Building Blocks**, **Data Access**, **Integrations**, and **Logging**. In essence, RA.Utilities acts as a "batteries-included" framework to help developers build modern .NET APIs by providing a foundation for a clean architecture, allowing them to focus more on business logic rather than infrastructure setup. The repository is public, licensed under the MIT license, and uses C#.
+## 🚀 Getting Started
 
-## 🚀 Purpose & Benefits of RA.Utilities NuGet Packages
+New to RA.Utilities? Here is the recommended reading order — each layer builds on the one before it.
 
-RA.Utilities is a suite of NuGet packages designed to accelerate and standardize.NET web API development. Each package encapsulates best practices and reusable components that help developers build robust, maintainable, and scalable applications with minimal boilerplate.
+| Step | Layer | Start here | What you will learn |
+|------|-------|------------|-------------------|
+| **1. Foundation** | Core | [Core Overview](/nuget-packages/core) | The `Result` monad, exception hierarchy, and HTTP constants — these underpin everything else |
+| **2. Business Logic** | Application | [Feature Mediator](/nuget-packages/Application/Feature) | CQRS handlers, the custom mediator, and pipeline behaviors |
+| **3. API Layer** | Api | [Api Package](/nuget-packages/api/RA.Utilities.Api) | Endpoint registration, exception handling, validation filters, and standardized responses |
 
-## 🔑 Key Benefits:
-  * 🧱 Modular Architecture: Plug-and-play components for logging, authentication, error handling, and more.
-  * 📦 NuGet-Ready: Easily integrate into your projects via NuGet for fast setup and consistent behavior.
-  * 🧭 Clean Design Patterns: Built around CQRS and vertical slice architecture to promote separation of concerns and testability.
-  * 📈 Developer Productivity: Reduce repetitive code and focus on business logic.
-  * 📚 Built-in Documentation: Seamless OpenAPI integration for clear and interactive API docs.
+Each package is opt-in — adopt only the layers your project needs.
 
-Whether you're starting a new project or refactoring an existing one, RA.Utilities helps you build better APIs—faster.
+### Quick Install
 
+```bash
+# Start with the foundation
+dotnet add package RA.Utilities.Core
+dotnet add package RA.Utilities.Core.Exceptions
 
-## 🆚 Solution Structure
+# Add the mediator and CQRS support
+dotnet add package RA.Utilities.Feature
+
+# Wire up your API
+dotnet add package RA.Utilities.Api
+```
+
+---
+
+## 🔑 Key Benefits
+
+RA.Utilities is a suite of NuGet packages designed to accelerate and standardize .NET web API development. Each package encapsulates best practices and reusable components that help developers build robust, maintainable, and scalable applications with minimal boilerplate.
+
+  * 🧱 **Modular Architecture**: Plug-and-play components for logging, authentication, error handling, and more.
+  * 📦 **NuGet-Ready**: Easily integrate into your projects via NuGet for fast setup and consistent behavior.
+  * 🧭 **Clean Design Patterns**: Built around CQRS and vertical slice architecture to promote separation of concerns and testability.
+  * 📈 **Developer Productivity**: Reduce repetitive code and focus on business logic.
+  * 📚 **Built-in Documentation**: Seamless OpenAPI integration for clear and interactive API docs.
+
+Whether you are starting a new project or refactoring an existing one, RA.Utilities helps you build better APIs — faster.
+
+---
+
+## 🗺️ Solution Structure
+
+The repository is organized into solution folders that map to Clean Architecture layers:
 
 import FileTree from '@site/src/components/FileTree/UtilitiesFileTree'
 
 <FileTree />
 
-## 📦 Packages
+| Layer | Purpose |
+|-------|---------|
+| **Core/** | Zero-dependency foundation: `Result` monad, exception hierarchy, HTTP constants |
+| **Application/** | Custom mediator, CQRS handlers, pipeline behaviors, FluentValidation utilities |
+| **Api/** | ASP.NET Core middleware, endpoint registration, typed HTTP responses, OpenAPI, JWT auth |
+| **Data/** | Entity base classes, repository interfaces, EF Core implementations |
+| **Infrastructure/** | Typed HTTP client with delegating-handler pipeline |
+| **Logging/** | Serilog setup with request-id enrichment, HTTP log templates |
 
-This table provides a quick overview of all the packages available in the RA.Utilities ecosystem, along with their current versions and download statistics from NuGet.
+---
+
+## 📦 Package Index
+
+This table provides a quick overview of all packages available in the RA.Utilities ecosystem, along with their current versions and download statistics from NuGet.
 
 import NuGetPackagesTable from '@site/src/components/NuGetPackagesTable'
 
 <NuGetPackagesTable />
 
+---
+
+## 📚 Browse by Category
+
 import DocCardList from '@theme/DocCardList';
 
 <br />
-<br />
 
-<DocCardList />
+---
+
+## 📖 Where to Go Next
+
+- **[Core Overview](/nuget-packages/core)** — Understand the `Result` monad, exception types, and constants
+- **[Feature Mediator](/nuget-packages/Application/Feature)** — Learn the custom CQRS mediator and pipeline behaviors
+- **[Api Package](/nuget-packages/api/RA.Utilities.Api)** — Set up endpoints, validation filters, and error handling
+- **[OpenApi](/nuget-packages/api/RA.Utilities.OpenApi)** — Auto-configure Swagger/Scalar documentation
+- **[Changelogs](/changelogs)** — See what is changed in recent releases

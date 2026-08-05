@@ -3,6 +3,15 @@ title: Application
 sidebar_position: 5
 ---
 
+The Application layer sits between Core and Api, implementing your business logic through the CQRS pattern. It contains two packages:
+
+- **`RA.Utilities.Feature`** — A custom mediator (not MediatR) that dispatches requests to handlers and composes pipeline behaviors. Start here.
+- **`RA.Utilities.Application.Validation`** — FluentValidation integration utilities for request validation.
+
+### Where to Start
+
+**[RA.Utilities.Feature →](/nuget-packages/Application/Feature)** — Learn the mediator, CQRS handlers, and pipeline behaviors that form the backbone of your application logic.
+
 import DocCardList from '@theme/DocCardList';
 
 <DocCardList />
