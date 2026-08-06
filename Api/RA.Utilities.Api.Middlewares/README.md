@@ -8,6 +8,14 @@
 
 `RA.Utilities.Api.Middlewares` provides a collection of useful ASP.NET Core middlewares to solve common cross-cutting concerns. It includes a high-performance middleware for logging HTTP requests/responses and another for enforcing the presence of required headers like `X-Request-Id` to ensure traceability.
 
+:::danger[Deprecated Package]
+
+This package is deprecated and has been moved to [RA.Utilities.Api](https://www.nuget.org/packages/RA.Utilities.Api/).
+
+All middleware types are now available in the `RA.Utilities.Api` package with expanded features — including multi-header enforcement, log-scope enrichment, and header filtering. See the [RA.Utilities.Api middlewares documentation](../RA.Utilities.Api/Middlewares/) for the current API and migration instructions.
+
+:::
+
 ## 📚 Table of Contents
 
 - Getting started
@@ -64,8 +72,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Add the logging middleware services
 builder.Services.AddHttpLoggingMiddleware(options =>
 {
-    options.ExcludePaths.Add("/swagger");
-    options.ExcludePaths.Add("/health");
+    options.PathsToIgnore.Add("/swagger");
+    options.PathsToIgnore.Add("/health");
 });
 
 var app = builder.Build();

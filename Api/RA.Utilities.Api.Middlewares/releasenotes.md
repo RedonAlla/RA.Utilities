@@ -1,5 +1,22 @@
 # RA.Utilities.Api.Middlewares Release Notes
 
+## Version 10.0.2
+![Date Badge](https://img.shields.io/badge/Publish-06%20August%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-v10.0.2-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api.Middlewares/10.0.2)
+
+Maintenance release with response model refactoring, log template improvements, and cancellation token support.
+
+### 📝 Improvements
+
+* **Response Model Refactoring**: `DefaultHeadersMiddleware` now constructs `BadRequestResponse` directly using object-initializer syntax instead of building a `BadRequestResult` array.
+* **Log Template Enhancement**: `HttpLoggingMiddleware` now includes the `RequestId` in both request and response log templates.
+* **Cancellation Token Support**: `WriteAsync` and `CopyToAsync` calls now pass `context.RequestAborted`.
+* **Typo Fix**: Fixed `Schema` → `Scheme` property name in the request log template.
+
+### ⚠️ Deprecation Notice
+
+This package is deprecated and superseded by [`RA.Utilities.Api`](https://www.nuget.org/packages/RA.Utilities.Api/). All middleware types have been consolidated there with expanded features. See the [migration guide](https://redonalla.github.io/RA.Utilities/nuget-packages/api/RA.Utilities.Api/Middlewares/) for details.
+
 ## Version 10.0.0
 ![Date Badge](https://img.shields.io/badge/Publish-24%20November%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-v10.0.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api.Middlewares/10.0.0)

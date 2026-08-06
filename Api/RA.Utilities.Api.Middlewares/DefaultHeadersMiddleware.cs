@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using RA.Utilities.Api.Middlewares.Extensions;
+using RA.Utilities.Api.Middlewares.Models;
 using RA.Utilities.Api.Middlewares.Options;
 using RA.Utilities.Api.Middlewares.Utilities;
-using RA.Utilities.Api.Results;
 using RA.Utilities.Core.Constants;
 
 namespace RA.Utilities.Api.Middlewares;
@@ -42,21 +42,27 @@ public class DefaultHeadersMiddleware : IMiddleware
 
         if (string.IsNullOrWhiteSpace(xRequestId))
         {
-            var result = new BadRequestResult[] {
-                new() {
-                    PropertyName = HeaderParameters.XRequestId,
-                    ErrorMessage = $"Header '{HeaderParameters.XRequestId}' is required.",
-                    ErrorCode = "NotNullValidator",
-                }
+            var response = new BadRequestResponse
+            {
+                ResponseCode = BaseResponseCode.BadRequest,
+                ResponseType = ResponseType.BadRequest,
+                ResponseMessage = BaseResponseMessages.BadRequest,
+                Result = [
+                    new() {
+                        PropertyName = HeaderParameters.XRequestId,
+                        ErrorMessage = $"Header '{HeaderParameters.XRequestId}' is required.",
+                        ErrorCode = "NotNullValidator",
+                    }
+                ]
             };
 
-            context.Response.Headers.TryAdd(HeaderParameters.Location, context.Request.Path!.ToString());
+            context.Response.Headers.TryAdd(HeaderParameters.Location, context.Request.Path.ToString());
             context.Response.Headers.TryAdd(HeaderParameters.XRequestId, Guid.NewGuid().ToString());
 
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
             context.Response.ContentType = "application/json; charset=utf-8";
-            string payload = JsonSerializer.Serialize(new BadRequestResponse(result));
-            await context.Response.WriteAsync(payload);
+            string payload = JsonSerializer.Serialize(response);
+            await context.Response.WriteAsync(payload, context.RequestAborted);
 
             // Short-circuit the pipeline — do not call the next middleware
             return;

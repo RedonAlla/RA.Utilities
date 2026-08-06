@@ -11,6 +11,7 @@ using Microsoft.IO;
 using RA.Utilities.Api.Middlewares.Json;
 using RA.Utilities.Api.Middlewares.Options;
 using RA.Utilities.Api.Middlewares.Utilities;
+using RA.Utilities.Logging.Shared.Constants;
 using RA.Utilities.Logging.Shared.Models.HttpLog;
 
 namespace RA.Utilities.Api.Middlewares;
@@ -72,7 +73,7 @@ public class HttpLoggingMiddleware : IMiddleware
 
         await LogResponseAsync(context, responseBody, stopwatch.Elapsed);
 
-        await responseBody.CopyToAsync(originalBodyStream);
+        await responseBody.CopyToAsync(originalBodyStream, context.RequestAborted);
     }
 
     private async Task LogRequestAsync(HttpContext context)
@@ -86,8 +87,9 @@ public class HttpLoggingMiddleware : IMiddleware
 
         var requestLog = new HttpRequestLogTemplate
         {
+            RequestId = context.Request.Headers[LoggingConstants.XRequestId].FirstOrDefault(),
             TraceIdentifier = context.TraceIdentifier,
-            Schema = context.Request.Scheme,
+            Scheme = context.Request.Scheme,
             Host = context.Request.Host.ToString(),
             Method = context.Request.Method,
             Path = context.Request.Path,
@@ -109,6 +111,7 @@ public class HttpLoggingMiddleware : IMiddleware
 
         var responseLog = new HttpResponseLogTemplate
         {
+            RequestId = context.Request.Headers[LoggingConstants.XRequestId].FirstOrDefault(),
             TraceIdentifier = context.TraceIdentifier,
             Path = context.Request.Path,
             RemoteAddress = context.Connection.RemoteIpAddress?.ToString(),
