@@ -39,7 +39,7 @@ dotnet add package RA.Utilities.Api --version 10.0.6
 
 ### `ApplicationBuilderExtensions` or `ServiceCollectionExtensions` no longer compile
 
-**Cause**: These generic extension classes were reorganized into feature-specific classes. `AddHttpLoggingMiddleware` and `UseHttpLoggingMiddleware` now live in `HttpLoggingExtensions`.
+**Cause**: These generic extension classes were reorganized into feature-specific classes. `AddLoggingMiddleware` and `UseLoggingMiddleware` now live in `HttpLoggingExtensions`.
 
 **Fix**: Update your using directives — no method name changes are required:
 
@@ -51,7 +51,7 @@ using RA.Utilities.Api.Extensions; // ApplicationBuilderExtensions / ServiceColl
 using RA.Utilities.Api.Extensions; // HttpLoggingExtensions, ValidationExtensions, etc.
 ```
 
-The method calls themselves are unchanged (`AddHttpLoggingMiddleware`, `UseHttpLoggingMiddleware`). They are extension methods resolved by the target type (`IServiceCollection`, `IApplicationBuilder`), so the class name change is transparent to consuming code.
+The method calls themselves are unchanged (`AddLoggingMiddleware`, `UseLoggingMiddleware`). They are extension methods resolved by the target type (`IServiceCollection`, `IApplicationBuilder`), so the class name change is transparent to consuming code.
 
 ### `Validate<T>()` is in `EndpointBuilderExtensions` — where did it go?
 
@@ -183,7 +183,7 @@ builder.Services.Configure<DefaultHeadersOptions>(options =>
 
 Comparisons are case-insensitive and match by prefix — `/health` also matches `/health/detailed`.
 
-### `HttpLoggingMiddleware` is not logging anything
+### `LoggingMiddleware` is not logging anything
 
 **Cause**: Either the middleware isn't registered in both DI and the pipeline, or the log level is too high.
 
@@ -191,18 +191,18 @@ Comparisons are case-insensitive and match by prefix — `/health` also matches 
 
 ```csharp
 // Register services
-builder.Services.AddHttpLoggingMiddleware();
+builder.Services.AddLoggingMiddleware();
 
 var app = builder.Build();
 
 // Add to pipeline (early, to capture all requests)
-app.UseHttpLoggingMiddleware();
+app.UseLoggingMiddleware();
 ```
 
-Also check your configured log level — `HttpLoggingMiddleware` logs at `Information` by default, switching to `Warning` when the request exceeds `WarningThresholdMilliseconds`:
+Also check your configured log level — `LoggingMiddleware` logs at `Information` by default, switching to `Warning` when the request exceeds `WarningThresholdMilliseconds`:
 
 ```csharp
-builder.Services.AddHttpLoggingMiddleware(options =>
+builder.Services.AddLoggingMiddleware(options =>
 {
     options.WarningThresholdMilliseconds = 500; // Log slow requests as Warning
 });
@@ -294,7 +294,7 @@ app.UseDefaultHeadersMiddleware();
 Use `HttpLoggingOptions`:
 
 ```csharp
-builder.Services.AddHttpLoggingMiddleware(options =>
+builder.Services.AddLoggingMiddleware(options =>
 {
     options.MaxBodyLogLength = 8192;          // Truncate bodies larger than this
     options.PathsToIgnore.Add("/health");     // Skip health check endpoints
@@ -312,4 +312,4 @@ builder.Services.AddHttpLoggingMiddleware(options =>
 - **Request body can only be read once**: The `ValidationEndpointFilter` reads and buffers the request body. If another middleware also needs to read the body, ensure `EnableBuffering` is called first.
 - **Assembly scanning is eager**: `AddEndpoints()` discovers and registers all `IEndpoint` implementations at startup. For very large assemblies with thousands of endpoints, this may have a measurable startup cost.
 - **`DefaultHeadersMiddleware` defaults to requiring `x-request-id` only**: Additional required headers must be configured via `DefaultHeadersOptions.RequiredHeaders`. The default auto-generates `x-request-id` if missing.
-- **`HttpLoggingMiddleware` buffers full request/response bodies**: Large payloads will be fully read into memory. Use `MaxBodyLogLength` to truncate large bodies and `PathsToIgnore` to skip specific endpoints.
+- **`LoggingMiddleware` buffers full request/response bodies**: Large payloads will be fully read into memory. Use `MaxBodyLogLength` to truncate large bodies and `PathsToIgnore` to skip specific endpoints.

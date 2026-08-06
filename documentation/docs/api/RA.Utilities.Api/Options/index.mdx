@@ -1,0 +1,22 @@
+---
+title: Options
+sidebar_position: 4
+---
+
+```powershell
+Namespace: RA.Utilities.Api.Options;
+```
+
+The `RA.Utilities.Api.Options;` namespace contains configuration classes used to customize the behavior of the middlewares in this package. Each options class follows the ASP.NET Core Options pattern and is configured via the `Action<T>` delegate parameter on the corresponding `Add*` extension method.
+
+## 🧩 Available Options Classes
+
+- [**DefaultHeadersOptions**](./DefaultHeadersOptions) — Configures path exclusion for the `DefaultHeadersMiddleware`.
+- [**HttpLoggingOptions**](./HttpLoggingOptions) — Configures path exclusion and body size limits for the `HttpLoggingMiddleware`.
+
+<br />
+<br />
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />

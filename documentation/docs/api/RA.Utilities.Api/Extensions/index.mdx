@@ -24,7 +24,7 @@ This class simplifies the setup of global exception handling.
 It provides a convenient one-liner for registering the [`GlobalExceptionHandler`](../GlobalExceptionHandler.mdx) with the DI container and another for adding its middleware to the request pipeline,
 ensuring every unhandled exception is logged and returned to the client as a structured error response.
 
-### 4. [HttpLoggingExtensions](./HttpLoggingExtensions.md)
+### 4. [HttpLoggingExtensions](./LoggingMiddlewareExtensions.md)
 This class provides extension methods for registering and configuring the logging middleware.
 It pairs `AddLoggingMiddleware` (service registration) with `UseLoggingMiddleware` (pipeline registration) in a single, cohesive entry point.
 

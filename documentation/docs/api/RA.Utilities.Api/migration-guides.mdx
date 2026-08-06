@@ -49,13 +49,13 @@ Your existing `Program.cs` code continues to compile without modification:
 // ✅ This code is unchanged in v10.0.6
 using RA.Utilities.Api.Extensions;
 
-builder.Services.AddHttpLoggingMiddleware();  // Resolved on IServiceCollection
+builder.Services.AddLoggingMiddleware();  // Resolved on IServiceCollection
 builder.Services.AddEndpoints(typeof(Program).Assembly); // Resolved on IServiceCollection
 builder.Services.AddRaExceptionHandling();    // Resolved on IServiceCollection
 
 var app = builder.Build();
 
-app.UseHttpLoggingMiddleware();   // Resolved on IApplicationBuilder
+app.UseLoggingMiddleware();   // Resolved on IApplicationBuilder
 app.UseRaExceptionHandling();     // Resolved on IApplicationBuilder
 app.MapEndpoints();               // Resolved on WebApplication
 ```

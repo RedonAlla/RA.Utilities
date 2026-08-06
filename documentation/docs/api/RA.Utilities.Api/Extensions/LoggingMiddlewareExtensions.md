@@ -1,14 +1,18 @@
+---
+sidebar_position: 2
+---
+
 ```powershell
 Namespace: RA.Utilities.Api.Extensions
 ```
 
-The `HttpLoggingExtensions` class provides a paired set of extension methods for registering and configuring the `HttpLoggingMiddleware` in an ASP.NET Core application. The `Add`/`Use` pair follows the standard ASP.NET Core convention — `Add` registers services in DI, `Use` adds the middleware to the request pipeline.
+The `HttpLoggingExtensions` class provides a paired set of extension methods for registering and configuring the `LoggingMiddleware` in an ASP.NET Core application. The `Add`/`Use` pair follows the standard ASP.NET Core convention — `Add` registers services in DI, `Use` adds the middleware to the request pipeline.
 
 ## Methods
 
-### `AddHttpLoggingMiddleware()`
+### `AddLoggingMiddleware()`
 
-Registers the `HttpLoggingMiddleware` and its dependencies in the dependency injection container.
+Registers the `LoggingMiddleware` and its dependencies in the dependency injection container.
 
 #### Parameters
 | Parameter | Type | Description |
@@ -19,12 +23,12 @@ Registers the `HttpLoggingMiddleware` and its dependencies in the dependency inj
 This method performs three registrations:
 - **Configures** `HttpLoggingOptions` if a delegate is provided.
 - **Registers** `RecyclableMemoryStreamManager` as a singleton (using `TryAddSingleton` so an existing registration is preserved).
-- **Registers** `HttpLoggingMiddleware` as a transient `IMiddleware`.
+- **Registers** `LoggingMiddleware` as a transient `IMiddleware`.
 
 #### Example
 
 ```csharp
-builder.Services.AddHttpLoggingMiddleware(options =>
+builder.Services.AddLoggingMiddleware(options =>
 {
     options.MaxBodyLogLength = 8192;
     options.WarningThresholdMilliseconds = 500;
@@ -33,9 +37,9 @@ builder.Services.AddHttpLoggingMiddleware(options =>
 });
 ```
 
-### `UseHttpLoggingMiddleware()`
+### `UseLoggingMiddleware()`
 
-Adds the `HttpLoggingMiddleware` to the request pipeline. Must be called after `AddHttpLoggingMiddleware()`.
+Adds the `LoggingMiddleware` to the request pipeline. Must be called after `AddLoggingMiddleware()`.
 
 #### Parameters
 | Parameter | Type | Description |
@@ -50,7 +54,7 @@ Adds the `HttpLoggingMiddleware` to the request pipeline. Must be called after `
 ```csharp
 var app = builder.Build();
 
-app.UseHttpLoggingMiddleware();
+app.UseLoggingMiddleware();
 // Other middleware...
 app.MapEndpoints();
 
@@ -65,7 +69,7 @@ using RA.Utilities.Api.Extensions;
 var builder = WebApplication.CreateBuilder(args);
 
 // Register the middleware services
-builder.Services.AddHttpLoggingMiddleware(options =>
+builder.Services.AddLoggingMiddleware(options =>
 {
     options.MaxBodyLogLength = 4096;
 });
@@ -73,7 +77,7 @@ builder.Services.AddHttpLoggingMiddleware(options =>
 var app = builder.Build();
 
 // Add the middleware to the pipeline (early, to capture all requests)
-app.UseHttpLoggingMiddleware();
+app.UseLoggingMiddleware();
 app.MapEndpoints();
 
 app.Run();

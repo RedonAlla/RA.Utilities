@@ -47,7 +47,7 @@ It's an internal helper used by [`ErrorResultResponse`](../../RA.Utilities.Api/m
 public static class ErrorResultMapper
 {
     // Maps a NotFoundException to a NotFoundResponse object (the response body)
-    public static NotFoundResponse MapToNotFoundResponse(NotFoundException exception)
+    public static NotFoundResponse ToResponse(NotFoundException exception)
     {
         ArgumentNullException.ThrowIfNull(exception);
 
@@ -83,7 +83,7 @@ public static class ErrorResultResponse
         // ...
         NotFoundException notFoundException => Microsoft.AspNetCore.Http.Results.Json(
             // It calls ErrorResultMapper to create the body...
-            ErrorResultMapper.MapToNotFoundResponse(notFoundException),
+            ErrorResultMapper.ToResponse(notFoundException),
             // ...and sets the correct status code.
             statusCode: BaseResponseCode.NotFound
         ),

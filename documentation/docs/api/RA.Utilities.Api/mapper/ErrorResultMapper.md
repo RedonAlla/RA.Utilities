@@ -38,7 +38,7 @@ public static IResult Result(Exception exception) => exception switch
 
     NotFoundException notFoundException => Microsoft.AspNetCore.Http.Results.Json(
         // highlight-next-line
-        ErrorResultMapper.MapToNotFoundResponse(notFoundException), // Creates the response body
+        ErrorResultMapper.ToResponse(notFoundException), // Creates the response body
         statusCode: notFoundException.ErrorCode
     ),
 
@@ -52,22 +52,22 @@ As you can see, [`ErrorResultResponse`](./ErrorResultResponse.md) delegates the 
 
 The class provides a dedicated mapping method for each custom exception type:
 
-- **`ToBadRequestResponse(BadRequestException ex)`**:
+- **`ToResponse(BadRequestException ex)`**:
   Maps a `BadRequestException` to a `BadRequestResponse`, converting the exception's validation errors into a `BadRequestResult` array.
 
-- **`MapToConflictResponse(ConflictException ex)`**:
+- **`ToResponse(ConflictException ex)`**:
   Maps a `ConflictException` to a `ConflictResponse`, populating the `ConflictResult` with the entity name and value.
 
-- **`MapToNotFoundResponse(NotFoundException ex)`**:
+- **`ToResponse(NotFoundException ex)`**:
   Maps a `NotFoundException` to a `NotFoundResponse`, populating the `NotFoundResult` with the entity name and value.
 
-- **`MapToUnauthorizedResponse(UnauthorizedException ex)`**:
+- **`ToResponse(UnauthorizedException ex)`**:
   Maps an `UnauthorizedException` to an `UnauthorizedResponse`, populating the `ErrorResult` with the error code and message.
 
-- **`MapToForbiddenResponse(ForbiddenException ex)`**:
+- **`ToResponse(ForbiddenException ex)`**:
   Maps a `ForbiddenException` to a `ForbiddenResponse`, populating the `ErrorResult` with the error code and message.
 
-- **`MapToUnprocessableResponse(UnprocessableException ex)`**:
+- **`ToResponse(UnprocessableException ex)`**:
   Maps an `UnprocessableException` to an `UnprocessableResponse`, populating the `ErrorResult` with the error code and message.
 
 - **`ToResponse(TooManyRequestsException ex)`**:
@@ -79,5 +79,5 @@ The class provides a dedicated mapping method for each custom exception type:
 - **`ToResponse(GatewayTimeoutException ex)`**:
   Maps a `GatewayTimeoutException` to a [`GatewayTimeoutResponse`](../Results/GatewayTimeoutResponse.md) (HTTP 504), populating the `ErrorResult` with the error code and message.
 
-- **`ToGeneralErrorResponse(RaBaseException ex)`**:
+- **`ToResponse(RaBaseException ex)`**:
   Maps any other `RaBaseException` to a generic `ErrorResponse`, using the exception's message and error code.
