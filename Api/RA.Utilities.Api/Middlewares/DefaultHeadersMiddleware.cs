@@ -69,13 +69,13 @@ public class DefaultHeadersMiddleware : IMiddleware
 
         if (missingHeaders.Count > 0)
         {
-            context.Response.Headers.TryAdd(HeaderParameters.Location, context.Request.Path!.ToString());
+            context.Response.Headers.TryAdd(HeaderParameters.Location, context.Request.Path.ToString());
             context.Response.Headers.TryAdd(HeaderParameters.XRequestId, Guid.NewGuid().ToString());
 
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
             context.Response.ContentType = "application/json; charset=utf-8";
-            string payload = JsonSerializer.Serialize(new BadRequestResponse(missingHeaders.ToArray()));
-            await context.Response.WriteAsync(payload);
+            string payload = JsonSerializer.Serialize(new BadRequestResponse([.. missingHeaders]));
+            await context.Response.WriteAsync(payload, context.RequestAborted);
 
             // Short-circuit the pipeline — do not call the next middleware
             return;

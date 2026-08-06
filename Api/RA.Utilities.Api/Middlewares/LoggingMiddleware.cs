@@ -6,7 +6,6 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Headers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IO;
@@ -76,7 +75,7 @@ public class LoggingMiddleware(
 
             await LogResponseAsync(context, responseBody, stopwatch.Elapsed);
 
-            await responseBody.CopyToAsync(originalBodyStream);
+            await responseBody.CopyToAsync(originalBodyStream, context.RequestAborted);
         }
     }
 
