@@ -7,40 +7,42 @@ sidebar_position: 2
 Namespace: RA.Utilities.Api.Middlewares
 ```
 
-The `HttpLoggingMiddleware` is a high-performance ASP.NET Core middleware designed to provide comprehensive logging for HTTP requests and responses.
-Its primary purpose is to capture and log detailed information about every incoming HTTP request and its corresponding outgoing response.
-This provides deep visibility into your API's behavior, which is invaluable for debugging, monitoring, and auditing.
+The `LoggingMiddleware` is a high-performance ASP.NET Core middleware that provides comprehensive structured logging for HTTP requests and responses. It captures the full request/response cycle — method, path, headers, body, status code, and processing duration — and logs it as structured data for easy querying in modern logging platforms.
+
+This middleware supersedes the `HttpLoggingMiddleware` from the deprecated `RA.Utilities.Api.Middlewares` package, adding log-scope enrichment, header filtering, and slow-response warning thresholds.
 
 ### Key Features
 
-1.  **Comprehensive Logging**: Captures the full request and response cycle — method, path, query string, headers, body, status code, and total processing time.
+1. **Comprehensive Logging**: Captures method, path, query string, headers, body, status code, remote address, and total processing time for every request.
 
-2.  **High Performance**: Utilizes [`Microsoft.IO.RecyclableMemoryStream`](https://www.nuget.org/packages/Microsoft.IO.RecyclableMemoryStream) to pool and reuse memory buffers instead of allocating new ones for each request, minimizing garbage collection pressure and making it safe for high-throughput production environments.
+2. **High Performance**: Uses [`Microsoft.IO.RecyclableMemoryStream`](https://www.nuget.org/packages/Microsoft.IO.RecyclableMemoryStream) to pool and reuse memory buffers, minimizing garbage collection pressure in high-throughput environments.
 
-3.  **Structured Logging**: Attempts to parse request and response bodies as JSON. When successful, they are logged as structured objects, enabling powerful querying and analysis in modern logging platforms (e.g., Seq, Splunk, Elasticsearch).
+3. **Structured Logging**: Request and response bodies are parsed as JSON when possible, producing structured objects in your logs rather than opaque strings. This enables powerful querying in tools like Seq, Splunk, or Elasticsearch.
 
-4.  **Configurable**: Exclude specific paths (e.g., `/swagger`, `/health`) from logging to reduce noise, and set a maximum body size to prevent excessively large payloads from overwhelming your logging system.
+4. **Log-Scope Enrichment**: Each request's log scope is automatically enriched with the `X-Request-Id` value, so every log entry in the pipeline carries the correlation ID.
 
-In essence, `HttpLoggingMiddleware` provides the detailed "flight data recorder" for your API, helping you understand exactly what happened during any given interaction.
+5. **Configurable**: Exclude specific paths (e.g., `/swagger`, `/health`) from logging; redact sensitive headers (e.g., `Authorization`); set a maximum body size to prevent large payloads from overwhelming your logging system; and configure a slow-response warning threshold.
 
 ## 🚀 Usage Guide
 
 ### Step 1: Register the middleware services in `Program.cs`
 
-Call `AddHttpLoggingMiddleware()` in your service configuration. You can also provide options to customize its behavior, such as excluding certain paths from logging.
+Call `AddLoggingMiddleware()` in your service configuration. Customize behavior with the options callback.
 
 ```csharp showLineNumbers
 // Program.cs
-using RA.Utilities.Api.Middlewares.Extensions;
+using RA.Utilities.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // highlight-start
-builder.Services.AddHttpLoggingMiddleware(options =>
+builder.Services.AddLoggingMiddleware(options =>
 {
+    options.MaxBodyLogLength = 16384;              // 16 KB max body size
+    options.WarningThresholdMilliseconds = 2000;   // Log Warning if > 2s
     options.PathsToIgnore.Add("/swagger");
     options.PathsToIgnore.Add("/health");
-    options.MaxBodyLogLength = 8192; // 8 KB
+    options.ExcludedHeaders.Add("Authorization");  // Redact from logs
 });
 // highlight-end
 
@@ -49,7 +51,7 @@ var app = builder.Build();
 
 ### Step 2: Add the middleware to the pipeline
 
-Place `app.UseHttpLoggingMiddleware()` early in your middleware pipeline. This ensures it can capture the entire request/response cycle, including any modifications made by subsequent middlewares.
+Place `app.UseLoggingMiddleware()` early in your middleware pipeline so it captures the full request/response cycle.
 
 ```csharp showLineNumbers
 // Program.cs (continued)
@@ -57,7 +59,7 @@ Place `app.UseHttpLoggingMiddleware()` early in your middleware pipeline. This e
 var app = builder.Build();
 
 // highlight-next-line
-app.UseHttpLoggingMiddleware();
+app.UseLoggingMiddleware();
 
 app.UseRouting();
 
@@ -66,17 +68,22 @@ app.MapControllers();
 app.Run();
 ```
 
-### Example Log Output
+### Log Output
 
-When a request is processed, the middleware will generate two structured log entries.
+When a request is processed, the middleware generates two structured log entries:
 
 #### Request Log:
 ```json showLineNumbers
 {
+  "RequestId": "abc-123-def",
   "TraceIdentifier": "0HMA1B2C3D4E5:00000001",
+  "Scheme": "https",
+  "Host": "api.example.com",
   "Method": "POST",
   "Path": "/api/users",
-  "RequestHeaders": { ... },
+  "QueryString": "?include=profile",
+  "RemoteAddress": "192.168.1.100",
+  "RequestHeaders": { "Content-Type": "application/json", "Accept": "application/json" },
   "RequestBody": { "name": "John Doe", "email": "john.doe@example.com" }
 }
 ```
@@ -84,10 +91,15 @@ When a request is processed, the middleware will generate two structured log ent
 #### Response Log:
 ```json showLineNumbers
 {
+  "RequestId": "abc-123-def",
   "TraceIdentifier": "0HMA1B2C3D4E5:00000001",
+  "Path": "/api/users",
+  "RemoteAddress": "192.168.1.100",
   "StatusCode": 201,
   "Duration": 15.42,
-  "ResponseHeaders": { ... },
+  "ResponseHeaders": { "Content-Type": "application/json", "Location": "/api/users/123" },
   "ResponseBody": { "id": 123, "name": "John Doe" }
 }
 ```
+
+Responses that exceed `WarningThresholdMilliseconds` are logged at `LogLevel.Warning` instead of `LogLevel.Information`. Headers listed in `ExcludedHeaders` are redacted from both request and response header dictionaries. Bodies larger than `MaxBodyLogLength` are truncated with a descriptive message.

@@ -3,14 +3,269 @@ title: Middlewares
 sidebar_position: 4
 ---
 
-```powershell
-Namespace: RA.Utilities.Api.Middlewares
-```
-
 import DocCardList from '@theme/DocCardList';
 
-`RA.Utilities.Api.Middlewares` provides a collection of useful ASP.NET Core middlewares designed to improve diagnostics and enforce API best practices.
-This package includes middlewares for efficient HTTP request/response logging and for ensuring the presence of default required headers.
+# Middlewares
+
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Api?logo=nuget&label=NuGet)](https://www.nuget.org/packages/RA.Utilities.Api/)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Api.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api/)
+
+`RA.Utilities.Api` provides a collection of ASP.NET Core middlewares designed to solve common cross-cutting concerns in API development — including HTTP request/response logging, default header enforcement, and request context enrichment.
+
+These middlewares were previously available in the now-deprecated `RA.Utilities.Api.Middlewares` standalone package and have been consolidated into `RA.Utilities.Api` for simpler dependency management.
+
+## 🎯 Purpose
+
+This middleware suite solves three common API challenges:
+
+1. **Observability**: The [`LoggingMiddleware`](./LoggingMiddleware) captures full HTTP request/response details — method, path, headers, body, status code, and duration — using structured logging for easy querying in tools like Seq, Splunk, or Elasticsearch.
+2. **Traceability**: The [`DefaultHeadersMiddleware`](./DefaultHeadersMiddleware) enforces required headers (like `X-Request-Id`) on every request, ensuring every operation can be traced across distributed services.
+3. **Context Propagation**: The `RequestContextLoggingMiddleware` enriches log scopes with request-level metadata (correlation IDs, client IP, user agent) so downstream logs carry the context they need for debugging.
+
+### ✨ Key Features
+
+- **High-Performance Logging** — Uses `Microsoft.IO.RecyclableMemoryStream` to pool memory buffers, minimizing GC pressure in high-throughput applications
+- **Structured Logging** — Request/response bodies are parsed as JSON for structured log output
+- **Configurable Exclusion** — Ignore specific paths (e.g., `/swagger`, `/health`) to reduce noise
+- **Flexible Header Enforcement** — Define required headers, auto-generate missing values, and echo headers back in responses
+- **Standardized Error Responses** — Missing headers produce consistent `400 Bad Request` responses using `RA.Utilities.Api.Results`
+
+## 🛠️ Getting Started
+
+### Prerequisites
+
+- **.NET 10.0** or later
+- The `RA.Utilities.Api` package (the middlewares ship as part of it — no separate install needed)
+
+### Installation
+
+**.NET CLI**
+```bash
+dotnet add package RA.Utilities.Api
+```
+
+**Package Manager Console**
+```powershell
+Install-Package RA.Utilities.Api
+```
+
+**PackageReference (csproj)**
+```xml
+<PackageReference Include="RA.Utilities.Api" Version="10.0.8" />
+```
+
+### Hello World
+
+Register and use the logging middleware in a few lines:
+
+```csharp showLineNumbers
+using RA.Utilities.Api.Extensions;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// highlight-start
+builder.Services.AddLoggingMiddleware();
+// highlight-end
+
+var app = builder.Build();
+
+// highlight-start
+app.UseLoggingMiddleware();
+// highlight-end
+
+app.MapGet("/", () => "Hello, World!");
+app.Run();
+```
+
+No additional setup is required — the middleware is ready to go with sensible defaults.
+
+## 🧠 Core Concepts
+
+| Middleware | Purpose | Registration |
+|---|---|---|
+| [`LoggingMiddleware`](./LoggingMiddleware) | Logs HTTP requests and responses with structured data | `AddLoggingMiddleware()` / `UseLoggingMiddleware()` |
+| [`DefaultHeadersMiddleware`](./DefaultHeadersMiddleware) | Enforces required headers on incoming requests | `AddDefaultHeadersMiddleware()` / `UseDefaultHeadersMiddleware()` |
+| [`RequestContextLoggingMiddleware`](./RequestContextLoggingMiddleware) | Enriches log scopes with request-level metadata | `AddRequestContextLoggingMiddleware()` / `UseRequestContextLoggingMiddleware()` |
+
+All three middlewares implement `IMiddleware`, meaning they are activated by the DI container and support constructor injection. They are registered via extension methods in the `RA.Utilities.Api.Extensions` namespace.
+
+### How They Work Together
+
+```
+Incoming Request
+      │
+      ▼
+┌──────────────────────────────┐
+│ RequestContextLoggingMiddleware │  ← Enriches log scope (correlation ID, IP, UA)
+└──────────────────────────────┘
+      │
+      ▼
+┌──────────────────────────────┐
+│ DefaultHeadersMiddleware       │  ← Validates required headers (X-Request-Id, etc.)
+└──────────────────────────────┘
+      │
+      ▼
+┌──────────────────────────────┐
+│ Your Application Logic        │
+└──────────────────────────────┘
+      │
+      ▼
+┌──────────────────────────────┐
+│ LoggingMiddleware              │  ← Logs request/response details
+└──────────────────────────────┘
+      │
+      ▼
+Outgoing Response
+```
+
+### Terminology
+
+- **Middleware**: A component in the ASP.NET Core request pipeline that can inspect, modify, or short-circuit requests and responses
+- **Structured Logging**: Logging data as key-value pairs rather than plain strings, enabling powerful querying
+- **Required Header**: An HTTP header that must be present on every request — if missing, the middleware returns a `400 Bad Request`
+
+## 📖 How-To Guides
+
+### Log Every Request and Response
+
+```csharp showLineNumbers
+using RA.Utilities.Api.Extensions;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddLoggingMiddleware(options =>
+{
+    options.MaxBodyLogLength = 16384;       // 16 KB max body size to log
+    options.WarningThresholdMilliseconds = 2000; // Warn if response > 2s
+    options.PathsToIgnore.Add("/health");        // Skip health checks
+    options.ExcludedHeaders.Add("Authorization"); // Redact sensitive headers
+});
+
+var app = builder.Build();
+app.UseLoggingMiddleware();
+app.MapControllers();
+app.Run();
+```
+
+### Enforce Required Headers
+
+```csharp showLineNumbers
+using RA.Utilities.Api.Extensions;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDefaultHeadersMiddleware(options =>
+{
+    // Require X-Request-Id — auto-generate if missing
+    options.RequiredHeaders.Add(new RequiredHeaderDefinition("X-Request-Id")
+    {
+        AutoGenerate = true,
+        EchoInResponse = true,
+        ErrorMessage = "X-Request-Id header is required for request tracing."
+    });
+
+    // Require X-Tenant-Id — must be provided by caller
+    options.RequiredHeaders.Add(new RequiredHeaderDefinition("X-Tenant-Id")
+    {
+        AutoGenerate = false,
+        ErrorMessage = "X-Tenant-Id header is required for multi-tenant routing."
+    });
+
+    options.PathsToIgnore.Add("/health");
+});
+
+var app = builder.Build();
+app.UseDefaultHeadersMiddleware();
+app.MapControllers();
+app.Run();
+```
+
+### Enrich Logs with Request Context
+
+```csharp showLineNumbers
+using RA.Utilities.Api.Extensions;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddRequestContextLoggingMiddleware(options =>
+{
+    options.IncludeClientIp = true;
+    options.IncludeUserAgent = true;
+    options.IncludeCorrelationId = true;
+});
+
+var app = builder.Build();
+app.UseRequestContextLoggingMiddleware();
+app.MapControllers();
+app.Run();
+```
+
+## ⚙️ Configuration
+
+### LoggingMiddleware Options
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `MaxBodyLogLength` | `int` | `32768` | Maximum request/response body size (in bytes) to log before truncating |
+| `WarningThresholdMilliseconds` | `int` | `0` | Log responses exceeding this duration at `Warning` level (`0` = disabled) |
+| `PathsToIgnore` | `HashSet<string>` | `[]` | Request paths to skip (e.g., `/swagger`, `/health`) |
+| `ExcludedHeaders` | `HashSet<string>` | `[]` | Header names to redact from logs (e.g., `Authorization`) |
+
+### DefaultHeadersMiddleware Options
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `RequiredHeaders` | `IList<RequiredHeaderDefinition>` | `[]` | Headers that must be present on incoming requests |
+| `PathsToIgnore` | `HashSet<string>` | `[]` | Request paths to skip header validation for |
+
+#### RequiredHeaderDefinition
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `Name` | `string` | (required) | The header name (e.g., `X-Request-Id`) |
+| `AutoGenerate` | `bool` | `false` | If `true`, generates a GUID when header is missing |
+| `EchoInResponse` | `bool` | `false` | If `true`, includes the header value in the response |
+| `ErrorMessage` | `string?` | `null` | Custom error message when header is missing |
+
+### RequestContextLoggingMiddleware
+
+This middleware has **no configuration options**. It reads the `X-Request-Id` header from the incoming request (generating a GUID if absent) and enriches the log scope automatically. See the [RequestContextLoggingMiddleware API reference](./RequestContextLoggingMiddleware) for details.
+
+## 🔄 Migration from RA.Utilities.Api.Middlewares
+
+The standalone `RA.Utilities.Api.Middlewares` package is **deprecated**. If you're migrating to `RA.Utilities.Api`:
+
+| Old (RA.Utilities.Api.Middlewares) | New (RA.Utilities.Api) |
+|---|---|
+| `dotnet add package RA.Utilities.Api.Middlewares` | `dotnet add package RA.Utilities.Api` |
+| `builder.Services.AddHttpLoggingMiddleware()` | `builder.Services.AddLoggingMiddleware()` |
+| `app.UseMiddleware<HttpLoggingMiddleware>()` | `app.UseLoggingMiddleware()` |
+| `builder.Services.AddDefaultHeadersMiddleware()` | Same — no change |
+| `app.UseMiddleware<DefaultHeadersMiddleware>()` | `app.UseDefaultHeadersMiddleware()` |
+| Namespace `RA.Utilities.Api.Middlewares` | Namespace `RA.Utilities.Api.Middlewares` (unchanged) |
+| Extension namespace `RA.Utilities.Api.Middlewares.Extensions` | Extension namespace `RA.Utilities.Api.Extensions` |
+
+**No code changes** are needed for the `DefaultHeadersMiddleware` registration — only update your package reference and using directives. For `HttpLoggingMiddleware`, rename to `LoggingMiddleware` and use the new extension methods.
+
+## 🙌 Contributing & Support
+
+### Found a bug or have a suggestion?
+
+- **GitHub Issues**: [Report an issue](https://github.com/RedonAlla/RA.Utilities/issues)
+- **Discussions**: [Start a discussion](https://github.com/RedonAlla/RA.Utilities/discussions)
+
+### Contributing
+
+1. Fork → 2. Branch → 3. Change → 4. PR
+
+### Links
+
+| Resource | URL |
+|---|---|
+| **NuGet** | [RA.Utilities.Api](https://www.nuget.org/packages/RA.Utilities.Api/) |
+| **Source** | [GitHub — RedonAlla/RA.Utilities](https://github.com/RedonAlla/RA.Utilities) |
+| **License** | [MIT](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file) |
+| **Build Status** | [GitHub Actions](https://github.com/RedonAlla/RA.Utilities/actions) |
 
 <br />
 <br />

@@ -3,6 +3,29 @@ title: RA.Utilities.Api.Middlewares
 authors: [RedonAlla]
 ---
 
+## Version 10.0.2
+![Date Badge](https://img.shields.io/badge/Publish-06%20August%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-v10.0.2-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api.Middlewares/10.0.2)
+
+Maintenance release with response model refactoring, log template improvements, and cancellation token support.
+
+<!-- truncate -->
+
+### 📝 Improvements
+
+* **Response Model Refactoring**: `DefaultHeadersMiddleware` now constructs `BadRequestResponse` directly using object-initializer syntax instead of building a `BadRequestResult` array and wrapping it — producing the same JSON output with cleaner code.
+* **Log Template Enhancement**: `HttpLoggingMiddleware` now includes the `RequestId` (`X-Request-Id` header value) in both request and response log templates, improving trace correlation.
+* **Cancellation Token Support**: Both `WriteAsync` and `CopyToAsync` calls now pass `context.RequestAborted`, allowing operations to be properly cancelled when the client disconnects.
+* **Typo Fix**: Fixed `Schema` → `Scheme` property name in the request log template.
+
+### ⚠️ Deprecation Notice
+
+This package is **deprecated**. All middleware types have been consolidated into [`RA.Utilities.Api`](https://www.nuget.org/packages/RA.Utilities.Api/). See the [RA.Utilities.Api middlewares documentation](../docs/api/RA.Utilities.Api/Middlewares/) for the current API.
+
+**Migration**: Replace `RA.Utilities.Api.Middlewares` with `RA.Utilities.Api` and update extension methods:
+- `AddHttpLoggingMiddleware()` → `AddLoggingMiddleware()`
+- `app.UseMiddleware<HttpLoggingMiddleware>()` → `app.UseLoggingMiddleware()`
+
 ## Version 10.0.1
 ![Date Badge](https://img.shields.io/badge/Publish-25%20April%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-v10.0.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api.Middlewares/10.0.1)

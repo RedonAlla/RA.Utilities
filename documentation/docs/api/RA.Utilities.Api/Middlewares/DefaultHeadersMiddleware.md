@@ -6,41 +6,46 @@ sidebar_position: 1
 Namespace: RA.Utilities.Api.Middlewares
 ```
 
-The `DefaultHeadersMiddleware` is a piece of ASP.NET Core middleware designed to enforce API best practices by ensuring that every incoming request includes a specific, mandatory header: `X-Request-Id`.
+The `DefaultHeadersMiddleware` enforces the presence of required HTTP headers on incoming requests, ensuring consistency and traceability across your API. Unlike the deprecated package's version (which only enforced `X-Request-Id`), this implementation allows you to define **any number of required headers** with per-header configuration.
 
-Here’s a breakdown of its primary functions:
+Here's a breakdown of its primary functions:
 
-1. **Enforces Traceability**: In a distributed system (like microservices), tracking a single user operation across multiple services can be difficult.
-By requiring an `X-Request-Id` on every request, you establish a unique identifier that can be logged by each service.
-This allows you to correlate all related logs, making it much easier to debug issues and trace the entire lifecycle of a request.
-
-2. **Provides Immediate Feedback**: If a client sends a request without the `X-Request-Id` header, the middleware immediately stops processing and returns a standardized `HTTP 400 Bad Request` error.
-This "fail-fast" approach prevents invalid requests from proceeding further into your application, saving resources and providing clear, actionable feedback to the client.
-
-3. **Maintains Consistency**: It ensures that the `X-Request-Id` from the incoming request is passed back in the response headers.
-This allows the client to match its outgoing requests with the incoming responses.
-
-4. **Configurable Exclusion**: The middleware is flexible. You can configure it to ignore certain URL paths (like `/swagger` or `/health`), which typically don't require this level of tracing.
-
-In short, this middleware is a simple but powerful tool for building robust, observable, and consistent APIs.
+1. **Flexible Header Enforcement**: Define multiple required headers — each with its own name, error message, and behavior — via `RequiredHeaderDefinition` items in `DefaultHeadersOptions`.
+2. **Auto-Generation**: For each header, you can opt to have the middleware generate a GUID value when the header is missing, rather than rejecting the request.
+3. **Response Echo**: Configure headers to be echoed back in the response, allowing clients to confirm what values were received or assigned.
+4. **Standardized Error Responses**: When one or more required headers are missing (and not auto-generated), the middleware returns a `400 Bad Request` with a structured error payload listing all missing headers.
+5. **Path-Based Exclusion**: Configure paths to skip (e.g., `/swagger`, `/health`) via `PathsToIgnore`.
 
 ## 🚀 Usage Guide
 
 ### Step 1: Register the middleware services in `Program.cs`
 
-Call `AddDefaultHeadersMiddleware()` in your service configuration.
-You can also provide options to customize its behavior, such as excluding certain paths from header validation.
+Call `AddDefaultHeadersMiddleware()` with options to define your required headers.
 
 ```csharp showLineNumbers
 // Program.cs
-using RA.Utilities.Api.Middlewares.Extensions;
+using RA.Utilities.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // highlight-start
 builder.Services.AddDefaultHeadersMiddleware(options =>
 {
-    options.PathsToIgnore.Add("/swagger");
+    // Require X-Request-Id — auto-generate a GUID if missing
+    options.RequiredHeaders.Add(new RequiredHeaderDefinition("X-Request-Id")
+    {
+        AutoGenerate = true,
+        EchoInResponse = true,
+        ErrorMessage = "X-Request-Id header is required for request tracing."
+    });
+
+    // Require X-Tenant-Id — must be provided by the caller
+    options.RequiredHeaders.Add(new RequiredHeaderDefinition("X-Tenant-Id")
+    {
+        AutoGenerate = false,
+        ErrorMessage = "X-Tenant-Id header is required for multi-tenant routing."
+    });
+
     options.PathsToIgnore.Add("/health");
 });
 // highlight-end
@@ -48,9 +53,9 @@ builder.Services.AddDefaultHeadersMiddleware(options =>
 var app = builder.Build();
 ```
 
-## Step 2: Add the middleware to the pipeline
+### Step 2: Add the middleware to the pipeline
 
-Place `app.UseDefaultHeadersMiddleware()` right after routing to ensure it runs for all API endpoints.
+Place `app.UseDefaultHeadersMiddleware()` early in the pipeline so header validation runs before your application logic.
 
 ```csharp showLineNumbers
 // Program.cs (continued)
@@ -64,7 +69,9 @@ app.MapControllers();
 app.Run();
 ```
 
-A request without the `X-Request-Id` header will receive a response like this:
+### Example: Missing Required Headers
+
+A request missing the `X-Request-Id` header receives:
 
 ```json showLineNumbers
 {
@@ -75,9 +82,14 @@ A request without the `X-Request-Id` header will receive a response like this:
     {
       "propertyName": "X-Request-Id",
       "errorMessage": "Header 'X-Request-Id' is required.",
-      "attemptedValue": null,
       "errorCode": "NotNullValidator"
     }
   ]
 }
 ```
+
+The response includes a `Location` header and an auto-generated `X-Request-Id` for traceability.
+
+### Example: Auto-Generated Headers
+
+If `X-Request-Id` is missing but `AutoGenerate = true`, the middleware silently generates a GUID and echoes it in the response — no error is returned and the request proceeds normally.
