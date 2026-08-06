@@ -6,7 +6,7 @@ sidebar_position: 2
 Namespace: RA.Utilities.Api.Middlewares.Options
 ```
 
-The `HttpLoggingOptions` class provides configuration for the [`HttpLoggingMiddleware`](../HttpLoggingMiddleware). It allows you to control which requests are logged and how large request/response bodies are captured.
+The `HttpLoggingOptions` class provides configuration for the [`LoggingMiddleware`](../Middlewares/LoggingMiddleware). It allows you to control which requests are logged and how large request/response bodies are captured.
 
 ## Properties
 

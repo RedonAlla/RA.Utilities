@@ -379,7 +379,8 @@ li {
     }
   }
 
-  &.nav_session.ra_utilities_api_results {
+  &.nav_session.ra_utilities_api_results,
+  &.nav_session.ra_utilities_middlewares {
     & > div {
       & > a {
         text-decoration: line-through;

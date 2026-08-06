@@ -6,7 +6,7 @@ sidebar_position: 1
 Namespace: RA.Utilities.Api.Middlewares.Options
 ```
 
-The `DefaultHeadersOptions` class provides configuration for the [`DefaultHeadersMiddleware`](../DefaultHeadersMiddleware). It allows you to specify request paths that should be excluded from header enforcement.
+The `DefaultHeadersOptions` class provides configuration for the [`DefaultHeadersMiddleware`](../Middlewares/DefaultHeadersMiddleware). It allows you to specify request paths that should be excluded from header enforcement.
 
 ## Properties
 
