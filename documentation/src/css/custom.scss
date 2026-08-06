@@ -485,6 +485,13 @@ li {
     }
   }
 
+  /* Separator above the Archived category */
+  &.sidebar-archived-separator > div > a {
+    border-top: 1px solid var(--ifm-toc-border-color);
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+  }
+
   &.nav_session.ra_utilities_validation {
     & > div {
       & > a::before {
