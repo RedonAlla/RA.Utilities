@@ -50,7 +50,7 @@ const packages: Package[] = [
     name: 'RA.Utilities.Api.Middlewares',
     shortName: 'Middlewares',
     description: 'Request ID propagation, default headers, and cross-cutting HTTP middleware components.',
-    link: '/nuget-packages/api/RA.Utilities.Api.Middlewares/',
+    link: '/nuget-packages/archived/RA.Utilities.Api.Middlewares/',
     layer: 'api',
   },
   {

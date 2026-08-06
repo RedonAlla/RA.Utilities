@@ -20,7 +20,7 @@ Maintenance release with response model refactoring, log template improvements, 
 
 ### ⚠️ Deprecation Notice
 
-This package is **deprecated**. All middleware types have been consolidated into [`RA.Utilities.Api`](https://www.nuget.org/packages/RA.Utilities.Api/). See the [RA.Utilities.Api middlewares documentation](../docs/api/RA.Utilities.Api/Middlewares/) for the current API.
+This package is **deprecated**. All middleware types have been consolidated into [`RA.Utilities.Api`](https://www.nuget.org/packages/RA.Utilities.Api/). See the [RA.Utilities.Api middlewares documentation](/RA.Utilities/nuget-packages/api/RA.Utilities.Api/Middlewares/) for the current API.
 
 **Migration**: Replace `RA.Utilities.Api.Middlewares` with `RA.Utilities.Api` and update extension methods:
 - `AddHttpLoggingMiddleware()` → `AddLoggingMiddleware()`

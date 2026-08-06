@@ -12,7 +12,7 @@ The `RequestContextLoggingMiddleware` enriches every log entry within a request'
 This makes it trivial to correlate all log entries belonging to a single request, even across multiple services, by filtering on the `X-Request-Id` value in your logging platform.
 
 :::caution
-Do not use `RequestContextLoggingMiddleware` if you are already using [`LoggingMiddleware`](./LoggingMiddlewareExtensions.md).
+Do not use `RequestContextLoggingMiddleware` if you are already using [`LoggingMiddleware`](./LoggingMiddleware).
 The `LoggingMiddleware` already enriches log entries with request-scoped context — it creates a logging scope containing the `x-request-id` correlation ID for every request it processes.
 
 Adding `RequestContextLoggingMiddleware` on top of it is redundant and adds unnecessary overhead.
