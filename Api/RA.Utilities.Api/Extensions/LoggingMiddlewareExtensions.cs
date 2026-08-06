@@ -11,7 +11,7 @@ namespace RA.Utilities.Api.Extensions;
 /// <summary>
 /// Provides extension methods for registering and configuring the <see cref="LoggingMiddleware"/> in the application.
 /// </summary>
-public static class HttpLoggingExtensions
+public static class LoggingMiddlewareExtensions
 {
     /// <summary>
     /// Adds the <see cref="LoggingMiddleware"/> and its dependencies to the specified <see cref="IServiceCollection"/>.
