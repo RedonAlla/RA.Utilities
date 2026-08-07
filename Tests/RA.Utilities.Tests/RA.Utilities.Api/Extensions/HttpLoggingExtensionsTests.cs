@@ -10,7 +10,7 @@ using RA.Utilities.Api.Options;
 namespace RA.Utilities.Tests.RA.Utilities.Api.Extensions;
 
 /// <summary>
-/// Contains unit tests for the <see cref="HttpLoggingExtensions"/> class.
+/// Contains unit tests for the logging middleware configuration.
 /// </summary>
 public class HttpLoggingExtensionsTests
 {

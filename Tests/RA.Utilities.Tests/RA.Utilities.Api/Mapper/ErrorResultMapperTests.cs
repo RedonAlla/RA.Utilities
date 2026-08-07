@@ -39,7 +39,7 @@ public class ErrorResultMapperTests
         result.ResponseCode.Should().Be(BaseResponseCode.BadRequest);
         result.ResponseType.Should().Be(ResponseType.BadRequest);
         result.Result.Should().HaveCount(1);
-        result.Result![0].PropertyName.Should().Be("Email");
+        result.Result[0].PropertyName.Should().Be("Email");
         result.Result[0].ErrorMessage.Should().Be("Email is invalid.");
     }
 
@@ -74,7 +74,7 @@ public class ErrorResultMapperTests
         result.ResponseCode.Should().Be(BaseResponseCode.Conflict);
         result.ResponseType.Should().Be(ResponseType.Conflict);
         result.Result.Should().NotBeNull();
-        result.Result!.Entity.Should().Be("User");
+        result.Result.Entity.Should().Be("User");
         result.Result.Value.Should().Be("existing@example.com");
     }
 
@@ -109,7 +109,7 @@ public class ErrorResultMapperTests
         result.ResponseCode.Should().Be(BaseResponseCode.NotFound);
         result.ResponseType.Should().Be(ResponseType.NotFound);
         result.Result.Should().NotBeNull();
-        result.Result!.Entity.Should().Be("Product");
+        result.Result.Entity.Should().Be("Product");
         result.Result.Value.Should().Be(42);
     }
 

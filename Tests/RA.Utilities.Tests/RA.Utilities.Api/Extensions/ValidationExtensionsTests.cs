@@ -105,7 +105,7 @@ public class ValidationExtensionsTests
         nextCalled.Should().BeFalse("invalid model should short-circuit before the handler");
         result.Should().NotBeNull();
         result.Should().BeAssignableTo<IStatusCodeHttpResult>();
-        ((IStatusCodeHttpResult)result!).StatusCode.Should().Be(StatusCodes.Status400BadRequest);
+        ((IStatusCodeHttpResult)result).StatusCode.Should().Be(StatusCodes.Status400BadRequest);
     }
 
     // =================================================================
