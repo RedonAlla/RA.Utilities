@@ -203,7 +203,7 @@ public class ResponseTypeTests
 
         // Assert
         result.Should().NotBeNull();
-        result!.Value.Should().Be("NotFound");
+        result.Value.Should().Be("NotFound");
     }
 
     [Fact]
@@ -275,7 +275,7 @@ public class ResponseTypeTests
             string json = JsonSerializer.Serialize(responseType);
             ResponseType? deserialized = JsonSerializer.Deserialize<ResponseType>(json);
 
-            deserialized.Should().Be(responseType, $"round-trip should preserve equality for '{responseType!.Value}'");
+            deserialized.Should().Be(responseType, $"round-trip should preserve equality for '{responseType.Value}'");
         }
     }
 
@@ -362,7 +362,7 @@ public class ResponseTypeTests
 
         // Assert
         result.Should().NotBeNull();
-        result!.Value.Should().Be("PaymentRequired");
+        result.Value.Should().Be("PaymentRequired");
     }
 
     [Fact]
