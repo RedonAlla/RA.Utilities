@@ -1,0 +1,161 @@
+---
+title: Troubleshooting & FAQ
+sidebar_position: 99
+---
+
+# Troubleshooting & FAQ
+
+## Common Issues
+
+### `AddDefaultsDocumentTransformer` throws `ArgumentNullException`
+
+**Cause**: `OpenApiOptions` is null when calling the extension method.
+
+**Fix**: Ensure `AddOpenApi()` is called before chaining:
+
+```csharp
+// ❌
+OpenApiOptions? opts = null;
+opts.AddDefaultsDocumentTransformer(); // throws
+
+// ✅
+builder.Services.AddOpenApi()
+    .AddDefaultsDocumentTransformer();
+```
+
+### Swagger UI doesn't show the Authorize button
+
+**Cause**: `BearerSecurityDocumentTransformer` wasn't registered, or JWT Bearer authentication isn't configured.
+
+**Fix**: Register the transformer and ensure authentication is set up:
+
+```csharp
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(/* ... */);
+
+builder.Services.AddOpenApi(options =>
+    options.AddBearerSecurityDocumentTransformer());
+```
+
+The transformer checks for registered authentication schemes named `"Bearer"` or `"BearerToken"`.
+
+### Header parameters aren't appearing in the OpenAPI doc
+
+**Cause**: `HeadersParameterSettings` aren't bound from configuration, or `HeadersParameterTransformer` isn't registered.
+
+**Fix**: Bind the settings and register the transformer:
+
+```csharp
+builder.Services.Configure<HeadersParameterSettings>(
+    builder.Configuration.GetSection(HeadersParameterSettings.AppSettingsKey));
+
+builder.Services.AddOpenApi(options =>
+    options.AddHeadersParameterTransformer());
+```
+
+### FluentValidation rules aren't reflected in the schema
+
+**Cause**: The validators aren't registered in DI, or `AddFluentValidationRules()` wasn't called.
+
+**Fix**: Register validators and the transformer:
+
+```csharp
+// Register validators
+builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
+
+// Register schema transformer
+builder.Services.AddOpenApi(options =>
+    options.AddFluentValidationRules());
+```
+
+The transformer resolves `IValidator<T>` from DI for each schema type. If the validator isn't registered, the schema is left unchanged.
+
+### Enum descriptions aren't appearing
+
+**Cause**: Either the XML documentation file path is wrong, or the file doesn't exist, or the enum members don't have XML comments.
+
+**Fix**: Verify the XML file is generated and the path is correct:
+
+```csharp
+var xmlPath = Path.Combine(AppContext.BaseDirectory, "MyApi.xml");
+
+if (!File.Exists(xmlPath))
+{
+    throw new FileNotFoundException($"XML doc file not found: {xmlPath}");
+}
+
+builder.Services.AddOpenApi(options =>
+    options.AddEnumXmlDescriptionTransformer(xmlPath));
+```
+
+Also ensure your enum members have `<summary>` XML comments.
+
+### Polymorphism discriminator isn't working
+
+**Cause**: The base schema name doesn't match the type passed to `AddPolymorphismDocumentTransformer<T>()`.
+
+**Fix**: Pass the correct base type as the generic parameter:
+
+```csharp
+// ✅ The base type T must match the schema you want to transform
+options.AddPolymorphismDocumentTransformer<Animal>(new Dictionary<string, Type>
+{
+    { "Cat", typeof(Cat) },
+    { "Dog", typeof(Dog) },
+});
+```
+
+---
+
+## FAQ
+
+### What's the difference between a Document Transformer and an Operation Transformer?
+
+| | Document Transformer | Operation Transformer |
+|---|---|---|
+| Interface | `IOpenApiDocumentTransformer` | `IOpenApiOperationTransformer` |
+| Scope | Entire OpenAPI document | Individual API operation |
+| Use for | Info, security schemes, global headers | Per-operation responses, parameters |
+
+### Do I need `AddOpenApi()` before using these transformers?
+
+Yes. The extension methods extend `OpenApiOptions`, which is returned by `AddOpenApi()`:
+
+```csharp
+builder.Services.AddOpenApi()           // returns OpenApiOptions
+    .AddDefaultsDocumentTransformer()   // extends OpenApiOptions
+    .AddFluentValidationRules();        // extends OpenApiOptions
+```
+
+### Can I use multiple schema transformers together?
+
+Yes. Register them all:
+
+```csharp
+builder.Services.AddOpenApi(options =>
+{
+    options.AddFluentValidationRules();
+    options.AddEnumXmlDescriptionTransformer(xmlPath);
+});
+```
+
+### Why are the transformers `internal`?
+
+Transformers are `internal sealed` to enforce registration through the provided extension methods. This ensures consistent configuration, proper dependency injection, and the ability to change internal implementations without breaking consumers.
+
+### Does `AddDefaultsDocumentTransformer()` include everything?
+
+No. It registers only three document transformers: `DocumentInfoTransformer`, `BearerSecurityDocumentTransformer`, and `HeadersParameterTransformer`. Operation and schema transformers must be registered separately.
+
+### How do I exclude specific endpoints from a transformer?
+
+Document transformers apply globally. To exclude specific endpoints, use a custom operation transformer that checks the operation's metadata, or configure the transformer settings (e.g., `HeadersParameterSettings` can be customized per endpoint since headers are only added if not already present).
+
+---
+
+## Known Limitations
+
+- **No endpoint exclusion**: Document transformers apply to all operations. Use custom transformers for per-endpoint behavior.
+- **Single XML file**: `EnumXmlSchemaTransformer` currently supports only one XML documentation file.
+- **Synchronous callback**: The `configureOptions` equivalent for these transformers is registration-time; there is no per-operation callback.
+- **FluentValidation scope**: Only validators registered in the DI container are discovered. Attributes-based validation (DataAnnotations) is not supported.

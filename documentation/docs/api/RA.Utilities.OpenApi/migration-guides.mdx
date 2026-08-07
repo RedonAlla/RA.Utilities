@@ -1,0 +1,75 @@
+---
+title: Migration Guides
+---
+
+# Migration Guides
+
+## v10.0.10 → v10.0.11
+
+### Breaking Change: `OpenApiResponseExample.StatusCodes` → `StatusCode`
+
+The property was renamed to reflect that it holds a single HTTP status code, not a collection.
+
+```csharp
+// ❌ v10.0.10
+example.StatusCodes = 200;
+
+// ✅ v10.0.11
+example.StatusCode = 200;
+```
+
+### Other Changes (non-breaking)
+
+- **`AddDefaultsDocumentTransformer` now throws on null**: Previously, passing `null` options silently skipped all transformers. Now throws `ArgumentNullException`.
+- **`DefaultResponsesOperationTransformer` dedup fixed**: The 500 response is no longer added multiple times to the same operation.
+- **`OpenApiOperationUtilities.AddResponseExample` null-safe**: No longer throws `NullReferenceException` when `operation.Responses` is null.
+- **`FluentValidationSchemaTransformer` boolean format**: `ExclusiveMinimum`/`ExclusiveMaximum` now produce lowercase `"true"`/`"false"` instead of culture-dependent `"True"`/`"False"`.
+- **`EnumXmlSchemaTransformer` performance**: Fixed a bug where missing XML files caused the lock to be re-entered on every schema transformation call.
+- **`HeadersParameterSettings` deterministic examples**: Example GUID values are now fixed instead of randomized per instantiation.
+- **Filename fixed**: `DepenenceInjectionExtensions.cs` → `DependencyInjectionExtensions.cs`.
+
+### Verify the upgrade
+
+```csharp
+// If using OpenApiResponseExample, rename StatusCodes to StatusCode
+example.StatusCode = 200;
+
+// If using AddDefaultsDocumentTransformer, ensure options is not null
+options.AddDefaultsDocumentTransformer(); // throws if options is null
+```
+
+---
+
+## v10.0.2 → v10.0.3
+
+### Breaking Change: Transformers made internal
+
+The following transformers were made `internal sealed` to enforce consistent registration through extension methods:
+
+- `BearerSecurityDocumentTransformer`
+- `DocumentInfoTransformer`
+- `HeadersParameterTransformer`
+- `PolymorphismDocumentTransformer`
+- `DefaultResponsesOperationTransformer`
+
+**Before:**
+```csharp
+builder.Services.AddOpenApiDocumentTransformer<BearerSecurityDocumentTransformer>();
+```
+
+**After:**
+```csharp
+builder.Services.AddOpenApi(options =>
+    options.AddBearerSecurityDocumentTransformer());
+```
+
+### Renames
+
+- `BearerSecuritySchemeTransformer` → `BearerSecurityDocumentTransformer`
+- `PolymorphismSchemaFilter` → `PolymorphismDocumentTransformer`
+
+---
+
+## Full Changelog
+
+See the [package release notes](https://github.com/RedonAlla/RA.Utilities/blob/main/Api/RA.Utilities.OpenApi/releasenotes.md) for a complete version history.

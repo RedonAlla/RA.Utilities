@@ -19,46 +19,367 @@ import LogoSvg from '../../../../Assets/Images/openapi.svg';
 [![Publish NuGet](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml/badge.svg)](https://github.com/RedonAlla/RA.Utilities/actions/runs/19650265805)
 [![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?label=License&logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
 
-
-A utility library to enhance and customize OpenAPI (Swagger) documentation in ASP.NET Core applications.
+`RA.Utilities.OpenApi` provides a collection of document, operation, and schema transformers that automate common OpenAPI specification modifications. Instead of manually annotating every endpoint, apply transformations globally — add security schemes, inject headers, enrich schemas from FluentValidation rules, and document enum values from XML comments.
 
 ## 🎯 Purpose
 
-This package provides a collection of `IOpenApiDocumentTransformer` implementations to automate common modifications to your generated OpenAPI specification.
-Instead of manually annotating every endpoint with attributes for common headers or security schemes, you can apply these transformations globally.
+The built-in `Microsoft.AspNetCore.OpenApi` package generates a basic OpenAPI document. Making it production-ready — adding Bearer auth, correlation headers, validation constraints, enum descriptions, default error responses — typically requires dozens of lines of boilerplate per endpoint.
 
-The primary goals are to:
-- **Reduce Boilerplate**: Automatically add common parameters (like correlation IDs) to all API operations.
-- **Enforce Consistency**: Ensure that all endpoints consistently document required headers and responses.
-- **Simplify Configuration**: Keep your endpoint definitions clean by centralizing OpenAPI modifications.
+This package collapses all of that into a few extension methods:
 
-This package is designed to work with the standard [`Microsoft.AspNetCore.OpenApi`](https://www.nuget.org/packages/Microsoft.AspNetCore.OpenApi) tooling in ASP.NET Core.
+```csharp
+builder.Services.AddOpenApi()
+    .AddDefaultsDocumentTransformer()
+    .AddFluentValidationRules()
+    .AddDefaultResponsesOperationTransformer();
+```
 
-## 🛠️ Installation
+The primary goals are:
 
-You can install the package via the .NET CLI:
+- **Reduce Boilerplate**: Automatically add common parameters (correlation IDs, security schemes) to all API operations.
+- **Enforce Consistency**: Ensure all endpoints consistently document required headers, error responses, and validation constraints.
+- **Simplify Configuration**: Keep endpoint definitions clean by centralizing OpenAPI modifications in `Program.cs` and `appsettings.json`.
+
+### ✨ Key Features
+
+- **Document Transformers** — 6 transformers: `DocumentInfo`, `BearerSecurity`, `HeadersParameter`, `Polymorphism`, `TagOperation`, plus a combined `AddDefaultsDocumentTransformer()` convenience method
+- **Operation Transformers** — `DefaultResponsesOperationTransformer` adds standardized 500 error responses
+- **Schema Transformers** — `FluentValidationSchemaTransformer` enriches schemas from validators, `EnumXmlSchemaTransformer` appends XML doc descriptions
+- **Configuration-driven** — `OpenApiInfoSettings` and `HeadersParameterSettings` bind from `appsettings.json`
+- **Utility helpers** — `OpenApiOperationUtilities` for programmatically adding request/response examples
+
+---
+
+## 🛠️ Getting Started
+
+### Prerequisites
+
+- **.NET 10.0** or later
+- An ASP.NET Core application with `Microsoft.AspNetCore.OpenApi` configured
+
+### Installation
+
+**.NET CLI**
 
 ```bash
 dotnet add package RA.Utilities.OpenApi
 ```
 
-Or through the NuGet Package Manager console:
+**Package Manager Console**
 
 ```powershell
 Install-Package RA.Utilities.OpenApi
 ```
 
-Or through the NuGet Package Manager in Visual Studio.
+**PackageReference (csproj)**
 
-## 🔗 Dependencies
+```xml
+<PackageReference Include="RA.Utilities.OpenApi" Version="10.0.11" />
+```
 
-- [`RA.Utilities.Api`](../RA.Utilities.Api/index.mdx)
-- [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/)
-- [`Microsoft.AspNetCore.OpenApi`](https://www.nuget.org/packages/Microsoft.AspNetCore.OpenApi)
+### Hello World
 
+Minimal setup with the default transformers:
 
-<br />
-<br />
+```csharp showLineNumbers
+using RA.Utilities.OpenApi.Extensions;
+using RA.Utilities.OpenApi.Settings;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Bind settings from appsettings.json
+builder.Services.Configure<OpenApiInfoSettings>(
+    builder.Configuration.GetSection(OpenApiInfoSettings.AppSettingsKey));
+builder.Services.Configure<HeadersParameterSettings>(
+    builder.Configuration.GetSection(HeadersParameterSettings.AppSettingsKey));
+
+// highlight-start
+builder.Services.AddOpenApi()
+    .AddDefaultsDocumentTransformer()
+    .AddFluentValidationRules()
+    .AddDefaultResponsesOperationTransformer();
+// highlight-end
+
+var app = builder.Build();
+
+app.MapOpenApi();
+app.Run();
+```
+
+---
+
+## 🧠 Core Concepts
+
+### Transformer types
+
+The package provides three kinds of transformers, matching the ASP.NET Core OpenAPI extension points:
+
+| Type | Interface | Applied to | Examples |
+|---|---|---|---|
+| **Document Transformer** | `IOpenApiDocumentTransformer` | Entire OpenAPI document | Info population, security schemes, header injection, polymorphism |
+| **Operation Transformer** | `IOpenApiOperationTransformer` | Individual API operations | Default error responses |
+| **Schema Transformer** | `IOpenApiSchemaTransformer` | Individual schema objects | FluentValidation rules, enum descriptions |
+
+### Configuration flow
+
+```
+appsettings.json                     Program.cs
+────────────────                     ──────────
+OpenApiInfoSettings  ────────────►  DocumentInfoTransformer
+  (Title, Version, etc.)              populates document.Info
+
+OpenApiHeaders       ────────────►  HeadersParameterTransformer
+  (RequestHeaders,                    adds headers to all ops
+   ResponseHeaders)
+
+(FluentValidation     ────────────► FluentValidationSchemaTransformer
+  validators in DI)                   enriches schema properties
+
+(XML doc comments)   ────────────►  EnumXmlSchemaTransformer
+                                      appends enum value tables
+```
+
+### Registration
+
+All transformers are `internal sealed` — register them through the extension methods in `RA.Utilities.OpenApi.Extensions`:
+
+| Method | Registers |
+|---|---|
+| `AddDefaultsDocumentTransformer()` | `DocumentInfo` + `BearerSecurity` + `HeadersParameter` document transformers |
+| `AddFluentValidationRules()` | `FluentValidationSchemaTransformer` |
+| `AddEnumXmlDescriptionTransformer(path)` | `EnumXmlSchemaTransformer` |
+| `AddDefaultResponsesOperationTransformer()` | `DefaultResponsesOperationTransformer` |
+| `AddDocumentInfoTransformer()` | `DocumentInfoTransformer` individually |
+| `AddBearerSecurityDocumentTransformer()` | `BearerSecurityDocumentTransformer` individually |
+| `AddHeadersParameterTransformer()` | `HeadersParameterTransformer` individually |
+| `AddPolymorphismDocumentTransformer<T>(types)` | `PolymorphismDocumentTransformer` |
+| `AddTagOperationTransformer(tags)` | `TagOperationTransformer` |
+
+---
+
+## 📖 How-To Guides
+
+### Populate API info from configuration
+
+Add to `appsettings.json`:
+
+```json
+{
+  "OpenApiInfoSettings": {
+    "Title": "My API",
+    "Version": "v1",
+    "Description": "API for managing products and orders."
+  }
+}
+```
+
+Bind and register:
+
+```csharp
+builder.Services.Configure<OpenApiInfoSettings>(
+    builder.Configuration.GetSection(OpenApiInfoSettings.AppSettingsKey));
+
+builder.Services.AddOpenApi()
+    .AddDocumentInfoTransformer();
+```
+
+### Add Bearer token security to Swagger UI
+
+```csharp
+builder.Services.AddOpenApi()
+    .AddBearerSecurityDocumentTransformer();
+```
+
+When JWT Bearer authentication is registered in DI, this adds the security scheme and applies it to all operations, enabling the "Authorize" button in Swagger UI.
+
+### Add correlation headers to all endpoints
+
+```csharp
+builder.Services.Configure<HeadersParameterSettings>(
+    builder.Configuration.GetSection(HeadersParameterSettings.AppSettingsKey));
+
+builder.Services.AddOpenApi()
+    .AddHeadersParameterTransformer();
+```
+
+With default settings, this adds `x-request-id` to requests and `x-request-id` + `trace-id` to responses. Customize via `appsettings.json`:
+
+```json
+{
+  "OpenApiHeaders": {
+    "RequestHeaders": [
+      {
+        "Name": "x-api-key",
+        "Description": "API key for authentication",
+        "Required": true
+      }
+    ]
+  }
+}
+```
+
+### Enrich schemas from FluentValidation rules
+
+```csharp
+builder.Services.AddOpenApi(options =>
+{
+    options.AddFluentValidationRules();
+});
+```
+
+Requires FluentValidation validators to be registered in DI. Supported rules: `NotNull`/`NotEmpty` (required), `Length` (minLength/maxLength), `Matches` (pattern), `GreaterThan`/`LessThan` (minimum/maximum), `InclusiveBetween`/`ExclusiveBetween`, `EmailAddress`, `CreditCard`.
+
+### Add enum value descriptions from XML comments
+
+```csharp
+var xmlPath = Path.Combine(AppContext.BaseDirectory, "MyApi.xml");
+
+builder.Services.AddOpenApi(options =>
+{
+    options.AddEnumXmlDescriptionTransformer(xmlPath);
+});
+```
+
+Produces a Markdown table in the schema description:
+
+| Value | Description |
+| ----- | ----------- |
+| Pending | Order has been placed but not processed. |
+| Shipped | Order has been dispatched to the customer. |
+
+### Add default 500 error response to all operations
+
+```csharp
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDefaultResponsesOperationTransformer();
+});
+```
+
+### Support polymorphic types in the schema
+
+```csharp
+builder.Services.AddOpenApi(options =>
+{
+    options.AddPolymorphismDocumentTransformer<Animal>(new Dictionary<string, Type>
+    {
+        { "Cat", typeof(Cat) },
+        { "Dog", typeof(Dog) },
+    }, discriminatorPropertyName: "animalType");
+});
+```
+
+### Add tag descriptions
+
+```csharp
+builder.Services.AddOpenApi(options =>
+{
+    options.AddTagOperationTransformer(new Dictionary<string, string>
+    {
+        { "Products", "Product catalog and inventory operations." },
+        { "Orders", "Order placement and fulfillment operations." }
+    });
+});
+```
+
+### Add custom request/response examples programmatically
+
+```csharp
+using RA.Utilities.OpenApi.Utilities;
+
+// In a custom transformer
+OpenApiOperationUtilities.AddRequestExample(operation, "CreateProduct",
+    new OpenApiExample
+    {
+        Summary = "A new product",
+        Value = JsonSerializer.SerializeToNode(new { Name = "Widget", Price = 9.99 })
+    });
+
+OpenApiOperationUtilities.AddResponseExample(operation, 200, "Success",
+    new OpenApiExample
+    {
+        Summary = "Product created",
+        Value = JsonSerializer.SerializeToNode(new { Id = 1, Name = "Widget" })
+    });
+```
+
+---
+
+## ⚙️ Configuration
+
+### `OpenApiInfoSettings`
+
+**Section:** `OpenApiInfoSettings`
+
+| Property | Type | Description |
+|---|---|---|
+| Title | `string?` | The title of the API. |
+| Version | `string?` | The version of the API. |
+| Description | `string?` | A short description. |
+| Summary | `string?` | A brief summary. |
+| TermsOfService | `Uri?` | URL to Terms of Service. |
+| Contact | `OpenApiContactSettings?` | Contact info (Name, Email, Url). |
+| License | `OpenApiLicenseSettings?` | License info (Name, Url, Identifier). |
+
+### `HeadersParameterSettings`
+
+**Section:** `OpenApiHeaders`
+
+| Property | Type | Description |
+|---|---|---|
+| RequestHeaders | `List<HeaderDefinition>` | Headers added to all requests. |
+| ResponseHeaders | `List<HeaderDefinition>` | Headers added to all responses. |
+
+**`HeaderDefinition`:**
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| Name | `string` | `""` | Header name (e.g., `"x-request-id"`). |
+| Description | `string` | `""` | Description of the header. |
+| Required | `bool` | `true` | Whether the header is required. |
+| Type | `JsonSchemaType` | `String` | Schema type. |
+| Format | `string?` | `null` | Format (e.g., `"uuid"`). |
+| Value | `object?` | `null` | Example value. |
+
+---
+
+## ✨ Available Components
+
+### Document Transformers
 
 <DocCardList />
 
+### Extensions
+
+The `RA.Utilities.OpenApi.Extensions` namespace provides all registration extension methods on `OpenApiOptions`. See the [Extensions](./Extensions/index.mdx) page for details.
+
+### Utilities
+
+The `OpenApiOperationUtilities` static class provides helpers for adding examples to operations. See the [Utilities](./Utilities/index.mdx) page.
+
+---
+
+## 🙌 Contributing & Support
+
+### Found a bug or have a suggestion?
+
+- **GitHub Issues**: [Report a bug or request a feature](https://github.com/RedonAlla/RA.Utilities/issues)
+- **Discussions**: [Ask questions or start a discussion](https://github.com/RedonAlla/RA.Utilities/discussions)
+
+### Contributing
+
+Contributions are welcome! Please follow the standard workflow:
+
+1. **Fork** the [RA.Utilities repository](https://github.com/RedonAlla/RA.Utilities)
+2. **Create a branch** from `main` with a descriptive name
+3. **Make your changes** — new transformers must implement the appropriate `IOpenApi*Transformer` interface and have an accompanying extension method
+4. **Submit a pull request** to the `main` branch with a clear description
+
+### Links
+
+| Resource | URL |
+|---|---|
+| **NuGet** | [RA.Utilities.OpenApi](https://www.nuget.org/packages/RA.Utilities.OpenApi/) |
+| **Source** | [GitHub — RedonAlla/RA.Utilities](https://github.com/RedonAlla/RA.Utilities) |
+| **License** | [MIT](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file) |
+| **Build Status** | [GitHub Actions](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml) |
