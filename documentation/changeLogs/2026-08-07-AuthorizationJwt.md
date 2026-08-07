@@ -3,16 +3,26 @@ title: RA.Utilities.Authentication.JwtBearer
 authors: [RedonAlla]
 ---
 
+## Version 10.0.1
+![Date Badge](https://img.shields.io/badge/Publish-07%20August%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Authentication.JwtBearer/10.0.1)
+
+### 🔧 Fixes & Improvements
+
+* **Consolidated Options Configuration**: All `JwtBearerOptions` binding and special conversions now happen in a single place (`ConfigureJwtBearerOptions`), eliminating a subtle bug where the user-provided `configureOptions` callback could be silently overwritten. The callback now runs **last**, so programmatic overrides always win.
+* **Fail-Fast Key Validation**: The issuer signing key is now validated at construction time rather than on first use, catching misconfiguration immediately at app startup.
+* **Null-Reference Guard**: Added `ArgumentNullException.ThrowIfNull` for the `IConfiguration` parameter, matching the guard in the DI extension method.
+
+<!-- truncate -->
+
 ## Version 10.0.0
 ![Date Badge](https://img.shields.io/badge/Publish-23%20November%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Authentication.JwtBearer/10.0.0)
 
 Updated the project version from `10.0.0-rc.2` to the stable release version `10.0.0` in preparation for a production release.
 
-<!-- truncate -->
-
 ## Version 10.0.0-rc.2
-![Date Badge](https://img.shields.io/badge/Publish-18%20Octomber%202025-lightblue?logo=fastly&logoColor=white)
+![Date Badge](https://img.shields.io/badge/Publish-18%20October%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.0--rc.2-orange?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Authentication.JwtBearer/10.0.0-rc.2)
 
 
@@ -25,29 +35,6 @@ This release modernizes the `RA.Utilities.Authentication.JwtBearer` package, pro
     *   Eliminates hardcoded values and boilerplate code in `Program.cs`.
 
 *   **Smart Configuration Handling**:
-    *   Automatically converts `ClockSkewInSeconds` from your configuration into a `TimeSpan`.
-    *   Automatically converts `IssuerSigningKeyString` into a `SymmetricSecurityKey`, simplifying the setup for self-issued tokens.
-
-*   **Convenience `UseAuth()` Method**:
-    *   Includes a `UseAuth()` extension method that registers both `app.UseAuthentication()` and `app.UseAuthorization()` with a single call.
-
-*   **Updated Documentation**:
-    *   The `README.md` has been updated to provide clear, step-by-step instructions and a complete `appsettings.json` example.
-
-### 🚀 Getting Started
-
-Register the services in your `Program.cs`:
-
-```csharp
-var builder = WebApplication.CreateBuilder(args);
-
-builder.Services.AddJwtBearerAuthentication(builder.Configuration);
-
-var app = builder.Build();
-
-app.UseAuth();
-```
-*   **Cnfiguration Handling**:
     *   Automatically converts `ClockSkewInSeconds` from your configuration into a `TimeSpan`.
     *   Automatically converts `IssuerSigningKeyString` into a `SymmetricSecurityKey`, simplifying the setup for self-issued tokens.
 

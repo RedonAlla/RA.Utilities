@@ -1,0 +1,70 @@
+---
+title: Migration Guides
+---
+
+# Migration Guides
+
+## v10.0.0 → v10.0.1
+
+### Breaking Change: None
+
+This is a non-breaking release. All public APIs (`AddJwtBearerAuthentication`, `UseAuth`) are unchanged. The `configureOptions` callback signature and behavior are fully backward-compatible.
+
+### What changed
+
+**Consolidated configuration pipeline.** In v10.0.0, `JwtBearerOptions` were configured in two separate places — the `AddJwtBearer` lambda (which bound standard config and invoked the user callback) and the `ConfigureJwtBearerOptions` class (which applied `ClockSkewInSeconds` and `IssuerSigningKeyString` conversions). Because `ConfigureJwtBearerOptions` ran second, any `ClockSkew` or `IssuerSigningKey` values set in the user's `configureOptions` callback were silently overwritten.
+
+In v10.0.1, all configuration happens in a single `ConfigureJwtBearerOptions` class that applies settings in a fixed, documented order:
+
+| Step | Action | Overrideable? |
+|---|---|---|
+| 1 | Bind standard `JwtBearerOptions` from `Authentication:Schemes:Bearer` | Yes, by step 3 |
+| 2 | Apply special conversions (`ClockSkewInSeconds` → `TimeSpan`, `IssuerSigningKeyString` → `SymmetricSecurityKey`) | Yes, by step 3 |
+| 3 | Invoke user's `configureOptions` callback | **Final** — always wins |
+
+**Fail-fast key validation.** The issuer signing key is now validated at construction time (app startup). If the key is shorter than 32 bytes, the app throws `InvalidOperationException` immediately rather than failing at runtime with a cryptic token validation error.
+
+**Added null guard.** `ConfigureJwtBearerOptions` now throws `ArgumentNullException` if `IConfiguration` is null, matching the guard already present in the DI extension method.
+
+### Migration Steps
+
+**No code changes are required.** Your existing `Program.cs` continues to compile and work identically:
+
+```csharp
+// ✅ This code works in both v10.0.0 and v10.0.1
+using RA.Utilities.Authentication.JwtBearer.Extensions;
+
+builder.Services.AddJwtBearerAuthentication(builder.Configuration, options =>
+{
+    options.Events = new JwtBearerEvents { /* ... */ };
+});
+
+app.UseAuth();
+```
+
+If you were previously working around the silent-overwrite bug by avoiding the `configureOptions` callback for `ClockSkew` or `IssuerSigningKey`, you can now safely use it:
+
+```csharp
+// ✅ In v10.0.1, this override now works correctly
+builder.Services.AddJwtBearerAuthentication(builder.Configuration, options =>
+{
+    // This now takes effect — the config value is no longer overwritten
+    options.TokenValidationParameters.ClockSkew = TimeSpan.Zero;
+});
+```
+
+### Verify the upgrade
+
+After upgrading, confirm the key validation still passes by checking your signing key length:
+
+```csharp
+// If your IssuerSigningKeyString is >= 32 bytes, startup proceeds normally.
+// If it's shorter, you'll now see a clear error at startup:
+// InvalidOperationException: The configured issuer signing key must be at least 32 bytes long.
+```
+
+---
+
+## Full Changelog
+
+See the [package release notes](https://github.com/RedonAlla/RA.Utilities/blob/main/Api/RA.Utilities.Authentication.JwtBearer/releasenotes.md) for a complete version history.

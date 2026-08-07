@@ -1,0 +1,221 @@
+---
+title: Troubleshooting & FAQ
+sidebar_position: 99
+---
+
+# Troubleshooting & FAQ
+
+## Common Issues
+
+### `InvalidOperationException: The configured issuer signing key must be at least 32 bytes long`
+
+**Cause**: The `IssuerSigningKeyString` value in your `appsettings.json` is shorter than 32 bytes (256 bits), the minimum required for HMAC-SHA256.
+
+**Fix**: Use a longer key. The key must be at least 32 characters when using UTF-8 encoding:
+
+```json
+{
+  "Authentication": {
+    "Schemes": {
+      "Bearer": {
+        "TokenValidationParameters": {
+          "IssuerSigningKeyString": "this-is-a-secret-key-at-least-32-bytes-long!!"
+        }
+      }
+    }
+  }
+}
+```
+
+To generate a cryptographically strong key:
+
+```bash
+# Generate a 64-byte base64 key
+openssl rand -base64 64
+```
+
+### Authentication always returns 401 Unauthorized
+
+**Cause**: One or more token validation parameters are misconfigured.
+
+**Common misconfigurations:**
+
+1. **Missing or mismatched `IssuerSigningKeyString`** — if you're issuing tokens with a specific key, that same key must be configured for validation:
+   ```json
+   {
+     "TokenValidationParameters": {
+       "ValidateIssuerSigningKey": true,
+       "IssuerSigningKeyString": "the-same-key-used-to-sign-the-tokens-must-be-32-bytes!!"
+     }
+   }
+   ```
+
+2. **Clock skew is too tight** — if your server's clock differs from the token issuer's clock by more than the configured skew, tokens appear expired. Increase `ClockSkewInSeconds`:
+   ```json
+   {
+     "TokenValidationParameters": {
+       "ClockSkewInSeconds": 300
+     }
+   }
+   ```
+
+3. **Issuer or audience mismatch** — verify `ValidIssuer` and `ValidAudience` match the values in the token:
+   ```json
+   {
+     "TokenValidationParameters": {
+       "ValidateIssuer": true,
+       "ValidIssuer": "https://my-api.example.com",
+       "ValidateAudience": true,
+       "ValidAudience": "my-api"
+     }
+   }
+   ```
+
+4. **Lifetime validation** — check that `ValidateLifetime` is `true` (the default) and tokens haven't expired.
+
+### `UseAuth()` is not protecting my endpoints
+
+**Cause**: The middleware is registered but no authorization policy is applied to your endpoints.
+
+**Fix**: Add `[Authorize]` attributes or `.RequireAuthorization()` calls:
+
+```csharp
+// For Minimal APIs
+app.MapGet("/secure", () => "Protected").RequireAuthorization();
+
+// For controller-based APIs, add [Authorize] to controllers or actions
+[Authorize]
+[ApiController]
+public class SecureController : ControllerBase { /* ... */ }
+```
+
+`UseAuth()` only adds the middleware to the pipeline — it does not enforce authorization. You must explicitly require it on protected endpoints.
+
+### `InvalidOperationException: No authenticationScheme was specified`
+
+**Cause**: `AddJwtBearerAuthentication()` was called without the `UseAuth()` middleware, or the middleware is ordered incorrectly.
+
+**Fix**: Ensure `UseAuth()` is called in the pipeline and that it appears **after** routing but **before** endpoint mapping:
+
+```csharp
+var app = builder.Build();
+
+app.UseRouting();
+
+app.UseAuth();     // ✅ Between routing and endpoints
+
+app.MapEndpoints();
+app.Run();
+```
+
+### My `configureOptions` callback changes aren't taking effect
+
+**Cause (v10.0.0 only)**: In v10.0.0, the `ConfigureJwtBearerOptions` class ran *after* the `AddJwtBearer` lambda, silently overwriting `ClockSkew` and `IssuerSigningKey` values set in the callback.
+
+**Fix**: Upgrade to v10.0.1, where the callback runs **last** and always wins:
+
+```bash
+dotnet add package RA.Utilities.Authentication.JwtBearer --version 10.0.1
+```
+
+In v10.0.0, use the `appsettings.json` config keys instead of the callback for `ClockSkewInSeconds` and `IssuerSigningKeyString`.
+
+### Configuration changes in `appsettings.json` aren't picked up at runtime
+
+**Cause**: `IConfiguration` is resolved from the DI container at startup. Standard `appsettings.json` changes require a restart. If you're using `IOptions<>` (singleton), values are cached for the application lifetime.
+
+**Fix**: Use `IOptionsSnapshot<>` or `IOptionsMonitor<>` to pick up changes without restarting. The `ConfigureJwtBearerOptions` class registers as a singleton `IConfigureOptions<JwtBearerOptions>`, which respects the snapshot/monitor lifecycle when resolved accordingly. Ensure your consuming code injects `IOptionsSnapshot<JwtBearerOptions>` if you need live reload:
+
+```csharp
+public class MyService
+{
+    public MyService(IOptionsSnapshot<JwtBearerOptions> options)
+    {
+        // options.Value reflects the latest configuration on each request
+    }
+}
+```
+
+---
+
+## FAQ
+
+### Do I need `AddAuthorization()` separately?
+
+No. `AddJwtBearerAuthentication()` calls `AddAuthorization()` internally. Calling it twice is harmless (it uses `TryAdd` internally) but unnecessary.
+
+### Can I use multiple JWT Bearer schemes?
+
+`AddJwtBearerAuthentication()` configures only the default `JwtBearerDefaults.AuthenticationScheme`. To add additional named schemes, call `AddJwtBearer("SchemeName", ...)` directly after `AddJwtBearerAuthentication()`:
+
+```csharp
+builder.Services.AddJwtBearerAuthentication(builder.Configuration);
+
+// Add a second scheme for internal service-to-service auth
+builder.Services.AddAuthentication()
+    .AddJwtBearer("InternalService", options =>
+    {
+        options.Authority = "https://internal-identity.example.com";
+        // ...
+    });
+```
+
+### What's the difference between `IssuerSigningKeyString` and `IssuerSigningKey`?
+
+| Key | Type | Set via |
+|---|---|---|
+| `IssuerSigningKeyString` | `string` in `appsettings.json` | This package — converts to a `SymmetricSecurityKey` |
+| `IssuerSigningKey` | `SecurityKey` in code | Standard ASP.NET Core — set programmatically |
+
+Use `IssuerSigningKeyString` when you want to store the key in configuration. Use `IssuerSigningKey` (via `configureOptions`) when you need to load it from a key vault or certificate store.
+
+### Does this package support asymmetric keys (RSA, ECDSA)?
+
+Not directly. `IssuerSigningKeyString` only creates `SymmetricSecurityKey` instances. For asymmetric keys, use the `configureOptions` callback:
+
+```csharp
+builder.Services.AddJwtBearerAuthentication(builder.Configuration, options =>
+{
+    var rsa = RSA.Create();
+    rsa.ImportFromPem(File.ReadAllText("public-key.pem"));
+    options.TokenValidationParameters.IssuerSigningKey = new RsaSecurityKey(rsa);
+});
+```
+
+### How do I load the signing key from a key vault?
+
+Use the `configureOptions` callback, which runs after all config binding:
+
+```csharp
+builder.Services.AddJwtBearerAuthentication(builder.Configuration, async options =>
+{
+    // ⚠️ Warning: ConfigureJwtBearerOptions doesn't support async callbacks.
+    // Load the key before calling AddJwtBearerAuthentication instead:
+});
+
+// Better approach: resolve the key first
+var signingKey = await keyVault.GetSecretAsync("jwt-signing-key");
+builder.Services.AddJwtBearerAuthentication(builder.Configuration, options =>
+{
+    options.TokenValidationParameters.IssuerSigningKey =
+        new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey));
+});
+```
+
+### Where are the middleware extension methods?
+
+`UseAuth()` is defined as an extension on `IApplicationBuilder` in `RA.Utilities.Authentication.JwtBearer.Extensions`. Import the namespace:
+
+```csharp
+using RA.Utilities.Authentication.JwtBearer.Extensions;
+```
+
+---
+
+## Known Limitations
+
+- **Default scheme only**: `AddJwtBearerAuthentication()` configures only `JwtBearerDefaults.AuthenticationScheme`. Custom named schemes must be added manually via `AddJwtBearer("name", ...)`.
+- **Symmetric keys only**: `IssuerSigningKeyString` creates a `SymmetricSecurityKey`. Asymmetric keys must be set via the `configureOptions` callback.
+- **No automatic OIDC discovery caching**: The `Authority` setting uses the framework's built-in OIDC discovery, which fetches metadata on first request. For high-throughput scenarios, consider configuring a backchannel handler with caching.
+- **English-only error messages**: Validation errors (e.g., key too short) are English-only. If you need localized errors, catch the `InvalidOperationException` at startup and re-throw with a translated message.
+- **`configureOptions` callback is synchronous**: The `Action<JwtBearerOptions>` delegate does not support async operations. Perform any async key resolution before calling `AddJwtBearerAuthentication()`.

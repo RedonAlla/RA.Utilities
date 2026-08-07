@@ -1,7 +1,7 @@
 ---
 title: RA.Utilities.Authentication.JwtBearer
 sidebar_position: 5
-sidebar_class_name: nav_session session_icon ra_utilities_jwt
+sidebar_class_name: nav_session ra_utilities_jwt
 ---
 
 import LogoSvg from '../../../../Assets/Images/jwt.svg';
@@ -18,66 +18,288 @@ import LogoSvg from '../../../../Assets/Images/jwt.svg';
 [![Publish NuGet](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml/badge.svg)](https://github.com/RedonAlla/RA.Utilities/actions/runs/19649494913)
 [![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
 
-This library provides extension methods to streamline the setup of JWT Bearer authentication by leveraging the standard `IConfiguration` system.
-It allows you to configure `JwtBearerOptions` directly from your `appsettings.json` file, reducing boilerplate code in your `Program.cs` or `Startup.cs`.
+`RA.Utilities.Authentication.JwtBearer` streamlines JWT Bearer authentication setup in ASP.NET Core by moving configuration out of your `Program.cs` and into `appsettings.json`. A single extension method reads your configuration, applies smart type conversions, and registers everything the framework needs — no boilerplate, no hardcoded secrets.
 
-## ✨ The main benefits are:
--   **Simplified Setup**: A single extension method call to configure JWT Bearer authentication.
--   **Configuration-driven**: Easily manage JWT validation parameters through `appsettings.json` without changing code.
--   **Customizable**: Supports custom configuration for `ClockSkew` and the `IssuerSigningKey`.
+## 🎯 Purpose
 
-## 🛠️ Installation
+Configuring JWT Bearer authentication in ASP.NET Core typically requires 20+ lines of setup in `Program.cs`: binding configuration sections, converting string keys to `SymmetricSecurityKey`, setting clock skew as a `TimeSpan`, wiring up authorization, and registering middleware in the correct order. This package collapses all of that into two calls:
+
+```csharp
+builder.Services.AddJwtBearerAuthentication(builder.Configuration);
+// ...
+app.UseAuth();
+```
+
+The configuration lives entirely in `appsettings.json`, making it environment-aware and easy to audit. This approach gives you:
+
+- **Configuration-driven security**: JWT validation parameters (authority, audience, key material, clock skew) are managed through config files, not code — different environments can use different identity providers without rebuilding.
+- **Type coercion handled for you**: `ClockSkewInSeconds` (a number) is automatically converted to a `TimeSpan`, and `IssuerSigningKeyString` (a plain string) is converted to a `SymmetricSecurityKey` with a minimum-length safety check.
+- **Guaranteed callback ordering**: An optional `configureOptions` callback lets you programmatically extend or override any setting — and it always runs **last**, so your overrides always win.
+- **Fail-fast validation**: If your signing key is too short for HMAC-SHA256, the app fails at startup with a clear error message — not at runtime with a cryptic token validation failure.
+
+### ✨ Key Features
+
+- **One-call setup** — `AddJwtBearerAuthentication()` configures authentication, authorization, and JWT Bearer options from `IConfiguration`
+- **Convenience middleware** — `UseAuth()` chains `UseAuthentication()` + `UseAuthorization()` in the correct order
+- **Smart type conversion** — `ClockSkewInSeconds` (double) → `TimeSpan`, `IssuerSigningKeyString` (string) → `SymmetricSecurityKey`
+- **Minimum key enforcement** — Keys shorter than 32 bytes (256 bits) are rejected at startup with a descriptive error
+- **Programmatic override hook** — The `configureOptions` callback runs after all config binding, guaranteeing consumer overrides take effect
+- **Named-scheme aware** — Only applies to the `JwtBearerDefaults.AuthenticationScheme` scheme, leaving custom named schemes untouched
+
+---
+
+## 🛠️ Getting Started
+
+### Prerequisites
+
+- **.NET 10.0** or later
+- An understanding of JWT Bearer authentication in ASP.NET Core
+
+### Installation
+
+**.NET CLI**
 
 ```bash
 dotnet add package RA.Utilities.Authentication.JwtBearer
 ```
 
-Or through the NuGet Package Manager console:
+**Package Manager Console**
 
 ```powershell
 Install-Package RA.Utilities.Authentication.JwtBearer
 ```
 
-Or through the NuGet Package Manager in Visual Studio.
+**PackageReference (csproj)**
 
-## 🔗 Dependencies
+```xml
+<PackageReference Include="RA.Utilities.Authentication.JwtBearer" Version="10.0.1" />
+```
 
--   [`Microsoft.AspNetCore.Authentication.JwtBearer`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.authentication.jwtbearer)
+### Hello World
 
+The minimal setup in `Program.cs`:
 
-## 🚀 Usage
-
-In your `Program.cs` (for minimal APIs) or `Startup.cs`, use the `AddJwtBearerAuthentication` extension method to configure authentication and authorization services.
-
-### `Program.cs` (ASP.NET Core 6+)
-
-```csharp
+```csharp showLineNumbers
 // highlight-next-line
 using RA.Utilities.Authentication.JwtBearer.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Add and configure JWT Bearer authentication using settings from IConfiguration.
-// This single call also adds the necessary authorization services.
 // highlight-next-line
 builder.Services.AddJwtBearerAuthentication(builder.Configuration);
 
 var app = builder.Build();
 
-// 2. Add the authentication and authorization middleware.
 // highlight-next-line
-app.UseAuth(); // This is a convenience method for app.UseAuthentication() and app.UseAuthorization().
+app.UseAuth();
 
 app.MapGet("/", () => "Hello World!");
-
 app.Run();
 ```
 
-## 🛠️ Configuration
+And a minimal `appsettings.json` for a self-issued token:
 
-This library reads JWT Bearer options from the `Authentication:Schemes:Bearer` section of your configuration file (e.g., `appsettings.json`).
+```json
+{
+  "Authentication": {
+    "Schemes": {
+      "Bearer": {
+        "TokenValidationParameters": {
+          "ValidateIssuerSigningKey": true,
+          "IssuerSigningKeyString": "this-is-a-secret-key-at-least-32-bytes-long!!"
+        }
+      }
+    }
+  }
+}
+```
 
-Here is an example `appsettings.json` configuration:
+---
+
+## 🧠 Core Concepts
+
+### Configuration flow
+
+When you call `AddJwtBearerAuthentication(configuration, configureOptions)`, the library registers a single `IConfigureNamedOptions<JwtBearerOptions>` implementation that applies settings in a fixed, documented order:
+
+```
+┌──────────────────────────────────────────────────┐
+│  ConfigureJwtBearerOptions.Configure()            │
+│                                                   │
+│  Step 1: Bind standard JwtBearerOptions           │
+│          from Authentication:Schemes:Bearer       │
+│          (Authority, Audience, ValidIssuer, etc.) │
+│                ↓                                  │
+│  Step 2: Apply special conversions                │
+│          ClockSkewInSeconds → TimeSpan            │
+│          IssuerSigningKeyString → SecurityKey     │
+│                ↓                                  │
+│  Step 3: Invoke configureOptions callback         │
+│          (user overrides — ALWAYS wins)           │
+└──────────────────────────────────────────────────┘
+```
+
+This ordering guarantees that configuration files set the baseline, the library applies its smart conversions, and the consumer has the final say via the callback.
+
+### Configuration keys
+
+The library reads from `Authentication:Schemes:Bearer` and its children. The two non-standard keys are:
+
+| Config Key | Type | Purpose | Default |
+|---|---|---|---|
+| `TokenValidationParameters:ClockSkewInSeconds` | `double` | Token expiration tolerance | `300` (5 minutes) |
+| `TokenValidationParameters:IssuerSigningKeyString` | `string` | Symmetric key material for HMAC-SHA256 | `null` (not set) |
+
+All other keys under `Authentication:Schemes:Bearer` follow the standard ASP.NET Core `JwtBearerOptions` binding — `Authority`, `Audience`, `ValidIssuer`, `ValidateLifetime`, etc.
+
+### Terminology
+
+- **Clock skew**: The allowed time difference between the token issuer's clock and your server's clock. Default is 5 minutes — if a token expires at 12:00, it's still accepted until 12:05.
+- **Issuer signing key**: The symmetric key used to verify the token's signature. Must be at least 32 bytes (256 bits) for HMAC-SHA256.
+- **`configureOptions` callback**: An optional `Action<JwtBearerOptions>` parameter on `AddJwtBearerAuthentication()`. It runs after all config binding and conversions, so you can set `Events`, override `TokenValidationParameters`, or add custom handlers.
+
+---
+
+## 📖 How-To Guides
+
+### Use a self-issued token (no external identity provider)
+
+Configure the key in `appsettings.json` — everything else is optional:
+
+```json
+{
+  "Authentication": {
+    "Schemes": {
+      "Bearer": {
+        "TokenValidationParameters": {
+          "ValidateIssuerSigningKey": true,
+          "IssuerSigningKeyString": "your-secret-key-at-least-32-bytes-long!!"
+        }
+      }
+    }
+  }
+}
+```
+
+### Use an external identity provider (Azure AD, Auth0, Keycloak, etc.)
+
+Set the `Authority` and `Audience`. The library discovers signing keys automatically via the OIDC metadata endpoint:
+
+```json
+{
+  "Authentication": {
+    "Schemes": {
+      "Bearer": {
+        "Authority": "https://login.microsoftonline.com/{tenant-id}/v2.0",
+        "Audience": "api://your-client-id"
+      }
+    }
+  }
+}
+```
+
+### Tighten clock skew for stricter token expiration
+
+Reduce the 5-minute default to something tighter:
+
+```json
+{
+  "Authentication": {
+    "Schemes": {
+      "Bearer": {
+        "TokenValidationParameters": {
+          "ClockSkewInSeconds": 30
+        }
+      }
+    }
+  }
+}
+```
+
+### Add custom JWT event handlers
+
+Use the `configureOptions` callback to hook into authentication events:
+
+```csharp showLineNumbers
+builder.Services.AddJwtBearerAuthentication(builder.Configuration, options =>
+{
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            // highlight-next-line
+            _logger.LogWarning(context.Exception, "JWT authentication failed");
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            // highlight-next-line
+            _logger.LogInformation("Token validated for {Subject}",
+                context.Principal?.FindFirst("sub")?.Value);
+            return Task.CompletedTask;
+        }
+    };
+});
+```
+
+### Override a config-driven setting programmatically
+
+The callback runs **after** config binding, so you can selectively override:
+
+```csharp showLineNumbers
+builder.Services.AddJwtBearerAuthentication(builder.Configuration, options =>
+{
+    // Always validate lifetime, regardless of what's in appsettings.json
+    // highlight-next-line
+    options.TokenValidationParameters.ValidateLifetime = true;
+
+    // Use a different key per environment
+    if (builder.Environment.IsDevelopment())
+    {
+        // highlight-next-line
+        options.TokenValidationParameters.ValidateIssuerSigningKey = false;
+    }
+});
+```
+
+### Validate the issuer and audience for self-issued tokens
+
+```json
+{
+  "Authentication": {
+    "Schemes": {
+      "Bearer": {
+        "TokenValidationParameters": {
+          "ValidateIssuer": true,
+          "ValidIssuer": "https://my-api.example.com",
+          "ValidateAudience": true,
+          "ValidAudience": "my-api",
+          "ValidateIssuerSigningKey": true,
+          "IssuerSigningKeyString": "your-secret-key-at-least-32-bytes-long!!"
+        }
+      }
+    }
+  }
+}
+```
+
+### Exclude specific endpoints from authentication
+
+The package doesn't add `[Authorize]` attributes — it only configures the JWT Bearer handler. To exclude endpoints, use the standard ASP.NET Core approach:
+
+```csharp
+app.MapGet("/health", () => "Healthy").AllowAnonymous();
+```
+
+---
+
+## ⚙️ Configuration
+
+This library reads JWT Bearer options from the `Authentication:Schemes:Bearer` section of your configuration file.
+
+### Full reference
+
+Here is a complete `appsettings.json` with all supported settings:
 
 ```json
 {
@@ -86,13 +308,17 @@ Here is an example `appsettings.json` configuration:
       "Bearer": {
         "Authority": "https://your-identity-provider.com/",
         "Audience": "your-api-audience",
+        "ClaimsIssuer": null,
+        "Challenge": "Bearer",
         "TokenValidationParameters": {
           "ValidateIssuer": true,
+          "ValidIssuer": "https://your-identity-provider.com/",
           "ValidateAudience": true,
+          "ValidAudience": "your-api-audience",
           "ValidateLifetime": true,
           "ValidateIssuerSigningKey": true,
           "ClockSkewInSeconds": 30,
-          "IssuerSigningKeyString": "your-super-secret-key-that-is-long-enough-for-the-algorithm"
+          "IssuerSigningKeyString": "your-super-secret-key-that-is-at-least-32-bytes-long!!"
         }
       }
     }
@@ -102,13 +328,81 @@ Here is an example `appsettings.json` configuration:
 
 :::tip
 
-When using an identity provider (`Authority`), you typically don't need to specify `ValidIssuer`, `ValidAudience`, or `IssuerSigningKey` as these are discovered from the metadata endpoint.
-The example above shows settings for both scenarios (using an authority or validating a self-issued token).
+When using an identity provider with an `Authority`, you typically don't need to specify `ValidIssuer`, `ValidAudience`, or `IssuerSigningKey` — these are discovered from the OIDC metadata endpoint. The `IssuerSigningKeyString` is only needed for self-issued tokens.
 
 :::
 
-The library automatically binds these settings to `JwtBearerOptions`.
-It also provides special handling for:
+### Special config keys
 
--   `ClockSkewInSeconds`: Converts this integer value into a `TimeSpan` for `TokenValidationParameters.ClockSkew`.
--   `IssuerSigningKeyString`: Converts this string into a `SymmetricSecurityKey` for `TokenValidationParameters.IssuerSigningKey`.
+| Key | Type | Required | Notes |
+|---|---|---|---|
+| `TokenValidationParameters:ClockSkewInSeconds` | `double` | No | Defaults to `300` (5 minutes). Converted to `TimeSpan` automatically. |
+| `TokenValidationParameters:IssuerSigningKeyString` | `string` | No | Must be ≥ 32 bytes. Converted to `SymmetricSecurityKey` automatically. |
+
+All other keys under `Authentication:Schemes:Bearer` are bound directly to `JwtBearerOptions` using the standard ASP.NET Core configuration binding. See the [Microsoft JwtBearerOptions documentation](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.authentication.jwtbearer.jwtbeareroptions) for the full list of bindable properties.
+
+### Programmatic overrides
+
+The `configureOptions` callback gives you the final word on any option. It runs **after** all configuration binding and special conversions:
+
+```csharp
+builder.Services.AddJwtBearerAuthentication(builder.Configuration, options =>
+{
+    // This runs LAST — your changes always take effect
+    options.TokenValidationParameters.ValidateIssuer = false;
+    options.BackchannelHttpHandler = new HttpClientHandler
+    {
+        Proxy = new WebProxy("http://corporate-proxy:8080")
+    };
+});
+```
+
+---
+
+## ✨ Available Components
+
+### Extension Methods
+
+| Method | Type | Purpose |
+|---|---|---|
+| `AddJwtBearerAuthentication()` | `IServiceCollection` extension | Registers JWT Bearer authentication, authorization, and configuration |
+| `UseAuth()` | `IApplicationBuilder` extension | Chains `UseAuthentication()` + `UseAuthorization()` |
+
+### Configuration Classes
+
+| Class | Purpose |
+|---|---|
+| `ConfigureJwtBearerOptions` | `IConfigureNamedOptions<JwtBearerOptions>` — binds config, applies special conversions, invokes user callback |
+
+### Internal Types (not part of the public API)
+
+| Type | Purpose |
+|---|---|
+| `KeyConstants` | Configuration key strings for `Authentication:Schemes:Bearer` and sub-keys |
+
+---
+
+## 🙌 Contributing & Support
+
+### Found a bug or have a suggestion?
+
+- **GitHub Issues**: [Report a bug or request a feature](https://github.com/RedonAlla/RA.Utilities/issues)
+- **Discussions**: [Ask questions or start a discussion](https://github.com/RedonAlla/RA.Utilities/discussions)
+
+### Contributing
+
+Contributions are welcome! Please follow the standard workflow:
+
+1. **Fork** the [RA.Utilities repository](https://github.com/RedonAlla/RA.Utilities)
+2. **Create a branch** from `main` with a descriptive name (e.g., `feature/oidc-discovery-caching`)
+3. **Make your changes** — follow the existing coding style and add XML documentation for new public APIs
+4. **Submit a pull request** to the `main` branch with a clear description
+
+### Links
+
+| Resource | URL |
+|---|---|
+| **NuGet** | [RA.Utilities.Authentication.JwtBearer](https://www.nuget.org/packages/RA.Utilities.Authentication.JwtBearer/) |
+| **Source** | [GitHub — RedonAlla/RA.Utilities](https://github.com/RedonAlla/RA.Utilities) |
+| **License** | [MIT](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file) |
+| **Build Status** | [GitHub Actions](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml) |
