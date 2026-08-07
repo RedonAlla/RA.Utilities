@@ -120,7 +120,7 @@ public class LoggingMiddleware(
             Path = context.Request.Path,
             RemoteAddress = context.Connection.RemoteIpAddress?.ToString(),
             StatusCode = context.Response.StatusCode,
-            Duration = duration.TotalMilliseconds,
+            Duration = $"{duration.TotalMilliseconds} ms",
             ResponseHeaders = FilterHeaders(context.Response.Headers, _options.ExcludedHeaders),
             ResponseBody = await ReadBodyAsync(responseBody)
         };
