@@ -3,6 +3,25 @@ title: RA.Utilities.Authorization
 authors: [RedonAlla]
 ---
 
+## Version 10.0.1
+![Date Badge](https://img.shields.io/badge/Publish-07%20August%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Authorization/10.0.1)
+
+### 🔧 Fixes & Improvements
+
+* **Fixed `HasClaim` signature**: `HasClaim(string claimValue)` → `HasClaim(string claimType, string claimValue)`. The old signature hardcoded the claim type to `"claim"` which never matched real auth provider claims. The new two-parameter signature matches standard `ClaimsPrincipal.HasClaim(type, value)`.
+* **Fixed `HasScope` for OIDC compliance**: `HasScope` now splits space-separated scope values per the OAuth 2.0 standard. A `"scope"` claim with value `"api.read api.write"` now correctly matches individual scopes.
+* **New `Guid UserId` on `AppUser`**: Typed access to the user ID without calling the extension method. Throws `InvalidOperationException` if the user is not authenticated or the claim is invalid.
+* **Null validation**: `AppUser` constructor now throws `ArgumentNullException` for null `IHttpContextAccessor`.
+* **Removed `FindFirstValue` extension**: Shadowed the built-in `ClaimsPrincipal.FindFirstValue(string)` method. Use the built-in directly.
+* **`GetUserId` exception type**: Throws `InvalidOperationException` instead of `ApplicationException`.
+
+### ⚠️ Breaking Change
+
+`HasClaim(string claimValue)` → `HasClaim(string claimType, string claimValue)`. Update callers to provide both a claim type and value.
+
+<!-- truncate -->
+
 ## Version 10.0.0
 ![Date Badge](https://img.shields.io/badge/Publish-23%20November%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Authorization/10.0.0)
@@ -13,7 +32,7 @@ This signifies that the code is considered stable and ready for production use, 
 <!-- truncate -->
 
 ## Version 10.0.0-rc.2
-![Date Badge](https://img.shields.io/badge/Publish-18%20Octomber%202025-lightblue?logo=fastly&logoColor=white)
+![Date Badge](https://img.shields.io/badge/Publish-18%20October%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.0--rc.2-orange?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Authorization/10.0.0-rc.2)
 
 This release marks a major evolution of the `RA.Utilities.Authorization` package, shifting its focus from a simple current user service to a powerful, claims-based authorization system. The package now provides a flexible and maintainable way to implement permission-based security in ASP.NET Core applications.

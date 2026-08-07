@@ -25,5 +25,5 @@ public class HttpResponseLogTemplate : BaseHttpLogTemplate
     /// <summary>
     /// The total time taken to process the request and generate the response.
     /// </summary>
-    public double? Duration { get; set; }
+    public string? Duration { get; set; }
 }

@@ -1,0 +1,158 @@
+---
+title: Troubleshooting & FAQ
+sidebar_position: 99
+---
+
+# Troubleshooting & FAQ
+
+## Common Issues
+
+### `InvalidOperationException: User id is unavailable`
+
+**Cause**: `AppUser.UserId` or `ClaimsPrincipal.GetUserId()` is called but the user is not authenticated, or the NameIdentifier claim is missing or not a valid `Guid`.
+
+**Fix**: Check `IsAuthenticated` before accessing `UserId`:
+
+```csharp
+if (user.IsAuthenticated)
+{
+    Guid id = user.UserId; // Safe
+}
+```
+
+Or use the nullable `Id` property instead:
+
+```csharp
+string? id = user.Id; // Returns null instead of throwing
+```
+
+### `AppUser` properties are all null / `IsAuthenticated` is false
+
+**Cause**: The user is not authenticated. `AppUser` reads from `HttpContext.User`, which is only populated when the request has been authenticated by middleware.
+
+**Fix**: Ensure authentication middleware is registered and ordered correctly:
+
+```csharp
+var app = builder.Build();
+
+app.UseAuthentication();  // Must come before UseAuthorization
+app.UseAuthorization();
+
+app.MapEndpoints();
+```
+
+Also verify the endpoint requires authentication:
+
+```csharp
+app.MapGet("/me", (AppUser user) => ...).RequireAuthorization();
+```
+
+### `HasScope` returns `false` even though the token has the scope
+
+**Cause**: Scope comparison is **case-sensitive** and uses the `"scope"` claim with space-separated values.
+
+**Fix**: Verify the scope claim in your token:
+
+```csharp
+// Debug: inspect the raw scope claim
+var scopeClaim = user.GetClaimValue("scope");
+// Should contain values like "api.read api.write openid profile"
+
+// Check with exact case
+bool hasScope = user.HasScope("api.read"); // ✅ correct
+bool wrongCase = user.HasScope("API.READ"); // ❌ will be false
+```
+
+If your identity provider uses non-standard claim names (e.g., `"scp"` instead of `"scope"`), use `HasClaim` instead:
+
+```csharp
+if (user.HasClaim("scp", "api.read"))
+{
+    // ...
+}
+```
+
+### `AddAppUser()` is not recognized
+
+**Cause**: Missing using directive.
+
+**Fix**: Add the namespace:
+
+```csharp
+using RA.Utilities.Authorization.Extensions;
+
+builder.Services.AddAppUser();
+```
+
+### `HasClaim` gives a compilation error about too few arguments
+
+**Cause**: You're using the v10.0.0 signature `HasClaim(string claimValue)` after upgrading to v10.0.1.
+
+**Fix**: Add the `claimType` parameter:
+
+```csharp
+// ❌ v10.0.0
+user.HasClaim("CanDeleteUsers");
+
+// ✅ v10.0.1
+user.HasClaim("permission", "CanDeleteUsers");
+```
+
+---
+
+## FAQ
+
+### What's the difference between `Id` and `UserId`?
+
+| Property | Type | Behavior |
+|---|---|---|
+| `Id` | `string?` | Returns the raw NameIdentifier claim value, or null if missing |
+| `UserId` | `Guid` | Parses the NameIdentifier claim as a `Guid`. Throws `InvalidOperationException` if missing or invalid |
+
+Use `UserId` when you know the user is authenticated and your IDs are GUIDs. Use `Id` when you need the raw string or are handling the null case yourself.
+
+### Does `AppUser` work with Minimal APIs?
+
+Yes. Inject it directly into endpoint handlers:
+
+```csharp
+app.MapGet("/me", (AppUser user) => new { user.UserId, user.Email });
+```
+
+### Can I use `AppUser` outside of a request context (e.g., background jobs)?
+
+No. `AppUser` reads from `IHttpContextAccessor.HttpContext.User`, which is only available during an HTTP request. For background jobs, construct a `ClaimsPrincipal` manually or pass the relevant user information as parameters.
+
+### How do I add custom properties to `AppUser`?
+
+`AppUser` is a concrete class, so you can subclass it or create extension methods. For most cases, use `GetClaimValue`:
+
+```csharp
+public static class AppUserExtensions
+{
+    public static string? GetDepartment(this AppUser user) =>
+        user.GetClaimValue("department");
+}
+```
+
+### Is `AppUser` thread-safe?
+
+Yes. It's registered as transient and holds a reference to a `ClaimsPrincipal`, which is immutable. Each injection gets a fresh instance scoped to the current `IHttpContextAccessor`.
+
+### Does `HasScope` support the `scp` claim?
+
+No — `HasScope` specifically checks the `"scope"` claim. If your identity provider uses `"scp"` instead, use `GetClaimValues("scp")` and check manually, or use `HasClaim`:
+
+```csharp
+bool hasScope = user.HasClaim("scp", "api.read");
+```
+
+---
+
+## Known Limitations
+
+- **GUID-only user IDs**: `UserId` and `GetUserId()` parse only `Guid`. For integer or string IDs, use `Id` and convert manually.
+- **Request-bound**: `AppUser` requires an active `HttpContext`. It won't work in background jobs, hosted services, or message handlers without a request context.
+- **Case-sensitive scope matching**: `HasScope` uses ordinal comparison. Most OIDC providers use lowercase scopes, but verify your provider's output.
+- **No implicit authorization**: `AppUser` reads claims; it doesn't enforce authorization. Use `[Authorize]` attributes or `RequireAuthorization()` to protect endpoints.
+- **No claim transformation**: If you use `IClaimsTransformation`, the transformed claims are available through `AppUser` since it reads `HttpContext.User` after transformation.

@@ -1,0 +1,67 @@
+---
+title: Migration Guides
+---
+
+# Migration Guides
+
+## v10.0.0 → v10.0.1
+
+### Breaking Change: `HasClaim` signature changed
+
+**`HasClaim(string claimValue)` → `HasClaim(string claimType, string claimValue)`**
+
+The old signature accepted only a claim value and hardcoded the claim type to the literal string `"claim"`, which never matched real claims from any standard auth provider. The new signature requires both a claim type and value.
+
+### Why this change?
+
+The old `HasClaim(string claimValue)` was functionally broken — it checked `c.Type == "claim"`, but no JWT issuer, OIDC provider, or cookie auth middleware emits a claim type literally named `"claim"`. The method would always return `false`.
+
+The fix adds a `claimType` parameter. The new signature `HasClaim(string claimType, string claimValue)` matches the standard `ClaimsPrincipal.HasClaim(string type, string value)` pattern.
+
+### Migration Steps
+
+#### 1. Update `AppUser.HasClaim` calls
+
+```csharp
+// ❌ v10.0.0
+_user.HasClaim("CanDeleteUsers");
+
+// ✅ v10.0.1
+_user.HasClaim("permission", "CanDeleteUsers");
+```
+
+#### 2. Update `ClaimsPrincipalExtensions.HasClaim` calls
+
+```csharp
+// ❌ v10.0.0
+principal.HasClaim("SomeValue");
+
+// ✅ v10.0.1
+principal.HasClaim("my_claim_type", "SomeValue");
+```
+
+### Other Changes (non-breaking)
+
+- **New `Guid UserId` property on `AppUser`** — typed access to the user ID without calling the extension method
+- **`HasScope` now handles OIDC space-separated scopes** — a `"scope"` claim with value `"api.read api.write"` now correctly matches both individual scopes
+- **`AppUser` constructor validates `IHttpContextAccessor`** — throws `ArgumentNullException` instead of silently accepting null
+- **Field renamed** — internal `User` field renamed to `_user` (no external impact)
+- **`FindFirstValue` extension removed** — shadowed the built-in `ClaimsPrincipal.FindFirstValue(string)` method. Use the built-in directly.
+- **`GetUserId` throws `InvalidOperationException` instead of `ApplicationException`** — more specific exception type
+
+### Verify the upgrade
+
+```csharp
+// If you use HasClaim, ensure both claimType and claimValue are provided
+_user.HasClaim("permission", "CanDeleteUsers"); // ✅
+
+// If you previously called FindFirstValue as an extension:
+// ❌ principal.FindFirstValue(ClaimTypes.Email) via our extension
+// ✅ principal.FindFirstValue(ClaimTypes.Email) via the built-in — just works
+```
+
+---
+
+## Full Changelog
+
+See the [package release notes](https://github.com/RedonAlla/RA.Utilities/blob/main/Api/RA.Utilities.Authorization/releasenotes.md) for a complete version history.

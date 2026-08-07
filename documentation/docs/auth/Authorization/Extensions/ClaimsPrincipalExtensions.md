@@ -7,12 +7,9 @@ sidebar_position: 2
 Namespace: RA.Utilities.Authorization.Extensions
 ```
 
-The `ClaimsPrincipalExtensions` class provides a set of convenient extension methods for the `ClaimsPrincipal` object, simplifying common claim-related tasks.
+The `ClaimsPrincipalExtensions` class provides convenient extension methods for `ClaimsPrincipal`, simplifying common claim-related tasks.
 
 ### 🎯 Purpose
-
-The `ClaimsPrincipalExtensions` class is a static helper class that adds several convenient methods to the standard `ClaimsPrincipal` object.
-Its primary purpose is to simplify and standardize the way you interact with a user's claims.
 
 Instead of writing repetitive code to find, parse, and validate claims, these extension methods provide clean, readable, and reusable shortcuts.
 
@@ -20,27 +17,24 @@ Instead of writing repetitive code to find, parse, and validate claims, these ex
 
 ### GetUserId()
 
-This is a standout feature.
-It safely retrieves the user's ID from the `NameIdentifier` claim and attempts to parse it into a `Guid`.
-If the claim is missing or invalid, it throws a clear exception.
-This encapsulates error-prone parsing logic into a single, reliable method.
+Retrieves the user's ID from the `NameIdentifier` claim and parses it into a `Guid`.
+Throws if the claim is missing or invalid.
 
 **Returns**: `Guid`
-**Throws**: `InvalidOperationException` if the claim is missing or cannot be parsed into a `Guid`.
+**Throws**: `InvalidOperationException` if the claim is missing or cannot be parsed.
 
 ```csharp
 var userId = User.GetUserId(); // 'User' is the ClaimsPrincipal from HttpContext
 ```
 
-### HasClaim(string claimValue)
+### HasClaim(string claimType, string claimValue)
 
-Checks if the principal has a claim with the specific type `"claim"` and a matching value.
-This is useful for simple permission checks.
+Checks if the principal has a claim with the specified type and value.
 
 **Returns**: `bool`
 
 ```csharp
-if (User.HasClaim("CanDeleteUsers"))
+if (User.HasClaim("permission", "CanDeleteUsers"))
 {
     // ... perform action
 }
@@ -48,8 +42,8 @@ if (User.HasClaim("CanDeleteUsers"))
 
 ### HasScope(string scopeValue)
 
-Checks if the principal has a claim with the specific type `"scope"` and a matching value.
-This is commonly used in OAuth 2.0 / OIDC scenarios.
+Checks if the principal has the specified OAuth 2.0 / OIDC scope.
+Handles both space-separated scopes (the OIDC standard) and individual scope-per-claim entries.
 
 **Returns**: `bool`
 
@@ -60,4 +54,4 @@ if (User.HasScope("api.read"))
 }
 ```
 
-These extensions are used by the `AppUser` service to build its higher-level, user-friendly API, but they are also available for you to use in any part of your application where you might be working directly with a `ClaimsPrincipal`.
+These extensions are used by the `AppUser` service to build its higher-level API, but are also available for use directly on any `ClaimsPrincipal`.

@@ -18,47 +18,319 @@ import LogoSvg from '../../../../Assets/Images/authorization.svg';
 [![Publish NuGet](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml/badge.svg)](https://github.com/RedonAlla/RA.Utilities/actions/runs/56274253042)
 [![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
 
-`RA.Utilities.Authorization` offers a streamlined approach to handling user authentication and authorization in ASP.NET Core applications.
-It provides a strongly-typed, injectable service to easily access the current user's claims, such as user ID, name, and roles, directly from the `HttpContext`.
-This utility simplifies the process of retrieving authenticated user data, reducing boilerplate code and improving the readability and maintainability of your authorization logic.
+`RA.Utilities.Authorization` provides a strongly-typed, injectable `AppUser` service that wraps `HttpContext.User` so you never hand-parse claims, role-check with magic strings, or inject `IHttpContextAccessor` into your business logic. One line in `Program.cs` and you have typed access to user identity everywhere.
 
 ## 🎯 Purpose
 
-In any ASP.NET Core application that requires authentication, you often need to access information about the currently logged-in user.
-This typically involves injecting [`IHttpContextAccessor`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.ihttpcontextaccessor) and manually parsing claims from `HttpContext.User`.
+In any ASP.NET Core application with authentication, you constantly need the current user's ID, email, roles, and custom claims. The built-in approach — injecting `IHttpContextAccessor` and manually navigating `HttpContext.User.Claims` — is verbose, error-prone, and hard to test.
 
-This package abstracts that logic away into a clean, reusable, and testable service, `ICurrentUser`.
+This package replaces all of that with a single injectable service:
+
+```csharp
+builder.Services.AddAppUser();
+```
+
+From any controller, Minimal API endpoint, or service, you write:
+
+```csharp
+app.MapGet("/me", (AppUser user) => new { user.UserId, user.Name, user.Email });
+```
 
 The main benefits are:
-- **Simplified Access**: No more [`IHttpContextAccessor`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.ihttpcontextaccessor) in your controllers and services. Just inject `ICurrentUser`.
-- **Strongly-Typed**: Get the user's ID as a `Guid` or `int` without manual parsing and type conversion.
-- **Testable**: Easily mock `ICurrentUser` in your unit tests to simulate different authenticated users and scenarios.
+
+- **Simplified Access**: No more [`IHttpContextAccessor`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.ihttpcontextaccessor) in your controllers and services. Just inject `AppUser`.
+- **Strongly-Typed**: Get the user's ID as a `Guid` via `UserId`, or as a string via `Id`. Email, Name, roles, and custom claims are all accessible through simple properties and methods.
+- **Testable**: Easily mock `AppUser` in your unit tests to simulate different authenticated users and scenarios.
 - **Reduced Boilerplate**: Drastically cuts down on repetitive code for accessing user claims.
+- **OIDC-aware scope checking**: `HasScope("api.read")` correctly handles space-separated scopes per the OAuth 2.0 standard.
 
-## 🛠️ Installation
+### ✨ Key Features
 
-You can install the package via the .NET CLI:
+- **One-call registration** — `AddAppUser()` registers `AppUser` as transient and adds `IHttpContextAccessor`
+- **Typed user ID** — `Guid UserId` (parsed from NameIdentifier) and `string? Id` (raw)
+- **Common claim properties** — `Name`, `Email`, `IsAuthenticated`, `IsInRole(string)`
+- **Claim helpers** — `GetClaimValue(string)` and `GetClaimValues(string)` for custom claims
+- **OIDC scope support** — `HasScope(string)` splits on spaces per the OAuth 2.0 spec
+- **Extension methods on `ClaimsPrincipal`** — `GetUserId()`, `HasClaim(type, value)`, `HasScope(value)`
+
+---
+
+## 🛠️ Getting Started
+
+### Prerequisites
+
+- **.NET 10.0** or later
+- An ASP.NET Core application with authentication configured (JWT Bearer, cookies, etc.)
+
+### Installation
+
+**.NET CLI**
 
 ```bash
 dotnet add package RA.Utilities.Authorization
 ```
 
-Or through the NuGet Package Manager console:
+**Package Manager Console**
 
 ```powershell
 Install-Package RA.Utilities.Authorization
 ```
 
-Or through the NuGet Package Manager in Visual Studio.
+**PackageReference (csproj)**
 
-## 🔗 Dependencies
+```xml
+<PackageReference Include="RA.Utilities.Authorization" Version="10.0.1" />
+```
 
--   [`Microsoft.AspNetCore.Http`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http)
--   [`Microsoft.Extensions.Options.ConfigurationExtensions`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection)
+### Hello World
 
-<br />
+```csharp showLineNumbers
+using RA.Utilities.Authorization.Extensions;
+using RA.Utilities.Authorization;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// highlight-next-line
+builder.Services.AddAppUser();
+
+var app = builder.Build();
+
+app.MapGet("/me", (AppUser user) => new
+{
+    // highlight-start
+    IsAuthenticated = user.IsAuthenticated,
+    UserId = user.UserId,
+    Name = user.Name,
+    Email = user.Email
+    // highlight-end
+});
+
+app.Run();
+```
+
+---
+
+## 🧠 Core Concepts
+
+### How `AppUser` works
+
+`AppUser` is a transient service that wraps `ClaimsPrincipal` from the current `HttpContext`:
+
+```
+HTTP Request
+     │
+     ▼
+IHttpContextAccessor.HttpContext.User  (ClaimsPrincipal)
+     │
+     ▼
+AppUser constructor ─── stores ClaimsPrincipal? _user
+     │
+     ▼
+Your controller/service injects AppUser
+     │
+     ▼
+_user.GetUserId()     → Guid           (via ClaimsPrincipalExtensions)
+_user.FindFirst(...)  → string?        (Id, Name, Email, GetClaimValue)
+_user.FindAll(...)    → IEnumerable<>  (GetClaimValues)
+_user.IsInRole(...)   → bool
+_user.HasClaim(...)   → bool           (HasClaim, HasScope)
+```
+
+`AppUser` is registered as **transient** — it's lightweight (just holds a reference to the `ClaimsPrincipal`) and reconstructing it per injection is cheap. `IHttpContextAccessor` (registered as a singleton behind `AsyncLocal`) provides the per-request `HttpContext`.
+
+### Extension methods vs AppUser
+
+| Use case | Approach |
+|---|---|
+| Already have a `ClaimsPrincipal` (e.g., in middleware) | `user.GetUserId()`, `user.HasClaim(type, value)` |
+| In a controller or service (DI-managed) | Inject `AppUser` and use `.UserId`, `.Name`, `.HasClaim(type, value)` |
+
+The extension methods are the building blocks; `AppUser` is the ergonomic wrapper.
+
+### Terminology
+
+- **NameIdentifier claim**: `ClaimTypes.NameIdentifier` (`http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier`). The JWT middleware maps the `sub` claim here automatically.
+- **Scope claim**: OAuth 2.0 / OIDC standard. Scopes are space-separated in a single `"scope"` claim value. `HasScope` handles both this standard format and non-standard individual entries.
+
+---
+
+## 📖 How-To Guides
+
+### Access the current user in a controller
+
+```csharp showLineNumbers
+[ApiController]
+[Route("api/[controller]")]
+[Authorize]
+public class OrdersController : ControllerBase
+{
+    private readonly AppUser _user;
+
+    public OrdersController(AppUser user) => _user = user;
+
+    [HttpGet]
+    public IActionResult GetOrders()
+    {
+        // highlight-start
+        if (!_user.IsAuthenticated)
+            return Unauthorized();
+
+        Guid ownerId = _user.UserId;
+        // highlight-end
+        var orders = _orderService.GetByOwner(ownerId);
+        return Ok(orders);
+    }
+}
+```
+
+### Access the current user in a Minimal API endpoint
+
+```csharp showLineNumbers
+app.MapGet("/profile", (AppUser user) =>
+{
+    // highlight-start
+    return new
+    {
+        user.UserId,
+        user.Name,
+        user.Email,
+        IsAdmin = user.IsInRole("Admin")
+    };
+    // highlight-end
+}).RequireAuthorization();
+```
+
+### Check OIDC scopes
+
+```csharp showLineNumbers
+app.MapGet("/admin", (AppUser user) =>
+{
+    // highlight-start
+    if (!user.HasScope("admin.access"))
+        return Results.Forbid();
+    // highlight-end
+
+    return Results.Ok(new { message = "Welcome, admin" });
+}).RequireAuthorization();
+```
+
+### Read a custom claim
+
+```csharp showLineNumbers
+public class TenantService
+{
+    private readonly AppUser _user;
+
+    public TenantService(AppUser user) => _user = user;
+
+    public string? GetTenantId()
+    {
+        // highlight-next-line
+        return _user.GetClaimValue("tenant_id");
+    }
+}
+```
+
+### Use extension methods directly on ClaimsPrincipal
+
+```csharp showLineNumbers
+public static class AuthorizationMiddleware
+{
+    public static Task HandleAsync(HttpContext context, RequestDelegate next)
+    {
+        var user = context.User;
+
+        // highlight-start
+        if (!user.IsAuthenticated())
+            return next(context);
+
+        Guid userId = user.GetUserId();
+
+        if (user.HasClaim("permission", "CanManageUsers"))
+        {
+            // grant access
+        }
+        // highlight-end
+
+        return next(context);
+    }
+}
+```
+
+### Mock AppUser in unit tests
+
+```csharp
+// AppUser is a concrete class — just construct it with a mock IHttpContextAccessor
+var mockAccessor = new Mock<IHttpContextAccessor>();
+var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new[]
+{
+    new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+    new Claim(ClaimTypes.Email, "test@example.com"),
+    new Claim(ClaimTypes.Role, "Admin"),
+}, "test"));
+
+mockAccessor.Setup(a => a.HttpContext).Returns(new DefaultHttpContext { User = claimsPrincipal });
+
+var user = new AppUser(mockAccessor.Object);
+
+Assert.True(user.IsAuthenticated);
+Assert.NotEqual(Guid.Empty, user.UserId);
+Assert.Equal("test@example.com", user.Email);
+Assert.True(user.IsInRole("Admin"));
+```
+
+---
+
+## ⚙️ Configuration
+
+This package has **no configuration options**. There is no `appsettings.json` section, no options class, and no additional setup beyond calling `AddAppUser()`. The service reads directly from `IHttpContextAccessor.HttpContext.User` at injection time.
+
+---
+
+## ✨ Available Components
+
+### Service Classes
+
+| Class | Registration | Purpose |
+|---|---|---|
+| `AppUser` | Transient (via `AddAppUser()`) | Strongly-typed access to the current user's claims |
+
+### Extension Methods
+
+| Method | Type | Purpose |
+|---|---|---|
+| `AddAppUser()` | `IServiceCollection` | Registers `AppUser` and `IHttpContextAccessor` |
+| `GetUserId()` | `ClaimsPrincipal?` | Parses NameIdentifier claim into `Guid` |
+| `HasClaim(type, value)` | `ClaimsPrincipal?` | Checks for a claim with the given type and value |
+| `HasScope(value)` | `ClaimsPrincipal?` | Checks for an OIDC scope (space-separated or individual) |
+
 <br />
 
 import DocCardList from '@theme/DocCardList';
 
-<DocCardList />
+---
+
+## 🙌 Contributing & Support
+
+### Found a bug or have a suggestion?
+
+- **GitHub Issues**: [Report a bug or request a feature](https://github.com/RedonAlla/RA.Utilities/issues)
+- **Discussions**: [Ask questions or start a discussion](https://github.com/RedonAlla/RA.Utilities/discussions)
+
+### Contributing
+
+Contributions are welcome! Please follow the standard workflow:
+
+1. **Fork** the [RA.Utilities repository](https://github.com/RedonAlla/RA.Utilities)
+2. **Create a branch** from `main` with a descriptive name (e.g., `feature/add-claim-transforms`)
+3. **Make your changes** — follow the existing coding style and add XML documentation for new public APIs
+4. **Submit a pull request** to the `main` branch with a clear description
+
+### Links
+
+| Resource | URL |
+|---|---|
+| **NuGet** | [RA.Utilities.Authorization](https://www.nuget.org/packages/RA.Utilities.Authorization/) |
+| **Source** | [GitHub — RedonAlla/RA.Utilities](https://github.com/RedonAlla/RA.Utilities) |
+| **License** | [MIT](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file) |
+| **Build Status** | [GitHub Actions](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml) |
