@@ -80,8 +80,7 @@ internal sealed class PolymorphismDocumentTransformer : IOpenApiDocumentTransfor
             }
         }
 
-        string[] typeKeys = new string[_typesToInclude.Count];
-        _typesToInclude.Keys.CopyTo(typeKeys, 0);
+        string[] typeKeys = [.. _typesToInclude.Keys];
 
         // 4. Update the base schema to use oneOf with discriminator
         baseOpenApiSchema.Discriminator = new OpenApiDiscriminator

@@ -141,8 +141,8 @@ internal sealed class FluentValidationSchemaTransformer(IServiceProvider service
 
             string validatorTypeName = betweenValidator.GetType().Name;
             bool isExclusive = validatorTypeName.Contains("Exclusive", StringComparison.OrdinalIgnoreCase);
-            propertySchema.ExclusiveMinimum = isExclusive.ToString(System.Globalization.CultureInfo.InvariantCulture);
-            propertySchema.ExclusiveMaximum = isExclusive.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            propertySchema.ExclusiveMinimum = isExclusive ? "true" : "false";
+            propertySchema.ExclusiveMaximum = isExclusive ? "true" : "false";
         }
         catch
         {
@@ -161,19 +161,19 @@ internal sealed class FluentValidationSchemaTransformer(IServiceProvider service
             {
                 case Comparison.GreaterThan:
                     propertySchema.Minimum = value;
-                    propertySchema.ExclusiveMinimum = true.ToString();
+                    propertySchema.ExclusiveMinimum = "true";
                     break;
                 case Comparison.GreaterThanOrEqual:
                     propertySchema.Minimum = value;
-                    propertySchema.ExclusiveMinimum = false.ToString();
+                    propertySchema.ExclusiveMinimum = "false";
                     break;
                 case Comparison.LessThan:
                     propertySchema.Maximum = value;
-                    propertySchema.ExclusiveMaximum = true.ToString();
+                    propertySchema.ExclusiveMaximum = "true";
                     break;
                 case Comparison.LessThanOrEqual:
                     propertySchema.Maximum = value;
-                    propertySchema.ExclusiveMaximum = false.ToString();
+                    propertySchema.ExclusiveMaximum = "false";
                     break;
             }
         }

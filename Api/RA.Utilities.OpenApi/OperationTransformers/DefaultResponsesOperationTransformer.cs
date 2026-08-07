@@ -19,7 +19,7 @@ namespace RA.Utilities.OpenApi.OperationTransformers;
 /// </summary>
 internal sealed class DefaultResponsesOperationTransformer : IOpenApiOperationTransformer
 {
-    private static readonly string InternalServerError = BaseResponseCode.InternalServerError.ToString(CultureInfo.InvariantCulture);
+    private static readonly string InternalServerErrorKey = BaseResponseCode.InternalServerError.ToString(CultureInfo.InvariantCulture);
 
     /// <summary>
     /// Transforms the specified <see cref="OpenApiOperation"/> by adding a default error response if not already present.
@@ -34,28 +34,27 @@ internal sealed class DefaultResponsesOperationTransformer : IOpenApiOperationTr
         ArgumentNullException.ThrowIfNull(context);
 
         operation.Responses ??= [];
-        string defaultErrorName = nameof(Response<>);
 
-        if (!operation.Responses.ContainsKey(defaultErrorName))
+        if (!operation.Responses.ContainsKey(InternalServerErrorKey))
         {
             var paramDesc = new ApiParameterDescription
             {
                 Type = typeof(Response<ErrorResponse>),
                 Source = BindingSource.Body,
-                Name = defaultErrorName,
+                Name = InternalServerErrorKey,
             };
 
-            operation.Responses[InternalServerError] = new OpenApiResponse
+            operation.Responses[InternalServerErrorKey] = new OpenApiResponse
             {
                 Description = "Response designated \"catch-all\" for any unexpected or unhandled exceptions that occur within your application",
-                Content = new Dictionary<string, OpenApiMediaType>
+                Content = new Dictionary<string, IOpenApiMediaType>
                 {
                     [MediaTypeNames.Application.Json] = new OpenApiMediaType
                     {
                         Schema = await context.GetOrCreateSchemaAsync(paramDesc.Type, paramDesc, cancellationToken),
                         Examples = new Dictionary<string, IOpenApiExample>
                         {
-                            [InternalServerError] = new OpenApiExample
+                            [InternalServerErrorKey] = new OpenApiExample
                             {
                                 Summary = "Default error response",
                                 Description = "This is an example of a default error response.",

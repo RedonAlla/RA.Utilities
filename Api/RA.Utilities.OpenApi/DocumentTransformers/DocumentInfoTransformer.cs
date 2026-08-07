@@ -37,10 +37,8 @@ internal sealed class DocumentInfoTransformer : IOpenApiDocumentTransformer
         document.Info.Version = _openApiInfoSettings?.Version ?? document.Info.Version;
         document.Info.Description = _openApiInfoSettings?.Description ?? document.Info.Description;
         document.Info.TermsOfService = _openApiInfoSettings?.TermsOfService ?? document.Info.TermsOfService;
-        //document.Info.Summary = _openApiInfoSettings?.Summary ?? document.Info.Summary;
         if (_openApiInfoSettings?.Contact is not null)
         {
-
             document.Info.Contact ??= new OpenApiContact();
             document.Info.Contact.Name = _openApiInfoSettings?.Contact.Name ?? document.Info.Contact.Name;
             document.Info.Contact.Email = _openApiInfoSettings?.Contact.Email ?? document.Info.Contact.Email;
@@ -50,7 +48,6 @@ internal sealed class DocumentInfoTransformer : IOpenApiDocumentTransformer
         {
             document.Info.License ??= new OpenApiLicense();
             document.Info.License.Name = _openApiInfoSettings?.License.Name ?? document.Info.License.Name;
-            //document.Info.License.Identifier = _openApiInfoSettings?.License.Identifier ?? document.Info.License.Identifier;
             document.Info.License.Url = _openApiInfoSettings?.License.Url ?? document.Info.License.Url;
         }
 

@@ -1,7 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Version>10.0.9</Version>
+    <Version>10.0.11</Version>
     <Title>OpenApi Documentation</Title>
     <Description>This package provides utilities to generate and transform OpenAPI documents for ASP.NET Core web APIs.</Description>
     <Summary>This package provides utilities to generate and transform OpenAPI documents for ASP.NET Core web APIs.</Summary>
@@ -13,18 +13,23 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="RA.Utilities.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="../../Assets/Images/openapi.png" Pack="true" PackagePath="\" />
     <None Include="README.md" Pack="true" PackagePath="\" />
     <None Include="releasenotes.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
- <ItemGroup>
+  <ItemGroup>
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.OpenApi" />
   </ItemGroup>
 
- <ItemGroup>
-   <ProjectReference Include="../RA.Utilities.Api/RA.Utilities.Api.csproj" />
- </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../RA.Utilities.Api/RA.Utilities.Api.csproj" />
+  </ItemGroup>
 
 </Project>

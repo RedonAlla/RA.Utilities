@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Globalization;
 using System.Net.Mime;
 using System.Text.Json;
@@ -31,9 +30,9 @@ public static class OpenApiOperationUtilities
     /// <param name="mediaType">The media type of the example (default is application/json).</param>
     public static void AddRequestExample(OpenApiOperation operation, string exampleName, IOpenApiExample example, string mediaType = MediaTypeNames.Application.Json)
     {
-        if (operation.RequestBody?.Content?.TryGetValue(mediaType, out OpenApiMediaType? openApiMediaType) == true)
+        if (operation.RequestBody?.Content?.TryGetValue(mediaType, out IOpenApiMediaType? openApiMediaType) == true &&
+            openApiMediaType.Examples is not null)
         {
-            openApiMediaType.Examples ??= new Dictionary<string, IOpenApiExample>();
             openApiMediaType.Examples[exampleName] = example;
         }
     }
@@ -66,10 +65,10 @@ public static class OpenApiOperationUtilities
     /// <param name="mediaType">The media type of the example (default is application/json).</param>
     public static void AddResponseExample(OpenApiOperation operation, int statusCode, string exampleName, IOpenApiExample example, string mediaType = MediaTypeNames.Application.Json)
     {
-        if (operation!.Responses!.TryGetValue(statusCode.ToString(CultureInfo.InvariantCulture), out IOpenApiResponse? response) &&
-            response.Content!.TryGetValue(mediaType, out OpenApiMediaType? openApiMediaType))
+        if (operation.Responses?.TryGetValue(statusCode.ToString(CultureInfo.InvariantCulture), out IOpenApiResponse? response) == true &&
+            response.Content?.TryGetValue(mediaType, out IOpenApiMediaType? openApiMediaType) == true &&
+            openApiMediaType.Examples is not null)
         {
-            openApiMediaType.Examples ??= new Dictionary<string, IOpenApiExample>();
             openApiMediaType.Examples[exampleName] = example;
         }
     }
@@ -83,7 +82,7 @@ public static class OpenApiOperationUtilities
     {
         foreach (OpenApiResponseExample example in examples)
         {
-            AddResponseExample(operation, example.StatusCodes, example.ExampleKey, new OpenApiExample
+            AddResponseExample(operation, example.StatusCode, example.ExampleKey, new OpenApiExample
             {
                 Summary = example.Summary,
                 Description = example.Description,

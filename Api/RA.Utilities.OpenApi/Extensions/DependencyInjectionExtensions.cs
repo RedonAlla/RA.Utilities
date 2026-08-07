@@ -34,10 +34,11 @@ public static class DependencyInjectionExtensions
     /// <returns>The <see cref="OpenApiOptions"/> for chaining.</returns>
     public static OpenApiOptions AddDefaultsDocumentTransformer(this OpenApiOptions options)
     {
-        options?.AddDocumentTransformer<DocumentInfoTransformer>();
-        options?.AddDocumentTransformer<BearerSecurityDocumentTransformer>();
-        options?.AddDocumentTransformer<HeadersParameterTransformer>();
-        return options!;
+        ArgumentNullException.ThrowIfNull(options);
+        options.AddDocumentTransformer<DocumentInfoTransformer>();
+        options.AddDocumentTransformer<BearerSecurityDocumentTransformer>();
+        options.AddDocumentTransformer<HeadersParameterTransformer>();
+        return options;
     }
 
     /// <summary>

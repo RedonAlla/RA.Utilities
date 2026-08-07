@@ -20,6 +20,7 @@ internal sealed class TagOperationTransformer : IOpenApiDocumentTransformer
     /// <param name="tags">A dictionary of tag names and their descriptions.</param>
     public TagOperationTransformer(IDictionary<string, string> tags)
     {
+        ArgumentNullException.ThrowIfNull(tags);
         _tagDetails = tags;
     }
 

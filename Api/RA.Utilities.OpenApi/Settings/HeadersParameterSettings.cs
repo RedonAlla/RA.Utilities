@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Microsoft.OpenApi;
 
@@ -17,6 +16,11 @@ public class HeadersParameterSettings
     /// <summary>
     /// A list of header definitions to be added to all API requests.
     /// </summary>
+    private const string ExampleGuid = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
+
+    /// <summary>
+    /// A list of header definitions to be added to all API requests.
+    /// </summary>
     public List<HeaderDefinition> RequestHeaders { get; set; } = [
         new()
         {
@@ -25,7 +29,7 @@ public class HeadersParameterSettings
             Required = true,
             Type = JsonSchemaType.String,
             Format = "uuid",
-            Value = Guid.NewGuid().ToString()
+            Value = ExampleGuid
         }
     ];
 
@@ -40,7 +44,7 @@ public class HeadersParameterSettings
             Type = JsonSchemaType.String,
             Format = "uuid",
             Description = "Returns a request ID that can be used to track the request. It is the same value as the `x-request-id` in the request.",
-            Value = Guid.NewGuid().ToString()
+            Value = ExampleGuid
         },
         new()
         {
@@ -48,7 +52,7 @@ public class HeadersParameterSettings
             Format = "uuid",
             Type = JsonSchemaType.String,
             Description = "Returns a trace ID that can be used to track the request internally.",
-            Value = Guid.NewGuid().ToString()
+            Value = ExampleGuid
         }
     ];
 }

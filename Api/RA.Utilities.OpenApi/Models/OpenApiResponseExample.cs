@@ -8,5 +8,5 @@ public class OpenApiResponseExample : OpenApiExampleModel
     /// <summary>
     /// The HTTP status code for which the example is provided.
     /// </summary>
-    public int StatusCodes { get; set; }
+    public int StatusCode { get; set; }
 }

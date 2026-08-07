@@ -10,23 +10,23 @@ public class OpenApiExampleModel
     /// <summary>
     /// The key to identify the example.
     /// </summary>
-    public string ExampleKey { get; set; }
+    public string ExampleKey { get; set; } = string.Empty;
 
     /// <summary>
     /// Short description for the example.
     /// </summary>
-    public string Summary { get; set; }
+    public string Summary { get; set; } = string.Empty;
 
     /// <summary>
     /// Long description for the example.
     /// CommonMark syntax MAY be used for rich text representation.
     /// </summary>
-    public string Description { get; set; }
+    public string Description { get; set; } = string.Empty;
 
     /// <summary>
     /// JSON value for Request or Response example.
     /// </summary>
-    public object Value { get; set; }
+    public object Value { get; set; } = string.Empty;
 
     /// <summary>
     /// The media type of the example (default is application/json).

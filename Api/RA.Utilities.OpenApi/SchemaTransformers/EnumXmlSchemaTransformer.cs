@@ -114,21 +114,21 @@ internal sealed class EnumXmlSchemaTransformer : IOpenApiSchemaTransformer
 
         lock (_xmlDocLock)
         {
-            if (_xmlDocCache == null)
+            if (_xmlDocCache is not null)
             {
-                // Use File.Exists to check if the XML documentation file exists before opening
-                if (!File.Exists(_xmlPath))
-                {
-                    return xmlDoc;
-                    // Ignore errors
-                    //throw new FileNotFoundException($"The XML documentation file was not found: {_xmlPath}");
-                }
-
-                using FileStream stream = File.OpenRead(_xmlPath);
-                _xmlDocCache = XDocument.Load(stream);
+                return _xmlDocCache;
             }
 
-            return _xmlDocCache!;
+            if (!File.Exists(_xmlPath))
+            {
+                // Cache the null result to avoid re-checking the file on every call
+                _xmlDocCache = null;
+                return null;
+            }
+
+            using FileStream stream = File.OpenRead(_xmlPath);
+            _xmlDocCache = XDocument.Load(stream);
+            return _xmlDocCache;
         }
     }
 
