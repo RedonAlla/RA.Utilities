@@ -29,6 +29,7 @@
   <ItemGroup>
     <ProjectReference Include="../../Api/RA.Utilities.Api/RA.Utilities.Api.csproj" />
     <ProjectReference Include="../../Api/RA.Utilities.Authentication.JwtBearer/RA.Utilities.Authentication.JwtBearer.csproj" />
+    <ProjectReference Include="../../Api/RA.Utilities.Authorization/RA.Utilities.Authorization.csproj" />
     <ProjectReference Include="../../Core/RA.Utilities.Core.Exceptions/RA.Utilities.Core.Exceptions.csproj" />
     <ProjectReference Include="../../Core/RA.Utilities.Core/RA.Utilities.Core.csproj" />
   </ItemGroup>
