@@ -150,5 +150,5 @@ public sealed class Result<TResult> : Result
     /// <param name="failure">The function to execute if the result is a failure. The function takes the exception as a parameter.</param>
     /// <returns>The value returned by the executed function.</returns>
     public TContract Match<TContract>(Func<TResult, TContract> success, Func<Exception, TContract> failure) =>
-        IsSuccess ? success(Value!) : failure(Exception!);
+        IsSuccess ? success(Value) : failure(Exception);
 }

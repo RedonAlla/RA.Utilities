@@ -37,7 +37,7 @@ public static class ResultExtensions
     {
         if (result.IsSuccess)
         {
-            action(result.Value!);
+            action(result.Value);
         }
         return result;
     }
@@ -53,7 +53,7 @@ public static class ResultExtensions
     {
         if (result.IsFailure)
         {
-            action(result.Exception!);
+            action(result.Exception);
         }
         return result;
     }
@@ -70,7 +70,7 @@ public static class ResultExtensions
     {
         if (result.IsFailure)
         {
-            action(result.Exception!);
+            action(result.Exception);
         }
         return result;
     }
@@ -87,8 +87,8 @@ public static class ResultExtensions
     /// <returns>A new result with the transformed value or the original exception.</returns>
     public static Result<TOut> Map<TIn, TOut>(this Result<TIn> result, Func<TIn, TOut> mapFunc) =>
         result.IsSuccess
-            ? Result.Success(mapFunc(result.Value!))
-            : Result.Failure<TOut>(result.Exception!);
+            ? Result.Success(mapFunc(result.Value))
+            : Result.Failure<TOut>(result.Exception);
 
     /// <summary>
     /// Chains an operation that returns a <see cref="Result"/>.
@@ -114,8 +114,8 @@ public static class ResultExtensions
     /// <returns>The result of the <paramref name="bindFunc"/> if the initial result was a success; otherwise, the original failure result.</returns>
     public static Result Bind<TIn>(this Result<TIn> result, Func<TIn, Result> bindFunc) =>
         result.IsSuccess
-            ? bindFunc(result.Value!)
-            : Result.Failure(result.Exception!);
+            ? bindFunc(result.Value)
+            : Result.Failure(result.Exception);
 
     /// <summary>
     /// Chains an operation that returns a <see cref="Result{TOut}"/>.
@@ -129,8 +129,8 @@ public static class ResultExtensions
     /// <returns>The result of the <paramref name="bindFunc"/> if the initial result was a success; otherwise, a failure result with the original exception.</returns>
     public static Result<TOut> Bind<TIn, TOut>(this Result<TIn> result, Func<TIn, Result<TOut>> bindFunc) =>
         result.IsSuccess
-            ? bindFunc(result.Value!)
-            : Result.Failure<TOut>(result.Exception!);
+            ? bindFunc(result.Value)
+            : Result.Failure<TOut>(result.Exception);
 
     /// <summary>
     /// Executes one of the provided functions based on whether the result is a success or a failure.
@@ -141,7 +141,7 @@ public static class ResultExtensions
     /// <param name="failure">The function to execute if the result is a failure. The function takes the exception as a parameter.</param>
     /// <returns>The value returned by the executed function.</returns>
     public static TContract Match<TContract>(this Result result, Func<TContract> success, Func<Exception, TContract> failure) =>
-        result.IsSuccess ? success() : failure(result.Exception!);
+        result.IsSuccess ? success() : failure(result.Exception);
 
     /// <summary>
     /// Executes one of the provided actions based on whether the result is a success or a failure.
@@ -157,7 +157,7 @@ public static class ResultExtensions
         }
         else
         {
-            failure(result.Exception!);
+            failure(result.Exception);
         }
     }
 
@@ -191,7 +191,7 @@ public static class ResultExtensions
         Result<T> result = await resultTask.ConfigureAwait(false);
         if (result.IsSuccess)
         {
-            await action(result.Value!).ConfigureAwait(false);
+            await action(result.Value).ConfigureAwait(false);
         }
         return result;
     }
@@ -207,7 +207,7 @@ public static class ResultExtensions
         Result result = await resultTask.ConfigureAwait(false);
         if (result.IsFailure)
         {
-            await action(result.Exception!).ConfigureAwait(false);
+            await action(result.Exception).ConfigureAwait(false);
         }
         return result;
     }
@@ -224,7 +224,7 @@ public static class ResultExtensions
         Result<T> result = await resultTask.ConfigureAwait(false);
         if (result.IsFailure)
         {
-            await action(result.Exception!).ConfigureAwait(false);
+            await action(result.Exception).ConfigureAwait(false);
         }
         return result;
     }
@@ -241,8 +241,8 @@ public static class ResultExtensions
     {
         Result<TIn> result = await resultTask.ConfigureAwait(false);
         return result.IsSuccess
-            ? Result.Success(await mapFunc(result.Value!).ConfigureAwait(false))
-            : Result.Failure<TOut>(result.Exception!);
+            ? Result.Success(await mapFunc(result.Value).ConfigureAwait(false))
+            : Result.Failure<TOut>(result.Exception);
     }
 
     /// <summary>
@@ -256,8 +256,8 @@ public static class ResultExtensions
     public static async Task<Result<TOut>> MapAsync<TIn, TOut>(this Result<TIn> result, Func<TIn, Task<TOut>> mapFunc)
     {
         return result.IsSuccess
-            ? Result.Success(await mapFunc(result.Value!).ConfigureAwait(false))
-            : Result.Failure<TOut>(result.Exception!);
+            ? Result.Success(await mapFunc(result.Value).ConfigureAwait(false))
+            : Result.Failure<TOut>(result.Exception);
     }
 
     /// <summary>
@@ -298,8 +298,8 @@ public static class ResultExtensions
     {
         Result<TIn> result = await resultTask.ConfigureAwait(false);
         return result.IsSuccess
-            ? await bindFunc(result.Value!).ConfigureAwait(false)
-            : Result.Failure(result.Exception!);
+            ? await bindFunc(result.Value).ConfigureAwait(false)
+            : Result.Failure(result.Exception);
     }
 
     /// <summary>
@@ -312,8 +312,8 @@ public static class ResultExtensions
     public static async Task<Result> BindAsync<TIn>(this Result<TIn> result, Func<TIn, Task<Result>> bindFunc)
     {
         return result.IsSuccess
-            ? await bindFunc(result.Value!).ConfigureAwait(false)
-            : Result.Failure(result.Exception!);
+            ? await bindFunc(result.Value).ConfigureAwait(false)
+            : Result.Failure(result.Exception);
     }
 
     /// <summary>
@@ -328,8 +328,8 @@ public static class ResultExtensions
     {
         Result<TIn> result = await resultTask.ConfigureAwait(false);
         return result.IsSuccess
-            ? await bindFunc(result.Value!).ConfigureAwait(false)
-            : Result.Failure<TOut>(result.Exception!);
+            ? await bindFunc(result.Value).ConfigureAwait(false)
+            : Result.Failure<TOut>(result.Exception);
     }
 
     /// <summary>
@@ -343,7 +343,7 @@ public static class ResultExtensions
     public static async Task<Result<TOut>> BindAsync<TIn, TOut>(this Result<TIn> result, Func<TIn, Task<Result<TOut>>> bindFunc)
     {
         return result.IsSuccess
-            ? await bindFunc(result.Value!).ConfigureAwait(false)
-            : Result.Failure<TOut>(result.Exception!);
+            ? await bindFunc(result.Value).ConfigureAwait(false)
+            : Result.Failure<TOut>(result.Exception);
     }
 }
