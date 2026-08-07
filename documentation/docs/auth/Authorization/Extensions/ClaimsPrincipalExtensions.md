@@ -26,20 +26,10 @@ If the claim is missing or invalid, it throws a clear exception.
 This encapsulates error-prone parsing logic into a single, reliable method.
 
 **Returns**: `Guid`
-**Throws**: `ApplicationException` if the claim is missing or cannot be parsed into a `Guid`.
+**Throws**: `InvalidOperationException` if the claim is missing or cannot be parsed into a `Guid`.
 
 ```csharp
 var userId = User.GetUserId(); // 'User' is the ClaimsPrincipal from HttpContext
-```
-
-### FindFirstValue(string claimType)
-
-This method acts as a null-safe wrapper around the built-in `FindFirstValue`, ensuring your code doesn't throw an exception if the `ClaimsPrincipal` object itself happens to be `null`.
-
-**Returns**: `string?` - The claim value or `null` if not found.
-
-```csharp
-var email = User.FindFirstValue(ClaimTypes.Email);
 ```
 
 ### HasClaim(string claimValue)
