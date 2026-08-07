@@ -5,7 +5,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using RA.Utilities.Authentication.JwtBearer.Configurations;
-using RA.Utilities.Authentication.JwtBearer.Constants;
 
 namespace RA.Utilities.Authentication.JwtBearer.Extensions;
 
@@ -21,14 +20,19 @@ public static class DependencyInjectionExtensions
     /// <remarks>
     /// This is the primary setup method for the library. It performs the following actions:
     /// <list type="bullet">
-    ///   <item>Binds <see cref="JwtBearerOptions"/> to the <c>Authentication:Schemes:Bearer</c> configuration section.</item>
-    ///   <item>Registers a custom configuration class to handle the <c>IssuerSigningKeyString</c>.</item>
-    ///   <item>Adds the necessary authorization services via <c>AddAuthorization()</c>.</item>
+    ///   <item>Adds authorization services via <c>AddAuthorization()</c>.</item>
+    ///   <item>Configures authentication with JWT Bearer as the default scheme.</item>
+    ///   <item>
+    ///     Registers <see cref="ConfigureJwtBearerOptions"/> which handles all
+    ///     <see cref="JwtBearerOptions"/> binding and special conversions.
+    ///     The optional <paramref name="configureOptions"/> callback is invoked
+    ///     <em>last</em>, so it can override any config-driven values.
+    ///   </item>
     /// </list>
     /// </remarks>
     /// <param name="services">The <see cref="IServiceCollection"/> to add the services to.</param>
     /// <param name="configuration">The application's <see cref="IConfiguration"/> instance.</param>
-    /// <param name="configureOptions">An optional action to further customize <see cref="JwtBearerOptions"/> after initial configuration.</param>
+    /// <param name="configureOptions">An optional action to further customize <see cref="JwtBearerOptions"/> after all configuration binding has been applied.</param>
     /// <returns>The <see cref="IServiceCollection"/> for chaining.</returns>
     public static IServiceCollection AddJwtBearerAuthentication(this IServiceCollection services, IConfiguration configuration, Action<JwtBearerOptions>? configureOptions = null)
     {
@@ -41,13 +45,10 @@ public static class DependencyInjectionExtensions
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer(options =>
-            {
-                configuration.GetSection(KeyConstants.JwtBearerOptionsKey).Bind(options);
-                configureOptions?.Invoke(options);
-            });
+            }).AddJwtBearer();
 
-        services.AddSingleton<IConfigureOptions<JwtBearerOptions>, ConfigureJwtBearerOptions>();
+        services.AddSingleton<IConfigureOptions<JwtBearerOptions>>(
+            new ConfigureJwtBearerOptions(configuration, configureOptions));
 
         return services;
     }

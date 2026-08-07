@@ -1,4 +1,4 @@
-namespace RA.Utilities.Authentication.JwtBearer.Constants;
+namespace RA.Utilities.Authentication.JwtBearer;
 
 /// <summary>
 /// Contains constants for configuration keys related to JWT Bearer authentication options.

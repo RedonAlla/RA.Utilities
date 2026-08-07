@@ -48,6 +48,33 @@ app.MapGet("/", () => "Hello World!");
 app.Run();
 ```
 
+#### Programmatic overrides with `configureOptions`
+
+The optional `configureOptions` callback lets you programmatically extend or override any config-driven values. It is invoked **last**, so your changes always take precedence:
+
+```csharp
+builder.Services.AddJwtBearerAuthentication(builder.Configuration, options =>
+{
+    // Override or extend any JwtBearerOptions here — this runs AFTER config binding.
+    options.TokenValidationParameters.ValidateIssuer = false;
+
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            // Custom error handling
+            return Task.CompletedTask;
+        }
+    };
+});
+```
+
+> [!NOTE]
+> Configuration is applied in this order:
+> 1. Standard `JwtBearerOptions` binding from `Authentication:Schemes:Bearer`
+> 2. Special conversions for `ClockSkewInSeconds` and `IssuerSigningKeyString`
+> 3. The `configureOptions` callback (always last — your overrides win)
+
 ## Configuration
 
 This library reads JWT Bearer options from the `Authentication:Schemes:Bearer` section of your configuration file (e.g., `appsettings.json`).

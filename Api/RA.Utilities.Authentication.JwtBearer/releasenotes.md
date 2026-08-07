@@ -1,13 +1,23 @@
 # RA.Utilities.Authentication.JwtBearer Release Notes
 
+## Version 10.0.1
+![Date Badge](https://img.shields.io/badge/Publish-07%20August%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Authentication.JwtBearer/10.0.1)
+
+### 🔧 Fixes & Improvements
+
+* **Consolidated Options Configuration**: All `JwtBearerOptions` binding and special conversions now happen in a single place (`ConfigureJwtBearerOptions`), eliminating a subtle bug where the user-provided `configureOptions` callback could be silently overwritten. The callback now runs **last**, so programmatic overrides always win.
+* **Fail-Fast Key Validation**: The issuer signing key is now validated at construction time rather than on first use, catching misconfiguration immediately at app startup.
+* **Null-Reference Guard**: Added `ArgumentNullException.ThrowIfNull` for the `IConfiguration` parameter, matching the guard in the DI extension method.
+
 ## Version 10.0.0
 ![Date Badge](https://img.shields.io/badge/Publish-23%20November%202025-lightblue?logo=fastly&logoColor=white)
-[![NuGet version](https://img.shields.io/badge/NuGet-10.0.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Exceptions/10.0.0)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Authentication.JwtBearer/10.0.0)
 
 Updated the project version from `10.0.0-rc.2` to the stable release version `10.0.0` in preparation for a production release.
 
 ## Version 10.0.0-rc.2
-![Date Badge](https://img.shields.io/badge/Publish-18%20Octomber%202025-lightblue?logo=fastly&logoColor=white)
+![Date Badge](https://img.shields.io/badge/Publish-18%20October%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.0--rc.2-orange?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Authentication.JwtBearer/10.0.0-rc.2)
 
 
