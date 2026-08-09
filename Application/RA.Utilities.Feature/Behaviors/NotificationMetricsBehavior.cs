@@ -15,7 +15,6 @@ namespace RA.Utilities.Feature.Behaviors;
 public class NotificationMetricsBehavior<TNotification> : INotificationBehavior<TNotification>
     where TNotification : INotification
 {
-    private readonly Stopwatch _timer;
     private readonly ILogger<NotificationMetricsBehavior<TNotification>> _logger;
 
     /// <summary>
@@ -24,7 +23,6 @@ public class NotificationMetricsBehavior<TNotification> : INotificationBehavior<
     /// <param name="logger">The logger.</param>
     public NotificationMetricsBehavior(ILogger<NotificationMetricsBehavior<TNotification>> logger)
     {
-        _timer = new Stopwatch();
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -33,12 +31,11 @@ public class NotificationMetricsBehavior<TNotification> : INotificationBehavior<
     {
         _logger.LogDebug("MetricsBehavior..");
 
-        _timer.Reset();
-        _timer.Start();
+        var timer = Stopwatch.StartNew();
         await next();
-        _timer.Stop();
+        timer.Stop();
 
-        long elapsedMilliseconds = _timer.ElapsedMilliseconds;
+        long elapsedMilliseconds = timer.ElapsedMilliseconds;
 
         if (elapsedMilliseconds > 500)
         {

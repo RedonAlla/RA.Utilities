@@ -14,16 +14,24 @@ namespace RA.Utilities.Feature.Behaviors;
 public class NotificationRetryBehavior<TNotification> : INotificationBehavior<TNotification>
     where TNotification : INotification
 {
-    private readonly int _maxRetries = 3;
+    private readonly int _maxRetries;
+    private readonly int _baseDelayMilliseconds;
     private readonly ILogger<NotificationRetryBehavior<TNotification>> _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="NotificationRetryBehavior{TNotification}"/> class.
     /// </summary>
     /// <param name="logger">The logger.</param>
-    public NotificationRetryBehavior(ILogger<NotificationRetryBehavior<TNotification>> logger)
+    /// <param name="maxRetries">The maximum number of retry attempts. Defaults to 3.</param>
+    /// <param name="baseDelayMilliseconds">The base delay in milliseconds between retries. The actual delay is multiplied by the attempt number. Defaults to 200.</param>
+    public NotificationRetryBehavior(
+        ILogger<NotificationRetryBehavior<TNotification>> logger,
+        int maxRetries = 3,
+        int baseDelayMilliseconds = 200)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _maxRetries = maxRetries > 0 ? maxRetries : throw new ArgumentOutOfRangeException(nameof(maxRetries), maxRetries, "Max retries must be greater than 0.");
+        _baseDelayMilliseconds = baseDelayMilliseconds >= 0 ? baseDelayMilliseconds : throw new ArgumentOutOfRangeException(nameof(baseDelayMilliseconds), baseDelayMilliseconds, "Base delay must be non-negative.");
     }
 
     /// <inheritdoc/>
@@ -48,12 +56,12 @@ public class NotificationRetryBehavior<TNotification> : INotificationBehavior<TN
                         attempt,
                         typeof(TNotification).Name,
                         notification);
-                    await Task.Delay(200 * attempt, cancellationToken);
+                    await Task.Delay(_baseDelayMilliseconds * attempt, cancellationToken);
                 }
                 else
                 {
                     _logger.LogError(ex, "[Notification Retry] All {MaxRetries} attempts failed for {NotificationType}. Notification: {@Notification}",
-                        _maxRetries, typeof(TNotification).Name, notification); // This line was causing the error
+                        _maxRetries, typeof(TNotification).Name, notification);
                     throw; // Re-throw the last exception after logging
                 }
             }

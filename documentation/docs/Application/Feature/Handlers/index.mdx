@@ -1,0 +1,71 @@
+---
+title: Handlers
+sidebar_position: 3
+---
+
+```powershell
+Namespace: RA.Utilities.Feature.Handlers
+```
+
+The `RA.Utilities.Feature.Handlers` namespace provides abstract base classes that implement the [`IRequestHandler`](../Abstractions/IRequestHandler.md) interfaces. These base classes give your handlers built-in logging and automatic exception handling, so you can focus on business logic without boilerplate.
+
+## ✨ Why Use Base Handlers?
+
+Inheriting from these base classes instead of implementing the interfaces directly gives you:
+
+- **Automatic logging** — every request's start and finish is logged via `ILogger`
+- **Exception safety** — unhandled exceptions are caught and wrapped in `Result.Failure`, preventing crashes
+- **Consistent structure** — a single `HandleAsync` method to override for your business logic
+
+## 📦 Available Base Classes
+
+| Base Class | Implements | Use Case |
+|---|---|---|
+| `RequestHandler<TRequest>` | `IRequestHandler<TRequest>` | Commands with no return value |
+| `RequestHandler<TRequest, TResponse>` | `IRequestHandler<TRequest, TResponse>` | Commands/queries that return data |
+
+## 🚀 Usage
+
+```csharp
+using Microsoft.Extensions.Logging;
+using RA.Utilities.Core.Results;
+using RA.Utilities.Feature.Handlers;
+
+public class CreateProductHandler : RequestHandler<CreateProductCommand, Result<int>>
+{
+    private readonly IProductRepository _productRepository;
+
+    public CreateProductHandler(IProductRepository productRepository, ILogger<CreateProductHandler> logger)
+        : base(logger)
+    {
+        _productRepository = productRepository;
+    }
+
+    public override async Task<Result<int>> HandleAsync(
+        CreateProductCommand command, CancellationToken cancellationToken)
+    {
+        // Business logic here — logging and exception handling are automatic
+        var product = new Product { Name = command.Name, Price = command.Price };
+        var id = await _productRepository.AddAsync(product);
+        return id;
+    }
+}
+```
+
+## ⚙️ How It Works
+
+The base class implements the `IRequestHandler` interface **explicitly**. The interface method:
+
+1. Logs `"[Handler] Start Handling {RequestType}"`
+2. Calls your `HandleAsync` override
+3. On success, logs `"[Handler] Finished Handling {RequestType}"` and returns the result
+4. On exception, logs `"[Handler] Failed Handling {RequestType}"` and returns `Result.Failure`
+
+Your derived class never needs a `try-catch` block — the base class handles it.
+
+<br />
+<br />
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />

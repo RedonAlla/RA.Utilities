@@ -1,5 +1,5 @@
 ---
-title: RA.Utilities.Feature.Extensions
+title: Extensions
 sidebar_position: 5
 ---
 
@@ -48,9 +48,9 @@ This design allows you to define an entire vertical slice in a single, coherent 
 **example:**
 ```csharp showLineNumbers
 _ = services
-      .AddFeature<CreateProductCommand, CreateProductHandler>() // 1. Starts with the extension method
-      .AddDecoration<LoggingBehavior<CreateProductCommand>>()   // 2. Chains a behavior from the returned builder
-      .AddValidator<CreateProductCommandValidator>();           // 3. Chains a validator from the builder
+      .AddFeature<CreateProductCommand, Result<int>, CreateProductHandler>() // 1. Starts with the extension method
+      .AddDecoration<LoggingBehavior<CreateProductCommand, Result<int>>>()   // 2. Chains a behavior from the returned builder
+      .AddValidator<CreateProductCommandValidator>();                       // 3. Chains a validator from the builder
 ```
 
 <br />

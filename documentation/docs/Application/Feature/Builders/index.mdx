@@ -1,0 +1,49 @@
+---
+title: Builders
+sidebar_position: 4
+---
+
+```powershell
+Namespace: RA.Utilities.Feature.Builders
+```
+
+The `RA.Utilities.Feature.Builders` namespace contains the fluent builder classes returned by the `AddFeature` and `AddNotification` extension methods. These builders enable a clean, chainable API for registering handlers, pipeline behaviors, validators, and notification behaviors.
+
+## 🔑 Builder Classes
+
+| Builder | Returned By | Purpose |
+|---|---|---|
+| `FeatureBuilder<TRequest>` | `AddFeature<TRequest, THandler>()` | Configures a request with no response — add decorations and validators |
+| `FeatureBuilder<TRequest, TResponse>` | `AddFeature<TRequest, TResponse, THandler>()` | Configures a request that returns a response — add decorations and validators |
+| `NotificationFeatureBuilder<TNotification>` | `AddNotification<TNotification>()` | Configures a notification — add handlers and notification behaviors |
+
+All builders implement [`IFeatureBuilder`](../Abstractions/IFeatureBuilder.md), which exposes the underlying [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection).
+
+## 🚀 Usage
+
+```csharp
+// Request with response — builder chains .AddDecoration and .AddValidator
+builder.Services
+    .AddFeature<CreateProductCommand, Result<int>, CreateProductHandler>()
+    .AddDecoration<LoggingBehavior<CreateProductCommand, Result<int>>>()
+    .AddValidator<CreateProductCommandValidator>();
+
+// Request without response — builder chains .AddDecoration and .AddValidator
+builder.Services
+    .AddFeature<DeleteProductCommand, DeleteProductHandler>()
+    .AddValidator<DeleteProductCommandValidator>();
+
+// Notification — builder chains .AddHandler and .AddDecoration
+builder.Services
+    .AddNotification<OrderPlaced>()
+    .AddHandler<SendConfirmationEmail>()
+    .AddHandler<UpdateInventory>()
+    .AddDecoration<NotificationRetryBehavior<OrderPlaced>>();
+```
+
+<br />
+<br />
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />

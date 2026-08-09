@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using RA.Utilities.Core.Results;
 using RA.Utilities.Feature.Abstractions;
 using RA.Utilities.Feature.Models;
@@ -16,13 +17,18 @@ namespace RA.Utilities.Feature;
 public class Mediator : IMediator
 {
     private readonly IServiceProvider _provider;
+    private readonly ILogger<Mediator> _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Mediator"/> class.
     /// </summary>
     /// <param name="provider">The service provider.</param>
-    public Mediator(IServiceProvider provider) =>
+    /// <param name="logger">The logger.</param>
+    public Mediator(IServiceProvider provider, ILogger<Mediator> logger)
+    {
         _provider = provider ?? throw new ArgumentNullException(nameof(provider));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
 
     // ------------------- SEND (with response) -------------------
     /// <summary>
@@ -41,8 +47,7 @@ public class Mediator : IMediator
         ArgumentNullException.ThrowIfNull(request);
 
         IRequestHandler<TRequest, TResponse> handler =
-            _provider.GetRequiredService<IRequestHandler<TRequest, TResponse>>() ??
-            throw new InvalidOperationException($"No handler registered for {typeof(TRequest).Name}");
+            _provider.GetRequiredService<IRequestHandler<TRequest, TResponse>>();
 
         IEnumerable<IPipelineBehavior<TRequest, TResponse>> behaviors = _provider.GetServices<IPipelineBehavior<TRequest, TResponse>>();
 
@@ -71,8 +76,7 @@ public class Mediator : IMediator
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        IRequestHandler<TRequest> handler = _provider.GetRequiredService<IRequestHandler<TRequest>>() ??
-            throw new InvalidOperationException($"No handler registered for {typeof(TRequest).Name}");
+        IRequestHandler<TRequest> handler = _provider.GetRequiredService<IRequestHandler<TRequest>>();
 
         IEnumerable<IPipelineBehavior<TRequest>> behaviors = _provider.GetServices<IPipelineBehavior<TRequest>>();
 
@@ -94,6 +98,12 @@ public class Mediator : IMediator
         ArgumentNullException.ThrowIfNull(notification);
 
         var handlers = _provider.GetServices<INotificationHandler<TNotification>>().ToList();
+
+        if (handlers.Count == 0)
+        {
+            return;
+        }
+
         var behaviors = _provider.GetServices<INotificationBehavior<TNotification>>().ToList();
 
         foreach (INotificationHandler<TNotification>? handler in handlers)
@@ -106,7 +116,16 @@ public class Mediator : IMediator
                 handlerDelegate = () => behavior.HandleAsync(notification, next, cancellationToken);
             }
 
-            await handlerDelegate();
+            try
+            {
+                await handlerDelegate();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "[Publish] Handler {HandlerType} failed for notification {NotificationType}. Notification: {@Notification}",
+                    handler.GetType().Name, typeof(TNotification).Name, notification);
+            }
         }
     }
 }

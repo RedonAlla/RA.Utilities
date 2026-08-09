@@ -40,17 +40,16 @@ A behavior can:
 
 ## 🧠 How pipeline ordering currently works
 
-:::danger Caution
-Pipelines are executed in **reverse order of registration**:
+:::info
+Pipelines are executed in **reverse order of registration** — the first registered behavior is outermost, the last registered is innermost (closest to the handler).
 :::
 
-
 ```csharp
-foreach (var behavior in behaviors.Reverse())
-{
-    var next = handlerDelegate;
-    handlerDelegate = () => behavior.Handle((dynamic)request, next, cancellationToken);
-}
+// From Mediator.cs — pipeline composition via Reverse().Aggregate()
+RequestHandlerDelegate<TResponse> next = behaviors
+    .Reverse()
+    .Aggregate((RequestHandlerDelegate<TResponse>)HandlerDelegate,
+        (nextDelegate, behavior) => () => behavior.HandleAsync(request, nextDelegate, cancellationToken));
 ```
 
 That means:
@@ -69,7 +68,7 @@ Logging → Validation → Handler
 
 ## 🚀 Usage Example
 
-The `RA.Utilities.Feature` package includes a `ValidationBehavior` that demonstrates the power of this pattern.
+The `RA.Utilities.Feature` package includes a [`ValidationBehavior`](../Behaviors/ValidationBehavior.md) that demonstrates the power of this pattern.
 
 ```csharp
 public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
@@ -77,30 +76,24 @@ public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TReques
 {
     private readonly IEnumerable<IValidator<TRequest>> _validators;
 
-    public ValidationBehavior(IEnumerable<IValidator<TRequest>> validators)
-    {
-        _validators = validators;
-    }
+    public ValidationBehavior(IEnumerable<IValidator<TRequest>> validators) =>
+        _validators = validators ?? Array.Empty<IValidator<TRequest>>();
 
     public async Task<Result<TResponse>> HandleAsync(
         TRequest request,
         RequestHandlerDelegate<TResponse> next,
         CancellationToken cancellationToken)
     {
-        // 1. Execute logic BEFORE the next delegate.
-        var validationFailures = _validators
-            .Select(v => v.Validate(request))
-            .SelectMany(result => result.Errors)
-            .Where(f => f != null)
-            .ToList();
+        // 1. Execute validation BEFORE the next delegate.
+        var validationFailures = await ValidationUtilities.ValidateAsync(request, _validators);
 
-        if (validationFailures.Any())
+        if (validationFailures.Length > 0)
         {
             // 2. Short-circuit the pipeline if validation fails.
-            return new ValidationException(validationFailures);
+            return ValidationUtilities.CreateValidationErrorResult(validationFailures);
         }
 
-        // 3. Call the next delegate in the pipeline.
+        // 3. Call the next delegate in the pipeline (the handler or next behavior).
         return await next();
     }
 }

@@ -8,7 +8,7 @@
 
 
 `RA.Utilities.Feature` provides a foundational toolkit for implementing the **Vertical Slice Architecture** pattern using CQRS (Command Query Responsibility Segregation).
-It offers base handlers, validation behaviors, and exception handling mechanisms to streamline feature development and promote clean, maintainable code.
+It includes a custom mediator, base handlers, pipeline behaviors for cross-cutting concerns, a notification system, and seamless integration with the `Result<T>` type to streamline feature development and promote clean, maintainable code.
 
 Building applications with a traditional layered architecture can lead to wide, coupled classes and scattered logic.
 The Vertical Slice pattern, combined with CQRS, addresses this by organizing code around features.
@@ -24,8 +24,9 @@ dotnet add package RA.Utilities.Feature
 
 ## 🔗 Dependencies
 
--   [`RA.Utilities.Core.Exceptions`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/RA.Utilities.Core.Exceptions/)
 -   [`RA.Utilities.Core`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/RA.Utilities.Core/)
+-   [`RA.Utilities.Core.Exceptions`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/RA.Utilities.Core.Exceptions/)
+-   [`RA.Utilities.Application.Validation`](https://redonalla.github.io/RA.Utilities/nuget-packages/application/RA.Utilities.Application.Validation/)
 -   [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/)
 -   [`Microsoft.Extensions.DependencyInjection.Abstractions`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection)
 -   [`Microsoft.Extensions.Logging.Abstractions`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.logging.abstractions)
@@ -34,39 +35,100 @@ dotnet add package RA.Utilities.Feature
 
 ## ✨ Features
 
-### 1. Base Handlers
+### 1. Custom Mediator
 
-The package provides abstract base classes that implement the `IRequestHandler` interfaces.
-Inheriting from these base classes gives your handlers a consistent structure and automatically handles cross-cutting concerns.
+The package provides its own lightweight **`IMediator`** / **`Mediator`** implementation — no external MediatR dependency. It supports:
 
-The primary base classes are:
--   **`RequestHandler<TRequest>`**: For handlers that process a request but do not return a value. It implements `IRequestHandler<TRequest>`.
--   **`RequestHandler<TRequest, TResponse>`**: The most common handler, for requests that return a value. It implements `IRequestHandler<TRequest, TResponse>` and is designed to work with the `Result<T>` type from `RA.Utilities.Core`.
+- **Request/Response** dispatch with a composable pipeline of behaviors
+- **Notification** publishing to zero or more handlers, each wrapped in its own behavior pipeline
+- Behavior ordering: behaviors execute in registration order, outermost first
 
-These base classes include built-in logging for the start and end of a request, automatic exception catching (which wraps exceptions in a `Result.Failure`), and a clear `HandleAsync` method for you to override with your business logic.
+Register the mediator once at startup:
 
-### 2. Validation Pipeline Behavior
+```csharp
+builder.Services.AddMediator();
+```
 
-The `ValidationBehavior<TRequest, TResponse>` is a pipeline behavior that intercepts incoming requests, finds the corresponding `FluentValidation` validator, and executes it.
+### 2. Base Handlers
 
--   If validation passes, the request proceeds to the handler.
--   If validation fails, the pipeline is short-circuited, and a `Result.Failure` containing a `ValidationException` is returned immediately. This prevents invalid data from ever reaching your business logic.
+Abstract base classes that implement the `IRequestHandler` interfaces, providing built-in logging and automatic exception-to-`Result` conversion. Inherit from these to focus on business logic without boilerplate.
+
+| Base Class | Interface Implemented | Use Case |
+|---|---|---|
+| `RequestHandler<TRequest>` | `IRequestHandler<TRequest>` | Commands with no return value |
+| `RequestHandler<TRequest, TResponse>` | `IRequestHandler<TRequest, TResponse>` | Commands/queries that return data |
+
+Both base classes log the start and end of each request via `ILogger`, catch unhandled exceptions, and wrap them in `Result.Failure` — no `try-catch` blocks needed in your handlers.
+
+Namespace: `RA.Utilities.Feature.Handlers`
+
+### 3. Pipeline Behaviors
+
+Pipeline behaviors wrap request handlers to add cross-cutting concerns. They implement `IPipelineBehavior<TRequest>` or `IPipelineBehavior<TRequest, TResponse>` and are composed into a chain via the mediator.
+
+**Built-in request pipeline behaviors:**
+
+| Behavior | Description |
+|---|---|
+| `LoggingBehavior<TRequest>` / `LoggingBehavior<TRequest, TResponse>` | Logs each request and its result at `Information` level |
+| `ValidationBehavior<TRequest>` / `ValidationBehavior<TRequest, TResponse>` | Executes FluentValidation validators; short-circuits with a `BadRequestException` on failure |
+
+Register per-feature via the fluent builder:
+
+```csharp
+builder.Services
+    .AddFeature<MyCommand, Result<int>, MyCommandHandler>()
+    .AddDecoration<LoggingBehavior<MyCommand, Result<int>>>()
+    .AddValidator<MyCommandValidator>();
+```
+
+### 4. Notification System
+
+Publish fire-and-forget notifications to zero or more handlers. Each handler is wrapped in its own notification behavior pipeline, and one handler's failure does not prevent others from executing.
+
+| Abstraction | Role |
+|---|---|
+| `INotification` | Marker interface for notification types |
+| `INotificationHandler<TNotification>` | Handles a notification |
+| `INotificationBehavior<TNotification>` | Cross-cutting concerns for notification handlers |
+
+**Built-in notification behaviors:**
+
+| Behavior | Description |
+|---|---|
+| `NotificationLoggingBehavior<TNotification>` | Logs each notification at start and finish |
+| `NotificationMetricsBehavior<TNotification>` | Measures handler duration; warns if over 500 ms |
+| `NotificationRetryBehavior<TNotification>` | Retries failed handlers up to N times with configurable backoff |
+
+Register notifications via the fluent builder:
+
+```csharp
+builder.Services
+    .AddNotification<OrderPlaced>()
+    .AddHandler<SendConfirmationEmail>()
+    .AddHandler<UpdateInventory>()
+    .AddDecoration<NotificationRetryBehavior<OrderPlaced>>()
+    .AddDecoration<NotificationLoggingBehavior<OrderPlaced>>();
+```
+
+### 5. Fluent Validation Integration
+
+The `ValidationBehavior` automatically discovers and executes all registered `IValidator<TRequest>` implementations. If validation fails, the pipeline short-circuits and returns a `Result.Failure` containing a `BadRequestException` with the validation errors — invalid data never reaches your handler.
 
 ---
 
-## 🚀 Usage Example
+## 🚀 Usage Example — Request/Response
 
 Let's walk through creating a complete feature slice for creating a new product.
 
 ### Step 1: Define the Command and Validator
 
-First, define the command (the request) and its validation rules.
-
 ```csharp
 // Features/Products/CreateProduct.cs
 
 using FluentValidation;
-using RA.Utilities.Core;
+using RA.Utilities.Core.Results;
+using RA.Utilities.Feature.Abstractions;
 
 // The command containing the data for the new product
 public record CreateProductCommand(string Name, decimal Price) : IRequest<Result<int>>;
@@ -84,40 +146,34 @@ public class CreateProductCommandValidator : AbstractValidator<CreateProductComm
 
 ### Step 2: Implement the Handler
 
-Next, create the handler by inheriting from `IRequestHandler<TRequest, TResponse>`. This is where your business logic lives.
+Inherit from `RequestHandler<TRequest, TResponse>` to get automatic logging and exception handling.
 
 ```csharp
 // Features/Products/CreateProduct.cs (continued)
-using RA.Utilities.Feature.Abstractions;
 using Microsoft.Extensions.Logging;
-using RA.Utilities.Core;
+using RA.Utilities.Core.Results;
+using RA.Utilities.Feature.Handlers;
 
 public class CreateProductHandler : RequestHandler<CreateProductCommand, Result<int>>
 {
     private readonly IProductRepository _productRepository;
- 
-    // Inject dependencies and the base logger
+
     public CreateProductHandler(IProductRepository productRepository, ILogger<CreateProductHandler> logger)
         : base(logger)
     {
         _productRepository = productRepository;
     }
 
-    // Override the base HandleAsync to implement the core business logic
     public override async Task<Result<int>> HandleAsync(CreateProductCommand command, CancellationToken cancellationToken)
     {
-        // Check if a product with the same name already exists
         if (await _productRepository.DoesProductExistAsync(command.Name))
         {
-            // Return a failure Result using a custom exception
             return new ConflictException(nameof(Product), command.Name);
         }
 
         var newProduct = new Product { Name = command.Name, Price = command.Price };
-        
         var productId = await _productRepository.AddAsync(newProduct);
 
-        // Return a success Result with the new product's ID
         return productId;
     }
 }
@@ -125,11 +181,10 @@ public class CreateProductHandler : RequestHandler<CreateProductCommand, Result<
 
 ### Step 3: Register Services in `Program.cs`
 
-Finally, wire up MediatR, the validation behavior, and your validators in your application's service configuration.
-
 ```csharp
 // Program.cs
 using RA.Utilities.Feature.Behaviors;
+using RA.Utilities.Feature.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -137,17 +192,118 @@ builder.Services.AddMediator();
 
 builder.Services
     .AddFeature<CreateProductCommand, Result<int>, CreateProductHandler>()
-    .AddDecoration<LoggingBehavior<CreateProductCommand>>()
+    .AddDecoration<LoggingBehavior<CreateProductCommand, Result<int>>>()
     .AddValidator<CreateProductCommandValidator>();
 
 var app = builder.Build();
 
-// ... your endpoint mapping
+app.MapEndpoints(app.Services);
 
 app.Run();
 ```
 
-With this setup, when your API endpoint sends a `CreateProductCommand`, it will be automatically validated. If valid, the `CreateProductHandler` will execute within a managed scope that provides logging and exception safety.
+---
+
+## 📬 Usage Example — Notifications
+
+Publish a notification from a request handler, and let multiple handlers process it independently.
+
+### Step 1: Define the Notification
+
+```csharp
+// Features/Orders/OrderPlaced.cs
+
+using RA.Utilities.Feature.Abstractions;
+
+public record OrderPlaced(int OrderId, string CustomerEmail) : INotification;
+```
+
+### Step 2: Implement Handlers
+
+```csharp
+// Features/Orders/SendConfirmationEmail.cs
+using Microsoft.Extensions.Logging;
+using RA.Utilities.Feature.Abstractions;
+
+public class SendConfirmationEmail : INotificationHandler<OrderPlaced>
+{
+    private readonly IEmailService _emailService;
+    private readonly ILogger<SendConfirmationEmail> _logger;
+
+    public SendConfirmationEmail(IEmailService emailService, ILogger<SendConfirmationEmail> logger)
+    {
+        _emailService = emailService;
+        _logger = logger;
+    }
+
+    public async Task HandleAsync(OrderPlaced notification, CancellationToken cancellationToken)
+    {
+        await _emailService.SendAsync(notification.CustomerEmail, "Order Confirmed", /* ... */);
+        _logger.LogInformation("Confirmation email sent for order {OrderId}", notification.OrderId);
+    }
+}
+
+// Features/Orders/UpdateInventory.cs
+public class UpdateInventory : INotificationHandler<OrderPlaced>
+{
+    public async Task HandleAsync(OrderPlaced notification, CancellationToken cancellationToken)
+    {
+        // reduce stock levels...
+    }
+}
+```
+
+### Step 3: Register and Publish
+
+```csharp
+// Program.cs — registration
+builder.Services
+    .AddNotification<OrderPlaced>()
+    .AddHandler<SendConfirmationEmail>()
+    .AddHandler<UpdateInventory>()
+    .AddDecoration<NotificationRetryBehavior<OrderPlaced>>()
+    .AddDecoration<NotificationLoggingBehavior<OrderPlaced>>();
+
+// Inside a request handler or endpoint — publishing
+await mediator.Publish(new OrderPlaced(orderId, customerEmail), cancellationToken);
+```
+
+---
+
+## 🧩 Bringing It All Together
+
+A complete `Program.cs` might look like:
+
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+
+// 1. Register the mediator
+builder.Services.AddMediator();
+
+// 2. Register features with validation and logging
+builder.Services
+    .AddFeature<CreateProductCommand, Result<int>, CreateProductHandler>()
+    .AddDecoration<LoggingBehavior<CreateProductCommand, Result<int>>>()
+    .AddValidator<CreateProductCommandValidator>();
+
+builder.Services
+    .AddFeature<DeleteProductCommand, DeleteProductHandler>()
+    .AddValidator<DeleteProductCommandValidator>();
+
+// 3. Register notifications
+builder.Services
+    .AddNotification<OrderPlaced>()
+    .AddHandler<SendConfirmationEmail>()
+    .AddHandler<UpdateInventory>()
+    .AddDecoration<NotificationRetryBehavior<OrderPlaced>>()
+    .AddDecoration<NotificationLoggingBehavior<OrderPlaced>>();
+
+var app = builder.Build();
+app.MapEndpoints(app.Services);
+app.Run();
+```
+
+---
 
 ## Contributing
 

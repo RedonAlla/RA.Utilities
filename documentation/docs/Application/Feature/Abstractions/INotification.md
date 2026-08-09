@@ -35,7 +35,7 @@ First, you would define a class that implements `INotification`.
 
 ```csharp
 // In a new file: Features/Products/ProductCreatedNotification.cs
-using RA.Utilities.Feature.Models; // Assuming INotification is aliased or available here
+using RA.Utilities.Feature.Abstractions;
 
 public record ProductCreatedNotification(int ProductId, string ProductName) : INotification;
 ```
@@ -61,7 +61,7 @@ Now, you can create multiple, small, focused handlers that each subscribe to Pro
 // In Features/Caching/CacheInvalidationHandler.cs
 public class CacheInvalidationHandler : INotificationHandler<ProductCreatedNotification>
 {
-    public Task Handle(ProductCreatedNotification notification, CancellationToken cancellationToken)
+    public Task HandleAsync(ProductCreatedNotification notification, CancellationToken cancellationToken)
     {
         // Invalidate product cache logic here...
         return Task.CompletedTask;
@@ -71,7 +71,7 @@ public class CacheInvalidationHandler : INotificationHandler<ProductCreatedNotif
 // In Features/Auditing/AuditLogHandler.cs
 public class AuditLogHandler : INotificationHandler<ProductCreatedNotification>
 {
-    public Task Handle(ProductCreatedNotification notification, CancellationToken cancellationToken)
+    public Task HandleAsync(ProductCreatedNotification notification, CancellationToken cancellationToken)
     {
         // Write to audit log logic here...
         return Task.CompletedTask;

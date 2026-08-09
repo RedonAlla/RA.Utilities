@@ -1,0 +1,153 @@
+---
+title: Migration Guides
+---
+
+# Migration Guides
+
+## v10.0.1 → v10.0.2
+
+### No Breaking Changes
+
+v10.0.2 is fully backward-compatible with v10.0.1. All changes are additive or bug fixes. No code changes are required to upgrade.
+
+### What's New
+
+| Change | Impact |
+|---|---|
+| `RequestHandler` base classes | Optional — inherit from these instead of implementing `IRequestHandler` directly to get free logging and exception handling |
+| Configurable `NotificationRetryBehavior` | Optional — constructor now accepts `maxRetries` and `baseDelayMilliseconds`; existing code using the parameterless constructor continues to work with defaults (3 retries, 200ms base delay) |
+| Per-handler exception isolation in `Publish` | Automatic — one failing notification handler no longer prevents others from executing |
+| Empty handler short-circuit in `Publish` | Automatic — no behavior change, just a minor performance improvement |
+| Thread-safe `NotificationMetricsBehavior` | Automatic — `Stopwatch` moved from instance field to local variable |
+| `ValidationBehavior` null guard | Automatic — prevents `NullReferenceException` in edge cases |
+| Consistent `LoggingBehavior` messages | Automatic — no-response variant now logs consistently with the two-param variant |
+
+### Opting Into the New Base Classes
+
+If you want to use the new `RequestHandler` base classes, change your handlers from implementing the interface directly to inheriting from the base class:
+
+**Before (v10.0.1):**
+
+```csharp
+using RA.Utilities.Feature.Abstractions;
+using RA.Utilities.Core.Results;
+
+public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result<int>>
+{
+    private readonly ILogger<CreateProductHandler> _logger;
+    private readonly IProductRepository _repository;
+
+    public CreateProductHandler(ILogger<CreateProductHandler> logger, IProductRepository repository)
+    {
+        _logger = logger;
+        _repository = repository;
+    }
+
+    public async Task<Result<Result<int>>> HandleAsync(
+        CreateProductCommand request, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Handling {RequestType}...", typeof(CreateProductCommand).Name);
+        try
+        {
+            var product = new Product { Name = request.Name, Price = request.Price };
+            var id = await _repository.AddAsync(product);
+            _logger.LogInformation("{RequestType} handled successfully.", typeof(CreateProductCommand).Name);
+            return id;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "{RequestType} failed.", typeof(CreateProductCommand).Name);
+            return ex;
+        }
+    }
+}
+```
+
+**After (v10.0.2):**
+
+```csharp
+using RA.Utilities.Feature.Handlers;
+using RA.Utilities.Core.Results;
+
+public class CreateProductHandler : RequestHandler<CreateProductCommand, Result<int>>
+{
+    private readonly IProductRepository _repository;
+
+    public CreateProductHandler(ILogger<CreateProductHandler> logger, IProductRepository repository)
+        : base(logger)
+    {
+        _repository = repository;
+    }
+
+    public override async Task<Result<int>> HandleAsync(
+        CreateProductCommand request, CancellationToken cancellationToken)
+    {
+        var product = new Product { Name = request.Name, Price = request.Price };
+        var id = await _repository.AddAsync(product);
+        return id;
+    }
+}
+```
+
+### Configuring Retry Behavior
+
+**Before (v10.0.1) — hardcoded 3 retries, 200ms base delay:**
+
+```csharp
+builder.Services
+    .AddNotification<OrderPlaced>()
+    .AddDecoration<NotificationRetryBehavior<OrderPlaced>>();
+```
+
+**After (v10.0.2) — configurable:**
+
+```csharp
+// Default behavior (3 retries, 200ms base delay) — still works
+builder.Services
+    .AddNotification<OrderPlaced>()
+    .AddDecoration<NotificationRetryBehavior<OrderPlaced>>();
+
+// Custom retry strategy
+builder.Services.AddTransient<INotificationBehavior<OrderPlaced>>(
+    sp => new NotificationRetryBehavior<OrderPlaced>(
+        sp.GetRequiredService<ILogger<NotificationRetryBehavior<OrderPlaced>>>(),
+        maxRetries: 5,
+        baseDelayMilliseconds: 500));
+```
+
+---
+
+## v10.0.0-rc.2 → v10.0.0 / v10.0.1
+
+### API Stability
+
+Starting with v10.0.0, the package API is considered stable. The custom mediator, pipeline behaviors, notification system, and fluent builder registration API are the supported patterns going forward.
+
+Key differences from the rc.2 release notes (which incorrectly referenced MediatR):
+
+| rc.2 Documentation (incorrect) | Actual API (v10.0.0+) |
+|---|---|
+| `builder.Services.AddMediatR(cfg => ...)` | `builder.Services.AddMediator()` |
+| `services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>))` | `.AddValidator<TValidator>()` on the fluent builder |
+| `services.AddValidatorsFromAssembly(...)` | Validators are registered per-feature via `AddValidator<T>()` |
+| `BaseHandler<TRequest, TResponse>` | `RequestHandler<TRequest, TResponse>` (available in v10.0.2+) |
+
+### Registration Pattern Change
+
+The recommended registration pattern uses the fluent builder:
+
+```csharp
+// ✅ Correct pattern (v10.0.0+)
+builder.Services.AddMediator();
+
+builder.Services
+    .AddFeature<CreateProductCommand, Result<int>, CreateProductHandler>()
+    .AddDecoration<LoggingBehavior<CreateProductCommand, Result<int>>>()
+    .AddValidator<CreateProductCommandValidator>();
+```
+
+---
+
+## Full Changelog
+
+See the [package release notes](https://github.com/RedonAlla/RA.Utilities/blob/main/Application/RA.Utilities.Feature/releasenotes.md) for a complete version history.

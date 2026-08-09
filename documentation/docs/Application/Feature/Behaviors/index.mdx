@@ -1,5 +1,5 @@
 ---
-title: RA.Utilities.Feature.Behaviors
+title: Behaviors
 sidebar_position: 1
 ---
 
@@ -7,7 +7,24 @@ sidebar_position: 1
 Namespace: RA.Utilities.Feature.Behaviors
 ```
 
-`RA.Utilities.Feature.Behaviors` offers some building `IPipelineBehavior` and `INotificationBehavior`.
+`RA.Utilities.Feature.Behaviors` provides built-in `IPipelineBehavior` and `INotificationBehavior` implementations for common cross-cutting concerns.
+
+## 📦 Request Pipeline Behaviors
+
+| Behavior | Interface | Purpose |
+|---|---|---|
+| [`LoggingBehavior<TRequest>`](LoggingBehavior.md) | `IPipelineBehavior<TRequest>` | Logs each request and its result |
+| [`LoggingBehavior<TRequest, TResponse>`](LoggingBehavior.md) | `IPipelineBehavior<TRequest, TResponse>` | Logs each request and its response |
+| [`ValidationBehavior<TRequest>`](ValidationBehavior.md) | `IPipelineBehavior<TRequest>` | Validates requests via FluentValidation; short-circuits on failure |
+| [`ValidationBehavior<TRequest, TResponse>`](ValidationBehavior.md) | `IPipelineBehavior<TRequest, TResponse>` | Validates requests via FluentValidation; short-circuits on failure |
+
+## 📬 Notification Pipeline Behaviors
+
+| Behavior | Interface | Purpose |
+|---|---|---|
+| [`NotificationLoggingBehavior<TNotification>`](NotificationLoggingBehavior.md) | `INotificationBehavior<TNotification>` | Logs notification handling start and finish |
+| [`NotificationMetricsBehavior<TNotification>`](NotificationMetricsBehavior.md) | `INotificationBehavior<TNotification>` | Measures handler duration; warns if over 500 ms |
+| [`NotificationRetryBehavior<TNotification>`](NotificationRetryBehavior.md) | `INotificationBehavior<TNotification>` | Retries failed handlers with configurable backoff |
 
 <br />
 <br />

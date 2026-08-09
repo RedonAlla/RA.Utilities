@@ -1,5 +1,36 @@
 # RA.Utilities.Feature Release Notes
 
+## Version 10.0.2
+![Date Badge](https://img.shields.io/badge/Publish-09%20August%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.2-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Feature/10.0.2)
+
+### ✨ New Features
+
+*   **`RequestHandler` Base Classes**:
+    *   New `RequestHandler<TRequest>` and `RequestHandler<TRequest, TResponse>` abstract base classes in the `RA.Utilities.Feature.Handlers` namespace.
+    *   Provide built-in `ILogger`-based logging for the start and finish of each request.
+    *   Automatically catch unhandled exceptions and wrap them in `Result.Failure` — no boilerplate `try-catch` blocks needed in derived handlers.
+    *   Derived classes override `HandleAsync` and focus solely on business logic.
+
+*   **Configurable Notification Retry**:
+    *   `NotificationRetryBehavior<TNotification>` now accepts `maxRetries` and `baseDelayMilliseconds` via its constructor (defaults: 3 retries, 200 ms base delay).
+    *   Parameters include validation guards (`ArgumentOutOfRangeException` on invalid values).
+
+### 🐛 Bug Fixes
+
+*   **Mediator — removed dead code**: The null-coalescing `?? throw` after `GetRequiredService<T>()` was unreachable (`GetRequiredService` never returns null). Removed from both `Send` overloads.
+*   **Mediator — per-handler exception isolation in `Publish`**: Previously, one failing notification handler would prevent all subsequent handlers from executing. Each handler is now wrapped in its own `try-catch`; failures are logged and execution continues to the next handler.
+*   **Mediator — short-circuit empty handlers in `Publish`**: When no handlers are registered for a notification type, `Publish` returns immediately instead of needlessly resolving notification behaviors.
+*   **`NotificationMetricsBehavior` — thread-safety**: Replaced the `Stopwatch` instance field with a local `Stopwatch.StartNew()` variable, eliminating a potential thread-safety hazard if the behavior is ever resolved concurrently.
+*   **`ValidationBehavior` — null guard**: Both constructors now guard against `null` validators with `?? Array.Empty<IValidator<TRequest>>()`, preventing a `NullReferenceException` in edge cases (e.g., manual instantiation in tests).
+*   **`LoggingBehavior<TRequest>` — consistent log messages**: The no-response variant now mirrors the two-param variant: `"Start. Request: {...}"` and `"Finished. Result: {...}"` instead of the previous inconsistent messages.
+*   **`IMediator` — typo fix**: Corrected `"reques"` → `"request"` in XML documentation.
+
+### 📖 Documentation
+
+*   **README overhaul**: Rewritten with comprehensive sections covering the custom mediator, base handlers, pipeline behaviors, the notification system, and all built-in behaviors. Usage examples now include a complete notifications walkthrough in addition to the existing request/response example.
+*   Fixed stale code samples (incorrect generic arity in `LoggingBehavior` registration, MediatR references replaced with the correct custom mediator API).
+
 ## Version 10.0.1
 ![Date Badge](https://img.shields.io/badge/Publish-12%20January%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Feature/10.0.1)

@@ -22,52 +22,52 @@ Instead of having logic for a single operation scattered across multiple layers 
 This solves a common problem with traditional layered architectures where classes can become bloated and tightly coupled, making the codebase difficult to navigate and maintain.
 
 ## ✨ Key Features and How They Help
+
 The package provides several key components to achieve this clean architecture:
 
-1. **Base Handlers ([`IRequestHandler<TRequest, TResponse>`](./Abstractions/IRequestHandler.md))**:
+1. **Custom Mediator ([`IMediator`](./Abstractions/IMediator.md))**:
+  * **Purpose**: A lightweight, reflection-free mediator implementation — no external MediatR dependency.
+  * **Benefit**: Strongly-typed generic dispatch for both request/response (`Send`) and publish/subscribe (`Publish`) patterns.
 
-  * **Purpose*: These are base classes for your CQRS command and query handlers.
-  * **Benefit**: They reduce boilerplate code by providing built-in logging for the start and end of a request, as well as automatic exception handling.
-  Any unhandled exception within your logic is safely caught and wrapped in a Result.Failure object, preventing crashes and ensuring a consistent error-handling strategy.
+2. **Base Handlers ([`RequestHandler<TRequest, TResponse>`](./Handlers/RequestHandler.md))**:
+  * **Purpose**: Abstract base classes for your CQRS command and query handlers.
+  * **Benefit**: They reduce boilerplate by providing built-in logging and automatic exception handling. Any unhandled exception is safely caught and wrapped in a `Result.Failure`, preventing crashes and ensuring a consistent error-handling strategy.
 
-2. **Validation Pipeline Behavior ([`ValidationBehavior<TRequest, TResponse>`](./Behaviors/ValidationBehavior.md))**:
+3. **Validation Pipeline Behavior ([`ValidationBehavior<TRequest, TResponse>`](./Behaviors/ValidationBehavior.md))**:
+  * **Purpose**: A pipeline behavior that automatically validates incoming commands and queries before they reach your business logic.
+  * **Benefit**: Uses [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/). If validation fails, it short-circuits and returns a `BadRequestException`. Your handlers only ever deal with valid data.
 
-  * **Purpose**: This is a pipeline behavior (like MediatR middleware) that automatically validates incoming commands and queries before they reach your business logic.
-  * **Benefit**: It uses [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/) to check the request.
-  If validation fails, it immediately stops processing and returns a structured validation error.
-  This ensures that your handlers only ever deal with valid data, making them simpler and more robust.
+4. **Notification System ([`INotification`](./Abstractions/INotification.md))**:
+  * **Purpose**: Publish/subscribe eventing — fire-and-forget notifications handled by zero or more subscribers.
+  * **Benefit**: Built-in notification behaviors for logging, metrics, and retry. Each handler is independently wrapped, so one failing handler doesn't prevent others from executing.
 
-3. **Seamless Integration with RA.Utilities.Core**:
-
-  * **Purpose**: The handlers are designed to return a [`Result<T>`](../../core/RA.Utilities.Core/Results.md) object from the [`RA.Utilities.Core`](../../core/RA.Utilities.Core/index.mdx) package.
-  * **Benefit**: This allows you to explicitly communicate the outcome of an operation—either success with a value or a predictable failure (like "user not found" or "item already exists")—without using exceptions for control flow.
-  This leads to cleaner, more readable, and more predictable code.
+5. **Seamless Integration with RA.Utilities.Core**:
+  * **Purpose**: Handlers return a [`Result<T>`](../../core/RA.Utilities.Core/Results.md) object from the [`RA.Utilities.Core`](../../core/RA.Utilities.Core/index.mdx) package.
+  * **Benefit**: Explicit success/failure communication without using exceptions for control flow — cleaner, more predictable code.
 
 ## 🌟 Benefits
 
-The package has been fully rewritten to avoid reflection, 
-it uses strongly-typed generic registration and explicit DI resolution instead of dynamic type lookups or assembly scanning.
+The package has been fully rewritten to avoid reflection; it uses strongly-typed generic registration and explicit DI resolution instead of dynamic type lookups or assembly scanning.
 
   * ✅ No runtime reflection
   * ✅ Purely generic and compile-time safe
-  * ✅ Simplified DI registration via [`AddRequestHandler<TRequest, TResponse, THandler>()`](./Extensions/MediatorServiceCollectionExtensions.md)
-  * ✅ The mediator now supports notifications and publish/subscribe just like MediatR.
-  * ✅ Multiple notifications (publish/subscribe model)
-  * ✅ Multiple notification pipeline behaviors (logging, metrics, retry, etc.)
-  * ✅ Fluent builder style consistent with the request builder
-
+  * ✅ Simplified DI registration via fluent builders ([`FeatureBuilderExtensions`](./Extensions/FeatureBuilderExtensions.md))
+  * ✅ Custom mediator supports both request/response and publish/subscribe
+  * ✅ Multiple notification handlers per notification type
+  * ✅ Multiple notification pipeline behaviors (logging, metrics, retry)
+  * ✅ Fluent builder style consistent across requests and notifications
+  * ✅ Abstract [`RequestHandler`](./Handlers/RequestHandler.md) base classes with built-in logging and exception handling
 
 ## 🔧 Design Overview
 
-1. **`IFeatureBuilder`** → Fluent builder interface
-2. **`FeatureBuilder<TRequest, TResponse>`** and **`FeatureBuilder<TRequest>`** → Concrete builders for both request types
-3. Extension methods:
-  * `AddFeature<TRequest, TResponse, THandler>()`
-  * `AddFeature<TRequest, THandler>()`
-4. Each builder:
-  * Registers the handler.
-  * Supports `.AddDecoration<TBehavior>()` → registers a pipeline behavior.
-  * Supports `.AddValidator<TValidator>()` → registers validation pipeline.
+| Namespace | Purpose |
+|---|---|
+| [`Abstractions`](./Abstractions/index.mdx) | Core interfaces: `IMediator`, `IRequest`, `IRequestHandler`, `INotification`, `IPipelineBehavior`, `INotificationBehavior` |
+| [`Handlers`](./Handlers/index.mdx) | Abstract base classes: `RequestHandler<TRequest>`, `RequestHandler<TRequest, TResponse>` |
+| [`Behaviors`](./Behaviors/index.mdx) | Built-in pipeline and notification behaviors: logging, validation, metrics, retry |
+| [`Builders`](./Builders/index.mdx) | Fluent builders: `FeatureBuilder`, `NotificationFeatureBuilder` |
+| [`Extensions`](./Extensions/index.mdx) | DI registration extensions: `AddMediator()`, `AddFeature()`, `AddNotification()` |
+| [`Models`](./Models/index.mdx) | Delegates: `RequestHandlerDelegate`, `NotificationHandlerDelegate` |
 
 ## 🛠️ Installation
 
@@ -87,6 +87,7 @@ Install-Package RA.Utilities.Feature
 
 -  [`RA.Utilities.Core.Exceptions`](../../core/RA.Utilities.Core.Exceptions/index.mdx)
 -  [`RA.Utilities.Core`](../../core/RA.Utilities.Core/index.mdx)
+-  [`RA.Utilities.Application.Validation`](../../application/RA.Utilities.Application.Validation/index.mdx)
 -  [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/)
 -  [`Microsoft.Extensions.DependencyInjection.Abstractions`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection)
 -  [`Microsoft.Extensions.Logging.Abstractions`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.logging.abstractions)

@@ -53,20 +53,19 @@ public class CreateProductCommandValidator : AbstractValidator<CreateProductComm
 ```
 
 #### 2. Register Services
-In your `Program.cs`, register the `ValidationBehavior` and your validators.
+In your `Program.cs`, register the feature with its validator using the fluent builder.
 
   ```csharp showLineNumbers
   // Program.cs
-  using RA.Utilities.Feature.Behaviors;
-  using FluentValidation;
+  using RA.Utilities.Feature.Extensions;
 
-  var services = builder.Services;
+  var builder = WebApplication.CreateBuilder(args);
 
-  // Register the pipeline behavior
-  services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+  builder.Services.AddMediator();
 
-  // Scan the assembly and register all validators
-  services.AddValidatorsFromAssembly(typeof(CreateProductCommandValidator).Assembly);
+  builder.Services
+      .AddFeature<CreateProductCommand, Result<int>, CreateProductHandler>()
+      .AddValidator<CreateProductCommandValidator>();
   ```
 
 With this setup, any `CreateProductCommand` sent through the mediator will be automatically validated.

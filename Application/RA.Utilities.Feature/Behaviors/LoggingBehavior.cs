@@ -56,9 +56,9 @@ public class LoggingBehavior<TRequest> : IPipelineBehavior<TRequest>
     /// <inheritdoc/>
     public async Task<Result> HandleAsync(TRequest request, RequestHandlerDelegate next, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("[Request Logging] Request: {@Request}", request);
+        _logger.LogInformation("[Request Logging] Start. Request: {@Request}", request);
         Result results = await next();
-        _logger.LogInformation("[Request Logging] Finished");
+        _logger.LogInformation("[Request Logging] Finished. Result: {@Result}", results);
 
         return results;
     }

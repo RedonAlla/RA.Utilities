@@ -24,7 +24,8 @@ public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TReques
     /// Initializes a new instance of the <see cref="ValidationBehavior{TRequest, TResponse}"/> class.
     /// </summary>
     /// <param name="validators">The validators.</param>
-    public ValidationBehavior(IEnumerable<IValidator<TRequest>> validators) => _validators = validators;
+    public ValidationBehavior(IEnumerable<IValidator<TRequest>> validators) =>
+        _validators = validators ?? [];
 
     /// <inheritdoc/>
     public async Task<Result<TResponse>> HandleAsync(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
@@ -53,7 +54,8 @@ public class ValidationBehavior<TRequest> : IPipelineBehavior<TRequest>
     /// Initializes a new instance of the <see cref="ValidationBehavior{TRequest}"/> class.
     /// </summary>
     /// <param name="validators">The validators.</param>
-    public ValidationBehavior(IEnumerable<IValidator<TRequest>> validators) => _validators = validators;
+    public ValidationBehavior(IEnumerable<IValidator<TRequest>> validators) =>
+        _validators = validators ?? [];
 
     /// <inheritdoc/>
     public async Task<Result> HandleAsync(TRequest request, RequestHandlerDelegate next, CancellationToken cancellationToken)

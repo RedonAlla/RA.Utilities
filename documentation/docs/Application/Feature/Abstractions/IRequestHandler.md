@@ -50,12 +50,11 @@ public record CreateProductCommand(string Name, decimal Price) : IRequest<Result
 
 ### Step 2: Implement the Handler
 
-Next, create the handler by inheriting from `IRequestHandler<TRequest, TResponse>`. This is where your business logic lives.
+Next, create the handler by inheriting from [`RequestHandler<TRequest, TResponse>`](../Handlers/RequestHandler.md). This gives you automatic logging and exception handling.
 
 ```csharp
 // Features/Products/CreateProduct.cs (continued)
-// highlight-next-line
-using RA.Utilities.Feature.Abstractions;
+using RA.Utilities.Feature.Handlers;
 using Microsoft.Extensions.Logging;
 using RA.Utilities.Core;
 
@@ -90,22 +89,23 @@ public class CreateProductHandler : RequestHandler<CreateProductCommand, Result<
 }
 ```
 
-### Step 3: Register Services in `Program.cs` //TODO add Registration documentation link
+### Step 3: Register Services in `Program.cs`
 
-Finally, wire up MediatR, the validation behavior, and your validators in your application's service configuration.
+Finally, wire up the custom mediator, the handler, the validation behavior, and your validators.
 
 ```csharp
 // Program.cs
-// highlight-next-line
 using RA.Utilities.Feature.Behaviors;
+using RA.Utilities.Feature.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// highlight-start
-_ = services
-  .AddCustomMediator()
-  .AddFeature<CreateProductCommand, CreateProductHandler>();
-// highlight-end
+builder.Services.AddMediator();
+
+builder.Services
+    .AddFeature<CreateProductCommand, Result<int>, CreateProductHandler>()
+    .AddDecoration<LoggingBehavior<CreateProductCommand, Result<int>>>()
+    .AddValidator<CreateProductCommandValidator>();
 
 var app = builder.Build();
 

@@ -66,9 +66,9 @@ This design allows you to define an entire vertical slice in a single, coherent 
 // Example of the fluent API in action
 _ = services
       // 1. Starts with the extension method, registers the handler.
-      .AddFeature<CreateProductCommand, CreateProductHandler>() 
+      .AddFeature<CreateProductCommand, Result<int>, CreateProductHandler>() 
       // 2. Chains a behavior using the returned FeatureBuilder.
-      .AddDecoration<LoggingBehavior<CreateProductCommand>>()   
+      .AddDecoration<LoggingBehavior<CreateProductCommand, Result<int>>>()   
       // 3. Chains a validator using the FeatureBuilder.
       .AddValidator<CreateProductCommandValidator>();
 ```
