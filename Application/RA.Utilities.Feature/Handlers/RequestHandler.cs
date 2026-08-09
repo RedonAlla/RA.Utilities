@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using RA.Utilities.Core.Results;
 using RA.Utilities.Feature.Abstractions;
+using RA.Utilities.Feature.Models;
 
 namespace RA.Utilities.Feature.Handlers;
 
@@ -32,12 +33,35 @@ public abstract class RequestHandler<TRequest, TResponse> : IRequestHandler<TReq
     async Task<Result<TResponse>> IRequestHandler<TRequest, TResponse>.HandleAsync(
         TRequest request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("[Handler] Start Handling {RequestType}", typeof(TRequest).Name);
+        _logger.LogDebug("[Handler] Start Handling {RequestType}", typeof(TRequest).Name);
 
         try
         {
-            var result = await HandleAsync(request, cancellationToken).ConfigureAwait(false);
-            _logger.LogInformation("[Handler] Finished Handling {RequestType}", typeof(TRequest).Name);
+            TResponse? result =
+                await HandleAsync(request, cancellationToken).ConfigureAwait(false);
+
+            _logger.LogDebug("[Handler] Finished Handling {RequestType}", typeof(TRequest).Name);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[Handler] Failed Handling {RequestType}", typeof(TRequest).Name);
+            return ex;
+        }
+    }
+
+    /// <inheritdoc/>
+    async Task<Result<TResponse>> IRequestHandler<TRequest, TResponse>.HandleAsync<TContext>(
+        TRequest request, PipelineContext<TContext> context, CancellationToken cancellationToken)
+        where TContext : class
+    {
+        _logger.LogDebug("[Handler] Start Handling {RequestType}", typeof(TRequest).Name);
+        try
+        {
+            TResponse? result =
+                await HandleAsync(request, context, cancellationToken).ConfigureAwait(false);
+
+            _logger.LogDebug("[Handler] Finished Handling {RequestType}", typeof(TRequest).Name);
             return result;
         }
         catch (Exception ex)
@@ -54,6 +78,15 @@ public abstract class RequestHandler<TRequest, TResponse> : IRequestHandler<TReq
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A task representing the asynchronous operation, with the response.</returns>
     public abstract Task<TResponse> HandleAsync(TRequest request, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Handles the request with a typed pipeline context. The default delegates to
+    /// <see cref="HandleAsync(TRequest, CancellationToken)"/>. Override to consume context data.
+    /// </summary>
+    protected virtual Task<TResponse> HandleAsync<TContext>(
+        TRequest request, PipelineContext<TContext> context, CancellationToken cancellationToken)
+        where TContext : class, new()
+        => HandleAsync(request, cancellationToken);
 }
 
 /// <summary>
@@ -80,12 +113,34 @@ public abstract class RequestHandler<TRequest> : IRequestHandler<TRequest>
     async Task<Result> IRequestHandler<TRequest>.HandleAsync(
         TRequest request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("[Handler] Start Handling {RequestType}", typeof(TRequest).Name);
+        _logger.LogDebug("[Handler] Start Handling {RequestType}", typeof(TRequest).Name);
 
         try
         {
-            var result = await HandleAsync(request, cancellationToken).ConfigureAwait(false);
-            _logger.LogInformation("[Handler] Finished Handling {RequestType}", typeof(TRequest).Name);
+            Result result = await HandleAsync(request, cancellationToken).ConfigureAwait(false);
+            _logger.LogDebug("[Handler] Finished Handling {RequestType}", typeof(TRequest).Name);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[Handler] Failed Handling {RequestType}", typeof(TRequest).Name);
+            return ex;
+        }
+    }
+
+    /// <inheritdoc/>
+    async Task<Result> IRequestHandler<TRequest>.HandleAsync<TContext>(
+        TRequest request, PipelineContext<TContext> context, CancellationToken cancellationToken)
+        where TContext : class
+    {
+        _logger.LogDebug("[Handler] Start Handling {RequestType}", typeof(TRequest).Name);
+
+        try
+        {
+            Result result =
+                await HandleAsync(request, context, cancellationToken).ConfigureAwait(false);
+
+            _logger.LogDebug("[Handler] Finished Handling {RequestType}", typeof(TRequest).Name);
             return result;
         }
         catch (Exception ex)
@@ -102,4 +157,13 @@ public abstract class RequestHandler<TRequest> : IRequestHandler<TRequest>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     public abstract Task<Result> HandleAsync(TRequest request, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Handles the request with a typed pipeline context. The default delegates to
+    /// <see cref="HandleAsync(TRequest, CancellationToken)"/>. Override to consume context data.
+    /// </summary>
+    protected virtual Task<Result> HandleAsync<TContext>(
+        TRequest request, PipelineContext<TContext> context, CancellationToken cancellationToken)
+        where TContext : class, new()
+        => HandleAsync(request, cancellationToken);
 }

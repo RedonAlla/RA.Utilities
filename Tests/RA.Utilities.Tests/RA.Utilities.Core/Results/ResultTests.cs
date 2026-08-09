@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Threading.Tasks;
 using Xunit;
 using RA.Utilities.Core.Results;
@@ -268,7 +269,7 @@ public class ResultExtensionsTests
         var result = Result.Success(inputValue);
 
         // Act
-        Result<string> mappedResult = result.Map(x => x.ToString());
+        Result<string> mappedResult = result.Map(x => x.ToString(CultureInfo.InvariantCulture));
 
         // Assert
         Assert.True(mappedResult.IsSuccess);

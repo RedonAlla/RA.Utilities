@@ -3,6 +3,7 @@
   <PropertyGroup>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <NoWarn>$(NoWarn);CS1591;CA1305</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,6 +27,7 @@
     <ProjectReference Include="../../Api/RA.Utilities.OpenApi/RA.Utilities.OpenApi.csproj" />
     <ProjectReference Include="../../Core/RA.Utilities.Core.Exceptions/RA.Utilities.Core.Exceptions.csproj" />
     <ProjectReference Include="../../Core/RA.Utilities.Core/RA.Utilities.Core.csproj" />
+    <ProjectReference Include="../../Application/RA.Utilities.Feature/RA.Utilities.Feature.csproj" />
   </ItemGroup>
 
   <ItemGroup>

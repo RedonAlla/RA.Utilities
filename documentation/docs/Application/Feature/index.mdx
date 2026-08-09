@@ -41,7 +41,11 @@ The package provides several key components to achieve this clean architecture:
   * **Purpose**: Publish/subscribe eventing — fire-and-forget notifications handled by zero or more subscribers.
   * **Benefit**: Built-in notification behaviors for logging, metrics, and retry. Each handler is independently wrapped, so one failing handler doesn't prevent others from executing.
 
-5. **Seamless Integration with RA.Utilities.Core**:
+5. **Typed Pipeline Context ([`PipelineContext<T>`](./Models/PipelineContext.md))**:
+  * **Purpose**: Pass strongly-typed data through the entire pipeline — no dictionaries, no magic strings, no boxing.
+  * **Benefit**: Behaviors and handlers read/write properties on a user-defined `T`. Each call gets its own isolated instance. Fully opt-in — existing `Send`/`Publish` calls compile unchanged.
+
+6. **Seamless Integration with RA.Utilities.Core**:
   * **Purpose**: Handlers return a [`Result<T>`](../../core/RA.Utilities.Core/Results.md) object from the [`RA.Utilities.Core`](../../core/RA.Utilities.Core/index.mdx) package.
   * **Benefit**: Explicit success/failure communication without using exceptions for control flow — cleaner, more predictable code.
 
@@ -57,6 +61,7 @@ The package has been fully rewritten to avoid reflection; it uses strongly-typed
   * ✅ Multiple notification pipeline behaviors (logging, metrics, retry)
   * ✅ Fluent builder style consistent across requests and notifications
   * ✅ Abstract [`RequestHandler`](./Handlers/RequestHandler.md) base classes with built-in logging and exception handling
+  * ✅ Typed [`PipelineContext<T>`](./Models/PipelineContext.md) for passing data through the pipeline — no dictionaries
 
 ## 🔧 Design Overview
 

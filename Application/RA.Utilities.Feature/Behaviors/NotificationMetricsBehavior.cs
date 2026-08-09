@@ -30,17 +30,24 @@ public class NotificationMetricsBehavior<TNotification> : INotificationBehavior<
     public async Task HandleAsync(TNotification notification, NotificationHandlerDelegate next, CancellationToken cancellationToken)
     {
         _logger.LogDebug("MetricsBehavior..");
-
         var timer = Stopwatch.StartNew();
         await next();
         timer.Stop();
 
-        long elapsedMilliseconds = timer.ElapsedMilliseconds;
+        if (timer.ElapsedMilliseconds > 500)
+            _logger.LogWarning("Long running notification: {NotificationName} ({ElapsedMilliseconds}ms)", typeof(TNotification).Name, timer.ElapsedMilliseconds);
+    }
 
-        if (elapsedMilliseconds > 500)
-        {
-            _logger.LogWarning("Long running notification: {NotificationName} ({ElapsedMilliseconds}ms)",
-                typeof(TNotification).Name, elapsedMilliseconds);
-        }
+    /// <inheritdoc/>
+    public async Task HandleAsync<TContext>(TNotification notification, NotificationHandlerContextDelegate<TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
+        where TContext : class, new()
+    {
+        _logger.LogDebug("MetricsBehavior..");
+        var timer = Stopwatch.StartNew();
+        await next(context);
+        timer.Stop();
+
+        if (timer.ElapsedMilliseconds > 500)
+            _logger.LogWarning("Long running notification: {NotificationName} ({ElapsedMilliseconds}ms)", typeof(TNotification).Name, timer.ElapsedMilliseconds);
     }
 }

@@ -115,6 +115,66 @@ builder.Services
 
 The `ValidationBehavior` automatically discovers and executes all registered `IValidator<TRequest>` implementations. If validation fails, the pipeline short-circuits and returns a `Result.Failure` containing a `BadRequestException` with the validation errors — invalid data never reaches your handler.
 
+### 6. Pipeline Context
+
+The `PipelineContext<T>` provides a **strongly-typed** data carrier that flows through the entire pipeline. Each `Send` or `Publish` call gets its own isolated instance. Behaviors and handlers read and write properties on the user-defined `T` — no dictionaries, no magic strings, no boxing.
+
+```csharp
+// Define your context type
+public class MyPipelineContext
+{
+    public string? CorrelationId { get; set; }
+    public int? UserId { get; set; }
+    public Stopwatch? Timer { get; set; }
+}
+
+// A context-aware behavior that stamps a correlation ID
+public class CorrelationIdBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+    where TRequest : IRequest<TResponse>
+{
+    public Task<Result<TResponse>> HandleAsync(
+        TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken ct)
+        => HandleAsync(request, _ => next(), new PipelineContext<MyPipelineContext>(), ct);
+
+    public async Task<Result<TResponse>> HandleAsync<TContext>(
+        TRequest request, RequestHandlerContextDelegate<TResponse, TContext> next,
+        PipelineContext<TContext> context, CancellationToken ct)
+        where TContext : class, new()
+    {
+        if (context is PipelineContext<MyPipelineContext> ctx)
+            ctx.Data.CorrelationId = Guid.NewGuid().ToString();
+        return await next(context);
+    }
+}
+
+// A handler that reads the correlation ID
+public class MyHandler : RequestHandler<MyCommand, Result<Data>>
+{
+    public MyHandler(ILogger<MyHandler> logger) : base(logger) { }
+
+    protected override async Task<Result<Data>> HandleAsync<TContext>(
+        MyCommand request, PipelineContext<TContext> context, CancellationToken ct)
+        where TContext : class, new()
+    {
+        if (context is PipelineContext<MyPipelineContext> ctx)
+            _logger.LogInformation("CorrelationId: {Id}", ctx.Data.CorrelationId);
+        return await base.HandleAsync(request, context, ct);
+    }
+}
+
+// Caller provides (or omits) context
+var ctx = new PipelineContext<MyPipelineContext>();
+ctx.Data.UserId = 42;
+var result = await mediator.Send<MyCommand, Result<Data>, MyPipelineContext>(command, ctx);
+```
+
+The `IMediator` interface has overloads that accept a context type parameter:
+- `Send<TRequest, TResponse, TContext>(request, context?, ct)` — request/response with typed context
+- `Send<TRequest, TContext>(request, context?, ct)` — request without response, with typed context
+- `Publish<TNotification, TContext>(notification, context?, ct)` — notification with typed context
+
+Existing `Send<TRequest, TResponse>(...)` and `Publish<TNotification>(...)` calls continue to work unchanged — the context type parameter is entirely opt-in.
+
 ---
 
 ## 🚀 Usage Example — Request/Response

@@ -36,6 +36,14 @@ public class NotificationRetryBehavior<TNotification> : INotificationBehavior<TN
 
     /// <inheritdoc/>
     public async Task HandleAsync(TNotification notification, NotificationHandlerDelegate next, CancellationToken cancellationToken)
+        => await RetryLoop(() => next(), notification, cancellationToken);
+
+    /// <inheritdoc/>
+    public async Task HandleAsync<TContext>(TNotification notification, NotificationHandlerContextDelegate<TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
+        where TContext : class, new()
+        => await RetryLoop(() => next(context), notification, cancellationToken);
+
+    private async Task RetryLoop(Func<Task> action, TNotification notification, CancellationToken cancellationToken)
     {
         int attempt = 0;
         while (true)
@@ -43,26 +51,23 @@ public class NotificationRetryBehavior<TNotification> : INotificationBehavior<TN
             try
             {
                 attempt++;
-                await next();
+                await action();
                 break;
             }
             catch (Exception ex)
             {
                 if (attempt < _maxRetries)
                 {
-                    _logger.LogWarning(
-                        ex,
+                    _logger.LogWarning(ex,
                         "[Notification Retry] Attempt {Attempt} failed for {NotificationType}. Retrying... Notification: {@Notification}",
-                        attempt,
-                        typeof(TNotification).Name,
-                        notification);
+                        attempt, typeof(TNotification).Name, notification);
                     await Task.Delay(_baseDelayMilliseconds * attempt, cancellationToken);
                 }
                 else
                 {
                     _logger.LogError(ex, "[Notification Retry] All {MaxRetries} attempts failed for {NotificationType}. Notification: {@Notification}",
                         _maxRetries, typeof(TNotification).Name, notification);
-                    throw; // Re-throw the last exception after logging
+                    throw;
                 }
             }
         }

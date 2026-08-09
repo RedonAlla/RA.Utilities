@@ -32,4 +32,13 @@ public class NotificationLoggingBehavior<TNotification> : INotificationBehavior<
         await next();
         _logger.LogInformation("[Notification Logging] Finished. Notification: {@Notification}", notification);
     }
+
+    /// <inheritdoc/>
+    public async Task HandleAsync<TContext>(TNotification notification, NotificationHandlerContextDelegate<TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
+        where TContext : class, new()
+    {
+        _logger.LogInformation("[Notification Logging] Start. Notification: {@Notification}", notification);
+        await next(context);
+        _logger.LogInformation("[Notification Logging] Finished. Notification: {@Notification}", notification);
+    }
 }

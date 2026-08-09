@@ -4,115 +4,138 @@ title: Migration Guides
 
 # Migration Guides
 
-## v10.0.1 → v10.0.2
+## v10.0.1 → v10.1.0
 
-### No Breaking Changes
+### Breaking Change: `PipelineContext` is now generic `PipelineContext<T>`
 
-v10.0.2 is fully backward-compatible with v10.0.1. All changes are additive or bug fixes. No code changes are required to upgrade.
+The dictionary-based `PipelineContext` (with `Set<T>()`/`Get<T>()`/`TryGetValue<T>()`) has been replaced with a strongly-typed `PipelineContext<T>` where `T` is a user-defined class with a parameterless constructor.
 
-### What's New
+If you were not using `PipelineContext` in v10.0.1, this change does not affect you — all existing code compiles unchanged.
+
+### Why this change?
+
+- **Compile-time safety** — typos in context keys are caught by the compiler instead of silently returning `default`
+- **No boxing** — value types don't need to be boxed/unboxed
+- **IntelliSense** — context properties are discoverable via autocompletion
+- **Simpler API** — `ctx.Data.CorrelationId` instead of `ctx.Get<string>("correlationId")`
+
+### Migration Steps
+
+#### 1. Define a context class
+
+**Before (v10.0.1 — hypothetical, as PipelineContext didn't exist):**
+
+```csharp
+// No context API available in v10.0.1
+```
+
+**After (v10.1.0):**
+
+```csharp
+public class MyPipelineContext
+{
+    public string? CorrelationId { get; set; }
+    public int? UserId { get; set; }
+    public System.Diagnostics.Stopwatch? Timer { get; set; }
+}
+
+var ctx = new PipelineContext<MyPipelineContext>();
+ctx.Data.CorrelationId = "abc-123";
+var id = ctx.Data.CorrelationId;
+```
+
+#### 2. Write context-aware behaviors
+
+```csharp
+public class CorrelationIdBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+    where TRequest : IRequest<TResponse>
+{
+    // Required: implement the non-context method for backward compatibility
+    public Task<Result<TResponse>> HandleAsync(
+        TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken ct)
+        => HandleAsync(request, _ => next(), new PipelineContext<MyPipelineContext>(), ct);
+
+    // Override the generic context-aware method
+    public async Task<Result<TResponse>> HandleAsync<TContext>(
+        TRequest request, RequestHandlerContextDelegate<TResponse, TContext> next,
+        PipelineContext<TContext> context, CancellationToken ct)
+        where TContext : class, new()
+    {
+        if (context is PipelineContext<MyPipelineContext> ctx)
+            ctx.Data.CorrelationId = Guid.NewGuid().ToString();
+        return await next(context);
+    }
+}
+```
+
+#### 3. Write context-aware handlers
+
+```csharp
+public class MyHandler : RequestHandler<MyCommand, Result<Data>>
+{
+    public MyHandler(ILogger<MyHandler> logger) : base(logger) { }
+
+    // Override the abstract method for basic use
+    public override Task<Result<Data>> HandleAsync(MyCommand request, CancellationToken ct)
+    {
+        // Business logic without context
+    }
+
+    // Override the virtual method to consume typed context
+    protected override async Task<Result<Data>> HandleAsync<TContext>(
+        MyCommand request, PipelineContext<TContext> context, CancellationToken ct)
+        where TContext : class, new()
+    {
+        if (context is PipelineContext<MyPipelineContext> ctx)
+            _logger.LogInformation("CorrelationId: {Id}", ctx.Data.CorrelationId);
+        return await base.HandleAsync(request, context, ct);
+    }
+}
+```
+
+#### 4. Send requests with typed context
+
+```csharp
+// Without context — still works, unchanged from v10.0.1
+var result = await mediator.Send<MyCommand, Result<Data>>(command);
+
+// With typed context — new in v10.1.0
+var ctx = new PipelineContext<MyPipelineContext>();
+ctx.Data.UserId = 42;
+var result = await mediator.Send<MyCommand, Result<Data>, MyPipelineContext>(command, ctx);
+
+// Publish notifications with typed context
+await mediator.Publish<OrderPlaced, MyPipelineContext>(notification, ctx);
+```
+
+### What Else is New in v10.1.0
+
+These changes are additive and do not require migration:
 
 | Change | Impact |
 |---|---|
-| `RequestHandler` base classes | Optional — inherit from these instead of implementing `IRequestHandler` directly to get free logging and exception handling |
-| Configurable `NotificationRetryBehavior` | Optional — constructor now accepts `maxRetries` and `baseDelayMilliseconds`; existing code using the parameterless constructor continues to work with defaults (3 retries, 200ms base delay) |
-| Per-handler exception isolation in `Publish` | Automatic — one failing notification handler no longer prevents others from executing |
-| Empty handler short-circuit in `Publish` | Automatic — no behavior change, just a minor performance improvement |
+| `RequestHandler` base classes | Opt-in — inherit from `RequestHandler<TRequest, TResponse>` instead of implementing `IRequestHandler` directly to get free logging and exception handling |
+| Configurable `NotificationRetryBehavior` | Opt-in — constructor now accepts `maxRetries` and `baseDelayMilliseconds`; defaults match v10.0.1 behavior |
+| Per-handler exception isolation in `Publish` | Automatic — one failing handler no longer prevents others from executing |
 | Thread-safe `NotificationMetricsBehavior` | Automatic — `Stopwatch` moved from instance field to local variable |
 | `ValidationBehavior` null guard | Automatic — prevents `NullReferenceException` in edge cases |
-| Consistent `LoggingBehavior` messages | Automatic — no-response variant now logs consistently with the two-param variant |
+| Consistent `LoggingBehavior` messages | Automatic — no-response variant now logs consistently |
 
-### Opting Into the New Base Classes
+### No changes needed for existing v10.0.1 code
 
-If you want to use the new `RequestHandler` base classes, change your handlers from implementing the interface directly to inheriting from the base class:
+Existing `Send<TRequest, TResponse>(...)` and `Publish<TNotification>(...)` calls compile unchanged. The context type parameter is entirely opt-in. Internally, the Mediator uses a private marker type when no user-defined context is provided.
 
-**Before (v10.0.1):**
+### Registration Pattern (unchanged)
 
-```csharp
-using RA.Utilities.Feature.Abstractions;
-using RA.Utilities.Core.Results;
-
-public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result<int>>
-{
-    private readonly ILogger<CreateProductHandler> _logger;
-    private readonly IProductRepository _repository;
-
-    public CreateProductHandler(ILogger<CreateProductHandler> logger, IProductRepository repository)
-    {
-        _logger = logger;
-        _repository = repository;
-    }
-
-    public async Task<Result<Result<int>>> HandleAsync(
-        CreateProductCommand request, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Handling {RequestType}...", typeof(CreateProductCommand).Name);
-        try
-        {
-            var product = new Product { Name = request.Name, Price = request.Price };
-            var id = await _repository.AddAsync(product);
-            _logger.LogInformation("{RequestType} handled successfully.", typeof(CreateProductCommand).Name);
-            return id;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "{RequestType} failed.", typeof(CreateProductCommand).Name);
-            return ex;
-        }
-    }
-}
-```
-
-**After (v10.0.2):**
+The fluent builder registration API is unchanged from v10.0.1:
 
 ```csharp
-using RA.Utilities.Feature.Handlers;
-using RA.Utilities.Core.Results;
+builder.Services.AddMediator();
 
-public class CreateProductHandler : RequestHandler<CreateProductCommand, Result<int>>
-{
-    private readonly IProductRepository _repository;
-
-    public CreateProductHandler(ILogger<CreateProductHandler> logger, IProductRepository repository)
-        : base(logger)
-    {
-        _repository = repository;
-    }
-
-    public override async Task<Result<int>> HandleAsync(
-        CreateProductCommand request, CancellationToken cancellationToken)
-    {
-        var product = new Product { Name = request.Name, Price = request.Price };
-        var id = await _repository.AddAsync(product);
-        return id;
-    }
-}
-```
-
-### Configuring Retry Behavior
-
-**Before (v10.0.1) — hardcoded 3 retries, 200ms base delay:**
-
-```csharp
 builder.Services
-    .AddNotification<OrderPlaced>()
-    .AddDecoration<NotificationRetryBehavior<OrderPlaced>>();
-```
-
-**After (v10.0.2) — configurable:**
-
-```csharp
-// Default behavior (3 retries, 200ms base delay) — still works
-builder.Services
-    .AddNotification<OrderPlaced>()
-    .AddDecoration<NotificationRetryBehavior<OrderPlaced>>();
-
-// Custom retry strategy
-builder.Services.AddTransient<INotificationBehavior<OrderPlaced>>(
-    sp => new NotificationRetryBehavior<OrderPlaced>(
-        sp.GetRequiredService<ILogger<NotificationRetryBehavior<OrderPlaced>>>(),
-        maxRetries: 5,
-        baseDelayMilliseconds: 500));
+    .AddFeature<CreateProductCommand, Result<int>, CreateProductHandler>()
+    .AddDecoration<LoggingBehavior<CreateProductCommand, Result<int>>>()
+    .AddValidator<CreateProductCommandValidator>();
 ```
 
 ---
@@ -121,7 +144,7 @@ builder.Services.AddTransient<INotificationBehavior<OrderPlaced>>(
 
 ### API Stability
 
-Starting with v10.0.0, the package API is considered stable. The custom mediator, pipeline behaviors, notification system, and fluent builder registration API are the supported patterns going forward.
+Starting with v10.0.0, the package API is considered stable. The custom mediator, pipeline behaviors, notification system, and fluent builder registration API are the supported patterns.
 
 Key differences from the rc.2 release notes (which incorrectly referenced MediatR):
 
@@ -130,14 +153,10 @@ Key differences from the rc.2 release notes (which incorrectly referenced Mediat
 | `builder.Services.AddMediatR(cfg => ...)` | `builder.Services.AddMediator()` |
 | `services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>))` | `.AddValidator<TValidator>()` on the fluent builder |
 | `services.AddValidatorsFromAssembly(...)` | Validators are registered per-feature via `AddValidator<T>()` |
-| `BaseHandler<TRequest, TResponse>` | `RequestHandler<TRequest, TResponse>` (available in v10.0.2+) |
 
-### Registration Pattern Change
-
-The recommended registration pattern uses the fluent builder:
+### Registration Pattern (v10.0.0+)
 
 ```csharp
-// ✅ Correct pattern (v10.0.0+)
 builder.Services.AddMediator();
 
 builder.Services

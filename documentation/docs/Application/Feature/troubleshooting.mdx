@@ -162,6 +162,44 @@ builder.Services.AddSingleton<INotificationHandler<OrderPlaced>, SendConfirmatio
 
 But generally, keep handlers as `Transient` (the default) to avoid captive dependency issues.
 
+### My context-aware behavior doesn't see the data set by an earlier behavior
+
+**Cause**: Your behavior is overriding the non-context `HandleAsync` method, which creates a **new empty** `PipelineContext<MyContext>()` rather than forwarding the one received from the pipeline.
+
+**Fix**: Always call the context-aware overload from the non-context overload by forwarding the context:
+
+```csharp
+// ✅ Correct — forwards context from the pipeline
+public Task<Result<TResponse>> HandleAsync(
+    TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken ct)
+    => HandleAsync(request, _ => next(), new PipelineContext<MyContext>(), ct);
+```
+
+The `new PipelineContext<MyContext>()` here is only used as the **initial** context when none exists. The actual context from upstream behaviors is passed to the context-aware overload.
+
+### `PipelineContext<T>` disappears between my behavior and handler
+
+**Cause**: Previous versions of this package used a dictionary-based `PipelineContext`. If you have a mix of old and new behavior code, the old non-generic API doesn't forward the typed context.
+
+**Fix**: Ensure all behaviors in the chain override the generic `HandleAsync<TContext>(...)` method. The default interface method automatically adapts, but if you're still using the old dictionary-based API (from v10.0.2 or earlier), upgrade to v10.1.0 and use the typed API.
+
+### How do I access `PipelineContext<T>` from a handler that uses `RequestHandler` base class?
+
+Override the protected virtual method instead of the abstract one:
+
+```csharp
+protected override async Task<Result<Data>> HandleAsync<TContext>(
+    MyCommand request, PipelineContext<TContext> context, CancellationToken ct)
+    where TContext : class, new()
+{
+    if (context is PipelineContext<MyContext> ctx)
+        Console.WriteLine(ctx.Data.CorrelationId);
+    return await base.HandleAsync(request, context, ct);
+}
+```
+
+The default implementation delegates to the non-context `HandleAsync(request, ct)`, so calling `base.HandleAsync(request, context, ct)` preserves the chain.
+
 ### `RequestHandlerDelegate` and `RequestHandlerDelegate<TResponse>` — which one should my behavior use?
 
 **Cause**: These are two separate delegate types for the two `IPipelineBehavior` variants.
@@ -286,6 +324,22 @@ builder.Services.AddTransient<IValidator<CreateProductCommand>, InventoryValidat
 ```
 
 All three validators will run when the request is dispatched.
+
+### What's the difference between `PipelineContext` (old) and `PipelineContext<T>` (new)?
+
+As of v10.1.0, `PipelineContext` is now `PipelineContext<T>`. The old dictionary-based API (`Set<T>()`, `Get<T>()`, `TryGetValue<T>()`) has been removed in favor of strongly-typed context. Define a class for your context data and use `ctx.Data.PropertyName` instead. See the [migration guide](migration-guides) for detailed before/after examples.
+
+### Can I use multiple different context types in the same application?
+
+Yes. Each `Send`/`Publish` call specifies its context type via the generic parameter. Different features can use different context types:
+
+```csharp
+var auditCtx = new PipelineContext<AuditContext>();
+await mediator.Send<CommandA, Result<Data>, AuditContext>(cmd, auditCtx);
+
+var perfCtx = new PipelineContext<PerformanceContext>();
+await mediator.Send<CommandB, Result<Data>, PerformanceContext>(cmd, perfCtx);
+```
 
 ### How do notification behaviors compose?
 

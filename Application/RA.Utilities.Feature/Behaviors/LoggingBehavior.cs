@@ -34,6 +34,16 @@ public class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, 
         _logger.LogInformation("[Request Logging] Finished. Response: {@Response}", response);
         return response;
     }
+
+    /// <inheritdoc/>
+    public async Task<Result<TResponse>> HandleAsync<TContext>(TRequest request, RequestHandlerContextDelegate<TResponse, TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
+        where TContext : class, new()
+    {
+        _logger.LogInformation("[Request Logging] Start. Request: {@Request}", request);
+        Result<TResponse> response = await next(context);
+        _logger.LogInformation("[Request Logging] Finished. Response: {@Response}", response);
+        return response;
+    }
 }
 
 /// <summary>
@@ -59,7 +69,16 @@ public class LoggingBehavior<TRequest> : IPipelineBehavior<TRequest>
         _logger.LogInformation("[Request Logging] Start. Request: {@Request}", request);
         Result results = await next();
         _logger.LogInformation("[Request Logging] Finished. Result: {@Result}", results);
+        return results;
+    }
 
+    /// <inheritdoc/>
+    public async Task<Result> HandleAsync<TContext>(TRequest request, RequestHandlerContextDelegate<TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
+        where TContext : class, new()
+    {
+        _logger.LogInformation("[Request Logging] Start. Request: {@Request}", request);
+        Result results = await next(context);
+        _logger.LogInformation("[Request Logging] Finished. Result: {@Result}", results);
         return results;
     }
 }
