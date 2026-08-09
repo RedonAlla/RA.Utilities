@@ -47,7 +47,7 @@ internal sealed class DefaultResponsesOperationTransformer : IOpenApiOperationTr
             operation.Responses[InternalServerErrorKey] = new OpenApiResponse
             {
                 Description = "Response designated \"catch-all\" for any unexpected or unhandled exceptions that occur within your application",
-                Content = new Dictionary<string, IOpenApiMediaType>
+                Content = new Dictionary<string, OpenApiMediaType>
                 {
                     [MediaTypeNames.Application.Json] = new OpenApiMediaType
                     {
