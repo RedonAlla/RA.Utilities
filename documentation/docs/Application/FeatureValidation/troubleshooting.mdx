@@ -1,0 +1,71 @@
+---
+title: Troubleshooting & FAQ
+sidebar_class_name: nav_session ra_utilities_validation
+---
+
+# Troubleshooting & FAQ
+
+## Common Issues
+
+### I see duplicate validation failures — the same error appears once per validator
+
+**Cause**: you are on v10.0.0, which shared one `ValidationContext` across all validators in `ValidateAsync`. Every validator's result contained the full shared failure list.
+
+**Fix**: upgrade to **10.0.1**, which creates a fresh context per validator. Remove any de-duplication workarounds.
+
+### My optional currency field fails validation when it is null
+
+**Cause**: v10.0.0 ran the format rule on null values (FluentValidation 12 executes `Must` on null).
+
+**Fix**: upgrade to **10.0.1** (null passes the format rule), or make the requirement explicit:
+
+```csharp showLineNumbers
+// Currency is required
+RuleFor(x => x.Currency).NotNull().MustMatchesCurrencyFormat();
+// Currency is optional — null and valid codes pass, empty still fails
+RuleFor(x => x.Currency).MustMatchesCurrencyFormat();
+```
+
+### An empty string is rejected by `MustMatchesCurrencyFormat` — I want empty to be allowed
+
+**Cause**: the format rule intentionally fails empty strings; an empty string is not a currency code.
+
+**Fix**: allow empty values explicitly with a condition:
+
+```csharp showLineNumbers
+RuleFor(x => x.Currency)
+    .MustMatchesCurrencyFormat()
+    .When(x => !string.IsNullOrEmpty(x.Currency));
+```
+
+### Can I customize the error message?
+
+**Answer**: yes — chain FluentValidation's `WithMessage` (and `{PropertyName}` is substituted automatically):
+
+```csharp showLineNumbers
+RuleFor(x => x.Currency)
+    .MustMatchesCurrencyFormat()
+    .WithMessage("'{PropertyName}' must be a valid ISO 4217 currency code.");
+```
+
+### Can I run validators sequentially instead of in parallel?
+
+**Answer**: `ValidateAsync` always runs validators in parallel. If ordering or side effects require sequential execution, enumerate the validators yourself:
+
+```csharp showLineNumbers
+var failures = new List<ValidationFailure>();
+foreach (IValidator<MyRequest> validator in validators)
+    failures.AddRange((await validator.ValidateAsync(request)).Errors);
+```
+
+## Known Limitations
+
+- **`MustMatchesCurrencyFormat` checks format only** — it does not verify that a code exists in the official ISO 4217 list. Validate membership against a curated list for strict requirements.
+- **No `CancellationToken` support** — `ValidateAsync` cannot be cancelled mid-flight; each validator runs to completion.
+- **No DI registration helper** — the package deliberately registers nothing; supply `IEnumerable<IValidator<T>>` from your own container.
+
+## Performance Tips
+
+- **Validators run in parallel** — group independent rules across validators and let `Task.WhenAll` do the work.
+- **Source-generated regex** — the currency rule's `[GeneratedRegex]` compiles the pattern into your assembly; no runtime regex compilation cost.
+- **Validate once** — reuse the same `ValidationFailure[]` result for both logging and exception creation rather than calling `ValidateAsync` twice.

@@ -28,6 +28,7 @@
     <ProjectReference Include="../../Core/RA.Utilities.Core.Exceptions/RA.Utilities.Core.Exceptions.csproj" />
     <ProjectReference Include="../../Core/RA.Utilities.Core/RA.Utilities.Core.csproj" />
     <ProjectReference Include="../../Application/RA.Utilities.Feature/RA.Utilities.Feature.csproj" />
+    <ProjectReference Include="../../Application/RA.Utilities.Application.Validation/RA.Utilities.Application.Validation.csproj" />
   </ItemGroup>
 
   <ItemGroup>

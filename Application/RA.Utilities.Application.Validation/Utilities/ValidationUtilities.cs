@@ -1,3 +1,10 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using FluentValidation;
+using FluentValidation.Results;
+using RA.Utilities.Core.Exceptions;
+
 namespace RA.Utilities.Application.Validation.Utilities;
 
 /// <summary>
@@ -19,10 +26,8 @@ public static class ValidationUtilities
             return [];
         }
 
-        var context = new ValidationContext<TRequest>(request);
-
         ValidationResult[] validationResults = await Task.WhenAll(
-            validators.Select(validator => validator.ValidateAsync(context)));
+            validators.Select(validator => validator.ValidateAsync(new ValidationContext<TRequest>(request))));
 
         ValidationFailure[] validationFailures = [.. validationResults
             .Where(validationResult => !validationResult.IsValid)
@@ -38,10 +43,9 @@ public static class ValidationUtilities
     /// <returns>A new instance of <see cref="BadRequestException"/> containing the details of the validation errors.</returns>
     public static BadRequestException CreateValidationErrorResult(ValidationFailure[] validationFailures)
     {
-        ValidationErrors[] validationErrors = [.. validationFailures.Select(f => new ValidationErrors
+        ValidationError[] validationErrors = [.. validationFailures.Select(f => new ValidationError(f.ErrorMessage)
         {
             PropertyName = f.PropertyName,
-            ErrorMessage = f.ErrorMessage,
             AttemptedValue = f.AttemptedValue,
             ErrorCode = f.ErrorCode,
         })];

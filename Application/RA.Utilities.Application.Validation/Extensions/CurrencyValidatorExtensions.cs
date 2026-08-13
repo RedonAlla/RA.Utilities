@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using FluentValidation;
 
 namespace RA.Utilities.Application.Validation.Extensions;
 
@@ -14,6 +15,7 @@ public static partial class CurrencyValidatorExtensions
     private static partial Regex CurrencyRegex();
     /// <summary>
     /// Adds a validator to ensure the string matches the ISO 4217 currency code format (3 uppercase letters).
+    /// Null values pass this rule; use <c>NotNull</c> or <c>NotEmpty</c> when the currency is required.
     /// </summary>
     /// <typeparam name="T">The type of the object being validated.</typeparam>
     /// <param name="ruleBuilder">The rule builder for the string property.</param>
@@ -25,5 +27,5 @@ public static partial class CurrencyValidatorExtensions
             .WithMessage("Currency must be 3 uppercase letters (A-Z).");
     }
     private static bool IsValid(string value) =>
-        value != null && CurrencyRegex().IsMatch(value);
+        value is null || CurrencyRegex().IsMatch(value);
 }

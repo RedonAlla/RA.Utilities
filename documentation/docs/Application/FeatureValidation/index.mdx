@@ -16,22 +16,165 @@ import LogoSvg from '../../../../Assets/Images/validation.svg';
 [![Publish NuGet](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml/badge.svg)](https://github.com/RedonAlla/RA.Utilities/actions/runs/19650635405)
 [![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
 
-`RA.Utilities.Application.Validation` package is designed to provide utility validators for incoming requests.
+`RA.Utilities.Application.Validation` provides reusable validation utilities built on top of [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/) for validating incoming requests in web APIs.
 
-Its primary purpose is to use the [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/) library to handle validation logic within an application.
-The package tags include `validation` and `fluentvalidation`, which further confirms its role.
+Use it to run multiple validators against a request in parallel, aggregate the failures, and convert them into a standardized `HTTP 400 Bad Request` response — without writing the orchestration code yourself.
 
-In short, it's a dedicated project within the `RA.Utilities` solution for centralizing request validation using [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/).
+## 🎯 Purpose
+
+- **Centralize validation orchestration** — run every registered validator for a request in one call
+- **Standardize error payloads** — failures become a consistent [`BadRequestException`](../../core/RA.Utilities.Core.Exceptions/BadRequestException.md) with machine-readable details
+- **Avoid duplication** — share the same currency (and future format) rules across validators and services
+- **Stay fast** — validators run in parallel, and the currency rule uses a source-generated regex
+
+### ✨ Key Features
+
+- **`ValidationUtilities.ValidateAsync`** — executes all validators for a request concurrently and flattens the failures
+- **`ValidationUtilities.CreateValidationErrorResult`** — maps `ValidationFailure[]` into a `BadRequestException` carrying structured `ValidationError` entries
+- **`MustMatchesCurrencyFormat()`** — declarative ISO 4217 format rule (3 uppercase letters) for any string property
+- **Zero configuration** — static utilities; validators are supplied by your own DI container
+
+## 🧠 Core Concepts
+
+| Abstraction | Role | Where |
+|---|---|---|
+| `ValidationUtilities` | Orchestrates validation and converts failures to an exception | [`Utilities`](./ValidationUtilities) |
+| `MustMatchesCurrencyFormat()` | FluentValidation rule for ISO 4217 currency codes | [`Extensions`](./CurrencyValidatorExtensions) |
+| `BadRequestException` / `ValidationError` | The standardized 400 payload produced on failure | [`RA.Utilities.Core.Exceptions`](../../core/RA.Utilities.Core.Exceptions/index.mdx) |
+
+### How they work together
+
+```text
+Request ──► ValidateAsync(request, validators) ──► ValidationFailure[] (empty if valid)
+                                                      │
+                                                      └─► CreateValidationErrorResult ──► BadRequestException ──► HTTP 400
+```
+
+`ValidateAsync` gives **each validator its own `ValidationContext`**, so validators can run in parallel without sharing mutable state — results cannot leak between validators and the ordering of failures is preserved.
+
+### Terminology
+
+- **Validator**: a FluentValidation `IValidator<T>` implementation holding the rules for one request type
+- **Validation failure**: FluentValidation's `ValidationFailure` — property name, message, attempted value, error code
+- **Format rule**: a rule that checks the *shape* of a value (e.g., 3 uppercase letters), not its presence
+
+## 🛠️ Getting Started
+
+### Prerequisites
+
+- **.NET 10.0** or later
+
+### Installation
+
+**.NET CLI**
+
+```bash
+dotnet add package RA.Utilities.Application.Validation
+```
+
+**Package Manager Console**
+
+```powershell
+Install-Package RA.Utilities.Application.Validation
+```
+
+**PackageReference (csproj)**
+
+```xml
+<PackageReference Include="RA.Utilities.Application.Validation" Version="10.0.1" />
+```
+
+### Hello World
+
+```csharp showLineNumbers
+using FluentValidation;
+using FluentValidation.Results;
+using RA.Utilities.Application.Validation.Extensions;
+using RA.Utilities.Application.Validation.Utilities;
+
+public record CreateOrderRequest(string Currency, decimal Amount);
+
+public class CreateOrderValidator : AbstractValidator<CreateOrderRequest>
+{
+    public CreateOrderValidator()
+    {
+        RuleFor(x => x.Currency).MustMatchesCurrencyFormat();
+        RuleFor(x => x.Amount).GreaterThan(0);
+    }
+}
+
+// Run all validators, then throw a standardized BadRequestException on failure
+var request = new CreateOrderRequest("USD", 100);
+
+ValidationFailure[] failures = await ValidationUtilities.ValidateAsync(
+    request, [new CreateOrderValidator()]);
+
+if (failures.Length > 0)
+{
+    throw ValidationUtilities.CreateValidationErrorResult(failures);
+}
+```
+
+No DI or setup is required — the utilities are static and the validators come from your own service container.
+
+## 📖 How-To Guides
+
+### Validate a request and return a 400 payload
+
+```csharp showLineNumbers
+ValidationFailure[] failures = await ValidationUtilities.ValidateAsync(request, validators);
+
+if (failures.Length > 0)
+    throw ValidationUtilities.CreateValidationErrorResult(failures);
+```
+
+Throw inside a global exception handler pipeline (or the [`ValidationBehavior`](../Feature/Behaviors/ValidationBehavior) of `RA.Utilities.Feature`, which does exactly this) and clients receive a consistent machine-readable 400 response. See [`ValidationUtilities`](./ValidationUtilities) for the full API.
+
+### Add a currency format rule
+
+```csharp showLineNumbers
+RuleFor(x => x.Currency).MustMatchesCurrencyFormat();
+// Optional: require the value as well
+RuleFor(x => x.Currency).NotNull().MustMatchesCurrencyFormat();
+```
+
+Null values pass the format rule — chain `NotNull()` / `NotEmpty()` when the currency is required. See [`CurrencyValidatorExtensions`](./CurrencyValidatorExtensions) for details.
 
 ## 🔗 Dependencies
 
--  [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/)
+-  [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/) (12.1.1)
 -  [`RA.Utilities.Core.Exceptions`](../../core/RA.Utilities.Core.Exceptions/index.mdx)
 
+## ⚙️ Configuration
+
+This package has no configuration options. Validators are supplied by the caller (typically injected via your DI container).
 
 <br />
-<br />
+
+## 📚 API Reference
 
 import DocCardList from '@theme/DocCardList';
 
 <DocCardList />
+
+<br />
+
+## 🙌 Contributing & Support
+
+### Found a bug or have a suggestion?
+
+- **GitHub Issues**: [RedonAlla/RA.Utilities/issues](https://github.com/RedonAlla/RA.Utilities/issues)
+- **Discussions**: [RedonAlla/RA.Utilities/discussions](https://github.com/RedonAlla/RA.Utilities/discussions)
+
+### Contributing
+
+1. Fork → 2. Branch → 3. Change → 4. PR
+
+### Links
+
+| Resource | URL |
+|---|---|
+| **NuGet** | [RA.Utilities.Application.Validation](https://www.nuget.org/packages/RA.Utilities.Application.Validation) |
+| **Source** | [GitHub — RedonAlla/RA.Utilities](https://github.com/RedonAlla/RA.Utilities) |
+| **License** | [MIT](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file) |
+| **Build Status** | [GitHub Actions](https://github.com/RedonAlla/RA.Utilities/actions) |

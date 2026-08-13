@@ -1,27 +1,25 @@
 ---
+title: ValidationUtilities
 sidebar_position: 2
 ---
 
-```powershell
+```bash
 Namespace: RA.Utilities.Application.Validation.Utilities
 ```
 
-`ValidationUtilities` class is a static helper designed to streamline the process of validating application requests using the [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/) library.
-It serves two primary functions, neatly encapsulated in its two methods:
+`ValidationUtilities` is a static helper that streamlines request validation with [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/).
+It exposes two methods that together cover the whole validation pipeline: running validators and turning failures into a standardized exception.
 
 ### 1. `ValidateAsync<TRequest>`
 
-This method acts as a validation orchestrator. Its purpose is to take a request object (like a command, query, or API model) and run it against all relevant [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/) validators.
+This method is the validation orchestrator. It takes a request object (a command, query, or API model) and runs it against every supplied [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/) validator:
 
-Here's a breakdown of its logic:
+* It accepts a generic request (`TRequest`) and a collection of validators (`IEnumerable<IValidator<TRequest>>`).
+* It executes all validators asynchronously in parallel using `Task.WhenAll`.
+* **Each validator gets its own `ValidationContext`** — validators never share mutable state, so failures cannot leak between validators and results are thread-safe.
+* It aggregates the failures into a single, flat array of `ValidationFailure` objects, preserving validator order.
 
-* It accepts a generic request object (`TRequest`) and a collection of validators (`IEnumerable<IValidator<TRequest>>`).
-* It efficiently executes all validators asynchronously using `Task.WhenAll`.
-* It then aggregates any validation failures from all the validators into a single, flat array of `ValidationFailure` objects.
-
-In short, it centralizes the logic for running multiple validation rule sets against a single object and collecting all the errors.
-
-```csharp
+```csharp showLineNumbers
 /// <summary>
 /// Validates a request using a collection of FluentValidation validators.
 /// </summary>
@@ -32,10 +30,8 @@ public static async Task<ValidationFailure[]> ValidateAsync<TRequest>(TRequest r
         return [];
     }
 
-    var context = new ValidationContext<TRequest>(request);
-
     ValidationResult[] validationResults = await Task.WhenAll(
-        validators.Select(validator => validator.ValidateAsync(context)));
+        validators.Select(validator => validator.ValidateAsync(new ValidationContext<TRequest>(request))));
 
     ValidationFailure[] validationFailures = [.. validationResults
         .Where(validationResult => !validationResult.IsValid)
@@ -47,26 +43,21 @@ public static async Task<ValidationFailure[]> ValidateAsync<TRequest>(TRequest r
 
 ### 2. `CreateValidationErrorResult`
 
-This method handles what happens after validation fails.
-Its purpose is to convert the raw output from [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/) into a standardized application-specific exception.
+This method handles what happens after validation fails: it converts the raw [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/) output into a standardized application exception.
 
-Here's how it works:
+* It takes the array of `ValidationFailure` objects produced by `ValidateAsync`.
+* It transforms each failure into a [`ValidationError`](../../core/RA.Utilities.Core.Exceptions/BadRequestException.md#validationerror-class) DTO (`PropertyName`, `ErrorMessage`, `AttemptedValue`, `ErrorCode`).
+* It wraps the structured errors in a [`BadRequestException`](../../core/RA.Utilities.Core.Exceptions/BadRequestException.md) — typically thrown so a global exception handler produces a consistent, machine-readable `HTTP 400 Bad Request` response.
 
-It takes the array of `ValidationFailure` objects produced by `ValidateAsync`.
-It transforms each failure into a custom `ValidationErrors` data structure, which is a cleaner Data Transfer Object (DTO) for representing an error.
-It then wraps these structured errors inside a [`BadRequestException`](../../core//RA.Utilities.Core.Exceptions/BadRequestException.md).
-This custom exception is likely handled by a global exception handler in the API to produce a consistent, machine-readable `HTTP 400 Bad Request` response for the client.
-
-```csharp
+```csharp showLineNumbers
 /// <summary>
 /// Creates a <see cref="BadRequestException"/> from an array of validation failures.
 /// </summary>
 public static BadRequestException CreateValidationErrorResult(ValidationFailure[] validationFailures)
 {
-    ValidationErrors[] validationErrors = [.. validationFailures.Select(f => new ValidationErrors
+    ValidationError[] validationErrors = [.. validationFailures.Select(f => new ValidationError(f.ErrorMessage)
     {
         PropertyName = f.PropertyName,
-        ErrorMessage = f.ErrorMessage,
         AttemptedValue = f.AttemptedValue,
         ErrorCode = f.ErrorCode,
     })];
@@ -75,5 +66,19 @@ public static BadRequestException CreateValidationErrorResult(ValidationFailure[
 }
 ```
 
+> **Note**: since v10.0.1 this method maps failures to `ValidationError` (singular). See the [migration guide](./migration-guides) if you upgrade from 10.0.0 and reference the old `ValidationErrors` type.
+
+## Usage Example
+
+```csharp showLineNumbers
+using RA.Utilities.Application.Validation.Utilities;
+
+ValidationFailure[] failures = await ValidationUtilities.ValidateAsync(request, validators);
+
+if (failures.Length > 0)
+    throw ValidationUtilities.CreateValidationErrorResult(failures);
+```
+
 ## Summary
-In essence, `ValidationUtilities` provides a reusable and consistent pattern for handling request validation within your application. It decouples the validation logic (the "what") from the error handling and response generation (the "how"), promoting cleaner code in your application's entry points (like MediatR pipeline behaviors or API controllers).
+
+`ValidationUtilities` provides a reusable, consistent pattern for request validation: it decouples the validation logic (the "what") from error handling and response generation (the "how"). It is the engine behind the [`ValidationBehavior`](../Feature/Behaviors/ValidationBehavior) in `RA.Utilities.Feature`, which wires it into the pipeline automatically — but it works just as well standalone in any entry point.

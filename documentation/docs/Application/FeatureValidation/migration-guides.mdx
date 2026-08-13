@@ -1,0 +1,75 @@
+---
+title: Migration Guides
+sidebar_class_name: nav_session ra_utilities_validation
+---
+
+# Migration Guides
+
+## v10.0.0 → v10.0.1
+
+### Breaking Change: `ValidationErrors` → `ValidationError`
+
+`CreateValidationErrorResult` now maps failures to the renamed `ValidationError` type from `RA.Utilities.Core.Exceptions` **10.0.4** (the class represents a single error, hence the singular name). The `BadRequestException.Errors` array is now `ValidationError[]`.
+
+If you only consume `exception.Errors` and never name the old type, you don't need to change anything. Code that references `ValidationErrors` by name must be updated.
+
+### Why this change?
+
+- The rename aligns with `RA.Utilities.Core.Exceptions` 10.0.4, where `ValidationErrors` was renamed to `ValidationError` and its constructor now requires the error message.
+- The old collection-initializer pattern could produce errors without a message; the new constructor guarantees one.
+
+### What changed
+
+| | Before (10.0.0) | After (10.0.1) |
+|---|---|---|
+| Element type | `ValidationErrors` | `ValidationError` |
+| Constructor | parameterless + object initializer | `ValidationError(string errorMessage)` |
+| Message | optional | required |
+
+### Migration Steps
+
+#### 1. Rename references to the error type
+
+**Before:**
+
+```csharp
+ValidationErrors error = exception.Errors[0];
+var error = new ValidationErrors { ErrorMessage = "Something is wrong." };
+```
+
+**After:**
+
+```csharp
+ValidationError error = exception.Errors[0];
+var error = new ValidationError("Something is wrong.");
+```
+
+#### 2. Update the `RA.Utilities.Core.Exceptions` dependency
+
+The new payload type lives in `RA.Utilities.Core.Exceptions` **10.0.4+**. Upgrading this package pulls it in transitively; if you reference `Core.Exceptions` explicitly, update it too. See the [Core.Exceptions migration guide](../../core/RA.Utilities.Core.Exceptions/migration-guides) for the full rename details.
+
+### Behavior Change: null currency values now pass
+
+In 10.0.0, `MustMatchesCurrencyFormat()` rejected `null` values with the format error message (FluentValidation 12 runs `Must` on null). In 10.0.1, null passes the format rule — requiredness is the job of `NotNull()` / `NotEmpty()`.
+
+If you relied on the old behavior to reject null currencies, make the requirement explicit:
+
+**Before (10.0.0):**
+
+```csharp
+RuleFor(x => x.Currency).MustMatchesCurrencyFormat(); // null → error
+```
+
+**After (10.0.1):**
+
+```csharp
+RuleFor(x => x.Currency).NotNull().MustMatchesCurrencyFormat(); // null → error
+```
+
+### Bug Fix: duplicate failures from parallel validators
+
+10.0.0 shared a single `ValidationContext` across all validators in `ValidateAsync`, so each validator's result contained every validator's failures — one failing rule could appear once per registered validator (with a data race on top when validators were genuinely async). 10.0.1 creates a fresh context per validator. No migration is required; if you worked around the duplicates by de-duplicating failures, that workaround can be removed.
+
+## Full Changelog
+
+See the [package release notes](https://github.com/RedonAlla/RA.Utilities/blob/main/Application/RA.Utilities.Application.Validation/releasenotes.md) for a complete version history.
