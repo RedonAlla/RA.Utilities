@@ -93,35 +93,6 @@ builder.Services.AddHttpClientIntegration<IWeatherApiClient, WeatherApiClient, W
 
 ---
 
-## `AddOptionWithValidations<T>()`
-
-Registers a configuration class from `appsettings.json` and enables data annotation validation on application startup.
-
-#### Parameters
-
-| Parameter | Type | Description |
-| :--- | :--- | :--- |
-| `services` | [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection) | The [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection) to add the services to. |
-| `key` | `string?` | The configuration key to bind from. If `null`, it defaults to the class name of `T`. |
-| `T` | `class` | The options class to register and validate. |
-
-#### Example
-
-```csharp
-// In Program.cs
-using RA.Utilities.Integrations.Extensions;
-
-var builder = WebApplication.CreateBuilder(args);
-
-// Assumes a "MyFeature" section exists in appsettings.json
-builder.Services.AddOptionWithValidations<MyFeatureSettings>();
-
-// Or with an explicit key
-builder.Services.AddOptionWithValidations<MyFeatureSettings>("MyFeature");
-```
-
----
-
 ## `AddScopedHttpMessageHandler<T>()`
 
 Registers a [`DelegatingHandler`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.delegatinghandler) with a scoped lifetime in the DI container.

@@ -15,12 +15,12 @@ This approach is central to the .NET configuration pattern, where these classes 
 
 Let's break down the purpose by looking at the key classes you've provided:
 
-## 1. [`BaseApiSettings<T>`](./ProxySettings.md)
+## 1. [`BaseApiSettings<T>`](./BaseApiSettings.md)
 This abstract class is the cornerstone of the namespace.
 Its purpose is to provide a standardized, reusable foundation for any API integration's settings.
 
   * **Enforces Consistency**:
-  It ensures that every integration setting will have a common set of essential properties like `BaseUrl`, `Timeout`, and `MediaType`.
+  It ensures that every integration setting will have a common set of essential properties like `BaseUrl`, `Timeout`, and `Actions`.
   This is enforced by its implementation of the [`IIntegrationSettings`](../Abstractions/IIntegrationSettings.md) interface.
   * **Strongly-Typed Endpoints**:
   The generic parameter `T` for the `Actions` property is a clever design choice.

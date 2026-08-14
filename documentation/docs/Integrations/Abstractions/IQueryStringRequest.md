@@ -26,20 +26,35 @@ The client depends on the `IQueryStringRequest` abstraction, making it generic a
 
 
 ## ⚙️ How It Works
-The interface is designed for simplicity.
-A developer only needs to implement the `QueryStringValues` method, while the more complex `ToQueryString` logic is provided by a default interface implementation.
+The interface is designed for simplicity — and with v10.1.0 you usually don't implement it by hand at all:
+mark a `partial` class with [`[QueryParameters]`](../Attributes/QueryParametersAttribute.md) and the source generator implements the contract for you.
 
 | Method |	Return | Type	Description |
 | ------ | ------- | ---------------- |
-| **QueryStringValues()** |	`QueryParams` |	**(Must be implemented)**. Converts the properties of your request object into a collection of key-value pairs. |
+| **QueryStringValues()** |	`QueryParams` |	**(Implemented by the generator, or by hand)**. Converts the properties of your request object into a collection of key-value pairs. |
 | **ToQueryString(string action)** |	`string` |	**(Default implementation)**. Consumes the result of `QueryStringValues()` to build a complete, URL-encoded query string appended to the base `action` path. |
 
 ## 🚀 Example Usage
 Imagine an API endpoint `/users` that accepts `status` and `page` as query parameters.
 
-### 1. Define the Request Model
+### 1. Define the Request Model (generated)
 
-Create a class that implements `IQueryStringRequest`.
+Mark the class with `[QueryParameters]` — the generator maps each public property to a query parameter and skips `null` values.
+
+```csharp showLineNumbers
+using RA.Utilities.Integrations.Attributes;
+
+[QueryParameters]
+public partial class GetUsersRequest
+{
+    public string? Status { get; set; }
+    public int? Page { get; set; }
+}
+```
+
+### 1b. Define the Request Model (hand-written, also supported)
+
+Create a class that implements `IQueryStringRequest` manually.
 The `QueryStringValues` method maps the class properties to query parameters.
 
 ```csharp showLineNumbers
@@ -51,8 +66,14 @@ public class GetUsersRequest : IQueryStringRequest
     public QueryParams QueryStringValues()
     {
         var query = new QueryParams();
-        query.AddIfNotNull(nameof(Status), Status);
-        query.AddIfNotNull(nameof(Page), Page);
+        if (Status is not null)
+        {
+            query.Add(nameof(Status), Status);
+        }
+        if (Page is not null)
+        {
+            query.Add(nameof(Page), Page.Value.ToString());
+        }
         return query;
     }
 }

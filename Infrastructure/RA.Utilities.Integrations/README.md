@@ -29,12 +29,7 @@ Install-Package RA.Utilities.Integrations
 
 -   [`RA.Utilities.Core.Constants`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/RA.Utilities.Core.Constants/)
 -   [`RA.Utilities.Logging.Shared`](https://redonalla.github.io/RA.Utilities/nuget-packages/Logging/RA.Utilities.Logging.Shared/)
--   [`Microsoft.AspNetCore.Http`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http)
--   [`Microsoft.Extensions.DependencyInjection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection)
--   [`Microsoft.Extensions.Http`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.http)
--   [`Microsoft.Extensions.Logging.Abstractions`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.logging.abstractions)
--   [`Microsoft.Extensions.Options.ConfigurationExtensions`](https://www.nuget.org/packages/microsoft.extensions.options.configurationextensions/)
--   [`Microsoft.Extensions.Options.DataAnnotations`](https://www.nuget.org/packages/Microsoft.Extensions.Options.DataAnnotations)
+-   [`Microsoft.AspNetCore.App`](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/target-aspnetcore) shared framework reference
 
 ## Additional documentation
 
@@ -55,10 +50,9 @@ Define the settings for your integration. The section name (e.g., `"MyApi"`) wil
   "Integrations": {
     "MyApi": {
       "BaseUrl": "https://api.example.com/v1/",
-      "TimeoutSeconds": 60,
-      "DefaultHeaders": {
-        "X-Api-Key": "your-secret-api-key",
-        "Accept": "application/json"
+      "Timeout": 60,
+      "Actions": {
+        "GetProduct": "products/{0}"
       }
     }
   }
@@ -67,14 +61,19 @@ Define the settings for your integration. The section name (e.g., `"MyApi"`) wil
 
 ### 2. Create a Settings Class
 
-Create a class that inherits from `HttpClientSettings` to represent your configuration.
+Create a class that inherits from `BaseApiSettings<T>` to represent your configuration. The generic type argument holds the API action/endpoint names bound from the `Actions` configuration section.
 
 ```csharp
 using RA.Utilities.Integrations.Options;
 
-public class MyApiSettings : HttpClientSettings
+public class MyApiSettings : BaseApiSettings<MyApiActions>
 {
     // You can add custom properties specific to this integration if needed.
+}
+
+public class MyApiActions
+{
+    public string GetProduct { get; set; } = string.Empty;
 }
 ```
 
@@ -129,7 +128,7 @@ public class Product
 
 ### 4. Register the Client in `Program.cs`
 
-Use the `AddIntegrationHttpClient` extension method to register your typed client and bind its settings.
+Use the `AddHttpClientIntegration` extension method to register your typed client and bind its settings.
 
 ```csharp
 using RA.Utilities.Integrations.Extensions;
@@ -137,9 +136,8 @@ using RA.Utilities.Integrations.Extensions;
 var builder = WebApplication.CreateBuilder(args);
 
 // Register the typed client for "MyApi"
-builder.Services.AddIntegrationHttpClient<IMyApiClient, MyApiClient, MyApiSettings>(
-    builder.Configuration,
-    configSection: "Integrations:MyApi"
+builder.Services.AddHttpClientIntegration<IMyApiClient, MyApiClient, MyApiSettings>(
+    builder.Configuration.GetSection("Integrations:MyApi")
 );
 
 // ... other services
@@ -165,5 +163,56 @@ public class ProductService
     {
         return await _myApiClient.GetProductAsync(productId);
     }
+}
+```
+
+## Strongly-typed query & header parameters
+
+`BaseHttpClient` supports all four HTTP verbs — `GetAsync`, `PostAsync`, `PutAsync` and `DeleteAsync` — with optional, strongly-typed query string and header parameters. Mark a `partial` class with `[QueryParameters]` or `[HeaderParameters]` and a source generator implements the parameter contract for you, mapping each public property to a key-value pair. Null property values are skipped; non-nullable value types are always included. Use `[QueryParameterName("...")]` or `[HeaderParameterName("...")]` on a property to override the emitted key or header name.
+
+```csharp
+using RA.Utilities.Integrations;
+using RA.Utilities.Integrations.Attributes;
+
+[QueryParameters]
+public partial class GetProductsQuery
+{
+    [QueryParameterName("category_id")]
+    public int? CategoryId { get; init; }
+    public string? Search { get; init; }
+    public int[]? Ids { get; init; }
+}
+
+[HeaderParameters]
+public partial class RequestHeaders
+{
+    [HeaderParameterName("x-request-id")]
+    public string? XCorrelationId { get; init; }
+}
+
+public class Product
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+}
+
+public class ProductsClient : BaseHttpClient
+{
+    public ProductsClient(HttpClient httpClient, IOptions<IIntegrationSettings> settings)
+        : base(httpClient, settings)
+    {
+    }
+
+    public Task<Product?> GetProductsAsync(GetProductsQuery query) =>
+        GetAsync<Product>("products", query, new RequestHeaders { XCorrelationId = "..." });
+
+    public Task<Product?> CreateProductAsync(Product product) =>
+        PostAsync<Product, Product>("products", product);
+
+    public Task<Product?> UpdateProductAsync(Product product) =>
+        PutAsync<Product, Product>($"products/{product.Id}", product);
+
+    public Task DeleteProductAsync(int id) =>
+        DeleteAsync($"products/{id}");
 }
 ```

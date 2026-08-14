@@ -38,25 +38,4 @@ public interface IIntegrationSettings
     /// For more information, see the <see href="https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient.timeout?view=net-8.0">HttpClient.Timeout documentation</see>.
     /// </remarks>
     double Timeout { get; set; }
-
-    /// <summary>
-    /// Gets or sets the media type for the content.
-    /// </summary>
-    /// <value>
-    /// A string representing the media type, such as "application/json".
-    /// </value>
-    /// <remarks>
-    /// This is used to set the <c>Content-Type</c> header for requests that have a body.
-    /// </remarks>
-    string MediaType { get; set; }
-
-    /// <summary>
-    /// Gets or sets the encoding for the content.
-    /// Defaults to "utf-8".
-    /// </summary>
-    /// <value>A string representing the character encoding, such as "utf-8".</value>
-    /// <remarks>
-    /// This is used in conjunction with <see cref="RA.Utilities.Integrations.Abstractions.IIntegrationSettings.MediaType"/> to form the <c>Content-Type</c> header (e.g., "application/json; charset=utf-8").
-    /// </remarks>
-    string Encoding { get; set; }
 }

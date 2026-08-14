@@ -1,0 +1,154 @@
+---
+title: Migration Guides
+sidebar_position: 8
+---
+
+# Migration Guides
+
+## v10.0.1 → v10.1.0
+
+v10.1.0 reworks the `BaseHttpClient` request surface: headers are now strongly typed, all four HTTP verbs are supported, JSON is the fixed content type, and query/header parameter mappings can be generated at compile time. Most call sites need small mechanical updates; none of the changes affect how the HTTP requests themselves are sent.
+
+### Why this change?
+
+- Header dictionaries (`Dictionary<string, string>`) offered no compile-time safety and allowed typos in header names.
+- The settings model carried `MediaType`/`Encoding`, but JSON was the only supported format anyway.
+- Query parameter models had to hand-write the `IQueryStringRequest` contract; a source generator now does that work.
+
+### What changed
+
+| Aspect | v10.0.1 | v10.1.0 |
+|---|---|---|
+| HTTP verbs | `GetAsync`, `PostAsync`, `PutAsync` | + `DeleteAsync` |
+| Headers parameter | `Dictionary<string, string>?` | `IHeaderRequest?` |
+| Header classes | n/a | `[HeaderParameters]` + generated `IHeaderRequest` |
+| Query classes | hand-written `IQueryStringRequest` | `[QueryParameters]` + generated `IQueryStringRequest` (hand-written still works) |
+| Settings media type | `IIntegrationSettings.MediaType` / `Encoding` | removed — JSON only |
+| Typed responses | `Task<TResponse>` | `Task<TResponse?>` (null for empty bodies) |
+| `AddOptionWithValidations(...)` | available | removed |
+
+### Migration Steps
+
+#### 1. Replace header dictionaries with header classes
+
+**Before (v10.0.1):**
+
+```csharp
+var headers = new Dictionary<string, string>
+{
+    ["x-request-id"] = "trace-1"
+};
+
+var product = await client.GetAsync<Product>("products/1", headers: headers);
+```
+
+**After (v10.1.0):**
+
+```csharp
+using RA.Utilities.Integrations.Attributes;
+
+[HeaderParameters]
+public partial class RequestHeaders
+{
+    [HeaderParameterName("x-request-id")]
+    public string? XCorrelationId { get; init; }
+}
+
+var product = await client.GetAsync<Product>(
+    "products/1",
+    headers: new RequestHeaders { XCorrelationId = "trace-1" });
+```
+
+#### 2. Mark query parameter classes with `[QueryParameters]`
+
+Hand-written `IQueryStringRequest` implementations still work, but marked classes get the mapping generated:
+
+**Before (v10.0.1):**
+
+```csharp
+public class GetProductsQuery : IQueryStringRequest
+{
+    public int? CategoryId { get; set; }
+
+    public QueryParams QueryStringValues()
+    {
+        var query = new QueryParams();
+        if (CategoryId is not null)
+        {
+            query.Add(nameof(CategoryId), CategoryId.Value.ToString());
+        }
+        return query;
+    }
+}
+```
+
+**After (v10.1.0):**
+
+```csharp
+[QueryParameters]
+public partial class GetProductsQuery
+{
+    public int? CategoryId { get; set; }
+}
+```
+
+The class must be `partial` (and so must all of its containing types); the generator implements `IQueryStringRequest` on a generated partial part. Use `[QueryParameterName("...")]` to override a key.
+
+#### 3. Handle nullable typed responses
+
+**Before (v10.0.1):**
+
+```csharp
+Product product = await client.GetAsync<Product>("products/1");
+```
+
+**After (v10.1.0):**
+
+```csharp
+Product? product = await client.GetAsync<Product>("products/1");
+
+if (product is null)
+{
+    // The server returned a successful response with an empty body.
+}
+```
+
+#### 4. Remove media type / encoding from settings
+
+**Before (v10.0.1):**
+
+```csharp
+public class MyApiSettings : BaseApiSettings<MyApiActions>
+{
+    public override string MediaType { get; set; } = "application/json";
+}
+```
+
+**After (v10.1.0):**
+
+Delete the properties — request bodies are always sent as `application/json; charset=utf-8` and responses are always parsed as JSON.
+
+#### 5. Replace `AddOptionWithValidations` usage
+
+**Before (v10.0.1):**
+
+```csharp
+services.AddOptionWithValidations<MyFeatureSettings>();
+```
+
+**After (v10.1.0):**
+
+Register validated integration settings through [`AddHttpClientIntegration`](./Extensions/DependencyInjectionExtensions#addhttpclientintegration), or use the built-in options API directly:
+
+```csharp
+services.AddOptions<MyFeatureSettings>()
+    .BindConfiguration("MyFeature")
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+```
+
+---
+
+## Full Changelog
+
+See the [package release notes](https://github.com/RedonAlla/RA.Utilities/blob/main/Infrastructure/RA.Utilities.Integrations/releasenotes.md) for a complete version history.

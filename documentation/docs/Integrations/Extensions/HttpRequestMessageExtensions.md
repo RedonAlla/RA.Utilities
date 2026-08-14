@@ -16,42 +16,7 @@ particularly within the context of [`DelegatingHandlers`](https://learn.microsof
 
 ## Here's a breakdown of what each method does:
 
-### 1. AddSafe(this [`HttpRequestHeaders`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.headers.httprequestheaders) headers, ...):
-
-This method safely adds or updates a value in the request headers.
-It prevents exceptions that would normally occur if you try to add a header that already exists.
-Instead, it removes the old header and adds the new one.
-
-#### Input parameters
-| Parameter | Type | Description |
-| :--- | :--- | :--- |
-| **headers** | [`HttpRequestHeaders`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.headers.httprequestheaders) | The [`HttpRequestHeaders`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.headers.httprequestheaders) collection to modify. This is the extension method's target. |
-| **name** | `string` | The name of the header to add or update. |
-| **value** | `string` | The value of the header. |
-
-#### Output parameters
-| Parameter | Type | Description |
-| :--- | :--- | :--- |
-| **Returns** | [`HttpRequestMessage`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httprequestmessage) | The modified headers collection. |
-
-#### Example
-```csharp
-using System.Net.Http;
-using RA.Utilities.Integrations.Extensions;
-var request = new HttpRequestMessage();
-request.Headers.Add("X-Api-Key", "initial-key");
-
-// Safely update the existing header without causing an exception
-request.Headers.AddSafe("X-Api-Key", "updated-key");
-
-// Add a new header
-request.Headers.AddSafe("X-Custom-Header", "custom-value");
-
-// The header value will be "updated-key"
-Console.WriteLine(request.Headers.GetValues("X-Api-Key").First());
-```
-
-### 2. GetClientIpAddress(this [`HttpRequestOptions`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httprequestoptions) httpRequestOptions):
+### 1. GetClientIpAddress(this [`HttpRequestOptions`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httprequestoptions) httpRequestOptions):
 
 This method extracts the original client's IP address from the request context.
 Finding the client IP can be complex as it differs between hosting environments (e.g., IIS vs. self-hosted).

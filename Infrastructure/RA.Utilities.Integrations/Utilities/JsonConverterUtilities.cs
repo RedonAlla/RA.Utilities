@@ -33,39 +33,27 @@ internal static class JsonConverterUtilities
         request is null ? string.Empty : JsonSerializer.Serialize(request, DefaultJsonSerializerOptions);
 
     /// <summary>
-    /// Deserializes a string to an object of the specified type based on the media type.
+    /// Deserializes a JSON string to an object of the specified type.
     /// </summary>
     /// <typeparam name="TObject">The type of the object to deserialize to.</typeparam>
-    /// <param name="jsonString">The string content to deserialize.</param>
-    /// <param name="mediaType">The media type of the content. Currently, only "application/json" is supported.</param>
+    /// <param name="jsonString">The JSON string content to deserialize.</param>
     /// <returns>The deserialized object, or the default value for <typeparamref name="TObject"/> if the input string is null or whitespace.</returns>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when an unsupported media type is provided.</exception>
-    public static TObject? ToObject<TObject>(string jsonString, string mediaType)
+    public static TObject? ToObject<TObject>(string jsonString)
     {
         if (string.IsNullOrWhiteSpace(jsonString))
         {
             return default;
         }
 
-        return mediaType switch
-        {
-            MediaTypeNames.Application.Json => JsonSerializer.Deserialize<TObject>(jsonString, DefaultJsonSerializerOptions),
-            _ => throw new ArgumentOutOfRangeException(nameof(mediaType), $"Unsupported media type: {mediaType}"),
-        };
+        return JsonSerializer.Deserialize<TObject>(jsonString, DefaultJsonSerializerOptions);
     }
 
     /// <summary>
-    /// Converts the request body to a string content representation based on the specified media type.
+    /// Converts the request body to a JSON <see cref="StringContent"/> representation.
     /// </summary>
     /// <typeparam name="TObject">The type of the object to serialize.</typeparam>
     /// <param name="value">The object to serialize.</param>
-    /// <param name="mediaType">The media type for the content (e.g., "application/json").</param>
-    /// <param name="encoding">The character encoding for the content.</param>
-    /// <returns>A string representation of the request body, suitable for use as HTTP content.</returns>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when an unsupported media type is provided.</exception>
-    public static StringContent ToStringContent<TObject>(TObject value, string mediaType, Encoding encoding) where TObject : class => mediaType switch
-    {
-        MediaTypeNames.Application.Json => new StringContent(ToJsonString(value), encoding, mediaType),
-        _ => throw new ArgumentOutOfRangeException(nameof(mediaType)),
-    };
+    /// <returns>A JSON string representation of the request body, suitable for use as HTTP content.</returns>
+    public static StringContent ToStringContent<TObject>(TObject value) where TObject : class =>
+        new(ToJsonString(value), Encoding.UTF8, MediaTypeNames.Application.Json);
 }

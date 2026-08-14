@@ -12,7 +12,7 @@ where it would typically be populated from a section in `appsettings.json`.
 
 ### 1. Enforces a Standard Contract: 
 By implementing the [`IIntegrationSettings`](../Abstractions/IIntegrationSettings.md) interface,
-it guarantees that any concrete settings class inheriting from it will have a consistent set of essential properties required to configure an [`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient), such as `BaseUrl`, `Timeout`, and `MediaType`.
+it guarantees that any concrete settings class inheriting from it will have a consistent set of essential properties required to configure an [`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient), such as `BaseUrl`, `Timeout`, and strongly-typed `Actions`.
 This allows your integration helpers and [`HttpClientHandler`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclienthandler)
 to work with any integration in a generic way.
 
@@ -31,7 +31,7 @@ When these settings are bound from configuration at application startup, the .NE
 This ensures that the application will fail fast with a clear error if the configuration is missing or invalid, preventing potential runtime errors.
 
 ### 4. Reduces Boilerplate Code:
-It provides sensible defaults for common settings like `Timeout`, `MediaType`, and `Encoding`.
+It provides sensible defaults for common settings like `Timeout` and `UseProxy`.
 This means developers creating a new settings class for a specific API only need to define what's unique to that integration, inheriting all the common functionality.
 
 
@@ -47,8 +47,8 @@ instances for various API integrations.
 | **Actions** | `T` |	A container object holding the strongly-typed endpoint paths for the specific API. This is a required property.	| `null` |
 | **UseProxy** | `bool` |	A flag indicating whether requests should be sent through a configured proxy.	| `false` |
 | **Timeout** | `double` |	The request timeout in seconds. The value must be between 1 and 600.	| `200` |
-| **MediaType** | `string` |	The default Content-Type header value for requests (e.g., for POST/PUT bodies).	| `"application/json"` |
-| **Encoding** | `string` |	The default character encoding for request content.	| `"utf-8"` |
+
+Since v10.1.0, request bodies are always serialized as JSON — the class no longer exposes `MediaType` or `Encoding` properties.
 
 
 In essence, `BaseApiSettings<T>` is the cornerstone of your `RA.Utilities.Integrations` package.

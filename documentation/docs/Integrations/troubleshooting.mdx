@@ -1,0 +1,135 @@
+---
+title: Troubleshooting & FAQ
+sidebar_position: 9
+---
+
+# Troubleshooting & FAQ
+
+## Common Issues
+
+### Build error RPIG001: "must be partial"
+
+**Cause**: A class marked with `[QueryParameters]` or `[HeaderParameters]` is not `partial`, or it is nested inside a type that is not `partial`. The generator emits a partial declaration, which requires every declaration part of the type (and all of its containers) to carry the `partial` modifier.
+
+**Fix**:
+
+```csharp
+// ❌ Does not compile
+[QueryParameters]
+public class GetProductsQuery { ... }
+
+// ✅ Correct
+[QueryParameters]
+public partial class GetProductsQuery { ... }
+
+// ❌ Also does not compile — the containing type must be partial too
+public class Models
+{
+    [QueryParameters]
+    public partial class GetProductsQuery { ... }
+}
+
+// ✅ Correct
+public partial class Models
+{
+    [QueryParameters]
+    public partial class GetProductsQuery { ... }
+}
+```
+
+### Build error NETSDK1005 when building with `-p:TargetFramework=net10.0`
+
+**Cause**: A global `TargetFramework` property overrides the generator project's `netstandard2.0` target, and its restored assets don't contain that target.
+
+**Fix**: This is already handled by the package — the `RA.Utilities.Integrations.Generators` project multi-targets `netstandard2.0;net10.0` and consumers pin the netstandard2.0 leg via `SetTargetFramework`. If you see this error when referencing the generator project directly from source, add `SetTargetFramework="TargetFramework=netstandard2.0"` to your analyzer `ProjectReference`.
+
+### My header name contains a dash (e.g. `x-request-id`)
+
+**Cause**: The default header name is the property name, and C# identifiers cannot contain dashes.
+
+**Fix**: Override the emitted name with `[HeaderParameterName]`:
+
+```csharp
+[HeaderParameters]
+public partial class RequestHeaders
+{
+    [HeaderParameterName("x-request-id")]
+    public string? XCorrelationId { get; init; }
+}
+```
+
+The same applies to query string keys with `[QueryParameterName]`.
+
+### `InvalidOperationException: Misused header name` for `Content-Type` / `Accept`
+
+**Cause**: `Content-Type` is a *content* header, not a request header — `HttpRequestMessage.Headers` rejects it. Request bodies are always sent as `application/json; charset=utf-8` by `PostAsync`/`PutAsync`, so `Content-Type` is managed for you. For `Accept`, configure the typed client instead:
+
+```csharp
+services.AddHttpClientIntegration<IMyApiClient, MyApiClient, MyApiSettings>(configSection)
+    .ConfigureHttpClient(client => client.DefaultRequestHeaders.Add("Accept", "application/json"));
+```
+
+### Why do my `int`/`bool` properties always appear in the query string?
+
+Non-nullable value types have no null state, so the generator always emits them (`Featured=false`, `Score=0`, ...). Make the property nullable to treat it as optional:
+
+```csharp
+[QueryParameters]
+public partial class GetProductsQuery
+{
+    public int? CategoryId { get; init; }  // omitted when null
+    public bool? Featured { get; init; }   // omitted when null
+}
+```
+
+Only `null` values are skipped — empty strings are skipped as well when building the final query string.
+
+### `ToQueryString` is not available on my hand-written `IQueryStringRequest` class
+
+**Cause**: `ToQueryString(string action)` is a *default interface member* — C# only exposes it through interface-typed references. Classes generated from `[QueryParameters]` include a convenience `ToQueryString` on the class itself; hand-written implementations don't.
+
+**Fix**: Either call it through the interface, or use `QueryUtilities`:
+
+```csharp
+// Through the interface
+IQueryStringRequest request = myQuery;
+string uri = request.ToQueryString("products");
+
+// Or directly
+string uri = QueryUtilities.ToQueryString("products", myQuery);
+```
+
+### My class already implements `IQueryStringRequest` but nothing is generated
+
+**Cause**: The generator deliberately skips classes that already provide the mapping — either hand-written, inherited from a base class, or already declaring a `QueryStringValues`/`ToQueryString` member. This prevents duplicate member errors.
+
+**Fix**: Nothing to do. Remove the hand-written implementation and the `[QueryParameters]` attribute takes over.
+
+### The generated code does not appear in IntelliSense
+
+**Cause**: The generator is a build-time analyzer; stale IDE caches or incremental build state can hide the generated partial parts.
+
+**Fix**: Rebuild the project (`dotnet build`), and in the IDE use *Restart/Reload project* if needed. The generated files are also visible in `obj/Debug/net10.0/generated/` when `<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>` is enabled.
+
+### Duplicate header keys from a dictionary property
+
+**Cause**: `[HeaderParameters]` flattens dictionary properties, using each entry's key as the header name. If a dictionary key matches another property's header name, the last one written wins (headers use indexer assignment, so no exception is thrown).
+
+**Fix**: Avoid overlapping names between properties and dictionary keys.
+
+---
+
+## Known Limitations
+
+- **Content headers cannot be set** through `[HeaderParameters]` — `Content-Type`, `Content-Length`, etc. are rejected by `HttpRequestMessage.Headers`. Use `ConfigureHttpClient` for `Accept`-style defaults.
+- **Enumerable header properties are flattened to strings**: a non-dictionary collection property on a header class is formatted with `Convert.ToString` (e.g. `System.Int32[]`). Use query parameter classes for repeated values; headers use dictionaries.
+- **Query keys are case-sensitive and emitted verbatim**: the generator does not convert naming conventions (camelCase, snake_case). Use `[QueryParameterName]` / `[HeaderParameterName]` for exact control.
+- **The generator supports classes and records**: `struct` types cannot be marked (the attribute targets classes only), and all containing types must be `partial`.
+
+---
+
+## Performance Tips
+
+- **Marked classes generate zero-reflection code** — the mapping is plain C# compiled into your assembly.
+- **Reuse parameter class instances** where sensible: they are plain objects with no per-call state, and the generated mapping performs no allocation beyond the `QueryParams`/dictionary it returns.
+- **Prefer `IQueryStringRequest`/`IHeaderRequest` parameters on your own client methods** rather than `QueryParams`/`Dictionary<string, string>`, to keep the strongly-typed flow end to end.

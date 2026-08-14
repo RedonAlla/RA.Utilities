@@ -20,7 +20,7 @@ public static class HttpRequestMessageExtensions
     /// <returns></returns>
     public static string GetClientIpAddress(this HttpRequestOptions httpRequestOptions)
     {
-        Dictionary<string, object> options = httpRequestOptions!.ToDictionary(header => header.Key, header => header.Value)!;
+        var options = httpRequestOptions.ToDictionary(header => header.Key, header => header.Value);
 
         if (options.TryGetValue(HttpContext, out object? value))
         {

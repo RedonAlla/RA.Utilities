@@ -31,16 +31,25 @@ This interface defines a standardized contract for configuration classes that pr
 | -------- | ----- | ------------ |
 | **ApiKey** |	`string` |	Gets or sets the API key value. |
 
-## ⚙️ How It Would Fit In
-The `RA.Utilities.Integrations` package already has a base `HttpClientSettings` class which can handle API keys through its `DefaultHeaders` dictionary.
+## ⚙️ How It Fits In
+`IApiKeySettings` is consumed by the package's [`WithApiKeyFromSettingsHandler<TSettings>`](../Extensions/DependencyInjectionExtensions.md#withapikeyfromsettingshandlertsettings) fluent method, which injects the API key from your settings object into the `X-Api-Key` header of every request:
 
-```json
-"DefaultHeaders": {
-  "X-Api-Key": "your-secret-api-key"
+```csharp
+public class MyApiSettings : BaseApiSettings<MyApiActions>, IApiKeySettings
+{
+    public string? ApiKey { get; set; }
 }
+
+services.AddHttpClientIntegration<IMyApiClient, MyApiClient, MyApiSettings>(configSection)
+    .WithApiKeyFromSettingsHandler<MyApiSettings>();
 ```
 
-An `IApiKeySettings` interface would likely extend this concept to provide a more strongly-typed way to handle API keys.
+For a static API key you can also use [`WithApiKey(...)`](../Extensions/DependencyInjectionExtensions.md#withapikey):
+
+```csharp
+services.AddHttpClientIntegration<IMyApiClient, MyApiClient, MyApiSettings>(configSection)
+    .WithApiKey("your-secret-api-key");
+```
 
 ## 🧠 Summary
-In short, `IApiKeySettings` would be an abstraction to make API key management more standardized, secure, and self-documenting within your integration configurations.
+In short, `IApiKeySettings` standardizes API key management so that reusable handlers can authenticate any integration from its settings — self-documenting and consistent across your integrations.

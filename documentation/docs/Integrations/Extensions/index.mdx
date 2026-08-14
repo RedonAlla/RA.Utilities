@@ -30,8 +30,6 @@ integrations within the .NET dependency injection container.
 This class provides utility methods for working with [`HttpRequestMessage`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httprequestmessage)
 and its headers, which are typically used inside a [`DelegatingHandler`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.delegatinghandler).
 
-  * **`AddSafe(...)`**:
-  A convenient helper to safely add or update an HTTP header, preventing exceptions if the header already exists.
   * **`GetClientIpAddress(...)`**:
   A useful utility for extracting the client's IP address from the request context, which is invaluable for logging and auditing purposes within a handler.
   * **`ToDictionary(...)`**:

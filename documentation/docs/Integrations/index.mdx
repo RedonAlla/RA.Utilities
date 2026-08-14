@@ -16,49 +16,279 @@ import LogoSvg from '../../../Assets/Images/http.svg';
 [![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Integrations.svg?logo=nuget&label=NuGet)](https://www.nuget.org/packages/RA.Utilities.Integrations/)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Integrations.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Integrations/)
 [![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
-[![Publish NuGet](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml/badge.svg)](https://github.com/RedonAlla/RA.Utilities/actions/runs/19618407979)
+[![Publish NuGet](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml/badge.svg)](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml)
 [![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?label=License&logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
 
-The primary purpose of the `RA.Utilities.Integrations` package is to simplify and standardize how you make HTTP calls to external APIs in your .NET applications.
+`RA.Utilities.Integrations` simplifies and standardizes how you make HTTP calls to external APIs in .NET applications.
+It builds on Microsoft's recommended [`IHttpClientFactory`](https://learn.microsoft.com/en-us/dotnet/core/extensions/httpclient-factory) pattern and provides a reusable [`BaseHttpClient`](./BaseHttpClient) with all four HTTP verbs, strongly-typed query string and header parameters backed by a compile-time source generator, and a fluent registration pipeline.
 
-It builds on top of Microsoft's recommended [`IHttpClientFactory`](https://learn.microsoft.com/en-us/dotnet/core/extensions/httpclient-factory)
-pattern to provide a structured, reusable, and resilient way to manage these integrations.
+## 🎯 Purpose
 
-Here are the key problems it aims to solve:
+The package solves the problems that come up in every external API integration:
 
-* **Standardizes Configuration**: It allows you to centralize all your HTTP client settings (like Base URL, timeouts, and API keys) in your `appsettings.json` file, keeping configuration separate from your code.
-* **Simplifies Registration**: It provides a single extension method, [`AddHttpClientIntegration`](./Extensions/DependencyInjectionExtensions.md#addhttpclientintegration), which handles all the boilerplate of registering a typed [`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient), binding the configuration, and adding common policies like logging and retries.
-* **Promotes Best Practices**: It encourages using typed [`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient), which gives you compile-time safety and better IntelliSense when making API calls.
-* **Improves Resilience**: It comes with built-in support for transient fault handling using a default Polly retry policy (with exponential backoff), making your application more robust against temporary network issues.
+- **Standardizes Configuration** — centralize base URL, timeouts, and API keys in `appsettings.json` via [`BaseApiSettings<T>`](./Options/BaseApiSettings), keeping configuration out of your code.
+- **Simplifies Registration** — one extension method, [`AddHttpClientIntegration`](./Extensions/DependencyInjectionExtensions#addhttpclientintegration), binds and validates configuration and registers a typed [`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient).
+- **Provides Compile-Time Safety** — `[QueryParameters]` and `[HeaderParameters]` classes are mapped to request parameters by a source generator, so typos in keys, wrong types, and missing mappings fail at build time instead of runtime.
+- **Covers the Full CRUD Surface** — `GetAsync`, `PostAsync`, `PutAsync`, and `DeleteAsync` share one consistent request pipeline with JSON serialization built in.
+- **Improves Resilience** — typed clients via `IHttpClientFactory` plus optional logging, header forwarding, API key, and proxy handlers for robust, observable integrations.
 
-In short, this package provides a "batteries-included" solution for integrating with external services, saving you from writing repetitive setup code and ensuring all your API clients are configured consistently and correctly.
+### ✨ Key Features
 
-## 🛠️ Installation
+- **Strongly-typed query strings** — `[QueryParameters]` + `[QueryParameterName]` attributes with generated `IQueryStringRequest` implementations
+- **Strongly-typed headers** — `[HeaderParameters]` + `[HeaderParameterName]` attributes with generated `IHeaderRequest` implementations
+- **Null-safe requests** — query/header parameters are optional; `null` never throws
+- **JSON in, JSON out** — bodies serialized as `application/json; charset=utf-8`, responses deserialized with camel-case naming
+- **Incremental source generator** — shipped inside the package as an analyzer, zero reflection at runtime
 
-You can install the package via the .NET CLI:
+---
+
+## 🛠️ Getting Started
+
+### Prerequisites
+
+- **.NET 10.0** or later
+- An ASP.NET Core application (the package references the `Microsoft.AspNetCore.App` shared framework)
+
+### Installation
+
+**.NET CLI**
 
 ```bash
 dotnet add package RA.Utilities.Integrations
 ```
 
-Or through the NuGet Package Manager console:
+**Package Manager Console**
 
 ```powershell
 Install-Package RA.Utilities.Integrations
 ```
 
+**PackageReference (csproj)**
+
+```xml
+<PackageReference Include="RA.Utilities.Integrations" Version="10.1.0" />
+```
+
+### Hello World
+
+Define your parameter classes, build a client, and call an API:
+
+```csharp showLineNumbers
+using RA.Utilities.Integrations;
+using RA.Utilities.Integrations.Attributes;
+
+[QueryParameters]
+public partial class GetProductsQuery
+{
+    public int? CategoryId { get; init; }
+    public string? Search { get; init; }
+}
+
+[HeaderParameters]
+public partial class RequestHeaders
+{
+    [HeaderParameterName("x-request-id")]
+    public string? XCorrelationId { get; init; }
+}
+
+// Configured and injected via IHttpClientFactory; see ⚙️ Configuration below.
+public class ProductsClient : BaseHttpClient
+{
+    public ProductsClient(HttpClient httpClient, IOptions<IIntegrationSettings> settings)
+        : base(httpClient, settings)
+    {
+    }
+
+    public Task<Product?> GetProductsAsync(GetProductsQuery query) =>
+        GetAsync<Product>("products", query, new RequestHeaders { XCorrelationId = Guid.NewGuid().ToString() });
+
+    public Task<Product?> CreateProductAsync(Product product) =>
+        PostAsync<Product, Product>("products", product);
+
+    public Task<Product?> UpdateProductAsync(Product product) =>
+        PutAsync<Product, Product>($"products/{product.Id}", product);
+
+    public Task DeleteProductAsync(int id) =>
+        DeleteAsync($"products/{id}");
+}
+```
+
+---
+
+## 🧠 Core Concepts
+
+The package is built from a few cooperating pieces:
+
+| Component | Role | Example |
+|---|---|---|
+| [`BaseHttpClient`](./BaseHttpClient) | One pipeline for `GET`, `POST`, `PUT`, and `DELETE` with JSON serialization | `GetAsync<Product>("products", query)` |
+| [`[QueryParameters]`](./Attributes/QueryParametersAttribute) | Marker for strongly-typed query string classes (generator implements `IQueryStringRequest`) | `?CategoryId=5&Search=widgets` |
+| [`[HeaderParameters]`](./Attributes/HeaderParametersAttribute) | Marker for strongly-typed header classes (generator implements `IHeaderRequest`) | `x-request-id: trace-1` |
+| [`QueryUtilities`](./Utilities/QueryUtilities) | URL-encodes a `QueryParams` collection (skips empty values, `?` prefix) | `"?page=2"` |
+| [`AddHttpClientIntegration`](./Extensions/DependencyInjectionExtensions#addhttpclientintegration) | Registers a typed client, binds + validates settings | `services.AddHttpClientIntegration<...>(section)` |
+| [`BaseApiSettings<T>`](./Options/BaseApiSettings) | Validated settings base class with strongly-typed endpoint names | `BaseUrl`, `Timeout`, `Actions` |
+
+### How they work together
+
+```
+appsettings.json ──► BaseApiSettings<T> ──► AddHttpClientIntegration ──► typed HttpClient
+                                                                           │
+[QueryParameters] class ──(source generator)──► IQueryStringRequest ──────┤
+[HeaderParameters] class ──(source generator)──► IHeaderRequest ──────────┤
+                                                                           ▼
+                          BaseHttpClient.GetAsync/PostAsync/PutAsync/DeleteAsync
+                                                                           │
+                                          ┌─ QueryUtilities (URL encoding)
+                                          └─ JsonConverterUtilities (JSON body)
+```
+
+### Terminology
+
+- **Strongly-typed parameters**: Query/header values described as C# classes instead of `Dictionary<string, string>` — property names are checked at compile time and surfaced by IntelliSense.
+- **Source generator**: A Roslyn incremental generator shipped inside the NuGet package (under `analyzers/`) that emits partial class implementations at compile time.
+- **Typed client**: A class that receives a configured `HttpClient` from `IHttpClientFactory` and exposes strongly-typed methods.
+
+---
+
+## 📖 How-To Guides
+
+### Call all four HTTP verbs
+
+```csharp showLineNumbers
+Product? product = await client.GetAsync<Product>(
+    "products/1",
+    queryString: new GetProductsQuery { CategoryId = 5 },
+    headers: new RequestHeaders { XCorrelationId = "trace-1" });
+
+Product? created = await client.PostAsync<Product, Product>("products", product);
+
+Product? updated = await client.PutAsync<Product, Product>("products/1", product);
+
+await client.DeleteAsync("products/1");
+```
+
+### Use repeated query keys and dictionaries
+
+```csharp showLineNumbers
+[QueryParameters]
+public partial class FilterQuery
+{
+    public int[] Ids { get; init; } = [];                    // ?Ids=1&Ids=2
+    public Dictionary<string, string> Filters { get; init; } // key of each entry becomes the query key
+}
+
+var query = new FilterQuery
+{
+    Ids = [1, 2],
+    Filters = new() { ["brand"] = "acme" }
+};
+// GET /products?Ids=1&Ids=2&brand=acme
+```
+
+### Override emitted keys and header names
+
+```csharp showLineNumbers
+[QueryParameters]
+public partial class PagedQuery
+{
+    [QueryParameterName("page_size")]
+    public int PageSize { get; init; }
+}
+
+[HeaderParameters]
+public partial class RequestHeaders
+{
+    [HeaderParameterName("x-request-id")]
+    public string? XCorrelationId { get; init; }
+}
+```
+
+### Register a typed client with validation
+
+See the full walkthrough in [`AddHttpClientIntegration`](./Extensions/DependencyInjectionExtensions#addhttpclientintegration).
+
+### Add logging, API key, and proxy support
+
+```csharp showLineNumbers
+services.AddHttpClientIntegration<IMyApiClient, MyApiClient, MyApiSettings>(configSection)
+    .WithHttpLoggingHandler()
+    .WithApiKey("your-secret-api-key")
+    .WithProxyFromSettings<MyApiSettings>(settings => settings.Proxy!);
+```
+
+---
+
+## ⚙️ Configuration
+
+Settings live in `appsettings.json` and are bound + validated by `AddHttpClientIntegration`:
+
+```json
+{
+  "Integrations": {
+    "MyApi": {
+      "BaseUrl": "https://api.example.com/v1/",
+      "Timeout": 60,
+      "Actions": {
+        "GetProduct": "products/{0}"
+      }
+    }
+  }
+}
+```
+
+```csharp showLineNumbers
+using RA.Utilities.Integrations.Extensions;
+using RA.Utilities.Integrations.Options;
+
+public class MyApiSettings : BaseApiSettings<MyApiActions> { }
+public class MyApiActions
+{
+    public string GetProduct { get; set; } = string.Empty;
+}
+
+services.AddHttpClientIntegration<IMyApiClient, MyApiClient, MyApiSettings>(
+    builder.Configuration.GetSection("Integrations:MyApi"));
+```
+
+`BaseUrl` and `Actions` are required and validated at startup ([`BaseApiSettings<T>`](./Options/BaseApiSettings) details).
+
+---
+
 ## 🔗 Dependencies
 
 - [`RA.Utilities.Core.Constants`](../core/RA.Utilities.Core.Constants/index.mdx)
 - [`RA.Utilities.Logging.Shared`](../Logging/RA.Utilities.Logging.Shared/index.mdx)
-- [`Microsoft.AspNetCore.Http`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http)
-- [`Microsoft.Extensions.DependencyInjection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection)
-- [`Microsoft.Extensions.Http`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.http)
-- [`Microsoft.Extensions.Logging.Abstractions`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.logging.abstractions)
-- [`Microsoft.Extensions.Options.ConfigurationExtensions`](https://www.nuget.org/packages/microsoft.extensions.options.configurationextensions/)
-- [`Microsoft.Extensions.Options.DataAnnotations`](https://www.nuget.org/packages/Microsoft.Extensions.Options.DataAnnotations)
+- [`Microsoft.AspNetCore.App`](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/target-aspnetcore) shared framework reference
 
-<br />
-<br />
+---
+
+## ✨ Available Components
 
 <DocCardList />
+
+---
+
+## 🙌 Contributing & Support
+
+### Found a bug or have a suggestion?
+
+- **GitHub Issues**: [Report a bug or request a feature](https://github.com/RedonAlla/RA.Utilities/issues)
+- **Discussions**: [Ask questions or start a discussion](https://github.com/RedonAlla/RA.Utilities/discussions)
+
+### Contributing
+
+Contributions are welcome! Please follow the standard workflow:
+
+1. **Fork** the [RA.Utilities repository](https://github.com/RedonAlla/RA.Utilities)
+2. **Create a branch** from `main` with a descriptive name (e.g., `feature/new-integration-handler`)
+3. **Make your changes** — ensure XML doc comments are included for any new public API
+4. **Submit a pull request** to the `main` branch with a clear description
+
+### Links
+
+| Resource | URL |
+|---|---|
+| **NuGet** | [RA.Utilities.Integrations](https://www.nuget.org/packages/RA.Utilities.Integrations/) |
+| **Source** | [GitHub — RedonAlla/RA.Utilities](https://github.com/RedonAlla/RA.Utilities) |
+| **License** | [MIT](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file) |
+| **Build Status** | [GitHub Actions](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml) |

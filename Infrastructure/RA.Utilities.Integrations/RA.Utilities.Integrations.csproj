@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-		<Version>10.0.1</Version>
+		<Version>10.1.0</Version>
 		<Title>HTTP Client Integrations</Title>
 		<Description>A utility library to simplify and standardize HTTP client calls in .NET applications. It builds upon `IHttpClientFactory` to provide a structured way to configure and use typed HTTP clients for various integrations.</Description>
 		<PackageTags>RA;Core;Integrations;Http Client</PackageTags>
@@ -16,17 +16,23 @@
 	</ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Http" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
-    <PackageReference Include="Microsoft.Extensions.Http" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
-    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
-    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../../Core/RA.Utilities.Core.Constants/RA.Utilities.Core.Constants.csproj" />
     <ProjectReference Include="../../Logging/RA.Utilities.Logging.Shared/RA.Utilities.Logging.Shared.csproj" />
+    <ProjectReference Include="../RA.Utilities.Integrations.Generators/RA.Utilities.Integrations.Generators.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false"
+                      SetTargetFramework="TargetFramework=netstandard2.0" />
+
+    <!-- Ships the source generator inside the package so that consumers of the NuGet package
+         get it as a build-time analyzer. -->
+    <None Include="../RA.Utilities.Integrations.Generators/bin/$(Configuration)/netstandard2.0/RA.Utilities.Integrations.Generators.dll"
+          Pack="true"
+          PackagePath="analyzers/dotnet/cs/"
+          Visible="false" />
   </ItemGroup>
 
 </Project>

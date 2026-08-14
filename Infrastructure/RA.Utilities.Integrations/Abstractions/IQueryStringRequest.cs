@@ -1,5 +1,5 @@
-using RA.Utilities.Integrations.Extensions;
 using RA.Utilities.Integrations.Models;
+using RA.Utilities.Integrations.Utilities;
 
 namespace RA.Utilities.Integrations.Abstractions;
 
@@ -26,5 +26,5 @@ public interface IQueryStringRequest
     /// A URL-encoded query string, prefixed with a question mark ('?'), or an empty string if there are no parameters.
     /// For example: "?key1=value1&amp;key2=value2".
     /// </returns>
-    string ToQueryString(string action) => action + QueryStringValues()?.ToQueryString();
+    string ToQueryString(string action) => action + QueryUtilities.ToQueryString(QueryStringValues());
 }

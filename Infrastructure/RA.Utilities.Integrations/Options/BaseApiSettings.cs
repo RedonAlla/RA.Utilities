@@ -1,6 +1,5 @@
 using System;
 using System.ComponentModel.DataAnnotations;
-using System.Net.Mime;
 using RA.Utilities.Integrations.Abstractions;
 
 namespace RA.Utilities.Integrations.Options;
@@ -53,10 +52,4 @@ public abstract class BaseApiSettings<T> : IIntegrationSettings
     /// </remarks>
     [Range(1, 600, ErrorMessage = "TimeoutSeconds must be between 1 and 600.")]
     public double Timeout { get; set; } = 200;
-
-    /// <inheritdoc/>
-    public string MediaType { get; set; } = MediaTypeNames.Application.Json;
-
-    /// <inheritdoc/>
-    public string Encoding { get; set; } = "utf-8";
 }

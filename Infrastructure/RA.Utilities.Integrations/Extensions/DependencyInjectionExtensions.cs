@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using RA.Utilities.Integrations.Abstractions;
 using RA.Utilities.Integrations.DelegatingHandlers;
+using RA.Utilities.Integrations.Models;
 
 namespace RA.Utilities.Integrations.Extensions;
 
@@ -47,20 +48,6 @@ public static class DependencyInjectionExtensions
                 httpClient.BaseAddress = settings.BaseUrl;
                 httpClient.Timeout = TimeSpan.FromSeconds(settings.Timeout);
             });
-    }
-
-    /// <summary>
-    /// Registers a configuration instance of <typeparamref name="T"/> with DataAnnotations validations on startup,
-    /// if configuration does not exists.
-    /// </summary>
-    /// <param name="services"><see cref="IServiceCollection"/></param>
-    /// <param name="key">If parameter key it is empty it will try to read key by class name.</param>
-    public static void AddOptionWithValidations<T>(this IServiceCollection services, string? key = null) where T : class
-    {
-        services.AddOptions<T>()
-                .BindConfiguration(key ?? typeof(T).Name) // 👈 Bind the key section
-                .ValidateDataAnnotations()                // 👈 Enable validation
-                .ValidateOnStart();                       // 👈 Validate on app start
     }
 
     /// <summary>

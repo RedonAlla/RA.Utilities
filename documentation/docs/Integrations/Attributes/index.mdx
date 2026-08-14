@@ -1,0 +1,33 @@
+---
+title: Attributes
+sidebar_position: 4
+---
+
+```bash
+Namespace: RA.Utilities.Integrations.Attributes
+```
+
+The `RA.Utilities.Integrations.Attributes` namespace contains the marker and configuration attributes that drive the package's compile-time code generation.
+
+Two class-level attributes — `[QueryParameters]` and `[HeaderParameters]` — mark `partial` classes whose properties should be mapped into a URL query string or into HTTP request headers. The `RA.Utilities.Integrations.Generators` source generator (shipped inside the package as an analyzer) implements the corresponding contract on a generated partial part:
+
+| Attribute | Generated contract | Maps to |
+|---|---|---|
+| [`QueryParametersAttribute`](./QueryParametersAttribute) | `IQueryStringRequest` | `?key=value&...` query string |
+| [`HeaderParametersAttribute`](./HeaderParametersAttribute) | `IHeaderRequest` | HTTP request headers |
+
+Two property-level attributes override the emitted key or header name:
+
+| Attribute | Default | Example |
+|---|---|---|
+| [`QueryParameterNameAttribute`](./QueryParameterNameAttribute) | property name | `[QueryParameterName("category_id")]` → `?category_id=5` |
+| [`HeaderParameterNameAttribute`](./HeaderParameterNameAttribute) | property name | `[HeaderParameterName("x-request-id")]` → `x-request-id: ...` |
+
+All attributes are sealed, cannot be inherited (`Inherited = false`), and can be applied at most once per target (`AllowMultiple = false`).
+
+<br />
+<br />
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />

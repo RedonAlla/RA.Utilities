@@ -1,11 +1,16 @@
 using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using RA.Utilities.Integrations.Extensions;
+using RA.Utilities.Logging.Shared.Constants;
 using RA.Utilities.Logging.Shared.Models.HttpLog;
 
 namespace RA.Utilities.Integrations.DelegatingHandlers;
@@ -37,7 +42,9 @@ public class RequestResponseLoggingHandler : DelegatingHandler
         ArgumentNullException.ThrowIfNull(httpContextAccessor);
 
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _traceIdentifier = httpContextAccessor.HttpContext.TraceIdentifier;
+
+        _traceIdentifier = httpContextAccessor.HttpContext?.TraceIdentifier
+            ?? Environment.CurrentManagedThreadId.ToString(CultureInfo.InvariantCulture);
     }
 
     /// <summary>
@@ -53,15 +60,16 @@ public class RequestResponseLoggingHandler : DelegatingHandler
         #region LogRequest
         var requestDto = new HttpRequestLogTemplate
         {
+            RequestId = GetRequestId(request.Headers),
             TraceIdentifier = _traceIdentifier,
-            Schema = request.RequestUri?.Scheme,
+            Scheme = request.RequestUri?.Scheme,
             Host = request?.RequestUri?.Host,
             Method = request?.Method?.Method,
             Path = request?.RequestUri?.AbsoluteUri,
             QueryString = request?.RequestUri?.Query,
-            RemoteAddress = request!.Options!.GetClientIpAddress(),
-            RequestHeaders = request.Headers.ToDictionary(),
-            RequestBody = await GetHttpContent(request.Content, cancellationToken)
+            RemoteAddress = request?.Options?.GetClientIpAddress() ?? string.Empty,
+            RequestHeaders = request?.Headers.ToDictionary(),
+            RequestBody = await GetHttpContent(request?.Content, cancellationToken)
         };
 
         _logger.LogInformation("HttpClient Request: {@RequestDto}", requestDto);
@@ -70,9 +78,10 @@ public class RequestResponseLoggingHandler : DelegatingHandler
         #region LogResponse
         var responseDto = new HttpResponseLogTemplate
         {
+            RequestId = GetRequestId(request!.Headers),
             TraceIdentifier = _traceIdentifier,
             Path = response.RequestMessage?.RequestUri?.AbsoluteUri,
-            RemoteAddress = request!.Options!.GetClientIpAddress(),
+            RemoteAddress = request?.Options?.GetClientIpAddress() ?? string.Empty,
             StatusCode = (int)response.StatusCode,
             ResponseHeaders = response.Headers.ToDictionary(),
             ResponseBody = await GetHttpContent(response.Content, cancellationToken)
@@ -83,6 +92,16 @@ public class RequestResponseLoggingHandler : DelegatingHandler
         #endregion
 
         return response;
+    }
+
+    private string GetRequestId(HttpRequestHeaders? headers)
+    {
+        if (headers != null && headers.TryGetValues(LoggingConstants.XRequestId, out IEnumerable<string>? requestIds))
+        {
+            return requestIds?.FirstOrDefault() ?? _traceIdentifier;
+        }
+
+        return _traceIdentifier;
     }
 
     /// <summary>
