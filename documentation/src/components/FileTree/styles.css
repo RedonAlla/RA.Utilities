@@ -1,5 +1,6 @@
 .file-tree-container {
   padding: 1.5rem;
+  margin-bottom: 2rem;
   background-color: var(--ifm-pre-background);
   border-radius: var(--ifm-pre-border-radius); 
   /* background-color: var(--ifm-card-background-color);
