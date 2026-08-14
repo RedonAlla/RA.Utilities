@@ -46,11 +46,12 @@ The `ProxyMessageHandler.Create` static method takes an `IProxySettings` object 
 [`HttpClientHandler`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclienthandler).
 It translates the properties from the interface into a concrete `WebProxy` instance, which is then assigned to the handler.
 
-The Extension Method (DependencyInjectionExtensions.cs): The WithProxyFromSettings extension method connects the DI container to the ProxyMessageHandler. It configures the HttpClient's primary message handler by:
+#### 3. The Extension Method (`DependencyInjectionExtensions.cs`):
+The [`WithProxyFromSettings`](../Extensions/DependencyInjectionExtensions.md#withproxyfromsettingstsettings) extension method connects the DI container to the `ProxyMessageHandler`. It configures the [`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient)'s primary message handler by:
 
-#### 3. Resolving the main integration settings (`TSettings`).
-Using a selector function to extract the `IProxySettings` from `TSettings`.
-Calling `ProxyMessageHandler.Create()` to build the final, proxy-aware [`HttpClientHandler`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclienthandler).
+1. Resolving the main integration settings (`TSettings`).
+2. Using a selector function to extract the `IProxySettings` from `TSettings`.
+3. Calling `ProxyMessageHandler.Create()` to build the final, proxy-aware [`HttpClientHandler`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclienthandler).
 
 This design is powerful because the proxy configuration is applied to the innermost handler in the
 [`HttpClientHandler`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclienthandler)
@@ -63,9 +64,9 @@ This interface provides a standardized way to define proxy server configurations
 | Property |	Type |	Description |
 | -------- | ----- | ------------ |
 | **Address** |	`string?` |	The URI of the proxy server. Must be a valid URL format (e.g., `"http://proxy.example.com:8888"`). |
-| **Username** |	`string?` |	`string?	The username used for proxy authentication, if required. |
-| **Password** |	`string?` |	`string?	The password used for proxy authentication, if required. |
-| **BypassProxyOnLocal** |	`string?` |	bool	A flag indicating whether the proxy should be bypassed for local (intranet) addresses. |
+| **Username** |	`string?` |	The username used for proxy authentication, if required. |
+| **Password** |	`string?` |	The password used for proxy authentication, if required. |
+| **BypassProxyOnLocal** |	`bool` |	A flag indicating whether the proxy should be bypassed for local (intranet) addresses. |
 
 ## 🧠 Summary
 In short, `IProxySettings` is an abstraction that standardizes how proxy configurations are defined.

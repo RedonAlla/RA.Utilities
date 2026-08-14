@@ -114,7 +114,7 @@ Your [QueryParameters] class ──generator──► QueryStringValues() ──
 
 - The generated code and hand-written `IQueryStringRequest` implementations return `QueryParams`.
 - [`QueryUtilities.ToQueryString(QueryParams?)`](../Utilities/QueryUtilities.md) consumes it, URL-encodes keys and values, skips `null`/empty values, and prefixes the result with `?`.
-- The `DictionaryExtensions.ToQueryString(this QueryParams?)` extension delegates to `QueryUtilities` and remains available for backward compatibility.
+- The old `DictionaryExtensions.ToQueryString(this QueryParams)` extension was removed in v10.1.0 — call [`QueryUtilities.ToQueryString(QueryParams?)`](../Utilities/QueryUtilities.md) directly instead.
 
 ## 🧠 Summary
 

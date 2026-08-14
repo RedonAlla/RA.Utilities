@@ -48,6 +48,15 @@ This factory is used by the dependency injection extensions when setting up an [
 It allows integrations to transparently route traffic through a corporate or development proxy based on configuration,
 without the application code needing to be aware of it.
 
+### `RequestResponseLoggingHandler`
+* **Purpose**:
+This `DelegatingHandler` logs the details of outgoing HTTP requests and their responses as structured logs
+(using the `HttpRequestLogTemplate`/`HttpResponseLogTemplate` models from `RA.Utilities.Logging.Shared`),
+including method, URI, headers, body, and status code.
+* **Use Case**:
+Attach it with [`WithHttpLoggingHandler`](../Extensions/DependencyInjectionExtensions.md#withhttplogginghandler)
+to get a complete audit trail of every call an integration makes — invaluable for debugging external API failures.
+
 <br />
 <br />
 

@@ -53,7 +53,7 @@ public class IpLoggingHandler : DelegatingHandler
         // The hosting environment (like ASP.NET Core) populates the request options.
         // This method checks for keys used by both self-hosted ('RemoteEndpointMessageProperty')
         // and IIS-hosted ('MS_HttpContext') environments.
-        var clientIp = request.GetOptions().GetClientIpAddress();
+        var clientIp = request.Options.GetClientIpAddress();
 
         Console.WriteLine($"Request received from IP address: {clientIp}");
 
@@ -62,7 +62,7 @@ public class IpLoggingHandler : DelegatingHandler
 }
 ```
 
-### 3. ToDictionary(this [`HttpHeaders`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.headers.httpheaders) headers):
+### 2. ToDictionary(this [`HttpHeaders`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.headers.httpheaders) headers):
 
 This method converts a collection of HTTP headers into a simple `Dictionary<string, string>`.
 This provides an easy way to serialize headers for logging, inspection, or transmission.

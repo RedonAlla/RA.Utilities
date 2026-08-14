@@ -29,7 +29,7 @@ The client depends on the `IQueryStringRequest` abstraction, making it generic a
 The interface is designed for simplicity — and with v10.1.0 you usually don't implement it by hand at all:
 mark a `partial` class with [`[QueryParameters]`](../Attributes/QueryParametersAttribute.md) and the source generator implements the contract for you.
 
-| Method |	Return | Type	Description |
+| Method |	Return | Description |
 | ------ | ------- | ---------------- |
 | **QueryStringValues()** |	`QueryParams` |	**(Implemented by the generator, or by hand)**. Converts the properties of your request object into a collection of key-value pairs. |
 | **ToQueryString(string action)** |	`string` |	**(Default implementation)**. Consumes the result of `QueryStringValues()` to build a complete, URL-encoded query string appended to the base `action` path. |

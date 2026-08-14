@@ -34,6 +34,8 @@ This release overhauls the `BaseHttpClient` API with support for all four HTTP v
 *   `IIntegrationSettings` no longer carries `MediaType`/`Encoding`; JSON is now the fixed content type.
 *   `BaseHttpClient` methods now accept `IHeaderRequest?` instead of `Dictionary<string, string>?` for headers.
 *   Typed-response overloads now return `Task<TResponse?>` and yield `null` for empty response bodies.
+*   `AddOptionWithValidations(...)` was removed from `DependencyInjectionExtensions`; use `AddHttpClientIntegration` for validated integration settings.
+*   `DictionaryExtensions.ToQueryString(...)` was removed; use `QueryUtilities.ToQueryString(QueryParams?)` instead.
 
 ### 🚀 Getting Started
 

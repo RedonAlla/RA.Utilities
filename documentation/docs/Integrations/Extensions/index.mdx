@@ -21,7 +21,7 @@ integrations within the .NET dependency injection container.
   It binds configuration, validates it on startup, and sets up the client's base address and timeout, all in a single line of code.
   * **`With...` Methods**:
   It provides a suite of fluent methods ([`WithHttpLoggingHandler`](./DependencyInjectionExtensions.md#withhttplogginghandler),
-  [`WithApiKeyFromSettingsHandler`](./DependencyInjectionExtensions.md#withapikeyfromsettingshandlertsettings), [`WithProxyFromSettings`](#), etc.)
+  [`WithApiKeyFromSettingsHandler`](./DependencyInjectionExtensions.md#withapikeyfromsettingshandlertsettings), [`WithProxyFromSettings`](./DependencyInjectionExtensions.md#withproxyfromsettingstsettings), etc.)
   that allow you to easily attach [`HttpClientHandler`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclienthandler)
   and other configurations to the [`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient) pipeline.
   This makes it trivial to add features like logging, authentication, and proxy support.

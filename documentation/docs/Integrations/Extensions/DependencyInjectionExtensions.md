@@ -154,8 +154,6 @@ Adds the `RequestResponseLoggingHandler` to log request and response details.
 
 ```csharp
 // In Program.cs
-builder.Services.AddTransientHttpMessageHandler<RequestResponseLoggingHandler>(); // Must be registered first
-
 builder.Services.AddHttpClientIntegration<...>(...)
     .WithHttpLoggingHandler();
 ```
@@ -168,8 +166,6 @@ Adds the `InternalHeadersForwardHandler` to forward headers like `X-Request-Id` 
 
 ```csharp
 // In Program.cs
-builder.Services.AddTransientHttpMessageHandler<InternalHeadersForwardHandler>(); // Must be registered first
-
 builder.Services.AddHttpClientIntegration<...>(...)
     .WithInternalHeadersForwardingHandler();
 ```

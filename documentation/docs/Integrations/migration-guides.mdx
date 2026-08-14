@@ -26,6 +26,7 @@ v10.1.0 reworks the `BaseHttpClient` request surface: headers are now strongly t
 | Settings media type | `IIntegrationSettings.MediaType` / `Encoding` | removed — JSON only |
 | Typed responses | `Task<TResponse>` | `Task<TResponse?>` (null for empty bodies) |
 | `AddOptionWithValidations(...)` | available | removed |
+| Query string extension | `DictionaryExtensions.ToQueryString(this QueryParams)` | removed — use `QueryUtilities.ToQueryString(QueryParams?)` |
 
 ### Migration Steps
 
@@ -145,6 +146,28 @@ services.AddOptions<MyFeatureSettings>()
     .BindConfiguration("MyFeature")
     .ValidateDataAnnotations()
     .ValidateOnStart();
+```
+
+#### 6. Replace `DictionaryExtensions.ToQueryString(...)`
+
+**Before (v10.0.1):**
+
+```csharp
+using RA.Utilities.Integrations.Extensions;
+using RA.Utilities.Integrations.Models;
+
+QueryParams parameters = [new("page", "1")];
+string queryString = parameters.ToQueryString(); // "?page=1"
+```
+
+**After (v10.1.0):**
+
+```csharp
+using RA.Utilities.Integrations.Models;
+using RA.Utilities.Integrations.Utilities;
+
+QueryParams parameters = [new("page", "1")];
+string queryString = QueryUtilities.ToQueryString(parameters); // "?page=1"
 ```
 
 ---

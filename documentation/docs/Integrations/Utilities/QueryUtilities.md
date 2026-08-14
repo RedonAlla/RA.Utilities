@@ -43,7 +43,7 @@ string uri = QueryUtilities.ToQueryString("products", query); // "products?Categ
 - Keys and values are escaped with `Uri.EscapeDataString` (the stricter, modern escaping for query components).
 - Parameters with `null` or empty values are skipped.
 - Parameter order follows the insertion order of the collection.
-- The `DictionaryExtensions.ToQueryString(this QueryParams?)` extension method delegates to this class and remains available for backward compatibility.
+- The `DictionaryExtensions.ToQueryString(this QueryParams)` extension was removed in v10.1.0 — this class is now the single entry point for query string construction.
 
 ## 🧠 Summary
 

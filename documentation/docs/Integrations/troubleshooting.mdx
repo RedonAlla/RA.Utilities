@@ -122,7 +122,7 @@ string uri = QueryUtilities.ToQueryString("products", myQuery);
 ## Known Limitations
 
 - **Content headers cannot be set** through `[HeaderParameters]` — `Content-Type`, `Content-Length`, etc. are rejected by `HttpRequestMessage.Headers`. Use `ConfigureHttpClient` for `Accept`-style defaults.
-- **Enumerable header properties are flattened to strings**: a non-dictionary collection property on a header class is formatted with `Convert.ToString` (e.g. `System.Int32[]`). Use query parameter classes for repeated values; headers use dictionaries.
+- **Enumerable header properties write one entry per element**: a non-dictionary collection property on a header class is flattened element-by-element under the same header name, so the last element wins. Use query parameter classes for repeated values; headers use dictionaries.
 - **Query keys are case-sensitive and emitted verbatim**: the generator does not convert naming conventions (camelCase, snake_case). Use `[QueryParameterName]` / `[HeaderParameterName]` for exact control.
 - **The generator supports classes and records**: `struct` types cannot be marked (the attribute targets classes only), and all containing types must be `partial`.
 

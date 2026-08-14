@@ -62,7 +62,7 @@ You would have a settings class for your API that includes the `ProxySettings`.
 ```csharp showLineNumbers
 public class MyApiSettings : BaseApiSettings<MyApiActions>
 {
-    public ProxySettings Proxy { get; set; }
+    public required ProxySettings Proxy { get; set; }
 }
 ```
 

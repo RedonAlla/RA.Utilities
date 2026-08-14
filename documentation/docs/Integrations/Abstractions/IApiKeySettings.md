@@ -6,10 +6,8 @@ sidebar_position: 5
 Namespace: RA.Utilities.Integrations.Abstractions
 ```
 
-The `IApiKeySettings` interface itself is not explicitly defined in the files you've provided,
-we can infer its purpose from the overall architecture of the `RA.Utilities` solution, particularly the `RA.Utilities.Integrations` package.
-
-The purpose of an `IApiKeySettings` interface would be to **define a standardized contract for configuration classes that need to provide an API key for authentication**.
+The `IApiKeySettings` interface defines a **standardized contract for configuration classes that need to provide an API key for authentication**.
+It declares a single property, `ApiKey`, that settings classes expose for the package's API key handlers to consume.
 
 ## 🔑 This serves a few key goals:
 
@@ -29,7 +27,7 @@ This interface defines a standardized contract for configuration classes that pr
 
 | Property |	Type |	Description |
 | -------- | ----- | ------------ |
-| **ApiKey** |	`string` |	Gets or sets the API key value. |
+| **ApiKey** |	`string?` |	Gets or sets the API key value. |
 
 ## ⚙️ How It Fits In
 `IApiKeySettings` is consumed by the package's [`WithApiKeyFromSettingsHandler<TSettings>`](../Extensions/DependencyInjectionExtensions.md#withapikeyfromsettingshandlertsettings) fluent method, which injects the API key from your settings object into the `X-Api-Key` header of every request:

@@ -25,7 +25,7 @@ This release overhauls the `BaseHttpClient` API with support for all four HTTP v
 
 *   **JSON Request Bodies**: `PostAsync` and `PutAsync` serialize request bodies as JSON (`application/json; charset=utf-8`) with camel-case property naming.
 
-*   **Query String Utilities**: The query string building logic is consolidated into the new `QueryUtilities` class; the existing `DictionaryExtensions.ToQueryString(...)` extension is kept as a backward-compatible delegate.
+*   **Query String Utilities**: The query string building logic is consolidated into the new `QueryUtilities` class, which replaces the old `DictionaryExtensions.ToQueryString(...)` extension.
 
 ### ⚠️ Breaking Changes
 
@@ -33,6 +33,7 @@ This release overhauls the `BaseHttpClient` API with support for all four HTTP v
 *   `BaseHttpClient` methods now accept `IHeaderRequest?` instead of `Dictionary<string, string>?` for headers.
 *   Typed-response overloads now return `Task<TResponse?>` and yield `null` for empty response bodies.
 *   `AddOptionWithValidations(...)` was removed from `DependencyInjectionExtensions`; use `AddHttpClientIntegration` for validated integration settings.
+*   `DictionaryExtensions.ToQueryString(...)` was removed; use `QueryUtilities.ToQueryString(QueryParams?)` instead.
 *   See the [Migration Guide](/RA.Utilities/nuget-packages/Integrations/migration-guides) for detailed before/after examples.
 
 ### 🚀 Getting Started
