@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Net.Http;
@@ -31,6 +32,8 @@ public class RequestResponseLoggingHandler : DelegatingHandler
     /// </summary>
     private readonly string _traceIdentifier;
 
+    private const double _warningThresholdMilliseconds = 35000;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="RequestResponseLoggingHandler"/> class.
     /// </summary>
@@ -56,6 +59,11 @@ public class RequestResponseLoggingHandler : DelegatingHandler
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         HttpResponseMessage response = await base.SendAsync(request, cancellationToken);
+
+        if (!_logger.IsEnabled(LogLevel.Information))
+            return response;
+
+        var stopwatch = Stopwatch.StartNew();
 
         #region LogRequest
         var requestDto = new HttpRequestLogTemplate
@@ -84,14 +92,25 @@ public class RequestResponseLoggingHandler : DelegatingHandler
             RemoteAddress = request?.Options?.GetClientIpAddress() ?? string.Empty,
             StatusCode = (int)response.StatusCode,
             ResponseHeaders = response.Headers.ToDictionary(),
+            Duration = $"{stopwatch.Elapsed.TotalMilliseconds} ms",
             ResponseBody = await GetHttpContent(response.Content, cancellationToken)
         };
 
-        _logger.LogInformation("HttpClient Response: {@ResponseDto}", responseDto);
+        LogLevel logLevel = LoggingLevel(stopwatch.Elapsed.TotalMilliseconds);
+        _logger.Log(logLevel, "HttpClient Response: {@ResponseDto}", responseDto);
 
+        stopwatch.Stop();
         #endregion
 
         return response;
+    }
+
+    private LogLevel LoggingLevel(double duration)
+    {
+        return _warningThresholdMilliseconds > 0 &&
+                       duration > _warningThresholdMilliseconds
+            ? LogLevel.Warning
+            : LogLevel.Information;
     }
 
     private string GetRequestId(HttpRequestHeaders? headers)
