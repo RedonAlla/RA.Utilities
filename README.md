@@ -28,8 +28,6 @@ RA.Utilities/
 │
 ├── 📁 Api/
 │   ├── 📁 RA.Utilities.Api/
-│   ├── 📁 RA.Utilities.Api.Middlewares/
-│   ├── 📁 RA.Utilities.Api.Results/
 │   ├── 📁 RA.Utilities.Authentication.JwtBearer/
 │   ├── 📁 RA.Utilities.Authorization/
 │   └── 📁 RA.Utilities.OpenApi/
@@ -74,6 +72,70 @@ Here’s how the folders map to architectural layers:
 * **`documentation/`**: Treats documentation as a first-class citizen within the solution.
 
 This structure enforces the **Dependency Rule**: source code dependencies can only point inwards. For example, `Api` can depend on `Application`, but `Application` cannot depend on `Api`. This makes the core business logic independent of any specific UI or infrastructure.
+
+## Package Dependency Map
+
+The diagram below shows how every `RA.Utilities` package depends on the others. Arrows point from a package to the packages it depends on — every arrow points inward, toward the `Core` layer.
+
+```mermaid
+graph TD
+    subgraph apilayer["Api Layer"]
+        apipkg["RA.Utilities.Api"]
+        openapi["RA.Utilities.OpenApi"]
+        jwt["RA.Utilities.Authentication.JwtBearer"]
+        authz["RA.Utilities.Authorization"]
+    end
+
+    subgraph applayer["Application Layer"]
+        feature["RA.Utilities.Feature"]
+        validation["RA.Utilities.Application.Validation"]
+    end
+
+    subgraph datalayer["Data Layer"]
+        dataef["RA.Utilities.Data.EntityFramework"]
+        dataabstr["RA.Utilities.Data.Abstractions"]
+        dataentities["RA.Utilities.Data.Entities"]
+    end
+
+    subgraph infralayer["Infrastructure Layer"]
+        integrations["RA.Utilities.Integrations"]
+        generators["RA.Utilities.Integrations.Generators"]
+    end
+
+    subgraph logginglayer["Logging Layer"]
+        loggingcore["RA.Utilities.Logging.Core"]
+        loggingshared["RA.Utilities.Logging.Shared"]
+    end
+
+    subgraph corelayer["Core Layer"]
+        corepkg["RA.Utilities.Core"]
+        coreconst["RA.Utilities.Core.Constants"]
+        coreexc["RA.Utilities.Core.Exceptions"]
+    end
+
+    %% API & Web
+    apipkg --> coreconst
+    apipkg --> coreexc
+    apipkg --> loggingshared
+    openapi --> apipkg
+
+    %% Application Logic
+    feature --> corepkg
+    feature --> validation
+    validation --> coreexc
+
+    %% Data Access
+    dataabstr --> dataentities
+    dataef --> dataabstr
+
+    %% Integrations
+    integrations --> coreconst
+    integrations --> loggingshared
+    integrations --> generators
+
+    %% Core
+    coreexc --> coreconst
+```
 
 ## How the Pieces Fit Together
 The solution is broken down into several NuGet packages, each addressing a specific concern:
