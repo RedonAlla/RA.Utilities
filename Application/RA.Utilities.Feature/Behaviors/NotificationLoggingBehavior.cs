@@ -1,3 +1,5 @@
+#pragma warning disable CA1873
+
 using System;
 using System.Threading;
 using System.Threading.Tasks;
