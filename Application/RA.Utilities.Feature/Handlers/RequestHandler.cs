@@ -1,7 +1,5 @@
-using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using RA.Utilities.Core.Results;
 using RA.Utilities.Feature.Abstractions;
 using RA.Utilities.Feature.Models;
@@ -18,58 +16,16 @@ namespace RA.Utilities.Feature.Handlers;
 public abstract class RequestHandler<TRequest, TResponse> : IRequestHandler<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {
-    private readonly ILogger _logger;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="RequestHandler{TRequest, TResponse}"/> class.
-    /// </summary>
-    /// <param name="logger">The logger. Typically the derived handler's typed <see cref="ILogger{TCategoryName}"/>.</param>
-    protected RequestHandler(ILogger logger)
-    {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
     /// <inheritdoc/>
     async Task<Result<TResponse>> IRequestHandler<TRequest, TResponse>.HandleAsync(
-        TRequest request, CancellationToken cancellationToken)
-    {
-        _logger.LogDebug("[Handler] Start Handling {RequestType}", typeof(TRequest).Name);
-
-        try
-        {
-            TResponse? result =
-                await HandleAsync(request, cancellationToken).ConfigureAwait(false);
-
-            _logger.LogDebug("[Handler] Finished Handling {RequestType}", typeof(TRequest).Name);
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[Handler] Failed Handling {RequestType}", typeof(TRequest).Name);
-            return ex;
-        }
-    }
+        TRequest request, CancellationToken cancellationToken) =>
+            await HandleAsync(request, cancellationToken).ConfigureAwait(false);
 
     /// <inheritdoc/>
     async Task<Result<TResponse>> IRequestHandler<TRequest, TResponse>.HandleAsync<TContext>(
         TRequest request, PipelineContext<TContext> context, CancellationToken cancellationToken)
-        where TContext : class
-    {
-        _logger.LogDebug("[Handler] Start Handling {RequestType}", typeof(TRequest).Name);
-        try
-        {
-            TResponse? result =
-                await HandleAsync(request, context, cancellationToken).ConfigureAwait(false);
-
-            _logger.LogDebug("[Handler] Finished Handling {RequestType}", typeof(TRequest).Name);
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[Handler] Failed Handling {RequestType}", typeof(TRequest).Name);
-            return ex;
-        }
-    }
+        where TContext : class =>
+            await HandleAsync(request, context, cancellationToken).ConfigureAwait(false);
 
     /// <summary>
     /// Handles the request. Override this method in derived classes to implement business logic.
@@ -98,57 +54,16 @@ public abstract class RequestHandler<TRequest, TResponse> : IRequestHandler<TReq
 public abstract class RequestHandler<TRequest> : IRequestHandler<TRequest>
     where TRequest : IRequest
 {
-    private readonly ILogger _logger;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="RequestHandler{TRequest}"/> class.
-    /// </summary>
-    /// <param name="logger">The logger. Typically the derived handler's typed <see cref="ILogger{TCategoryName}"/>.</param>
-    protected RequestHandler(ILogger logger)
-    {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
     /// <inheritdoc/>
     async Task<Result> IRequestHandler<TRequest>.HandleAsync(
-        TRequest request, CancellationToken cancellationToken)
-    {
-        _logger.LogDebug("[Handler] Start Handling {RequestType}", typeof(TRequest).Name);
-
-        try
-        {
-            Result result = await HandleAsync(request, cancellationToken).ConfigureAwait(false);
-            _logger.LogDebug("[Handler] Finished Handling {RequestType}", typeof(TRequest).Name);
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[Handler] Failed Handling {RequestType}", typeof(TRequest).Name);
-            return ex;
-        }
-    }
+        TRequest request, CancellationToken cancellationToken) =>
+            await HandleAsync(request, cancellationToken).ConfigureAwait(false);
 
     /// <inheritdoc/>
     async Task<Result> IRequestHandler<TRequest>.HandleAsync<TContext>(
         TRequest request, PipelineContext<TContext> context, CancellationToken cancellationToken)
-        where TContext : class
-    {
-        _logger.LogDebug("[Handler] Start Handling {RequestType}", typeof(TRequest).Name);
-
-        try
-        {
-            Result result =
-                await HandleAsync(request, context, cancellationToken).ConfigureAwait(false);
-
-            _logger.LogDebug("[Handler] Finished Handling {RequestType}", typeof(TRequest).Name);
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[Handler] Failed Handling {RequestType}", typeof(TRequest).Name);
-            return ex;
-        }
-    }
+        where TContext : class =>
+            await HandleAsync(request, context, cancellationToken).ConfigureAwait(false);
 
     /// <summary>
     /// Handles the request. Override this method in derived classes to implement business logic.
