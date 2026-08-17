@@ -90,7 +90,7 @@ public class GeneratedBehaviorTests
     public void QueryStringValues_ShouldMapAllPropertyShapes_AndSkipNullValues()
     {
         // Arrange
-        var query = CreateInstance<IQueryStringRequest>("Sample.SearchQuery");
+        IQueryStringRequest query = CreateInstance<IQueryStringRequest>("Sample.SearchQuery");
 
         SetProperty(query, "Page", 2);
         SetProperty(query, "Term", "red widget");
@@ -121,7 +121,7 @@ public class GeneratedBehaviorTests
     public void ToQueryString_ShouldEncodeValues_AndSkipNullValues()
     {
         // Arrange
-        var query = CreateInstance<IQueryStringRequest>("Sample.SearchQuery");
+        IQueryStringRequest query = CreateInstance<IQueryStringRequest>("Sample.SearchQuery");
 
         SetProperty(query, "Page", 2);
         SetProperty(query, "Term", "red widget");
@@ -149,7 +149,7 @@ public class GeneratedBehaviorTests
     public void ToHeaders_ShouldMapProperties_AndSkipNullValues()
     {
         // Arrange
-        var headers = CreateInstance<IHeaderRequest>("Sample.ApiHeaders");
+        IHeaderRequest headers = CreateInstance<IHeaderRequest>("Sample.ApiHeaders");
 
         SetProperty(headers, "XCorrelationId", "trace-9");
         SetProperty(headers, "MaxRetries", 3);
