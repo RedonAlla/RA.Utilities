@@ -49,6 +49,9 @@ bld/
 *.[Tt]est[Rr]esults
 [Aa]nalysis[Ll]og.xml
 
+# BenchmarkDotNet output
+BenchmarkDotNet.Artifacts/
+
 # NUnit
 *.nunit
 nunit-agent_*.log

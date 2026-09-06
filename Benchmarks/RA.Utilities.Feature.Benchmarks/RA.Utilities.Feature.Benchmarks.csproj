@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <!-- The global GenerateDocumentationFile=True would otherwise fail undocumented public
+         benchmark classes with CS1591 under TreatWarningsAsErrors. BDN1605 is BenchmarkDotNet's
+         informational async-benchmark suggestion; preemptively silenced to keep output clean. -->
+    <NoWarn>$(NoWarn);CS1591;BDN1605</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" />
+    <PackageReference Include="MediatR" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../Application/RA.Utilities.Feature/RA.Utilities.Feature.csproj" />
+  </ItemGroup>
+
+</Project>
