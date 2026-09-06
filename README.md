@@ -75,18 +75,21 @@ Here’s how the folders map to architectural layers:
 
 This structure enforces the **Dependency Rule**: source code dependencies can only point inwards. For example, `Api` can depend on `Application`, but `Application` cannot depend on `Api`. This makes the core business logic independent of any specific UI or infrastructure.
 
-## Package Dependency Map
+## Package Dependency Tree
 
-The diagram below shows how every `RA.Utilities` package depends on the others. Arrows point from a package to the packages it depends on — every arrow points inward, toward the `Core` layer.
+The tree below shows how every `RA.Utilities` package depends on the others. Each node's children are the packages it depends on — every branch points inward, toward the `Core` layer, per the Dependency Rule. Solid edges are runtime package references; **dashed edges** are compile-time analyzers shipped inside the package (`RA.Utilities.Api.Generators` inside `RA.Utilities.Api`, `RA.Utilities.Integrations.Generators` inside `RA.Utilities.Integrations`). `RA.Utilities.Authentication.JwtBearer`, `RA.Utilities.Authorization`, and `RA.Utilities.Logging.Core` are standalone packages with no `RA.Utilities` dependencies.
 
 ```mermaid
-graph TD
+flowchart TD
     subgraph apilayer["Api Layer"]
         apipkg["RA.Utilities.Api"]
-        apigen["RA.Utilities.Api.Generators"]
         openapi["RA.Utilities.OpenApi"]
         jwt["RA.Utilities.Authentication.JwtBearer"]
         authz["RA.Utilities.Authorization"]
+    end
+
+    subgraph infralayer["Infrastructure Layer"]
+        integrations["RA.Utilities.Integrations"]
     end
 
     subgraph applayer["Application Layer"]
@@ -100,11 +103,6 @@ graph TD
         dataentities["RA.Utilities.Data.Entities"]
     end
 
-    subgraph infralayer["Infrastructure Layer"]
-        integrations["RA.Utilities.Integrations"]
-        generators["RA.Utilities.Integrations.Generators"]
-    end
-
     subgraph logginglayer["Logging Layer"]
         loggingcore["RA.Utilities.Logging.Core"]
         loggingshared["RA.Utilities.Logging.Shared"]
@@ -116,12 +114,22 @@ graph TD
         coreexc["RA.Utilities.Core.Exceptions"]
     end
 
-    %% API & Web
+    subgraph analyzers["Build-time analyzers"]
+        apigen["RA.Utilities.Api.Generators"]
+        intgen["RA.Utilities.Integrations.Generators"]
+    end
+
+    %% Api & Web
     apipkg --> coreconst
     apipkg --> coreexc
     apipkg --> loggingshared
-    apipkg --> apigen
+    apipkg -. analyzer .-> apigen
     openapi --> apipkg
+
+    %% Integrations
+    integrations --> coreconst
+    integrations --> loggingshared
+    integrations -. analyzer .-> intgen
 
     %% Application Logic
     feature --> corepkg
@@ -131,11 +139,6 @@ graph TD
     %% Data Access
     dataabstr --> dataentities
     dataef --> dataabstr
-
-    %% Integrations
-    integrations --> coreconst
-    integrations --> loggingshared
-    integrations --> generators
 
     %% Core
     coreexc --> coreconst

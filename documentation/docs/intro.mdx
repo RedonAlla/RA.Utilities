@@ -75,20 +75,85 @@ Whether you are starting a new project or refactoring an existing one, RA.Utilit
 
 ## 🗺️ Solution Structure
 
-The repository is organized into solution folders that map to Clean Architecture layers:
+The tree below shows how every `RA.Utilities` package depends on the others. Each node's children are the packages it depends on — every branch points inward, toward the `Core` layer, per the Dependency Rule. Solid edges are runtime package references; **dashed edges** are compile-time analyzers shipped inside the package (`RA.Utilities.Api.Generators` inside `RA.Utilities.Api`, `RA.Utilities.Integrations.Generators` inside `RA.Utilities.Integrations`). `RA.Utilities.Authentication.JwtBearer`, `RA.Utilities.Authorization`, and `RA.Utilities.Logging.Core` are standalone packages with no `RA.Utilities` dependencies.
+
+```mermaid
+flowchart TD
+    subgraph apilayer["Api Layer"]
+        apipkg["RA.Utilities.Api"]
+        openapi["RA.Utilities.OpenApi"]
+        jwt["RA.Utilities.Authentication.JwtBearer"]
+        authz["RA.Utilities.Authorization"]
+    end
+
+    subgraph infralayer["Infrastructure Layer"]
+        integrations["RA.Utilities.Integrations"]
+    end
+
+    subgraph applayer["Application Layer"]
+        feature["RA.Utilities.Feature"]
+        validation["RA.Utilities.Application.Validation"]
+    end
+
+    subgraph datalayer["Data Layer"]
+        dataef["RA.Utilities.Data.EntityFramework"]
+        dataabstr["RA.Utilities.Data.Abstractions"]
+        dataentities["RA.Utilities.Data.Entities"]
+    end
+
+    subgraph logginglayer["Logging Layer"]
+        loggingcore["RA.Utilities.Logging.Core"]
+        loggingshared["RA.Utilities.Logging.Shared"]
+    end
+
+    subgraph corelayer["Core Layer"]
+        corepkg["RA.Utilities.Core"]
+        coreconst["RA.Utilities.Core.Constants"]
+        coreexc["RA.Utilities.Core.Exceptions"]
+    end
+
+    subgraph analyzers["Build-time analyzers"]
+        apigen["RA.Utilities.Api.Generators"]
+        intgen["RA.Utilities.Integrations.Generators"]
+    end
+
+    %% Api & Web
+    apipkg --> coreconst
+    apipkg --> coreexc
+    apipkg --> loggingshared
+    apipkg -. analyzer .-> apigen
+    openapi --> apipkg
+
+    %% Integrations
+    integrations --> coreconst
+    integrations --> loggingshared
+    integrations -. analyzer .-> intgen
+
+    %% Application Logic
+    feature --> corepkg
+    feature --> validation
+    validation --> coreexc
+
+    %% Data Access
+    dataabstr --> dataentities
+    dataef --> dataabstr
+
+    %% Core
+    coreexc --> coreconst
+```
 
 import FileTree from '@site/src/components/FileTree/UtilitiesFileTree'
 
 <FileTree />
 
-| Layer | Purpose |
-|-------|---------|
-| **Core/** | Zero-dependency foundation: `Result` monad, exception hierarchy, HTTP constants |
-| **Application/** | Custom mediator, CQRS handlers, pipeline behaviors, FluentValidation utilities |
-| **Api/** | ASP.NET Core middleware, endpoint registration, typed HTTP responses, OpenAPI, JWT auth |
-| **Data/** | Entity base classes, repository interfaces, EF Core implementations |
-| **Infrastructure/** | Typed HTTP client with delegating-handler pipeline |
-| **Logging/** | Serilog setup with request-id enrichment, HTTP log templates |
+| Layer/Concern	| RA.Utilities Package(s)	| Purpose |
+| ------------- | ----------------------- | ------- |
+| **API & Web** | `RA.Utilities.Api`, `RA.Utilities.Api.Middlewares`, `RA.Utilities.Api.Results`, `RA.Utilities.OpenApi`, `RA.Utilities.Authentication.JwtBearer`, `RA.Utilities.Authorization` |	Provides helpers for standardized API responses (`SuccessResponse`), middleware for logging and header validation, automates OpenAPI/Swagger documentation, and simplifies access to authenticated user data. |
+| **Application Logic** | `RA.Utilities.Feature` |	This is the heart of the CQRS implementation. It provides base classes for your feature "handlers" and a validation pipeline to automatically validate incoming requests. |
+| **Core Building Blocks** |	`RA.Utilities.Core.Constants`, `RA.Utilities.Core.Exceptions` |	Offers shared constants (like HTTP status codes) and a set of standardized exceptions (`NotFoundException`, `ConflictException`) to create clear, semantic error handling. |
+| **Data Access** | `RA.Utilities.Data.Abstractions`, `RA.Utilities.Data.EntityFramework` | Provides abstractions and implementations for talking to the database. |
+| **Integrations** | `RA.Utilities.Integrations` | Simplifies and standardizes HTTP client calls to external APIs, with built-in support for configuration, logging, and resilience policies. |
+| **Logging** | `RA.Utilities.Logging.Core`, `RA.Utilities.Logging.Shared` | Provides a one-line setup for production-ready structured logging with Serilog. |
 
 ---
 
@@ -106,6 +171,7 @@ import NuGetPackagesTable from '@site/src/components/NuGetPackagesTable'
 
 import DocCardList from '@theme/DocCardList';
 
+<DocCardList />
 <br />
 
 ---

@@ -80,6 +80,7 @@ const config: Config = {
   ],
 
   themes: [
+    '@docusaurus/theme-mermaid',
     [
       // @ts-ignore
       require.resolve("@easyops-cn/docusaurus-search-local"),
@@ -109,6 +110,10 @@ const config: Config = {
       }),
     ],
   ],
+
+  markdown: {
+    mermaid: true,
+  },
 
   plugins: [
     'docusaurus-plugin-sass',
