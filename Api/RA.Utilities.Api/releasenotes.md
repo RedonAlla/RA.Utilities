@@ -1,6 +1,6 @@
 # RA.Utilities.Api Release Notes
 
-## Version 11.0.0
+## Version 10.1.0
 ![Date Badge](https://img.shields.io/badge/Publish-Unreleased-lightblue?logo=fastly&logoColor=white)
 
 This release replaces the reflection-based endpoint registration with a compile-time, source-generated pipeline. Endpoints are now discovered by the `RA.Utilities.Api.Generators` analyzer (shipped inside the package) and registered without reflection, DI scanning, or manual registration lists.
