@@ -3,14 +3,27 @@ using Microsoft.AspNetCore.Routing;
 namespace RA.Utilities.Api.Abstractions;
 
 /// <summary>
-/// Represents a feature's endpoints that can be dynamically registered with the application.
-/// Implement this interface to group related API endpoints and keep `Program.cs` clean.
+/// Represents a single endpoint that belongs to an <see cref="IEndpointGroup"/>.
+/// Implement this interface on a type whose static <see cref="MapEndpoint"/> method defines one or more
+/// routes. The <c>MapEndpoints</c> source-generated registration pipeline discovers every
+/// implementation at compile time and invokes <see cref="MapEndpoint"/> with the
+/// <see cref="RouteGroupBuilder"/> created by the <see cref="IEndpointGroup"/> whose
+/// <see cref="IEndpointGroup.GroupName"/> matches <see cref="GroupName"/>.
 /// </summary>
 public interface IEndpoint
 {
     /// <summary>
-    /// Maps the specific endpoint's routes to the application's endpoint route builder.
+    /// Gets the name of the <see cref="IEndpointGroup"/> this endpoint belongs to.
+    /// The source generator matches this value against the <see cref="IEndpointGroup.GroupName"/>
+    /// of every discovered group at compile time.
     /// </summary>
-    /// <param name="app">The <see cref="IEndpointRouteBuilder"/> to which the endpoint will be mapped.</param>
-    void MapEndpoint(IEndpointRouteBuilder app);
+    static abstract string GroupName { get; }
+
+    /// <summary>
+    /// Maps the endpoint's routes to the <see cref="RouteGroupBuilder"/> of the group identified by
+    /// <see cref="GroupName"/>. Invoked once per endpoint when the generated <c>MapEndpoints</c>
+    /// registration method is called.
+    /// </summary>
+    /// <param name="group">The route group this endpoint's routes are mapped into.</param>
+    static abstract void MapEndpoint(RouteGroupBuilder group);
 }

@@ -10,7 +10,7 @@ using RA.Utilities.Api.Extensions;
 namespace RA.Utilities.Tests.RA.Utilities.Api.Extensions;
 
 /// <summary>
-/// Contains unit tests for the <see cref="ExceptionHandlingExtensions"/> class.
+/// Contains unit tests for the <see cref="MiddlewareExtensions"/> class.
 /// </summary>
 public class RaExceptionHandlingExtensionsTests
 {

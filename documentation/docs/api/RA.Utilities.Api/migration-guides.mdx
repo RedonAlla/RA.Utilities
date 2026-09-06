@@ -4,6 +4,87 @@ title: Migration Guides
 
 # Migration Guides
 
+## v10.0.6 → v11.0.0
+
+### Breaking Changes:
+
+* `IEndpoint` redesigned into a static-abstract contract
+* `EndpointExtensions` (reflection-based `AddEndpoints`/`MapEndpoints`) removed
+
+The instance-based `IEndpoint` interface (`void MapEndpoint(IEndpointRouteBuilder app)`) has been replaced by a static-abstract contract (`static abstract string GroupName { get; }` and `static abstract void MapEndpoint(RouteGroupBuilder group)`). Endpoint registration no longer uses reflection or DI scanning: a source generator shipped inside the package emits the `app.MapEndpoints()` implementation at compile time.
+
+### Why this change?
+
+* The old pattern required reflection-based assembly scanning and DI registration at startup.
+* The new pipeline validates group names at compile time (`EPMG001`/`EPMG002` diagnostics) instead of failing at runtime.
+* Endpoint types no longer need to be instantiable — they are referenced statically by the generated code.
+
+### What changed
+
+| Aspect | v10.0.6 | v11.0.0 |
+|---|---|---|
+| Endpoint contract | `IEndpoint` with `void MapEndpoint(IEndpointRouteBuilder)` | `IEndpoint` with `static abstract string GroupName` + `static abstract void MapEndpoint(RouteGroupBuilder)` |
+| Group definition | — | `IEndpointGroup` (new) |
+| Registration | `builder.Services.AddEndpoints(assembly)` + `app.MapEndpoints()` | `app.MapEndpoints()` only |
+| Discovery | Reflection at startup | Source generator at compile time |
+
+### Migration Steps
+
+#### 1. Convert each `IEndpoint` class
+
+```csharp
+// ❌ v10.0.6
+public class ProductEndpoints : IEndpoint
+{
+    public void MapEndpoint(IEndpointRouteBuilder app)
+    {
+        app.MapGet("/products", () => Results.Ok("All products"));
+    }
+}
+
+// ✅ v11.0.0
+internal sealed class GetProductsEndpoint : IEndpoint
+{
+    public static string GroupName => "Products";
+
+    public static void MapEndpoint(RouteGroupBuilder group)
+    {
+        group.MapGet("/", () => Results.Ok("All products"));
+    }
+}
+```
+
+#### 2. Add an `IEndpointGroup` per feature
+
+```csharp
+// Features/Products/ProductsGroup.cs
+using RA.Utilities.Api.Abstractions;
+
+internal sealed class ProductsGroup : IEndpointGroup
+{
+    public static string GroupName => "Products";
+
+    public static RouteGroupBuilder MapGroup(IEndpointRouteBuilder app) =>
+        app.MapGroup("api/products").WithTags("Products");
+}
+```
+
+#### 3. Remove `AddEndpoints` from `Program.cs`
+
+```csharp
+// ❌ v10.0.6
+builder.Services.AddEndpoints(typeof(Program).Assembly);
+
+var app = builder.Build();
+app.MapEndpoints();
+
+// ✅ v11.0.0
+var app = builder.Build();
+app.MapEndpoints();
+```
+
+---
+
 ## v10.0.5 → v10.0.6
 
 ### Breaking Change:

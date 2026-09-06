@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <!-- Pin Microsoft.OpenApi to fix CVE-2026-57344 / GHSA-v5pm-xwqc-g5wc. -->
+    <PackageReference Include="Microsoft.OpenApi" />
+    <PackageReference Include="Scalar.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../RA.Utilities.Api/RA.Utilities.Api.csproj" />
+    <!-- Referenced explicitly as an analyzer so the sample exercises the same build-time endpoint
+         registration that consumers of the NuGet package get (where the generator ships inside
+         the package as a build-time analyzer). -->
+    <ProjectReference Include="../RA.Utilities.Api.Generators/RA.Utilities.Api.Generators.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false"
+                      SetTargetFramework="TargetFramework=netstandard2.0" />
+  </ItemGroup>
+
+</Project>

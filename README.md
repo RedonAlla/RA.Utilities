@@ -28,6 +28,8 @@ RA.Utilities/
 │
 ├── 📁 Api/
 │   ├── 📁 RA.Utilities.Api/
+│   ├── 📁 RA.Utilities.Api.Generators/
+│   ├── 📁 RA.Utilities.Api.Sample/
 │   ├── 📁 RA.Utilities.Authentication.JwtBearer/
 │   ├── 📁 RA.Utilities.Authorization/
 │   └── 📁 RA.Utilities.OpenApi/
@@ -81,6 +83,7 @@ The diagram below shows how every `RA.Utilities` package depends on the others. 
 graph TD
     subgraph apilayer["Api Layer"]
         apipkg["RA.Utilities.Api"]
+        apigen["RA.Utilities.Api.Generators"]
         openapi["RA.Utilities.OpenApi"]
         jwt["RA.Utilities.Authentication.JwtBearer"]
         authz["RA.Utilities.Authorization"]
@@ -117,6 +120,7 @@ graph TD
     apipkg --> coreconst
     apipkg --> coreexc
     apipkg --> loggingshared
+    apipkg --> apigen
     openapi --> apipkg
 
     %% Application Logic

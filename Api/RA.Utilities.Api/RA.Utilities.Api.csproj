@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-		<Version>10.0.6</Version>
+		<Version>11.0.0</Version>
 		<Title>Api Utilities</Title>
 		<Description>Provides a collection of essential utilities for building robust and consistent ASP.NET Core APIs. This package includes endpoint registration helpers, standardized response models, and exception handling middleware to streamline development and promote best practices.</Description>
 		<PackageTags>RA;Utilities;API;Web;AspNetCore;Endpoints;Helpers;Middleware;Exceptions;Responses;Standardization</PackageTags>
@@ -26,6 +26,21 @@
 		<ProjectReference Include="../../Core/RA.Utilities.Core.Constants/RA.Utilities.Core.Constants.csproj" />
 		<ProjectReference Include="../../Core/RA.Utilities.Core.Exceptions/RA.Utilities.Core.Exceptions.csproj" />
 		<ProjectReference Include="../../Logging/RA.Utilities.Logging.Shared/RA.Utilities.Logging.Shared.csproj" />
+		<!-- Referenced for build ordering and packing only, deliberately NOT as an analyzer:
+		     running the generator on this package's own compilation would emit a second,
+		     empty MapEndpoints method into the RA.Utilities.Api assembly, making extension
+		     method calls ambiguous in consuming projects (which get their own generated
+		     implementation). -->
+		<ProjectReference Include="../RA.Utilities.Api.Generators/RA.Utilities.Api.Generators.csproj"
+		                  ReferenceOutputAssembly="false"
+		                  SetTargetFramework="TargetFramework=netstandard2.0" />
+
+		<!-- Ships the source generator inside the package so that consumers of the NuGet package
+		     get it as a build-time analyzer. -->
+		<None Include="../RA.Utilities.Api.Generators/bin/$(Configuration)/netstandard2.0/RA.Utilities.Api.Generators.dll"
+		      Pack="true"
+		      PackagePath="analyzers/dotnet/cs/"
+		      Visible="false" />
 	</ItemGroup>
 
 	<ItemGroup>

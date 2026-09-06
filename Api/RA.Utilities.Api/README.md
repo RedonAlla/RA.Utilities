@@ -113,35 +113,58 @@ A request to `/products/0` would automatically return a 404 response with the fo
 
 ### 2. Endpoint Registration Helpers
 
-As your API grows, defining all routes in `Program.cs` can become messy. This package provides a clean, discoverable pattern for organizing your endpoints using the `IEndpoint` interface.
+As your API grows, defining all routes in `Program.cs` can become messy. This package provides a clean, discoverable pattern for organizing your endpoints using the `IEndpointGroup` and `IEndpoint` interfaces, wired together at **compile time** by a source generator (shipped inside this package as a build-time analyzer). There is no reflection, no DI scanning, and no manual registration list.
 
 **How it works:**
 
-1.  **Create an Endpoint Class**: Create a class that implements the `IEndpoint` interface.
-2.  **Define Routes**: Inside the `MapEndpoint` method, define your routes just as you would in `Program.cs`.
-3.  **Register Services**: In `Program.cs`, use the `AddEndpoints(assembly)` extension method to scan your assembly and register all `IEndpoint` implementations with the DI container.
-4.  **Map Endpoints**: After building the app, use the `MapEndpoints()` extension method to execute the route mapping for all registered endpoints.
+1. **Define a group**: A class implementing `IEndpointGroup` builds the shared `RouteGroupBuilder` (prefix, tags, versioning, conventions) for one feature and exposes it under a unique `GroupName`.
+2. **Define endpoints**: Each class implementing `IEndpoint` declares the `GroupName` it belongs to and maps its routes onto the group's `RouteGroupBuilder`.
+3. **Call `MapEndpoints()`**: The generated `MapEndpoints()` extension method creates every group exactly once (before any endpoint is mapped) and then maps every endpoint into the group matching its `GroupName`.
+
+Group names are validated at compile time: a duplicate `GroupName` (`EPMG001`) or an endpoint referencing a group that does not exist (`EPMG002`) is a build error. Names that are computed at runtime instead of being constants cannot be validated at compile time and fail with a descriptive exception at startup instead.
 
 #### Usage
 
-**Step 1: Create an `IEndpoint` implementation**
+**Step 1: Create an `IEndpointGroup` implementation**
 
 ```csharp
-// Features/Products/ProductEndpoints.cs
+// Features/Products/ProductsGroup.cs
 
+using Microsoft.AspNetCore.Routing;
 using RA.Utilities.Api.Abstractions;
 
-public class ProductEndpoints : IEndpoint
+internal sealed class ProductsGroup : IEndpointGroup
 {
-    public void MapEndpoint(IEndpointRouteBuilder app)
+    public static string GroupName => "Products";
+
+    public static RouteGroupBuilder MapGroup(IEndpointRouteBuilder app)
     {
-        app.MapGet("/products", () =>
+        return app.MapGroup("api/products").WithTags("Products");
+    }
+}
+```
+
+**Step 2: Create the `IEndpoint` implementations**
+
+```csharp
+// Features/Products/GetProductsEndpoint.cs
+
+using Microsoft.AspNetCore.Routing;
+using RA.Utilities.Api.Abstractions;
+
+internal sealed class GetProductsEndpoint : IEndpoint
+{
+    public static string GroupName => "Products";
+
+    public static void MapEndpoint(RouteGroupBuilder group)
+    {
+        group.MapGet("/", () =>
         {
             // Logic to get all products
             return Results.Ok("All products");
         });
 
-        app.MapGet("/products/{id}", (int id) => 
+        group.MapGet("/{id}", (int id) =>
         {
             // Logic to get a single product
             return Results.Ok($"Product {id}");
@@ -150,20 +173,16 @@ public class ProductEndpoints : IEndpoint
 }
 ```
 
-**Step 2: Register the endpoints in `Program.cs`**
+**Step 3: Call `MapEndpoints()` in `Program.cs`**
 
-The `MapEndpoints` method scans the specified assembly (or the calling assembly by default) for all types implementing `IEndpoint` and calls their `MapEndpoint` method.
 ```csharp
 // Program.cs
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Scans the assembly and registers all IEndpoint implementations with DI
-builder.Services.AddEndpoints(typeof(Program).Assembly);
-
 var app = builder.Build();
 
-// Maps all registered IEndpoint implementations to their routes
+// Maps all groups and endpoints discovered at compile time
 app.MapEndpoints();
 
 app.Run();
@@ -415,19 +434,24 @@ public class ProductService
 In your `IEndpoint` implementation, call the service and use the `Match` method to map the `Result` to an HTTP response. This pattern forces you to handle both success and failure cases explicitly.
 
 ```csharp
-// Features/Products/ProductEndpoints.cs
+// Features/Products/GetProductByIdEndpoint.cs
 
-public class ProductEndpoints : IEndpoint
+using Microsoft.AspNetCore.Routing;
+using RA.Utilities.Api.Abstractions;
+
+internal sealed class GetProductByIdEndpoint : IEndpoint
 {
-    public void MapEndpoint(IEndpointRouteBuilder app)
+    public static string GroupName => "Products";
+
+    public static void MapEndpoint(RouteGroupBuilder group)
     {
-        app.MapGet("/products/{id}", (int id, ProductService service) => 
+        group.MapGet("/{id}", (int id, ProductService service) => 
         {
             Result<Product> result = service.GetProductById(id);
             
             // Match the result to an appropriate HTTP response
             return result.Match(SuccessResult.Ok, ErrorResultResponse.Result);
-        }).WithTags("Products");
+        });
     }
 }
 ```

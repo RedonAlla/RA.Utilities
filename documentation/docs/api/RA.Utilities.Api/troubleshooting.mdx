@@ -39,7 +39,7 @@ dotnet add package RA.Utilities.Api --version 10.0.6
 
 ### `ApplicationBuilderExtensions` or `ServiceCollectionExtensions` no longer compile
 
-**Cause**: These generic extension classes were reorganized into feature-specific classes. `AddLoggingMiddleware` and `UseLoggingMiddleware` now live in `HttpLoggingExtensions`.
+**Cause**: These generic extension classes were reorganized into feature-specific classes. `AddLoggingMiddleware` and `UseLoggingMiddleware` now live in `MiddlewareExtensions`.
 
 **Fix**: Update your using directives — no method name changes are required:
 
@@ -48,7 +48,7 @@ dotnet add package RA.Utilities.Api --version 10.0.6
 using RA.Utilities.Api.Extensions; // ApplicationBuilderExtensions / ServiceCollectionExtensions
 
 // ✅ Still the same namespace, just different class names
-using RA.Utilities.Api.Extensions; // HttpLoggingExtensions, ValidationExtensions, etc.
+using RA.Utilities.Api.Extensions; // MiddlewareExtensions, ValidationExtensions, etc.
 ```
 
 The method calls themselves are unchanged (`AddLoggingMiddleware`, `UseLoggingMiddleware`). They are extension methods resolved by the target type (`IServiceCollection`, `IApplicationBuilder`), so the class name change is transparent to consuming code.
@@ -84,26 +84,22 @@ app.Run();
 
 ### `MapEndpoints()` is not discovering my endpoint classes
 
-**Cause**: The assembly scanning isn't finding your `IEndpoint` implementations. This usually happens when:
-- You forgot to call `AddEndpoints()` before `MapEndpoints()`
-- The assembly containing your endpoints wasn't passed to `AddEndpoints()`
-- Your endpoint class doesn't implement `IEndpoint` correctly
+**Cause**: The compile-time source generator isn't finding your `IEndpoint`/`IEndpointGroup` implementations. This usually happens when:
+- The class doesn't implement the interface **directly** — types that merely inherit the static members from a base class are not registered (only the base class is)
+- The class or one of its containing types is `private` or `file`-local, so the generated code cannot reference it (`EPMG004`)
+- The class is generic (`EPMG003`)
+- The static members are implemented explicitly instead of as public static members (`EPMG005`)
+- The endpoint class lives in a referenced class library — the generator only discovers types declared in the project's own assembly
 
-**Fix**:
+**Fix**: Make every `IEndpointGroup`/`IEndpoint` implementation a non-generic, `internal`/`public` type in the same assembly, implementing the interface directly, with `GroupName` and `MapGroup`/`MapEndpoint` declared as public static members. A rebuild regenerates the registration — check the `EPMG*` diagnostics for the exact offender.
 
-```csharp
-// ✅ Pass the assembly that contains your IEndpoint implementations
-builder.Services.AddEndpoints(typeof(Program).Assembly);
+### My build fails with `EPMG001` or `EPMG002`
 
-// Later, after building the app:
-app.MapEndpoints();
-```
+**Cause**: The generator validates group names at compile time whenever they are compile-time constants:
+- `EPMG001` — two `IEndpointGroup` implementations declare the same `GroupName`
+- `EPMG002` — an `IEndpoint` references a `GroupName` that no group declares
 
-If your endpoints are in a different project, pass that project's assembly:
-
-```csharp
-builder.Services.AddEndpoints(typeof(MyFeatureProject.SomeEndpoint).Assembly);
-```
+**Fix**: Rename one of the duplicate group names, or correct the endpoint's `GroupName` so it matches an existing group. Names computed at runtime (e.g. `typeof(X).Name`) cannot be validated at compile time — a mismatch among those throws an `InvalidOperationException` at startup naming the endpoint type and the missing group key.
 
 ### `Validate<T>()` filter returns 500 instead of 400 on validation failure
 
@@ -263,7 +259,7 @@ Extend the `ErrorResultResponse.Result` method or the `GlobalExceptionHandler`. 
 
 ### Can I use RA.Utilities.Api without the GlobalExceptionHandler?
 
-Yes. Every feature is opt-in. You can use `IEndpoint` + `MapEndpoints` for endpoint organization, `SuccessResult` for consistent responses, and `Validate<T>()` for request validation — all independently of the exception handler.
+Yes. Every feature is opt-in. You can use `IEndpointGroup`/`IEndpoint` + `MapEndpoints` for endpoint organization, `SuccessResult` for consistent responses, and `Validate<T>()` for request validation — all independently of the exception handler.
 
 ### Does the exception handler work with controller-based APIs?
 
@@ -310,6 +306,6 @@ builder.Services.AddLoggingMiddleware(options =>
 - **No localization support**: Error messages are English-only. Use `ErrorCode` values for client-side lookup tables if you need multi-language support.
 - **Minimal API focused**: The `IEndpoint` registration pattern and `Validate<T>()` filter are designed for Minimal APIs. Controller-based apps can still use the exception handler and `SuccessResult` helpers.
 - **Request body can only be read once**: The `ValidationEndpointFilter` reads and buffers the request body. If another middleware also needs to read the body, ensure `EnableBuffering` is called first.
-- **Assembly scanning is eager**: `AddEndpoints()` discovers and registers all `IEndpoint` implementations at startup. For very large assemblies with thousands of endpoints, this may have a measurable startup cost.
+- **Discovery is per assembly**: The source generator only discovers `IEndpointGroup`/`IEndpoint` types declared in the project's own assembly. Endpoint types in referenced class libraries are not mapped by the executable's `MapEndpoints()` call; each library would need the package and its own registration entry point.
 - **`DefaultHeadersMiddleware` defaults to requiring `x-request-id` only**: Additional required headers must be configured via `DefaultHeadersOptions.RequiredHeaders`. The default auto-generates `x-request-id` if missing.
 - **`LoggingMiddleware` buffers full request/response bodies**: Large payloads will be fully read into memory. Use `MaxBodyLogLength` to truncate large bodies and `PathsToIgnore` to skip specific endpoints.

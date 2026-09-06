@@ -9,34 +9,22 @@ They abstract away setup complexity and provide elegant shortcuts, guiding devel
 
 The namespace contains several key classes, each serving a distinct purpose:
 
-### 1. [EndpointExtensions](./EndpointExtensions.md)
+### 1. [HttpEndpointServiceCollectionExtensions](./HttpEndpointServiceCollectionExtensions.md)
 
-This class is the engine behind your **Endpoint Registration** Helpers feature.
-Its purpose is to declutter your `Program.cs` file by automating the discovery and mapping of API endpoints.
+This class is the engine behind your **Endpoint Registration** feature.
+Its purpose is to declutter your `Program.cs` file by discovering and mapping API endpoints at compile time through the source generator shipped with the package.
 This is a core pattern for implementing a clean Vertical Slice Architecture.
 
 ### 2. [ValidationExtensions](./ValidationExtensions.md)
 This class is designed to improve the developer experience when applying validation to Minimal API endpoints.
 It provides a more fluent and readable syntax for adding the [`ValidationEndpointFilter`](../ValidationEndpointFilter.md).
 
-### 3. [ExceptionHandlingExtensions](./ExceptionHandlingExtensions.md)
-This class simplifies the setup of global exception handling.
-It provides a convenient one-liner for registering the [`GlobalExceptionHandler`](../GlobalExceptionHandler.mdx) with the DI container and another for adding its middleware to the request pipeline,
-ensuring every unhandled exception is logged and returned to the client as a structured error response.
-
-### 4. [HttpLoggingExtensions](./LoggingMiddlewareExtensions.md)
-This class provides extension methods for registering and configuring the logging middleware.
-It pairs `AddLoggingMiddleware` (service registration) with `UseLoggingMiddleware` (pipeline registration) in a single, cohesive entry point.
-
-### 5. [DefaultHeadersMiddlewareExtensions](./DefaultHeadersMiddlewareExtensions.md)
-This class provides extension methods for registering and configuring the `DefaultHeadersMiddleware`.
-It pairs `AddDefaultHeadersMiddleware` (service registration) with `UseDefaultHeadersMiddleware` (pipeline registration).
-Configure required headers via `DefaultHeadersOptions.RequiredHeaders`.
-
-### 6. [RequestContextLoggingMiddlewareExtensions](./RequestContextLoggingMiddlewareExtensions.md)
-This class provides extension methods for registering and configuring the `RequestContextLoggingMiddleware`.
-It pairs `AddRequestContextLoggingMiddleware` (service registration) with `UseRequestContextLoggingMiddleware` (pipeline registration).
-The middleware enriches log entries with request-scoped context such as the correlation ID.
+### 3. [MiddlewareExtensions](./MiddlewareExtensions.md)
+This class is the single entry point for every middleware shipped with the package, pairing an `Add` (service registration) with a `Use` (pipeline registration) method for each:
+- `AddRaExceptionHandling` / `UseRaExceptionHandling` — registers the [`GlobalExceptionHandler`](../GlobalExceptionHandler.mdx) and adds its middleware to the pipeline, ensuring every unhandled exception is logged and returned to the client as a structured error response.
+- `AddDefaultHeadersMiddleware` / `UseDefaultHeadersMiddleware` — registers and configures the `DefaultHeadersMiddleware`; configure required headers via `DefaultHeadersOptions.RequiredHeaders`.
+- `AddLoggingMiddleware` / `UseLoggingMiddleware` — registers and configures the `LoggingMiddleware` for structured HTTP request/response logging.
+- `AddRequestContextLoggingMiddleware` / `UseRequestContextLoggingMiddleware` — registers and configures the `RequestContextLoggingMiddleware`, which enriches log entries with request-scoped context such as the correlation ID.
 
 <br />
 <br />
