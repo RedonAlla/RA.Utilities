@@ -13,14 +13,16 @@ This pattern ensures that the logic for each use case is completely isolated in 
 
 `RA.Utilities.Feature` defines two versions of this interfaces
 
-* **`IRequestHandler<TRequest, TResponse>`:
+* **`IRequestHandler<TRequest, TResponse>`**:
 This is the most common version.
 It's for handlers that process a request and are expected to return a value.
-The `HandleAsync` method returns a `Task<Result<TResponse>>`, wrapping the outcome in the `Result` type from your `RA.Utilities.Core` package for robust success/failure handling.
+The `HandleAsync` method returns a `Task<TResponse>` directly — no `Result` wrapper. Errors are communicated by **throwing** typed exceptions from `RA.Utilities.Core.Exceptions` (`NotFoundException`, `ConflictException`, `BadRequestException`, ...), which the API layer's `GlobalExceptionHandler` maps to HTTP responses.
 
 * **`IRequestHandler<in TRequest>`**:
 This version is for handlers that process a request but do not return a value (often called "fire-and-forget" operations).
-Its `HandleAsync` method returns a `Task<Result>`, which still allows you to know if the operation succeeded or failed, but without a return value.
+Its `HandleAsync` method returns a plain `Task`.
+
+Both interfaces also declare a context-aware `HandleAsync<TContext>(...)` overload that receives a [`PipelineContext<TContext>`](../Models/PipelineContext.md). Its default implementation delegates to the plain overload, so you only override it when you need context data.
 
 ## 🔑 Key characteristics:
 
@@ -42,48 +44,41 @@ First, define the command (the request) and its validation rules.
 
 ```csharp
 // Features/Products/CreateProduct.cs
-using RA.Utilities.Core;
+using RA.Utilities.Feature.Abstractions;
 
-// The command containing the data for the new product
-public record CreateProductCommand(string Name, decimal Price) : IRequest<Result<int>>;
+// The command containing the data for the new product.
+// TResponse is the plain return type of the handler — no Result wrapper.
+public record CreateProductCommand(string Name, decimal Price) : IRequest<int>;
 ```
 
 ### Step 2: Implement the Handler
 
-Next, create the handler by inheriting from [`RequestHandler<TRequest, TResponse>`](../Handlers/RequestHandler.md). This gives you automatic logging and exception handling.
+Next, create the handler by inheriting from [`RequestHandler<TRequest, TResponse>`](../Handlers/RequestHandler.md). Just override `HandleAsync` and return the value directly; report failures by throwing typed exceptions.
 
 ```csharp
 // Features/Products/CreateProduct.cs (continued)
+using RA.Utilities.Core.Exceptions;
 using RA.Utilities.Feature.Handlers;
-using Microsoft.Extensions.Logging;
-using RA.Utilities.Core;
 
-public class CreateProductHandler : RequestHandler<CreateProductCommand, Result<int>>
+public class CreateProductHandler : RequestHandler<CreateProductCommand, int>
 {
     private readonly IProductRepository _productRepository;
- 
-    // Inject dependencies and the base logger
-    public CreateProductHandler(IProductRepository productRepository, ILogger<CreateProductHandler> logger)
-        : base(logger)
+
+    public CreateProductHandler(IProductRepository productRepository)
     {
         _productRepository = productRepository;
     }
 
-    // Override the base HandleAsync to implement the core business logic
-    public override async Task<Result<int>> HandleAsync(CreateProductCommand command, CancellationToken cancellationToken)
+    public override async Task<int> HandleAsync(CreateProductCommand command, CancellationToken cancellationToken)
     {
-        // Check if a product with the same name already exists
         if (await _productRepository.DoesProductExistAsync(command.Name))
         {
-            // Return a failure Result using a custom exception
-            return new ConflictException(nameof(Product), command.Name);
+            throw new ConflictException(nameof(Product), command.Name);
         }
 
         var newProduct = new Product { Name = command.Name, Price = command.Price };
-        
         var productId = await _productRepository.AddAsync(newProduct);
 
-        // Return a success Result with the new product's ID
         return productId;
     }
 }
@@ -91,7 +86,7 @@ public class CreateProductHandler : RequestHandler<CreateProductCommand, Result<
 
 ### Step 3: Register Services in `Program.cs`
 
-Finally, wire up the custom mediator, the handler, the validation behavior, and your validators.
+Handlers implementing `IRequestHandler<,>` are discovered by the source generator, so `AddMediator()` registers them automatically. Only behaviors and validators need explicit registration:
 
 ```csharp
 // Program.cs
@@ -100,12 +95,12 @@ using RA.Utilities.Feature.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddMediator();
+builder.Services.AddMediator(); // registers IMediator + all handler implementations
 
 builder.Services
-    .AddFeature<CreateProductCommand, Result<int>, CreateProductHandler>()
-    .AddDecoration<LoggingBehavior<CreateProductCommand, Result<int>>>()
-    .AddValidator<CreateProductCommandValidator>();
+    .AddFeature<CreateProductCommand, int, CreateProductHandler>()
+    .AddValidator<CreateProductCommandValidator>()
+    .AddDecoration<LoggingBehavior<CreateProductCommand, int>>();
 
 var app = builder.Build();
 
@@ -113,3 +108,5 @@ var app = builder.Build();
 
 app.Run();
 ```
+
+`AddFeature` also re-registers the handler (same scoped registration), so it is only needed here to reach the builder for `.AddValidator` / `.AddDecoration`.

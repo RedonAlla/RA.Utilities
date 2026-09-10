@@ -7,15 +7,19 @@ sidebar_position: 3
 Namespace: RA.Utilities.Feature.Handlers
 ```
 
-The `RA.Utilities.Feature.Handlers` namespace provides abstract base classes that implement the [`IRequestHandler`](../Abstractions/IRequestHandler.md) interfaces. These base classes give your handlers built-in logging and automatic exception handling, so you can focus on business logic without boilerplate.
+The `RA.Utilities.Feature.Handlers` namespace provides abstract base classes that implement the [`IRequestHandler`](../Abstractions/IRequestHandler.md) interfaces. These base classes handle the interface plumbing for you, so your handlers only override one `HandleAsync` method with business logic.
 
 ## ✨ Why Use Base Handlers?
 
 Inheriting from these base classes instead of implementing the interfaces directly gives you:
 
-- **Automatic logging** — every request's start and finish is logged via `ILogger`
-- **Exception safety** — unhandled exceptions are caught and wrapped in `Result.Failure`, preventing crashes
-- **Consistent structure** — a single `HandleAsync` method to override for your business logic
+- **No interface plumbing** — implement a single abstract `HandleAsync` method; the interface members are implemented explicitly
+- **Direct returns** — return plain values (`Task<TResponse>` / `Task`); no `Result` wrapping, no implicit conversions
+- **Context support for free** — a protected virtual context-aware `HandleAsync` overload lets you consume [`PipelineContext<T>`](../Models/PipelineContext.md) data when you need it
+
+:::note
+Since v11.0.0 the base classes are **pure passthroughs**: they no longer take an `ILogger`, no longer log requests, and no longer catch exceptions. Failures are reported by **throwing** typed exceptions from `RA.Utilities.Core.Exceptions` (mapped to HTTP responses by the API layer's `GlobalExceptionHandler`). For request-level logging, register the [`LoggingBehavior`](../Behaviors/LoggingBehavior.md).
+:::
 
 ## 📦 Available Base Classes
 
@@ -27,24 +31,25 @@ Inheriting from these base classes instead of implementing the interfaces direct
 ## 🚀 Usage
 
 ```csharp
-using Microsoft.Extensions.Logging;
-using RA.Utilities.Core.Results;
+using RA.Utilities.Core.Exceptions;
 using RA.Utilities.Feature.Handlers;
 
-public class CreateProductHandler : RequestHandler<CreateProductCommand, Result<int>>
+public class CreateProductHandler : RequestHandler<CreateProductCommand, int>
 {
     private readonly IProductRepository _productRepository;
 
-    public CreateProductHandler(IProductRepository productRepository, ILogger<CreateProductHandler> logger)
-        : base(logger)
+    public CreateProductHandler(IProductRepository productRepository)
     {
         _productRepository = productRepository;
     }
 
-    public override async Task<Result<int>> HandleAsync(
+    public override async Task<int> HandleAsync(
         CreateProductCommand command, CancellationToken cancellationToken)
     {
-        // Business logic here — logging and exception handling are automatic
+        if (await _productRepository.DoesProductExistAsync(command.Name))
+            throw new ConflictException(nameof(Product), command.Name);
+
+        // Business logic here — return the value directly
         var product = new Product { Name = command.Name, Price = command.Price };
         var id = await _productRepository.AddAsync(product);
         return id;
@@ -54,14 +59,14 @@ public class CreateProductHandler : RequestHandler<CreateProductCommand, Result<
 
 ## ⚙️ How It Works
 
-The base class implements the `IRequestHandler` interface **explicitly**. The interface method:
+The base class implements the `IRequestHandler` interface **explicitly**, forwarding both the plain and the context-aware `HandleAsync` overloads to your overrides:
 
-1. Logs `"[Handler] Start Handling {RequestType}"`
-2. Calls your `HandleAsync` override
-3. On success, logs `"[Handler] Finished Handling {RequestType}"` and returns the result
-4. On exception, logs `"[Handler] Failed Handling {RequestType}"` and returns `Result.Failure`
+1. `HandleAsync(request, ct)` — the **public abstract** member you override with business logic.
+2. `HandleAsync<TContext>(request, context, ct)` — a **protected virtual** member that delegates to the abstract one by default; override it to read or write [`PipelineContext<T>`](../Models/PipelineContext.md) data.
 
-Your derived class never needs a `try-catch` block — the base class handles it.
+Exceptions thrown inside your override propagate out of the mediator unchanged — there is no try-catch wrapper.
+
+Handlers are auto-registered: the source generator shipped in the package discovers every concrete `IRequestHandler<,>` / `IRequestHandler<>` implementation and `AddMediator()` applies the registrations (scoped). See the [Auto Registration](../auto-registration) guide for details.
 
 <br />
 <br />

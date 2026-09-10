@@ -1,6 +1,5 @@
 using System.Threading;
 using System.Threading.Tasks;
-using RA.Utilities.Core.Results;
 using RA.Utilities.Feature.Models;
 
 namespace RA.Utilities.Feature.Abstractions;
@@ -19,7 +18,7 @@ public interface IPipelineBehavior<TRequest>
     /// <param name="next">The delegate to invoke the next handler in the pipeline.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task<Result> HandleAsync(TRequest request, RequestHandlerDelegate next, CancellationToken cancellationToken);
+    Task HandleAsync(TRequest request, RequestHandlerDelegate next, CancellationToken cancellationToken);
 
     /// <summary>
     /// Handles the request with a typed pipeline context and invokes the next context-aware delegate.
@@ -27,7 +26,7 @@ public interface IPipelineBehavior<TRequest>
     /// Override this method to read or write <see cref="PipelineContext{T}"/> data.
     /// </summary>
     /// <typeparam name="TContext">The user-defined context data type.</typeparam>
-    Task<Result> HandleAsync<TContext>(TRequest request, RequestHandlerContextDelegate<TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
+    Task HandleAsync<TContext>(TRequest request, RequestHandlerContextDelegate<TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
         where TContext : class, new()
         => HandleAsync(request, () => next(context), cancellationToken);
 }
@@ -47,7 +46,7 @@ public interface IPipelineBehavior<TRequest, TResponse>
     /// <param name="next">The delegate to invoke the next handler in the pipeline.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A task representing the asynchronous operation with the response.</returns>
-    Task<Result<TResponse>> HandleAsync(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken);
+    Task<TResponse> HandleAsync(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken);
 
     /// <summary>
     /// Handles the request with a typed pipeline context and invokes the next context-aware delegate.
@@ -55,7 +54,7 @@ public interface IPipelineBehavior<TRequest, TResponse>
     /// Override this method to read or write <see cref="PipelineContext{T}"/> data.
     /// </summary>
     /// <typeparam name="TContext">The user-defined context data type.</typeparam>
-    Task<Result<TResponse>> HandleAsync<TContext>(TRequest request, RequestHandlerContextDelegate<TResponse, TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
+    Task<TResponse> HandleAsync<TContext>(TRequest request, RequestHandlerContextDelegate<TResponse, TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
         where TContext : class, new()
         => HandleAsync(request, () => next(context), cancellationToken);
 }

@@ -13,6 +13,7 @@
     </PackageReference>
 
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -29,6 +30,16 @@
     <ProjectReference Include="../../Core/RA.Utilities.Core/RA.Utilities.Core.csproj" />
     <ProjectReference Include="../../Application/RA.Utilities.Feature/RA.Utilities.Feature.csproj" />
     <ProjectReference Include="../../Application/RA.Utilities.Application.Validation/RA.Utilities.Application.Validation.csproj" />
+  </ItemGroup>
+
+  <!-- The handler registration generator is referenced twice: normally so tests can drive it
+       in-memory, and as an analyzer so the test assembly's own handlers are auto-registered. -->
+  <ItemGroup>
+    <ProjectReference Include="../../Application/RA.Utilities.Feature.Generators/RA.Utilities.Feature.Generators.csproj"
+                      SetTargetFramework="TargetFramework=netstandard2.0" />
+    <ProjectReference Include="../../Application/RA.Utilities.Feature.Generators/RA.Utilities.Feature.Generators.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false"
+                      SetTargetFramework="TargetFramework=netstandard2.0" />
   </ItemGroup>
 
   <ItemGroup>

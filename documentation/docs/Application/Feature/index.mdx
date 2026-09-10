@@ -27,15 +27,15 @@ The package provides several key components to achieve this clean architecture:
 
 1. **Custom Mediator ([`IMediator`](./Abstractions/IMediator.md))**:
   * **Purpose**: A lightweight, reflection-free mediator implementation — no external MediatR dependency.
-  * **Benefit**: Strongly-typed generic dispatch for both request/response (`Send`) and publish/subscribe (`Publish`) patterns.
+  * **Benefit**: Strongly-typed generic dispatch for both request/response (`Send`) and publish/subscribe (`Publish`) patterns. `Send` returns the response value directly — errors surface as typed exceptions.
 
 2. **Base Handlers ([`RequestHandler<TRequest, TResponse>`](./Handlers/RequestHandler.md))**:
   * **Purpose**: Abstract base classes for your CQRS command and query handlers.
-  * **Benefit**: They reduce boilerplate by providing built-in logging and automatic exception handling. Any unhandled exception is safely caught and wrapped in a `Result.Failure`, preventing crashes and ensuring a consistent error-handling strategy.
+  * **Benefit**: They remove boilerplate: implement the single abstract `HandleAsync` method and return values (or throw typed exceptions) directly — no explicit interface plumbing.
 
 3. **Validation Pipeline Behavior ([`ValidationBehavior<TRequest, TResponse>`](./Behaviors/ValidationBehavior.md))**:
   * **Purpose**: A pipeline behavior that automatically validates incoming commands and queries before they reach your business logic.
-  * **Benefit**: Uses [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/). If validation fails, it short-circuits and returns a `BadRequestException`. Your handlers only ever deal with valid data.
+  * **Benefit**: Uses [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/). If validation fails, it short-circuits by **throwing** a `BadRequestException` carrying the structured validation errors. Your handlers only ever deal with valid data.
 
 4. **Notification System ([`INotification`](./Abstractions/INotification.md))**:
   * **Purpose**: Publish/subscribe eventing — fire-and-forget notifications handled by zero or more subscribers.
@@ -45,22 +45,28 @@ The package provides several key components to achieve this clean architecture:
   * **Purpose**: Pass strongly-typed data through the entire pipeline — no dictionaries, no magic strings, no boxing.
   * **Benefit**: Behaviors and handlers read/write properties on a user-defined `T`. Each call gets its own isolated instance. Fully opt-in — existing `Send`/`Publish` calls compile unchanged.
 
-6. **Seamless Integration with RA.Utilities.Core**:
-  * **Purpose**: Handlers return a [`Result<T>`](../../core/RA.Utilities.Core/Results.md) object from the [`RA.Utilities.Core`](../../core/RA.Utilities.Core/index.mdx) package.
-  * **Benefit**: Explicit success/failure communication without using exceptions for control flow — cleaner, more predictable code.
+6. **Zero-Configuration Handler Registration ([`Auto Registration`](./auto-registration))**:
+  * **Purpose**: A source generator shipped in the package discovers all `IRequestHandler<,>` / `IRequestHandler<>` / `INotificationHandler<>` implementations and registers them when `AddMediator()` is called.
+  * **Benefit**: Plain handlers need no explicit `AddFeature` / `AddNotification` calls — only behaviors and validators still require explicit registration.
+
+7. **Exception-Based Errors ([`RA.Utilities.Core.Exceptions`](../../core/RA.Utilities.Core.Exceptions/index.mdx))**:
+  * **Purpose**: Handlers communicate failures by throwing typed exceptions (`NotFoundException`, `ConflictException`, `BadRequestException`, ...).
+  * **Benefit**: A single `GlobalExceptionHandler` at the API layer maps them to consistent HTTP responses — no `Result` unwrapping at call sites. (The [`Result<T>` monad](../../core/RA.Utilities.Core/Results.md) still exists in `RA.Utilities.Core` for code that wants it.)
 
 ## 🌟 Benefits
 
-The package has been fully rewritten to avoid reflection; it uses strongly-typed generic registration and explicit DI resolution instead of dynamic type lookups or assembly scanning.
+The package has been fully rewritten to avoid reflection; handlers are discovered by a source generator and resolved through strongly-typed generic DI registration instead of dynamic type lookups or runtime assembly scanning.
 
   * ✅ No runtime reflection
   * ✅ Purely generic and compile-time safe
-  * ✅ Simplified DI registration via fluent builders ([`FeatureBuilderExtensions`](./Extensions/FeatureBuilderExtensions.md))
+  * ✅ Zero-config handler registration via the in-package source generator — plain handlers need no registration code
+  * ✅ Simplified DI registration via fluent builders ([`FeatureBuilderExtensions`](./Extensions/FeatureBuilderExtensions.md)) for behaviors and validators
   * ✅ Custom mediator supports both request/response and publish/subscribe
   * ✅ Multiple notification handlers per notification type
   * ✅ Multiple notification pipeline behaviors (logging, metrics, retry)
   * ✅ Fluent builder style consistent across requests and notifications
-  * ✅ Abstract [`RequestHandler`](./Handlers/RequestHandler.md) base classes with built-in logging and exception handling
+  * ✅ Abstract [`RequestHandler`](./Handlers/RequestHandler.md) base classes — one `HandleAsync` override per handler
+  * ✅ Exception-based errors — typed exceptions map to HTTP responses via `GlobalExceptionHandler`
   * ✅ Typed [`PipelineContext<T>`](./Models/PipelineContext.md) for passing data through the pipeline — no dictionaries
 
 ## 🔧 Design Overview

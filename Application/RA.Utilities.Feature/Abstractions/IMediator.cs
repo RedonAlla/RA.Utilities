@@ -1,6 +1,5 @@
 using System.Threading;
 using System.Threading.Tasks;
-using RA.Utilities.Core.Results;
 using RA.Utilities.Feature.Models;
 
 namespace RA.Utilities.Feature.Abstractions;
@@ -16,7 +15,7 @@ public interface IMediator
     /// <param name="request">The request to send.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task<Result> Send<TRequest>(
+    Task Send<TRequest>(
         TRequest request,
         CancellationToken cancellationToken = default
     )
@@ -30,7 +29,7 @@ public interface IMediator
     /// <returns>A task representing the asynchronous operation, with the response.</returns>
     /// <typeparam name="TRequest">The type of the request.</typeparam>
     /// <typeparam name="TResponse">The type of the response.</typeparam>
-    Task<Result<TResponse>> Send<TRequest, TResponse>(
+    Task<TResponse> Send<TRequest, TResponse>(
         TRequest request,
         CancellationToken cancellationToken = default
     )
@@ -41,7 +40,7 @@ public interface IMediator
     /// </summary>
     /// <typeparam name="TRequest">The type of the request.</typeparam>
     /// <typeparam name="TContext">The user-defined context data type.</typeparam>
-    Task<Result> Send<TRequest, TContext>(
+    Task Send<TRequest, TContext>(
         TRequest request,
         PipelineContext<TContext>? context = null,
         CancellationToken cancellationToken = default)
@@ -54,7 +53,7 @@ public interface IMediator
     /// <typeparam name="TRequest">The type of the request.</typeparam>
     /// <typeparam name="TResponse">The type of the response.</typeparam>
     /// <typeparam name="TContext">The user-defined context data type.</typeparam>
-    Task<Result<TResponse>> Send<TRequest, TResponse, TContext>(TRequest request, PipelineContext<TContext>? context = null, CancellationToken cancellationToken = default)
+    Task<TResponse> Send<TRequest, TResponse, TContext>(TRequest request, PipelineContext<TContext>? context = null, CancellationToken cancellationToken = default)
         where TRequest : IRequest<TResponse>
         where TContext : class, new();
 

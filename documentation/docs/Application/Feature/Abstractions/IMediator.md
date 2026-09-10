@@ -21,8 +21,10 @@ This interface combines two fundamental communication patterns:
 1. **Request/Response (`Send` methods)**:
 This is used for commands (actions that change state) and queries (requests for data).
 It's a one-to-one pattern where a single `IRequest` is dispatched to a single `IRequestHandler`.
-  * `Send<TRequest>(...)`: For requests that do not return a value.
-  * `Send<TRequest, TResponse>(...)`: For requests that return a value.
+  * `Send<TRequest>(...)`: For requests that do not return a value — returns `Task`.
+  * `Send<TRequest, TResponse>(...)`: For requests that return a value — returns `Task<TResponse>`.
+
+Since v11.0.0, `Send` returns the handler's value directly. Failures are exceptions: handlers throw typed exceptions from `RA.Utilities.Core.Exceptions`, and the API layer's `GlobalExceptionHandler` maps them to HTTP responses. Context overloads (`Send<TRequest, TResponse, TContext>` and `Send<TRequest, TContext>`) add an optional `PipelineContext<TContext>` parameter.
 
 2. **Publish/Subscribe (`Publish` method)**:
 This is used for events or notifications (`INotification`).

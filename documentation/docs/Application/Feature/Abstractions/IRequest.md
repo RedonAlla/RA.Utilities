@@ -22,15 +22,15 @@ It marks a class as a message that, when processed by its handler, will return a
 
 ```csharp
 // The command containing the data for the new product
-public record CreateProductCommand(string Name, decimal Price) : IRequest<Result<int>>;
+public record CreateProductCommand(string Name, decimal Price) : IRequest<int>;
 ```
 Let's break this down:
 
 * **CreateProductCommand**: This is a C# record that holds the data needed to create a product.
-* **`: IRequest<Result<int>>`**: By inheriting from `IRequest<Result<int>>`, this record is marked as a mediator message.
+* **`: IRequest<int>`**: By inheriting from `IRequest<int>`, this record is marked as a mediator message.
 This declaration tells the system two things:
   1. This is a request that can be sent via the custom mediator (`IMediator.Send`).
-  2. When it is successfully handled, the expected response will be a `Result<int>` (which comes from your `RA.Utilities.Core` package).
+  2. When it is successfully handled, the expected response will be an `int` (for example, the new product's ID).
 
 
 🧠 Summary

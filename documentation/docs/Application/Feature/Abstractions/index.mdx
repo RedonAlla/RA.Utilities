@@ -16,7 +16,7 @@ These interfaces form the contract between the mediator, your requests/notificat
 The primary abstractions are:
 
 * **[`IRequest` / `IRequest<TResponse>`](../Abstractions/IRequest.md)**: Marker interfaces for commands (no response) and queries (with response). Implement these on your request DTOs.
-* **[`IRequestHandler<TRequest>` / `IRequestHandler<TRequest, TResponse>`](../Abstractions/IRequestHandler.md)**: Interfaces your handlers implement. For a more convenient experience with built-in logging and exception handling, inherit from the abstract [`RequestHandler`](../Handlers/RequestHandler.md) base classes in the [`Handlers`](../Handlers/index.mdx) namespace instead.
+* **[`IRequestHandler<TRequest>` / `IRequestHandler<TRequest, TResponse>`](../Abstractions/IRequestHandler.md)**: Interfaces your handlers implement. For a more convenient experience, inherit from the abstract [`RequestHandler`](../Handlers/RequestHandler.md) base classes in the [`Handlers`](../Handlers/index.mdx) namespace — they implement the interface plumbing so you only override one `HandleAsync` method.
 * **[`IPipelineBehavior<TRequest>` / `IPipelineBehavior<TRequest, TResponse>`](../Abstractions/IPipelineBehavior.md)**: Cross-cutting concerns that wrap request handler execution (validation, logging, etc.).
 * **[`INotification`](../Abstractions/INotification.md)**: Marker interface for events/notifications in the publish/subscribe system.
 * **[`INotificationHandler<TNotification>`](../Abstractions/INotificationHandler.md)**: Interface for notification subscribers.
@@ -25,7 +25,7 @@ The primary abstractions are:
 * **[`IFeatureBuilder`](../Builders/FeatureBuilder.md)**: Exposes the `IServiceCollection` from fluent builders.
 
 ## 🧠 Summary
-In summary, the `RA.Utilities.Feature.Abstractions` interfaces are the cornerstone of the CQRS pattern in this framework. For concrete handler implementations, see the [`Handlers`](../Handlers/index.mdx) namespace which provides abstract base classes with automatic logging and exception handling.
+In summary, the `RA.Utilities.Feature.Abstractions` interfaces are the cornerstone of the CQRS pattern in this framework. For concrete handler implementations, see the [`Handlers`](../Handlers/index.mdx) namespace, which provides abstract base classes that handle the interface plumbing for you.
 
 <br />
 <br />

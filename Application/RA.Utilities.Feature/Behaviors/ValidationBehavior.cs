@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using FluentValidation;
 using FluentValidation.Results;
 using RA.Utilities.Application.Validation.Utilities;
-using RA.Utilities.Core.Results;
 using RA.Utilities.Feature.Abstractions;
 using RA.Utilities.Feature.Models;
 
@@ -12,6 +11,7 @@ namespace RA.Utilities.Feature.Behaviors;
 
 /// <summary>
 /// Represents a validation behavior for handling requests with a response.
+/// When validation fails, a <see cref="RA.Utilities.Core.Exceptions.BadRequestException"/> is thrown.
 /// </summary>
 /// <typeparam name="TRequest">The type of the request.</typeparam>
 /// <typeparam name="TResponse">The type of the response.</typeparam>
@@ -28,7 +28,7 @@ public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TReques
         _validators = validators ?? [];
 
     /// <inheritdoc/>
-    public async Task<Result<TResponse>> HandleAsync(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    public async Task<TResponse> HandleAsync(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
         ValidationFailure[] validationFailures =
             await ValidationUtilities.ValidateAsync(request, _validators);
@@ -36,11 +36,11 @@ public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TReques
         if (validationFailures.Length == 0)
             return await next();
 
-        return ValidationUtilities.CreateValidationErrorResult(validationFailures);
+        throw ValidationUtilities.CreateValidationErrorResult(validationFailures);
     }
 
     /// <inheritdoc/>
-    public async Task<Result<TResponse>> HandleAsync<TContext>(TRequest request, RequestHandlerContextDelegate<TResponse, TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
+    public async Task<TResponse> HandleAsync<TContext>(TRequest request, RequestHandlerContextDelegate<TResponse, TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
         where TContext : class, new()
     {
         ValidationFailure[] validationFailures =
@@ -49,12 +49,13 @@ public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TReques
         if (validationFailures.Length == 0)
             return await next(context);
 
-        return ValidationUtilities.CreateValidationErrorResult(validationFailures);
+        throw ValidationUtilities.CreateValidationErrorResult(validationFailures);
     }
 }
 
 /// <summary>
 /// Represents a validation behavior for handling requests without a response.
+/// When validation fails, a <see cref="RA.Utilities.Core.Exceptions.BadRequestException"/> is thrown.
 /// </summary>
 /// <typeparam name="TRequest">The type of the request.</typeparam>
 public class ValidationBehavior<TRequest> : IPipelineBehavior<TRequest>
@@ -70,27 +71,33 @@ public class ValidationBehavior<TRequest> : IPipelineBehavior<TRequest>
         _validators = validators ?? [];
 
     /// <inheritdoc/>
-    public async Task<Result> HandleAsync(TRequest request, RequestHandlerDelegate next, CancellationToken cancellationToken)
+    public async Task HandleAsync(TRequest request, RequestHandlerDelegate next, CancellationToken cancellationToken)
     {
         ValidationFailure[] validationFailures =
             await ValidationUtilities.ValidateAsync(request, _validators);
 
         if (validationFailures.Length == 0)
-            return await next();
+        {
+            await next();
+            return;
+        }
 
-        return ValidationUtilities.CreateValidationErrorResult(validationFailures);
+        throw ValidationUtilities.CreateValidationErrorResult(validationFailures);
     }
 
     /// <inheritdoc/>
-    public async Task<Result> HandleAsync<TContext>(TRequest request, RequestHandlerContextDelegate<TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
+    public async Task HandleAsync<TContext>(TRequest request, RequestHandlerContextDelegate<TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
         where TContext : class, new()
     {
         ValidationFailure[] validationFailures =
             await ValidationUtilities.ValidateAsync(request, _validators);
 
         if (validationFailures.Length == 0)
-            return await next(context);
+        {
+            await next(context);
+            return;
+        }
 
-        return ValidationUtilities.CreateValidationErrorResult(validationFailures);
+        throw ValidationUtilities.CreateValidationErrorResult(validationFailures);
     }
 }

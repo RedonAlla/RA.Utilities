@@ -4,6 +4,221 @@ title: Migration Guides
 
 # Migration Guides
 
+## v10.x → v11.0.0
+
+### 💥 Breaking Change: `Result` removed from the mediator contract — errors are now exceptions
+
+In 10.x, handlers and `Send` calls returned `Result` / `Result<T>`, and failures were expressed as failure results. In 11.0.0 the mediator contract is built on plain values and exceptions:
+
+- Handlers return plain values — `Task<TResponse>` for request/response handlers, `Task` for void request handlers. `INotificationHandler<TNotification>` is unchanged (`Task`).
+- `IMediator.Send<TRequest, TResponse>` returns `Task<TResponse>`; `Send<TRequest>` (void) returns `Task`. Context overloads add a `PipelineContext<TContext>? context = null` parameter. `Publish` is unchanged.
+- Errors are **exceptions**. Handlers throw typed exceptions from `RA.Utilities.Core.Exceptions` (`NotFoundException`, `BadRequestException`, `ConflictException`, `ForbiddenException`, `UnauthorizedException`, `UnprocessableException`, `GatewayTimeoutException`, `ServiceUnavailableException`, `TooManyRequestsException`). `ValidationBehavior` now **throws** a `BadRequestException` instead of returning a failure `Result`.
+- The API layer's `GlobalExceptionHandler` maps those exceptions to HTTP responses.
+- The `Result` / `Result<T>` monad still exists in `RA.Utilities.Core` for callers who want it — it just no longer participates in the mediator contract.
+
+### Signature changes at a glance
+
+| Member | Before (10.x) | After (11.0.0) |
+|---|---|---|
+| `IRequestHandler<TRequest, TResponse>.HandleAsync` | `Task<Result<TResponse>>` | `Task<TResponse>` |
+| `IRequestHandler<TRequest>.HandleAsync` (void) | `Task<Result>` | `Task` |
+| `IMediator.Send<TRequest, TResponse>` | `Task<Result<TResponse>>` | `Task<TResponse>` |
+| `IMediator.Send<TRequest>` (void) | `Task<Result>` | `Task` |
+| `RequestHandlerDelegate<TResponse>` | `Task<Result<TResponse>>` | `Task<TResponse>` |
+| `RequestHandlerDelegate` | `Task<Result>` | `Task` |
+| `RequestHandler<TRequest, TResponse>` abstract member | `Task<Result<TResponse>> HandleAsync(...)` | `Task<TResponse> HandleAsync(...)` |
+| `RequestHandler<TRequest>` abstract member | `Task<Result> HandleAsync(...)` | `Task HandleAsync(...)` |
+| `ValidationBehavior` on failure | Returns `Result.Failure` | **Throws** `BadRequestException` |
+
+### Step 1: Change request/response types from `Result<T>` to plain `T`
+
+Remove `Result<...>` from your request declarations and handler bases:
+
+**Before (10.x):**
+
+```csharp
+public record CreateProductCommand(string Name, decimal Price) : IRequest<Result<int>>;
+
+public class CreateProductHandler : RequestHandler<CreateProductCommand, Result<int>>
+{
+    public override async Task<Result<int>> HandleAsync(
+        CreateProductCommand command, CancellationToken ct)
+    {
+        var id = await _productRepository.AddAsync(new Product(command.Name, command.Price));
+        return id; // implicit Result.Success(id)
+    }
+}
+```
+
+**After (11.0.0):**
+
+```csharp
+public record CreateProductCommand(string Name, decimal Price) : IRequest<int>;
+
+public class CreateProductHandler : RequestHandler<CreateProductCommand, int>
+{
+    public override async Task<int> HandleAsync(
+        CreateProductCommand command, CancellationToken ct)
+    {
+        var id = await _productRepository.AddAsync(new Product(command.Name, command.Price));
+        return id;
+    }
+}
+```
+
+Replace `return Result.Success(x);` with `return x;`. For void handlers, replace `return Result.Success();` with a plain `return;` (or nothing):
+
+**Before (10.x):**
+
+```csharp
+public class DeleteProductHandler : RequestHandler<DeleteProductCommand>
+{
+    public override async Task<Result> HandleAsync(
+        DeleteProductCommand command, CancellationToken ct)
+    {
+        await _repository.RemoveAsync(command.ProductId, ct);
+        return Result.Success();
+    }
+}
+```
+
+**After (11.0.0):**
+
+```csharp
+public class DeleteProductHandler : RequestHandler<DeleteProductCommand>
+{
+    public override async Task HandleAsync(
+        DeleteProductCommand command, CancellationToken ct)
+    {
+        await _repository.RemoveAsync(command.ProductId, ct);
+    }
+}
+```
+
+### Step 2: Throw typed exceptions instead of returning failure results
+
+Every `return Result.Failure(...)`, `return exception;` (implicit `Exception` → `Result` conversion), or `return Result.Success();`-style failure path becomes a `throw` of the corresponding typed exception:
+
+**Before (10.x):**
+
+```csharp
+if (await _productRepository.DoesProductExistAsync(command.Name))
+    return new ConflictException(nameof(Product), command.Name);
+
+var product = await _repository.FindByIdAsync(query.ProductId, ct);
+if (product is null)
+    return new NotFoundException(nameof(Product), query.ProductId);
+```
+
+**After (11.0.0):**
+
+```csharp
+if (await _productRepository.DoesProductExistAsync(command.Name))
+    throw new ConflictException(nameof(Product), command.Name);
+
+var product = await _repository.FindByIdAsync(query.ProductId, ct);
+if (product is null)
+    throw new NotFoundException(nameof(Product), query.ProductId);
+```
+
+Unhandled exceptions now **propagate** out of the mediator instead of being captured in a failed `Result` — make sure your API layer uses the `GlobalExceptionHandler` (it maps `RaBaseException` subclasses to their HTTP responses and every other exception to `500`).
+
+### Step 3: Update call sites that unwrap results
+
+Callers that checked `result.IsSuccess`, read `result.Value`, or chained `OnFailure`/`Match`/`OnSuccess` must switch to plain values plus `try/catch`:
+
+**Before (10.x):**
+
+```csharp
+var result = await mediator.Send<GetProductQuery, Result<Product>>(query);
+if (result.IsSuccess)
+    return Results.Ok(result.Value);
+return Results.Problem(...);
+```
+
+**After (11.0.0):**
+
+```csharp
+var product = await mediator.Send<GetProductQuery, Product>(query);
+return Results.Ok(product);
+```
+
+Failures are handled centrally by `GlobalExceptionHandler` — no per-call unwrapping needed.
+
+### Step 4: `ValidationBehavior` now throws `BadRequestException`
+
+Nothing changes in how you register validators — `.AddValidator<TValidator>()` still wires the `ValidationBehavior` into the pipeline — but on failure the behavior now **throws** a `BadRequestException` (built from the collected `ValidationFailure` entries via `ValidationUtilities.CreateValidationErrorResult`) instead of returning a failed `Result`. The `GlobalExceptionHandler` converts it to `400 Bad Request` with the structured `ValidationError` collection.
+
+### Step 5: `RequestHandler` base classes are simplified
+
+The base classes no longer take an `ILogger` constructor argument, no longer log request start/finish, and no longer catch exceptions. They are pure passthroughs: a public abstract `HandleAsync` plus a protected virtual context-aware overload. If you relied on the base classes for logging, register the `LoggingBehavior` in the pipeline instead:
+
+```csharp
+// Before (10.x): handler ctor took a logger and the base wrapped exceptions in Result.Failure
+public class CreateProductHandler : RequestHandler<CreateProductCommand, Result<int>>
+{
+    public CreateProductHandler(IProductRepository repo, ILogger<CreateProductHandler> logger)
+        : base(logger) { }
+    ...
+}
+
+// After (11.0.0): no logger parameter — throw typed exceptions instead
+public class CreateProductHandler : RequestHandler<CreateProductCommand, int>
+{
+    public CreateProductHandler(IProductRepository repo) { }
+    ...
+}
+```
+
+### Step 6: Remove redundant `AddFeature` / `AddNotification` calls — handlers auto-register
+
+A source generator shipped in the package discovers every non-abstract `IRequestHandler<,>`, `IRequestHandler<>`, and `INotificationHandler<>` implementation and queues its registration; `services.AddMediator()` applies them (request handlers scoped, notification handlers transient).
+
+**Before (10.x):**
+
+```csharp
+builder.Services.AddMediator();
+
+builder.Services
+    .AddFeature<CreateProductCommand, Result<int>, CreateProductHandler>()
+    .AddDecoration<LoggingBehavior<CreateProductCommand, Result<int>>>()
+    .AddValidator<CreateProductCommandValidator>();
+```
+
+**After (11.0.0):**
+
+```csharp
+builder.Services.AddMediator(); // registers IMediator + all handlers in the assembly
+
+// Explicit registration is only needed for validators, behaviors, and generic handlers.
+builder.Services
+    .AddFeature<CreateProductCommand, int, CreateProductHandler>()
+    .AddValidator<CreateProductCommandValidator>()
+    .AddDecoration<LoggingBehavior<CreateProductCommand, int>>();
+```
+
+Note the assembly-loading guarantee: auto-registration covers the assembly that calls `AddMediator()` plus any assembly already loaded by then. Handlers in lazily-loaded class libraries may register too late — keep handlers in the entry/composition assembly, touch the handler assembly at startup (`typeof(SomeHandler)`), or register them explicitly. See the [Auto Registration guide](auto-registration) for the full details and generator diagnostics (`FEAG001`–`FEAG005`).
+
+### What still needs explicit registration
+
+Auto-registration covers plain request and notification handlers only. Still register explicitly:
+
+- **Pipeline behaviors** — `.AddDecoration<TBehavior>()` (e.g. `LoggingBehavior`)
+- **Validators** — `.AddValidator<TValidator>()`
+- **Notification behaviors** — `.AddDecoration<TBehavior>()` on the `AddNotification` builder
+- **Generic handlers** — the generator warns `FEAG002` and skips them
+- Handlers needing custom lifetimes or setup
+
+### What is unchanged
+
+- `Publish` and `INotificationHandler<TNotification>` signatures — notifications never carried results.
+- The typed `PipelineContext<T>` design and its behavior.
+- `AddMediator()` is still required, and still a single call.
+
+---
+
+> The guides below document earlier **10.x** versions of the package and show 10.x-era signatures (handlers returning `Result<T>`, explicit per-feature registration). When migrating to 11.0.0 follow the guide above.
+
 ## v10.0.1 → v10.1.0
 
 ### Breaking Change: `PipelineContext` is now generic `PipelineContext<T>`

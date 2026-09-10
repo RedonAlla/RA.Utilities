@@ -4,7 +4,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using RA.Utilities.Core.Results;
 using RA.Utilities.Feature.Abstractions;
 using RA.Utilities.Feature.Models;
 
@@ -29,20 +28,20 @@ public class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, 
     }
 
     /// <inheritdoc/>
-    public async Task<Result<TResponse>> HandleAsync(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    public async Task<TResponse> HandleAsync(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
         _logger.LogInformation("[Request Logging] Start. Request: {@Request}", request);
-        Result<TResponse> response = await next();
+        TResponse response = await next();
         _logger.LogInformation("[Request Logging] Finished. Response: {@Response}", response);
         return response;
     }
 
     /// <inheritdoc/>
-    public async Task<Result<TResponse>> HandleAsync<TContext>(TRequest request, RequestHandlerContextDelegate<TResponse, TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
+    public async Task<TResponse> HandleAsync<TContext>(TRequest request, RequestHandlerContextDelegate<TResponse, TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
         where TContext : class, new()
     {
         _logger.LogInformation("[Request Logging] Start. Request: {@Request}", request);
-        Result<TResponse> response = await next(context);
+        TResponse response = await next(context);
         _logger.LogInformation("[Request Logging] Finished. Response: {@Response}", response);
         return response;
     }
@@ -66,21 +65,19 @@ public class LoggingBehavior<TRequest> : IPipelineBehavior<TRequest>
     }
 
     /// <inheritdoc/>
-    public async Task<Result> HandleAsync(TRequest request, RequestHandlerDelegate next, CancellationToken cancellationToken)
+    public async Task HandleAsync(TRequest request, RequestHandlerDelegate next, CancellationToken cancellationToken)
     {
         _logger.LogInformation("[Request Logging] Start. Request: {@Request}", request);
-        Result results = await next();
-        _logger.LogInformation("[Request Logging] Finished. Result: {@Result}", results);
-        return results;
+        await next();
+        _logger.LogInformation("[Request Logging] Finished.");
     }
 
     /// <inheritdoc/>
-    public async Task<Result> HandleAsync<TContext>(TRequest request, RequestHandlerContextDelegate<TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
+    public async Task HandleAsync<TContext>(TRequest request, RequestHandlerContextDelegate<TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
         where TContext : class, new()
     {
         _logger.LogInformation("[Request Logging] Start. Request: {@Request}", request);
-        Result results = await next(context);
-        _logger.LogInformation("[Request Logging] Finished. Result: {@Result}", results);
-        return results;
+        await next(context);
+        _logger.LogInformation("[Request Logging] Finished.");
     }
 }

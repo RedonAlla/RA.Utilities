@@ -5,7 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using RA.Utilities.Core.Results;
 using RA.Utilities.Feature.Abstractions;
 using RA.Utilities.Feature.Models;
 
@@ -36,7 +35,7 @@ public class Mediator : IMediator
     // ------------------- SEND (no context) -------------------
 
     /// <inheritdoc/>
-    public Task<Result> Send<TRequest>(TRequest request, CancellationToken cancellationToken = default)
+    public Task Send<TRequest>(TRequest request, CancellationToken cancellationToken = default)
         where TRequest : IRequest
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -44,7 +43,7 @@ public class Mediator : IMediator
     }
 
     /// <inheritdoc/>
-    public Task<Result<TResponse>> Send<TRequest, TResponse>(TRequest request, CancellationToken cancellationToken = default)
+    public Task<TResponse> Send<TRequest, TResponse>(TRequest request, CancellationToken cancellationToken = default)
         where TRequest : IRequest<TResponse>
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -54,7 +53,7 @@ public class Mediator : IMediator
     // ------------------- SEND (with context) -------------------
 
     /// <inheritdoc/>
-    public Task<Result> Send<TRequest, TContext>(TRequest request, PipelineContext<TContext>? context = null, CancellationToken cancellationToken = default)
+    public Task Send<TRequest, TContext>(TRequest request, PipelineContext<TContext>? context = null, CancellationToken cancellationToken = default)
         where TRequest : IRequest
         where TContext : class, new()
     {
@@ -63,7 +62,7 @@ public class Mediator : IMediator
     }
 
     /// <inheritdoc/>
-    public Task<Result<TResponse>> Send<TRequest, TResponse, TContext>(TRequest request, PipelineContext<TContext>? context = null, CancellationToken cancellationToken = default)
+    public Task<TResponse> Send<TRequest, TResponse, TContext>(TRequest request, PipelineContext<TContext>? context = null, CancellationToken cancellationToken = default)
         where TRequest : IRequest<TResponse>
         where TContext : class, new()
     {
@@ -75,7 +74,7 @@ public class Mediator : IMediator
     /// No-context dispatch path: composes the pipeline from the non-context overloads and
     /// allocates no <see cref="PipelineContext{T}"/>.
     /// </summary>
-    private Task<Result> SendCore<TRequest>(TRequest request, CancellationToken cancellationToken)
+    private Task SendCore<TRequest>(TRequest request, CancellationToken cancellationToken)
         where TRequest : IRequest
     {
         IRequestHandler<TRequest> handler = _provider.GetRequiredService<IRequestHandler<TRequest>>();
@@ -98,7 +97,7 @@ public class Mediator : IMediator
     /// No-context dispatch path: composes the pipeline from the non-context overloads and
     /// allocates no <see cref="PipelineContext{T}"/>.
     /// </summary>
-    private Task<Result<TResponse>> SendCore<TRequest, TResponse>(TRequest request, CancellationToken cancellationToken)
+    private Task<TResponse> SendCore<TRequest, TResponse>(TRequest request, CancellationToken cancellationToken)
         where TRequest : IRequest<TResponse>
     {
         IRequestHandler<TRequest, TResponse> handler = _provider.GetRequiredService<IRequestHandler<TRequest, TResponse>>();
@@ -121,7 +120,7 @@ public class Mediator : IMediator
     /// Context dispatch path: a context is created when the caller supplied none, and it flows
     /// through the context-aware overloads so behaviors and handlers can exchange typed data.
     /// </summary>
-    private Task<Result> SendCore<TRequest, TContext>(TRequest request, PipelineContext<TContext>? context, CancellationToken cancellationToken)
+    private Task SendCore<TRequest, TContext>(TRequest request, PipelineContext<TContext>? context, CancellationToken cancellationToken)
         where TRequest : IRequest
         where TContext : class, new()
     {
@@ -146,7 +145,7 @@ public class Mediator : IMediator
     /// Context dispatch path: a context is created when the caller supplied none, and it flows
     /// through the context-aware overloads so behaviors and handlers can exchange typed data.
     /// </summary>
-    private Task<Result<TResponse>> SendCore<TRequest, TResponse, TContext>(TRequest request, PipelineContext<TContext>? context, CancellationToken cancellationToken)
+    private Task<TResponse> SendCore<TRequest, TResponse, TContext>(TRequest request, PipelineContext<TContext>? context, CancellationToken cancellationToken)
         where TRequest : IRequest<TResponse>
         where TContext : class, new()
     {

@@ -8,11 +8,13 @@
 
 
 `RA.Utilities.Feature` provides a foundational toolkit for implementing the **Vertical Slice Architecture** pattern using CQRS (Command Query Responsibility Segregation).
-It includes a custom mediator, base handlers, pipeline behaviors for cross-cutting concerns, a notification system, and seamless integration with the `Result<T>` type to streamline feature development and promote clean, maintainable code.
+It includes a custom mediator, base handlers, pipeline behaviors for cross-cutting concerns, and a notification system to streamline feature development and promote clean, maintainable code.
 
 Building applications with a traditional layered architecture can lead to wide, coupled classes and scattered logic.
 The Vertical Slice pattern, combined with CQRS, addresses this by organizing code around features.
 This package provides the essential building blocks to support that pattern.
+
+> **Version 11 breaking redesign**: Handlers and `IMediator.Send` no longer return `Result`/`Result<T>`. Errors are **exceptions** — handlers throw typed exceptions from `RA.Utilities.Core.Exceptions`, and `ValidationBehavior` throws a `BadRequestException` on validation failure. Handlers are now **registered automatically** by a source generator shipped in this package — plain handlers need no explicit registration at all. See the [migration guide](https://redonalla.github.io/RA.Utilities/docs/Application/Feature/migration-guides) for details.
 
 ## Getting started
 
@@ -43,26 +45,51 @@ The package provides its own lightweight **`IMediator`** / **`Mediator`** implem
 - **Notification** publishing to zero or more handlers, each wrapped in its own behavior pipeline
 - Behavior ordering: behaviors execute in registration order, outermost first
 
+`Send` returns the handler's value directly — `Task<TResponse>` (or `Task` for void requests). Failures are **exceptions** that propagate to the caller; the API layer's `GlobalExceptionHandler` maps the typed exceptions of `RA.Utilities.Core.Exceptions` to HTTP responses.
+
 Register the mediator once at startup:
 
 ```csharp
 builder.Services.AddMediator();
 ```
 
-### 2. Base Handlers
+### 2. Zero-Configuration Handler Registration
 
-Abstract base classes that implement the `IRequestHandler` interfaces, providing built-in logging and automatic exception-to-`Result` conversion. Inherit from these to focus on business logic without boilerplate.
+As of v11, plain handlers register themselves. A **source generator** shipped inside the `RA.Utilities.Feature` NuGet package discovers every non-abstract class implementing `IRequestHandler<TRequest, TResponse>`, `IRequestHandler<TRequest>`, or `INotificationHandler<TNotification>` and emits a module initializer that queues their DI registrations. Calling `AddMediator()` applies the queued registrations:
+
+- Request handlers are registered **scoped** (`IRequestHandler<TRequest, TResponse>` / `IRequestHandler<TRequest>`)
+- Notification handlers are registered **transient** (`INotificationHandler<TNotification>`)
+
+```csharp
+// No AddFeature/AddNotification calls needed for plain handlers —
+// AddMediator() registers every handler in the assembly.
+builder.Services.AddMediator();
+```
+
+**Still registered explicitly** (the generator cannot discover or must not auto-register these):
+
+- **Pipeline behaviors** — `AddFeature<TRequest, TResponse, THandler>().AddDecoration<TBehavior>()`
+- **Validators** — `.AddValidator<TValidator>()` (which also wires the `ValidationBehavior`)
+- **Notification behaviors** — `.AddNotification<TNotification>().AddDecoration<TBehavior>()`
+- **Generic handlers** — the generator reports `FEAG002` and skips them
+- Any handler whose registration needs a custom lifetime or setup
+
+**Assembly-loading caveat**: auto-registration covers the assembly that calls `AddMediator()` plus any assembly already loaded before that call (module initializers run when an assembly loads). Referenced class libraries load lazily on the CLR, so a handler in a library whose types are first touched at request time may be registered too late. Keep handlers in the entry/composition assembly, touch the handler assembly at startup (e.g. `typeof(SomeHandler)`), or register those handlers explicitly.
+
+### 3. Base Handlers
+
+Abstract base classes that implement the `IRequestHandler` interfaces. Inherit from these to focus on business logic without boilerplate.
 
 | Base Class | Interface Implemented | Use Case |
 |---|---|---|
 | `RequestHandler<TRequest>` | `IRequestHandler<TRequest>` | Commands with no return value |
 | `RequestHandler<TRequest, TResponse>` | `IRequestHandler<TRequest, TResponse>` | Commands/queries that return data |
 
-Both base classes log the start and end of each request via `ILogger`, catch unhandled exceptions, and wrap them in `Result.Failure` — no `try-catch` blocks needed in your handlers.
+Each base class exposes a **public abstract** `HandleAsync` method — `Task HandleAsync(TRequest, CancellationToken)` or `Task<TResponse> HandleAsync(TRequest, CancellationToken)` — plus a **protected virtual** context-aware overload that delegates to it. Exceptions propagate to the caller; there is no exception-to-`Result` wrapping.
 
 Namespace: `RA.Utilities.Feature.Handlers`
 
-### 3. Pipeline Behaviors
+### 4. Pipeline Behaviors
 
 Pipeline behaviors wrap request handlers to add cross-cutting concerns. They implement `IPipelineBehavior<TRequest>` or `IPipelineBehavior<TRequest, TResponse>` and are composed into a chain via the mediator.
 
@@ -70,19 +97,19 @@ Pipeline behaviors wrap request handlers to add cross-cutting concerns. They imp
 
 | Behavior | Description |
 |---|---|
-| `LoggingBehavior<TRequest>` / `LoggingBehavior<TRequest, TResponse>` | Logs each request and its result at `Information` level |
-| `ValidationBehavior<TRequest>` / `ValidationBehavior<TRequest, TResponse>` | Executes FluentValidation validators; short-circuits with a `BadRequestException` on failure |
+| `LoggingBehavior<TRequest>` / `LoggingBehavior<TRequest, TResponse>` | Logs each request and its response at `Information` level |
+| `ValidationBehavior<TRequest>` / `ValidationBehavior<TRequest, TResponse>` | Executes FluentValidation validators; **throws** a `BadRequestException` on validation failure |
 
 Register per-feature via the fluent builder:
 
 ```csharp
 builder.Services
-    .AddFeature<MyCommand, Result<int>, MyCommandHandler>()
-    .AddDecoration<LoggingBehavior<MyCommand, Result<int>>>()
+    .AddFeature<MyCommand, int, MyCommandHandler>()
+    .AddDecoration<LoggingBehavior<MyCommand, int>>()
     .AddValidator<MyCommandValidator>();
 ```
 
-### 4. Notification System
+### 5. Notification System
 
 Publish fire-and-forget notifications to zero or more handlers. Each handler is wrapped in its own notification behavior pipeline, and one handler's failure does not prevent others from executing.
 
@@ -100,7 +127,7 @@ Publish fire-and-forget notifications to zero or more handlers. Each handler is 
 | `NotificationMetricsBehavior<TNotification>` | Measures handler duration; warns if over 500 ms |
 | `NotificationRetryBehavior<TNotification>` | Retries failed handlers up to N times with configurable backoff |
 
-Register notifications via the fluent builder:
+Notification **handlers** are discovered by the source generator automatically. Add notification **behaviors** via the fluent builder:
 
 ```csharp
 builder.Services
@@ -111,11 +138,11 @@ builder.Services
     .AddDecoration<NotificationLoggingBehavior<OrderPlaced>>();
 ```
 
-### 5. Fluent Validation Integration
+### 6. Fluent Validation Integration
 
-The `ValidationBehavior` automatically discovers and executes all registered `IValidator<TRequest>` implementations. If validation fails, the pipeline short-circuits and returns a `Result.Failure` containing a `BadRequestException` with the validation errors — invalid data never reaches your handler.
+The `ValidationBehavior` automatically discovers and executes all registered `IValidator<TRequest>` implementations. If validation fails, the behavior **throws** a `BadRequestException` built from the collected `ValidationFailure` entries (via `ValidationUtilities.CreateValidationErrorResult`) — invalid data never reaches your handler, and the API layer's `GlobalExceptionHandler` turns it into a `400 Bad Request` response.
 
-### 6. Pipeline Context
+### 7. Pipeline Context
 
 The `PipelineContext<T>` provides a **strongly-typed** data carrier that flows through the entire pipeline. Each `Send` or `Publish` call gets its own isolated instance. Behaviors and handlers read and write properties on the user-defined `T` — no dictionaries, no magic strings, no boxing.
 
@@ -132,11 +159,11 @@ public class MyPipelineContext
 public class CorrelationIdBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {
-    public Task<Result<TResponse>> HandleAsync(
+    public Task<TResponse> HandleAsync(
         TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken ct)
         => HandleAsync(request, _ => next(), new PipelineContext<MyPipelineContext>(), ct);
 
-    public async Task<Result<TResponse>> HandleAsync<TContext>(
+    public async Task<TResponse> HandleAsync<TContext>(
         TRequest request, RequestHandlerContextDelegate<TResponse, TContext> next,
         PipelineContext<TContext> context, CancellationToken ct)
         where TContext : class, new()
@@ -148,16 +175,14 @@ public class CorrelationIdBehavior<TRequest, TResponse> : IPipelineBehavior<TReq
 }
 
 // A handler that reads the correlation ID
-public class MyHandler : RequestHandler<MyCommand, Result<Data>>
+public class MyHandler : RequestHandler<MyCommand, Data>
 {
-    public MyHandler(ILogger<MyHandler> logger) : base(logger) { }
-
-    protected override async Task<Result<Data>> HandleAsync<TContext>(
+    protected override async Task<Data> HandleAsync<TContext>(
         MyCommand request, PipelineContext<TContext> context, CancellationToken ct)
         where TContext : class, new()
     {
         if (context is PipelineContext<MyPipelineContext> ctx)
-            _logger.LogInformation("CorrelationId: {Id}", ctx.Data.CorrelationId);
+            Console.WriteLine($"CorrelationId: {ctx.Data.CorrelationId}");
         return await base.HandleAsync(request, context, ct);
     }
 }
@@ -165,7 +190,7 @@ public class MyHandler : RequestHandler<MyCommand, Result<Data>>
 // Caller provides (or omits) context
 var ctx = new PipelineContext<MyPipelineContext>();
 ctx.Data.UserId = 42;
-var result = await mediator.Send<MyCommand, Result<Data>, MyPipelineContext>(command, ctx);
+var result = await mediator.Send<MyCommand, Data, MyPipelineContext>(command, ctx);
 ```
 
 The `IMediator` interface has overloads that accept a context type parameter:
@@ -187,11 +212,11 @@ Let's walk through creating a complete feature slice for creating a new product.
 // Features/Products/CreateProduct.cs
 
 using FluentValidation;
-using RA.Utilities.Core.Results;
 using RA.Utilities.Feature.Abstractions;
 
-// The command containing the data for the new product
-public record CreateProductCommand(string Name, decimal Price) : IRequest<Result<int>>;
+// The command containing the data for the new product.
+// TResponse is the plain return type — no Result wrapper.
+public record CreateProductCommand(string Name, decimal Price) : IRequest<int>;
 
 // The validator for the command
 public class CreateProductCommandValidator : AbstractValidator<CreateProductCommand>
@@ -206,29 +231,27 @@ public class CreateProductCommandValidator : AbstractValidator<CreateProductComm
 
 ### Step 2: Implement the Handler
 
-Inherit from `RequestHandler<TRequest, TResponse>` to get automatic logging and exception handling.
+Inherit from `RequestHandler<TRequest, TResponse>` and return the value directly. Failures are communicated by **throwing** typed exceptions from `RA.Utilities.Core.Exceptions` — no `Result.Failure`, no implicit conversions.
 
 ```csharp
 // Features/Products/CreateProduct.cs (continued)
-using Microsoft.Extensions.Logging;
-using RA.Utilities.Core.Results;
+using RA.Utilities.Core.Exceptions;
 using RA.Utilities.Feature.Handlers;
 
-public class CreateProductHandler : RequestHandler<CreateProductCommand, Result<int>>
+public class CreateProductHandler : RequestHandler<CreateProductCommand, int>
 {
     private readonly IProductRepository _productRepository;
 
-    public CreateProductHandler(IProductRepository productRepository, ILogger<CreateProductHandler> logger)
-        : base(logger)
+    public CreateProductHandler(IProductRepository productRepository)
     {
         _productRepository = productRepository;
     }
 
-    public override async Task<Result<int>> HandleAsync(CreateProductCommand command, CancellationToken cancellationToken)
+    public override async Task<int> HandleAsync(CreateProductCommand command, CancellationToken cancellationToken)
     {
         if (await _productRepository.DoesProductExistAsync(command.Name))
         {
-            return new ConflictException(nameof(Product), command.Name);
+            throw new ConflictException(nameof(Product), command.Name);
         }
 
         var newProduct = new Product { Name = command.Name, Price = command.Price };
@@ -241,19 +264,20 @@ public class CreateProductHandler : RequestHandler<CreateProductCommand, Result<
 
 ### Step 3: Register Services in `Program.cs`
 
+The handler above is discovered by the source generator, so **no registration call is needed for it**. Only the validator (which also wires up the `ValidationBehavior`) still requires explicit registration:
+
 ```csharp
 // Program.cs
-using RA.Utilities.Feature.Behaviors;
 using RA.Utilities.Feature.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddMediator();
+builder.Services.AddMediator(); // registers IMediator + all auto-discovered handlers
 
 builder.Services
-    .AddFeature<CreateProductCommand, Result<int>, CreateProductHandler>()
-    .AddDecoration<LoggingBehavior<CreateProductCommand, Result<int>>>()
-    .AddValidator<CreateProductCommandValidator>();
+    .AddFeature<CreateProductCommand, int, CreateProductHandler>()
+    .AddValidator<CreateProductCommandValidator>()
+    .AddDecoration<LoggingBehavior<CreateProductCommand, int>>();
 
 var app = builder.Build();
 
@@ -261,6 +285,8 @@ app.MapEndpoints(app.Services);
 
 app.Run();
 ```
+
+`AddFeature` re-registers the handler (harmless — same scoped registration), so you only need it when the feature also has behaviors or validators to add.
 
 ---
 
@@ -313,14 +339,14 @@ public class UpdateInventory : INotificationHandler<OrderPlaced>
 }
 ```
 
-### Step 3: Register and Publish
+### Step 3: Publish
+
+Notification handlers are auto-registered by the generator, so nothing needs to be added in `Program.cs` for plain handlers. Add notification **behaviors** explicitly when you need them:
 
 ```csharp
-// Program.cs — registration
+// Program.cs — notification behaviors only (handlers are auto-registered)
 builder.Services
     .AddNotification<OrderPlaced>()
-    .AddHandler<SendConfirmationEmail>()
-    .AddHandler<UpdateInventory>()
     .AddDecoration<NotificationRetryBehavior<OrderPlaced>>()
     .AddDecoration<NotificationLoggingBehavior<OrderPlaced>>();
 
@@ -337,24 +363,22 @@ A complete `Program.cs` might look like:
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Register the mediator
+// 1. Register the mediator — also applies all compile-time handler registrations
 builder.Services.AddMediator();
 
-// 2. Register features with validation and logging
+// 2. Wire validators and behaviors per feature (handlers themselves need no registration)
 builder.Services
-    .AddFeature<CreateProductCommand, Result<int>, CreateProductHandler>()
-    .AddDecoration<LoggingBehavior<CreateProductCommand, Result<int>>>()
-    .AddValidator<CreateProductCommandValidator>();
+    .AddFeature<CreateProductCommand, int, CreateProductHandler>()
+    .AddValidator<CreateProductCommandValidator>()
+    .AddDecoration<LoggingBehavior<CreateProductCommand, int>>();
 
 builder.Services
     .AddFeature<DeleteProductCommand, DeleteProductHandler>()
     .AddValidator<DeleteProductCommandValidator>();
 
-// 3. Register notifications
+// 3. Notification behaviors (handlers are auto-registered)
 builder.Services
     .AddNotification<OrderPlaced>()
-    .AddHandler<SendConfirmationEmail>()
-    .AddHandler<UpdateInventory>()
     .AddDecoration<NotificationRetryBehavior<OrderPlaced>>()
     .AddDecoration<NotificationLoggingBehavior<OrderPlaced>>();
 

@@ -6,59 +6,51 @@ sidebar_position: 1
 Namespace: RA.Utilities.Feature.Handlers
 ```
 
-`RequestHandler` is an abstract base class that implements the [`IRequestHandler`](../Abstractions/IRequestHandler.md) interface. It provides automatic logging and exception-to-`Result` conversion, so derived handlers can focus purely on business logic.
+`RequestHandler` is an abstract base class that implements the [`IRequestHandler`](../Abstractions/IRequestHandler.md) interface. It implements the interface's plumbing so derived handlers only override a single `HandleAsync` method with their business logic.
+
+Since v11.0.0 the base classes are pure passthroughs: **no exception-to-`Result` wrapping** (exceptions propagate to the caller), and no logger is required. Errors are reported by throwing typed exceptions from `RA.Utilities.Core.Exceptions`, which the API layer's `GlobalExceptionHandler` converts to HTTP responses.
 
 ## 📦 Two Variants
 
 | Class | Implements | Abstract Method Return |
 |---|---|---|
-| `RequestHandler<TRequest>` | `IRequestHandler<TRequest>` | `Task<Result>` |
+| `RequestHandler<TRequest>` | `IRequestHandler<TRequest>` | `Task` |
 | `RequestHandler<TRequest, TResponse>` | `IRequestHandler<TRequest, TResponse>` | `Task<TResponse>` |
 
-## 🔧 Constructor
+## ⚙️ Members
 
-```csharp
-protected RequestHandler(ILogger logger)
-```
+Each base class declares:
 
-The base class accepts an untyped `ILogger`. Pass your derived handler's typed logger (e.g., `ILogger<MyHandler>`) via `base(logger)`.
+1. **A public abstract `HandleAsync`** — `Task<TResponse> HandleAsync(TRequest, CancellationToken)` (or `Task` for void requests). This is the single method you override with your business logic.
+2. **A protected virtual context-aware overload** — `HandleAsync<TContext>(TRequest, PipelineContext<TContext>, CancellationToken)`, which by default delegates to the abstract method. Override it to consume [`PipelineContext<T>`](../Models/PipelineContext.md) data.
 
-## ⚙️ Built-in Behavior
-
-The interface method is implemented **explicitly**, providing a template that:
-
-1. **Logs** `"[Handler] Start Handling {RequestType}"` at `Information` level
-2. **Calls** your abstract `HandleAsync` override
-3. **On success**: logs `"[Handler] Finished Handling {RequestType}"` and returns the result
-4. **On exception**: logs `"[Handler] Failed Handling {RequestType}"` at `Error` level and returns `Result.Failure` (via implicit conversion from `Exception`)
+The interface's `HandleAsync` methods are implemented **explicitly** and forward straight to your overrides — there is no logging and no try-catch around them.
 
 ## 🚀 Complete Example
 
 ### `RequestHandler<TRequest, TResponse>` (with response)
 
 ```csharp
-using Microsoft.Extensions.Logging;
-using RA.Utilities.Core.Results;
+using RA.Utilities.Core.Exceptions;
 using RA.Utilities.Feature.Handlers;
 
-public class GetProductHandler : RequestHandler<GetProductQuery, Result<Product>>
+public class GetProductHandler : RequestHandler<GetProductQuery, Product>
 {
     private readonly IProductRepository _repository;
 
-    public GetProductHandler(IProductRepository repository, ILogger<GetProductHandler> logger)
-        : base(logger)
+    public GetProductHandler(IProductRepository repository)
     {
         _repository = repository;
     }
 
-    public override async Task<Result<Product>> HandleAsync(
+    public override async Task<Product> HandleAsync(
         GetProductQuery query, CancellationToken cancellationToken)
     {
         var product = await _repository.FindByIdAsync(query.ProductId, cancellationToken);
 
         if (product is null)
         {
-            return new NotFoundException(nameof(Product), query.ProductId);
+            throw new NotFoundException(nameof(Product), query.ProductId);
         }
 
         return product;
@@ -69,25 +61,25 @@ public class GetProductHandler : RequestHandler<GetProductQuery, Result<Product>
 ### `RequestHandler<TRequest>` (no response)
 
 ```csharp
+using RA.Utilities.Feature.Handlers;
+
 public class DeleteProductHandler : RequestHandler<DeleteProductCommand>
 {
     private readonly IProductRepository _repository;
 
-    public DeleteProductHandler(IProductRepository repository, ILogger<DeleteProductHandler> logger)
-        : base(logger)
+    public DeleteProductHandler(IProductRepository repository)
     {
         _repository = repository;
     }
 
-    public override async Task<Result> HandleAsync(
+    public override async Task HandleAsync(
         DeleteProductCommand command, CancellationToken cancellationToken)
     {
         await _repository.RemoveAsync(command.ProductId, cancellationToken);
-        return Result.Success();
     }
 }
 ```
 
 ## 🧠 Summary
 
-`RequestHandler` eliminates the boilerplate of logging and `try-catch` in every handler. Inherit from it, override `HandleAsync`, and write your business logic — the base class handles the rest.
+`RequestHandler` removes the interface-implementation boilerplate from your handlers — override one `HandleAsync` method, return values, and throw typed exceptions on failure. Handlers are auto-registered by the source generator when `AddMediator()` is called. For request-level logging, register the [`LoggingBehavior`](../Behaviors/LoggingBehavior.md) on the feature instead.

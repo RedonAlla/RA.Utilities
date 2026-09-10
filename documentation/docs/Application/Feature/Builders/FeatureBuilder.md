@@ -28,8 +28,8 @@ Registers a pipeline behavior for the feature. The behavior wraps the handler an
 ```csharp
 // TBehavior must implement IPipelineBehavior<TRequest, TResponse>
 builder.Services
-    .AddFeature<MyQuery, Result<Data>, MyQueryHandler>()
-    .AddDecoration<LoggingBehavior<MyQuery, Result<Data>>>();
+    .AddFeature<MyQuery, Data, MyQueryHandler>()
+    .AddDecoration<LoggingBehavior<MyQuery, Data>>();
 ```
 
 ### `AddValidator<TValidator>()`
@@ -38,11 +38,11 @@ Registers a FluentValidation validator **and** the [`ValidationBehavior`](../Beh
 
 ```csharp
 builder.Services
-    .AddFeature<CreateProductCommand, Result<int>, CreateProductHandler>()
+    .AddFeature<CreateProductCommand, int, CreateProductHandler>()
     .AddValidator<CreateProductCommandValidator>();
 // Equivalent to:
 //   services.AddTransient<IValidator<CreateProductCommand>, CreateProductCommandValidator>();
-//   services.AddTransient<IPipelineBehavior<CreateProductCommand, Result<int>>, ValidationBehavior<CreateProductCommand, Result<int>>>();
+//   services.AddTransient<IPipelineBehavior<CreateProductCommand, int>, ValidationBehavior<CreateProductCommand, int>>();
 ```
 
 ## 🧠 Summary

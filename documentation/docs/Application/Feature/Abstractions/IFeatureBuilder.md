@@ -20,15 +20,15 @@ public interface IFeatureBuilder
 Two concrete builders implement the interface:
 
 - **`FeatureBuilder<TRequest>`** — returned by `AddFeature` for requests without a response; chains `AddValidator` and `AddDecoration` to register pipeline components.
-- **`NotificationFeatureBuilder<TNotification>`** — returned by `AddNotificationFeature`; chains `AddHandler` and `AddDecoration`.
+- **`NotificationFeatureBuilder<TNotification>`** — returned by `AddNotification`; chains `AddHandler` and `AddDecoration`.
 
 ```csharp
-services.AddFeature<CreateProductCommand, Result<int>, CreateProductCommandHandler>()
+services.AddFeature<CreateProductCommand, int, CreateProductCommandHandler>()
     .AddValidator<CreateProductCommandValidator>()
-    .AddDecoration<LoggingBehavior<CreateProductCommand, Result<int>>>();
+    .AddDecoration<LoggingBehavior<CreateProductCommand, int>>();
 ```
 
-Each chained call registers a service on the collection exposed by `Services` and returns the builder for further chaining.
+Each chained call registers a service on the collection exposed by `Services` and returns the builder for further chaining. Since v11.0.0 plain request handlers are auto-registered by the source generator; the fluent builders are used for validators, pipeline behaviors, and advanced registration scenarios.
 
 🧠 Summary
 

@@ -15,8 +15,8 @@ Namespace: RA.Utilities.Feature.Behaviors
 |---|---|---|
 | [`LoggingBehavior<TRequest>`](LoggingBehavior.md) | `IPipelineBehavior<TRequest>` | Logs each request and its result |
 | [`LoggingBehavior<TRequest, TResponse>`](LoggingBehavior.md) | `IPipelineBehavior<TRequest, TResponse>` | Logs each request and its response |
-| [`ValidationBehavior<TRequest>`](ValidationBehavior.md) | `IPipelineBehavior<TRequest>` | Validates requests via FluentValidation; short-circuits on failure |
-| [`ValidationBehavior<TRequest, TResponse>`](ValidationBehavior.md) | `IPipelineBehavior<TRequest, TResponse>` | Validates requests via FluentValidation; short-circuits on failure |
+| [`ValidationBehavior<TRequest>`](ValidationBehavior.md) | `IPipelineBehavior<TRequest>` | Validates requests via FluentValidation; throws `BadRequestException` on invalid requests |
+| [`ValidationBehavior<TRequest, TResponse>`](ValidationBehavior.md) | `IPipelineBehavior<TRequest, TResponse>` | Validates requests via FluentValidation; throws `BadRequestException` on invalid requests |
 
 ## 📬 Notification Pipeline Behaviors
 

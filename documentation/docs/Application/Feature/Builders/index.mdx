@@ -24,8 +24,8 @@ All builders implement [`IFeatureBuilder`](../Abstractions/IFeatureBuilder.md), 
 ```csharp
 // Request with response — builder chains .AddDecoration and .AddValidator
 builder.Services
-    .AddFeature<CreateProductCommand, Result<int>, CreateProductHandler>()
-    .AddDecoration<LoggingBehavior<CreateProductCommand, Result<int>>>()
+    .AddFeature<CreateProductCommand, int, CreateProductHandler>()
+    .AddDecoration<LoggingBehavior<CreateProductCommand, int>>()
     .AddValidator<CreateProductCommandValidator>();
 
 // Request without response — builder chains .AddDecoration and .AddValidator
@@ -40,6 +40,10 @@ builder.Services
     .AddHandler<UpdateInventory>()
     .AddDecoration<NotificationRetryBehavior<OrderPlaced>>();
 ```
+
+:::note
+Since v11.0.0, plain request and notification handlers are auto-registered by the source generator when `AddMediator()` is called. Reach for the builders when the feature has **behaviors or validators** to add — `AddFeature` re-registers the handler (harmless) purely so the chain can configure them.
+:::
 
 <br />
 <br />

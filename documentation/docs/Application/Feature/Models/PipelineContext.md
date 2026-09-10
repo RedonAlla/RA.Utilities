@@ -48,7 +48,7 @@ public class MyPipelineContext
 var ctx = new PipelineContext<MyPipelineContext>();
 ctx.Data.UserId = 42;
 
-var result = await mediator.Send<MyCommand, Result<Data>, MyPipelineContext>(command, ctx);
+var result = await mediator.Send<MyCommand, Data, MyPipelineContext>(command, ctx);
 ```
 
 Context is opt-in: the original `Send<TRequest, TResponse>(...)` and `Publish<TNotification>(...)` overloads continue to work without a context type parameter.
@@ -59,11 +59,11 @@ Context is opt-in: the original `Send<TRequest, TResponse>(...)` and `Publish<TN
 public class CorrelationIdBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {
-    public Task<Result<TResponse>> HandleAsync(
+    public Task<TResponse> HandleAsync(
         TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken ct)
         => HandleAsync(request, _ => next(), new PipelineContext<MyPipelineContext>(), ct);
 
-    public async Task<Result<TResponse>> HandleAsync<TContext>(
+    public async Task<TResponse> HandleAsync<TContext>(
         TRequest request, RequestHandlerContextDelegate<TResponse, TContext> next,
         PipelineContext<TContext> context, CancellationToken ct)
         where TContext : class, new()
@@ -78,11 +78,9 @@ public class CorrelationIdBehavior<TRequest, TResponse> : IPipelineBehavior<TReq
 ### Reading context in a handler
 
 ```csharp
-public class MyHandler : RequestHandler<MyCommand, Result<Data>>
+public class MyHandler : RequestHandler<MyCommand, Data>
 {
-    public MyHandler(ILogger<MyHandler> logger) : base(logger) { }
-
-    protected override async Task<Result<Data>> HandleAsync<TContext>(
+    protected override async Task<Data> HandleAsync<TContext>(
         MyCommand request, PipelineContext<TContext> context, CancellationToken ct)
         where TContext : class, new()
     {
@@ -96,6 +94,6 @@ public class MyHandler : RequestHandler<MyCommand, Result<Data>>
 ## 🧠 Design Notes
 
 - **No dictionaries** — the context type `T` is a plain class with properties. IntelliSense, refactoring, and compile-time safety are preserved.
-- **Isolation** — the `Mediator` creates `new PipelineContext<T>()` at the start of each call (or uses the caller-provided instance). No shared/static state.
-- **Backward compatible** — context type parameters on `Send`/`Publish` are additive. Existing code calling `Send<TRequest, TResponse>(...)` compiles unchanged via an internal marker type.
+- **Isolation** — the `Mediator` creates `new PipelineContext<T>()` for each context-aware call (or uses the caller-provided instance). No shared/static state. Calls that do not pass a context dispatch through the non-context overloads and allocate **no** pipeline context.
+- **Opt-in** — context type parameters on `Send`/`Publish` are additive. Existing code calling `Send<TRequest, TResponse>(...)` compiles and runs unchanged.
 - **Default interface methods** — behaviors and handlers override `HandleAsync<TContext>(...)` only if they need context; the default implementation delegates to the non-context method.

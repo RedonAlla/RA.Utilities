@@ -35,7 +35,7 @@ Calling await `next()` passes control to the next behavior, or to the final requ
 
 A behavior can:
 1.  Execute code **before** calling `await next()`.
-2.  Choose to **short-circuit** the pipeline by returning a response without calling `next()`.
+2.  Choose to **short-circuit** the pipeline by returning a response (or throwing an exception) without calling `next()`.
 3.  Execute code **after** `await next()` has completed.
 
 ## 🧠 How pipeline ordering currently works
@@ -79,7 +79,7 @@ public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TReques
     public ValidationBehavior(IEnumerable<IValidator<TRequest>> validators) =>
         _validators = validators ?? Array.Empty<IValidator<TRequest>>();
 
-    public async Task<Result<TResponse>> HandleAsync(
+    public async Task<TResponse> HandleAsync(
         TRequest request,
         RequestHandlerDelegate<TResponse> next,
         CancellationToken cancellationToken)
@@ -89,8 +89,8 @@ public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TReques
 
         if (validationFailures.Length > 0)
         {
-            // 2. Short-circuit the pipeline if validation fails.
-            return ValidationUtilities.CreateValidationErrorResult(validationFailures);
+            // 2. Short-circuit the pipeline by throwing a BadRequestException.
+            throw ValidationUtilities.CreateValidationErrorResult(validationFailures);
         }
 
         // 3. Call the next delegate in the pipeline (the handler or next behavior).
@@ -99,7 +99,7 @@ public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TReques
 }
 ```
 
-In this example, if validation fails, the handler is never executed, ensuring that your business logic only ever deals with valid data.
+In this example, if validation fails, the handler is never executed, ensuring that your business logic only ever deals with valid data. Since v11.0.0 the pipeline is exception-based: behaviors return plain `Task<TResponse>` values (or `Task` for void requests) and signal failures by throwing typed exceptions — no `Result` wrapper involved.
 
 ## 🧠 Summary
 In summary, `IPipelineBehavior` is a fundamental pattern for building clean, maintainable, and robust applications by separating business logic from cross-cutting concerns.

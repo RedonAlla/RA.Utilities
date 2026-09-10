@@ -9,8 +9,8 @@ namespace RA.Utilities.Feature.Benchmarks.Shared;
 
 /// <summary>
 /// Baseline: invokes handlers directly with no mediator and no DI container, isolating
-/// the cost of the handler work itself from the dispatch machinery. The Feature rows
-/// include the <c>Result&lt;T&gt;</c> wrapper; the MediatR rows return the bare payload.
+/// the cost of the handler work itself from the dispatch machinery. Both sides return
+/// the bare payload; neither wraps responses in a Result object.
 /// </summary>
 [MemoryDiagnoser]
 public class DirectInvocationBenchmarks

@@ -3,10 +3,8 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using RA.Utilities.Core.Results;
 using RA.Utilities.Feature.Abstractions;
 using RA.Utilities.Feature.Extensions;
-using RA.Utilities.Feature.Handlers;
 using RA.Utilities.Feature.Models;
 using Xunit;
 
@@ -46,24 +44,23 @@ public class PipelineContextTests
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddMediator();
-        services.AddScoped<IRequestHandler<SetContextRequest, Result<string>>, ContextReadingHandler>();
         ServiceProvider provider = services.BuildServiceProvider();
         IMediator mediator = provider.GetRequiredService<IMediator>();
 
         var ctx1 = new PipelineContext<MyContext>();
         ctx1.Data.CorrelationId = "first";
 
-        Result<Result<string>> result1 = await mediator.Send<SetContextRequest, Result<string>, MyContext>(
+        string result1 = await mediator.Send<SetContextRequest, string, MyContext>(
             new SetContextRequest("key1", "value1"), ctx1);
 
         var ctx2 = new PipelineContext<MyContext>();
         ctx2.Data.CorrelationId = "second";
 
-        Result<Result<string>> result2 = await mediator.Send<SetContextRequest, Result<string>, MyContext>(
+        string result2 = await mediator.Send<SetContextRequest, string, MyContext>(
             new SetContextRequest("key2", "value2"), ctx2);
 
-        result1.Value!.Value.Should().Be("key1:value1:value1");
-        result2.Value!.Value.Should().Be("key2:value2:value2");
+        result1.Should().Be("key1:value1:value1");
+        result2.Should().Be("key2:value2:value2");
     }
 
     #endregion
@@ -76,16 +73,15 @@ public class PipelineContextTests
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddMediator();
-        services.AddScoped<IRequestHandler<ContextAwareRequest, Result<string>>, ContextReadingHandler>();
-        services.AddTransient<IPipelineBehavior<ContextAwareRequest, Result<string>>, ContextWritingBehavior>();
+        services.AddTransient<IPipelineBehavior<ContextAwareRequest, string>, ContextWritingBehavior>();
 
         ServiceProvider provider = services.BuildServiceProvider();
         IMediator mediator = provider.GetRequiredService<IMediator>();
 
-        Result<Result<string>> result = await mediator.Send<ContextAwareRequest, Result<string>, MyContext>(
+        string result = await mediator.Send<ContextAwareRequest, string, MyContext>(
             new ContextAwareRequest("hello"), null);
 
-        result.Value!.Value.Should().Be("hello:set-by-behavior");
+        result.Should().Be("hello:set-by-behavior");
     }
 
     [Fact]
@@ -94,16 +90,15 @@ public class PipelineContextTests
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddMediator();
-        services.AddScoped<IRequestHandler<ContextAwareRequest, Result<string>>, ContextReadingHandler>();
-        services.AddTransient<IPipelineBehavior<ContextAwareRequest, Result<string>>, ContextWritingBehavior>();
-        services.AddTransient<IPipelineBehavior<ContextAwareRequest, Result<string>>, ContextAppendingBehavior>();
+        services.AddTransient<IPipelineBehavior<ContextAwareRequest, string>, ContextWritingBehavior>();
+        services.AddTransient<IPipelineBehavior<ContextAwareRequest, string>, ContextAppendingBehavior>();
         ServiceProvider provider = services.BuildServiceProvider();
         IMediator mediator = provider.GetRequiredService<IMediator>();
 
-        Result<Result<string>> result = await mediator.Send<ContextAwareRequest, Result<string>, MyContext>(
+        string result = await mediator.Send<ContextAwareRequest, string, MyContext>(
             new ContextAwareRequest("hello"), null);
 
-        result.Value!.Value.Should().Be("hello:set-by-behavior:appended");
+        result.Should().Be("hello:set-by-behavior:appended");
     }
 
     #endregion
@@ -116,14 +111,13 @@ public class PipelineContextTests
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddMediator();
-        services.AddScoped<IRequestHandler<NoContextRequest, Result<string>>, NoContextHandler>();
         ServiceProvider provider = services.BuildServiceProvider();
         IMediator mediator = provider.GetRequiredService<IMediator>();
 
-        Result<Result<string>> result = await mediator.Send<NoContextRequest, Result<string>>(
+        string result = await mediator.Send<NoContextRequest, string>(
             new NoContextRequest("test"));
 
-        result.Value!.Value.Should().Be("test");
+        result.Should().Be("test");
     }
 
     [Fact]
@@ -132,15 +126,14 @@ public class PipelineContextTests
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddMediator();
-        services.AddScoped<IRequestHandler<NoContextRequest, Result<string>>, NoContextHandler>();
-        services.AddTransient<IPipelineBehavior<NoContextRequest, Result<string>>, LegacyLoggingBehavior>();
+        services.AddTransient<IPipelineBehavior<NoContextRequest, string>, LegacyLoggingBehavior>();
         ServiceProvider provider = services.BuildServiceProvider();
         IMediator mediator = provider.GetRequiredService<IMediator>();
 
-        Result<Result<string>> result = await mediator.Send<NoContextRequest, Result<string>>(
+        string result = await mediator.Send<NoContextRequest, string>(
             new NoContextRequest("test"));
 
-        result.Value!.Value.Should().Be("test");
+        result.Should().Be("test");
     }
 
     [Fact]
@@ -149,17 +142,16 @@ public class PipelineContextTests
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddMediator();
-        services.AddScoped<IRequestHandler<NoContextRequest, Result<string>>, NoContextHandler>();
         ServiceProvider provider = services.BuildServiceProvider();
         IMediator mediator = provider.GetRequiredService<IMediator>();
 
         var ctx = new PipelineContext<MyContext>();
         ctx.Data.CorrelationId = "corr-1";
 
-        Result<Result<string>> result = await mediator.Send<NoContextRequest, Result<string>, MyContext>(
+        string result = await mediator.Send<NoContextRequest, string, MyContext>(
             new NoContextRequest("test"), ctx);
 
-        result.Value!.Value.Should().Be("test");
+        result.Should().Be("test");
     }
 
     #endregion
@@ -172,7 +164,6 @@ public class PipelineContextTests
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddMediator();
-        services.AddTransient<INotificationHandler<TestNotification>, ContextReadingNotificationHandler>();
         services.AddTransient<INotificationBehavior<TestNotification>, ContextWritingNotificationBehavior>();
         ServiceProvider provider = services.BuildServiceProvider();
         IMediator mediator = provider.GetRequiredService<IMediator>();
@@ -193,45 +184,45 @@ public class MyContext
     public int UserId { get; set; }
 }
 
-public record ContextAwareRequest(string Data) : IRequest<Result<string>>;
-public record NoContextRequest(string Data) : IRequest<Result<string>>;
-public record SetContextRequest(string Key, string Value) : IRequest<Result<string>>;
+public record ContextAwareRequest(string Data) : IRequest<string>;
+public record NoContextRequest(string Data) : IRequest<string>;
+public record SetContextRequest(string Key, string Value) : IRequest<string>;
 public record TestNotification(string Data) : INotification;
 
 public class ContextReadingHandler :
-    IRequestHandler<ContextAwareRequest, Result<string>>,
-    IRequestHandler<SetContextRequest, Result<string>>
+    IRequestHandler<ContextAwareRequest, string>,
+    IRequestHandler<SetContextRequest, string>
 {
-    public Task<Result<Result<string>>> HandleAsync(ContextAwareRequest request, CancellationToken cancellationToken)
+    public Task<string> HandleAsync(ContextAwareRequest request, CancellationToken cancellationToken)
         => HandleAsync(request, new PipelineContext<MyContext>(), cancellationToken);
 
-    public async Task<Result<Result<string>>> HandleAsync<TContext>(ContextAwareRequest request, PipelineContext<TContext> context, CancellationToken cancellationToken)
+    public Task<string> HandleAsync<TContext>(ContextAwareRequest request, PipelineContext<TContext> context, CancellationToken cancellationToken)
         where TContext : class, new()
     {
         string suffix = context is PipelineContext<MyContext> ctx ? ctx.Data.CorrelationId ?? "none" : "none";
-        return Result.Success($"{request.Data}:{suffix}");
+        return Task.FromResult($"{request.Data}:{suffix}");
     }
 
-    public Task<Result<Result<string>>> HandleAsync(SetContextRequest request, CancellationToken cancellationToken)
+    public Task<string> HandleAsync(SetContextRequest request, CancellationToken cancellationToken)
         => HandleAsync(request, new PipelineContext<MyContext>(), cancellationToken);
 
-    public async Task<Result<Result<string>>> HandleAsync<TContext>(SetContextRequest request, PipelineContext<TContext> context, CancellationToken cancellationToken)
+    public Task<string> HandleAsync<TContext>(SetContextRequest request, PipelineContext<TContext> context, CancellationToken cancellationToken)
         where TContext : class, new()
     {
         if (context is PipelineContext<MyContext> ctx)
             ctx.Data.CorrelationId = request.Value;
 
         string? corrId = context is PipelineContext<MyContext> c ? c.Data.CorrelationId : "none";
-        return Result.Success($"{request.Key}:{request.Value}:{corrId}");
+        return Task.FromResult($"{request.Key}:{request.Value}:{corrId}");
     }
 }
 
-public class ContextWritingBehavior : IPipelineBehavior<ContextAwareRequest, Result<string>>
+public class ContextWritingBehavior : IPipelineBehavior<ContextAwareRequest, string>
 {
-    public Task<Result<Result<string>>> HandleAsync(ContextAwareRequest request, RequestHandlerDelegate<Result<string>> next, CancellationToken cancellationToken)
+    public Task<string> HandleAsync(ContextAwareRequest request, RequestHandlerDelegate<string> next, CancellationToken cancellationToken)
         => HandleAsync(request, _ => next(), new PipelineContext<MyContext>(), cancellationToken);
 
-    public async Task<Result<Result<string>>> HandleAsync<TContext>(ContextAwareRequest request, RequestHandlerContextDelegate<Result<string>, TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
+    public async Task<string> HandleAsync<TContext>(ContextAwareRequest request, RequestHandlerContextDelegate<string, TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
         where TContext : class, new()
     {
         if (context is PipelineContext<MyContext> ctx)
@@ -240,12 +231,12 @@ public class ContextWritingBehavior : IPipelineBehavior<ContextAwareRequest, Res
     }
 }
 
-public class ContextAppendingBehavior : IPipelineBehavior<ContextAwareRequest, Result<string>>
+public class ContextAppendingBehavior : IPipelineBehavior<ContextAwareRequest, string>
 {
-    public Task<Result<Result<string>>> HandleAsync(ContextAwareRequest request, RequestHandlerDelegate<Result<string>> next, CancellationToken cancellationToken)
+    public Task<string> HandleAsync(ContextAwareRequest request, RequestHandlerDelegate<string> next, CancellationToken cancellationToken)
         => HandleAsync(request, _ => next(), new PipelineContext<MyContext>(), cancellationToken);
 
-    public async Task<Result<Result<string>>> HandleAsync<TContext>(ContextAwareRequest request, RequestHandlerContextDelegate<Result<string>, TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
+    public async Task<string> HandleAsync<TContext>(ContextAwareRequest request, RequestHandlerContextDelegate<string, TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
         where TContext : class, new()
     {
         if (context is PipelineContext<MyContext> ctx && ctx.Data.CorrelationId != null)
@@ -254,15 +245,15 @@ public class ContextAppendingBehavior : IPipelineBehavior<ContextAwareRequest, R
     }
 }
 
-public class NoContextHandler : IRequestHandler<NoContextRequest, Result<string>>
+public class NoContextHandler : IRequestHandler<NoContextRequest, string>
 {
-    public Task<Result<Result<string>>> HandleAsync(NoContextRequest request, CancellationToken cancellationToken)
-        => Task.FromResult(Result.Success(Result.Success(request.Data)));
+    public Task<string> HandleAsync(NoContextRequest request, CancellationToken cancellationToken)
+        => Task.FromResult(request.Data);
 }
 
-public class LegacyLoggingBehavior : IPipelineBehavior<NoContextRequest, Result<string>>
+public class LegacyLoggingBehavior : IPipelineBehavior<NoContextRequest, string>
 {
-    public async Task<Result<Result<string>>> HandleAsync(NoContextRequest request, RequestHandlerDelegate<Result<string>> next, CancellationToken cancellationToken)
+    public async Task<string> HandleAsync(NoContextRequest request, RequestHandlerDelegate<string> next, CancellationToken cancellationToken)
         => await next();
 }
 

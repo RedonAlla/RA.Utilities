@@ -1,6 +1,5 @@
 using System.Threading;
 using System.Threading.Tasks;
-using RA.Utilities.Core.Results;
 using RA.Utilities.Feature.Abstractions;
 using RA.Utilities.Feature.Benchmarks.Shared;
 using RA.Utilities.Feature.Models;
@@ -14,7 +13,7 @@ namespace RA.Utilities.Feature.Benchmarks.Feature;
 internal sealed class NoOpBehaviorA<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {
-    public Task<Result<TResponse>> HandleAsync(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken) =>
+    public Task<TResponse> HandleAsync(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken) =>
         next();
 }
 
@@ -24,7 +23,7 @@ internal sealed class NoOpBehaviorA<TRequest, TResponse> : IPipelineBehavior<TRe
 internal sealed class NoOpBehaviorB<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {
-    public Task<Result<TResponse>> HandleAsync(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken) =>
+    public Task<TResponse> HandleAsync(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken) =>
         next();
 }
 
@@ -34,7 +33,7 @@ internal sealed class NoOpBehaviorB<TRequest, TResponse> : IPipelineBehavior<TRe
 internal sealed class NoOpBehaviorC<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {
-    public Task<Result<TResponse>> HandleAsync(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken) =>
+    public Task<TResponse> HandleAsync(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken) =>
         next();
 }
 
@@ -44,7 +43,7 @@ internal sealed class NoOpBehaviorC<TRequest, TResponse> : IPipelineBehavior<TRe
 internal sealed class VoidNoOpBehaviorA<TRequest> : IPipelineBehavior<TRequest>
     where TRequest : IRequest
 {
-    public Task<Result> HandleAsync(TRequest request, RequestHandlerDelegate next, CancellationToken cancellationToken) =>
+    public Task HandleAsync(TRequest request, RequestHandlerDelegate next, CancellationToken cancellationToken) =>
         next();
 }
 
@@ -54,7 +53,7 @@ internal sealed class VoidNoOpBehaviorA<TRequest> : IPipelineBehavior<TRequest>
 internal sealed class VoidNoOpBehaviorB<TRequest> : IPipelineBehavior<TRequest>
     where TRequest : IRequest
 {
-    public Task<Result> HandleAsync(TRequest request, RequestHandlerDelegate next, CancellationToken cancellationToken) =>
+    public Task HandleAsync(TRequest request, RequestHandlerDelegate next, CancellationToken cancellationToken) =>
         next();
 }
 
@@ -64,7 +63,7 @@ internal sealed class VoidNoOpBehaviorB<TRequest> : IPipelineBehavior<TRequest>
 internal sealed class VoidNoOpBehaviorC<TRequest> : IPipelineBehavior<TRequest>
     where TRequest : IRequest
 {
-    public Task<Result> HandleAsync(TRequest request, RequestHandlerDelegate next, CancellationToken cancellationToken) =>
+    public Task HandleAsync(TRequest request, RequestHandlerDelegate next, CancellationToken cancellationToken) =>
         next();
 }
 
@@ -74,10 +73,10 @@ internal sealed class VoidNoOpBehaviorC<TRequest> : IPipelineBehavior<TRequest>
 /// </summary>
 internal sealed class ContextAwareBehavior : IPipelineBehavior<ContextPingRequest, PongResponse>
 {
-    public Task<Result<PongResponse>> HandleAsync(ContextPingRequest request, RequestHandlerDelegate<PongResponse> next, CancellationToken cancellationToken) =>
+    public Task<PongResponse> HandleAsync(ContextPingRequest request, RequestHandlerDelegate<PongResponse> next, CancellationToken cancellationToken) =>
         next();
 
-    public Task<Result<PongResponse>> HandleAsync<TContext>(
+    public Task<PongResponse> HandleAsync<TContext>(
         ContextPingRequest request,
         RequestHandlerContextDelegate<PongResponse, TContext> next,
         PipelineContext<TContext> context,

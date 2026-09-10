@@ -1,0 +1,122 @@
+---
+sidebar_position: 2
+title: Auto Registration
+---
+
+# Auto Registration
+
+Starting with v11.0.0, handlers no longer need to be registered one by one.
+A **source generator** shipped inside the `RA.Utilities.Feature` NuGet package discovers handler implementations at compile time and emits the registration code for you — plain handlers are wired up with nothing more than `services.AddMediator()`.
+
+## 🎯 How It Works
+
+The generator ships as an analyzer inside the `RA.Utilities.Feature` package (`analyzers/dotnet/cs`), so **every consumer of the NuGet package gets it automatically** — no extra package reference, attribute, or configuration required.
+
+For each assembly that references the package, the generator:
+
+1. **Scans** the assembly for every non-abstract, non-static class implementing one of the handler contracts:
+   - `IRequestHandler<TRequest, TResponse>` (request with response)
+   - `IRequestHandler<TRequest>` (request without response)
+   - `INotificationHandler<TNotification>` (notification subscriber)
+2. **Validates** each candidate (see [diagnostics](#diagnostics) below).
+3. **Emits** a module initializer into that assembly that queues the handler registrations on a static queue in the `RA.Utilities.Feature` runtime (`RA.Utilities.Feature.Generated.HandlerRegistrations`).
+4. When your startup code calls `services.AddMediator()`, all queued registrations are **applied to the service collection** in one pass.
+
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+
+// Registers IMediator AND applies every compile-time handler registration
+// queued by the source generator.
+builder.Services.AddMediator();
+```
+
+No `AddFeature<...>()` or `AddNotification<...>()` calls are needed for plain handlers.
+
+## 🔍 Discovery Rules
+
+The generator inspects the whole class hierarchy: matching interfaces are detected through `AllInterfaces`, so a concrete class that inherits from an abstract base (which itself implements the interface) is registered **as itself**, not as the base.
+
+| Scenario | Behavior |
+|---|---|
+| Abstract class implementing a handler interface | Skipped — it is a base class, not a registrable handler |
+| Concrete class implementing a handler interface directly | Auto-registered |
+| Concrete class deriving from an abstract handler base | Auto-registered as the concrete class |
+| Concrete class implementing multiple handler interfaces | One registration per implemented interface |
+| Partial class | Single registration (parts are de-duplicated) |
+| Generic handler class (`MyHandler<T>`) | `FEAG002` warning — skipped; register explicitly |
+| `private` / file-local handler (or contained in one) | `FEAG003` error |
+| `struct` handler | `FEAG004` error |
+| Two handlers for the same request pair in one assembly | `FEAG005` error |
+| Multiple notification handlers for the same notification | Allowed — fan-out is their purpose |
+
+## 🛠️ Diagnostics
+
+All diagnostics use the category `RA.Utilities.Feature.Generators`:
+
+| ID | Severity | Meaning |
+|---|---|---|
+| `FEAG001` | Warning | Compilation targets a framework **before .NET 5**, where `ModuleInitializerAttribute` does not exist, so handlers cannot be auto-registered. Register handlers explicitly with `AddFeature` / `AddNotification`. |
+| `FEAG002` | Warning | Handler is **generic**, so the generated registration code cannot supply a type argument. Register it explicitly. |
+| `FEAG003` | Error | Handler (or one of its containing types) is **private or file-local**, so the generated code cannot reference it. Make it `internal`/`public` (or register explicitly). |
+| `FEAG004` | Error | Handler is a **struct**. Handlers are registered and resolved as class services. |
+| `FEAG005` | Error | **Two or more handlers** implement the same request handler pair (`IRequestHandler<TRequest, TResponse>` or `IRequestHandler<TRequest>`) in one assembly — the winning registration would be load-order dependent. A request may have exactly one handler; remove one of the implementations. |
+
+## ⏳ Lifetimes
+
+Generated registrations use the same lifetimes as the explicit fluent builders:
+
+| Registration | Lifetime |
+|---|---|
+| `IRequestHandler<TRequest, TResponse>` → handler | Scoped |
+| `IRequestHandler<TRequest>` → handler | Scoped |
+| `INotificationHandler<TNotification>` → handler | Transient |
+
+## 📥 Assembly-Loading Guarantee
+
+Module initializers run **when their assembly is loaded by the CLR**. The registrations are queued at that moment and applied later, when `AddMediator()` executes.
+
+The practical guarantee is:
+
+> Auto-registration covers the assembly that calls `AddMediator()` **plus any assembly that was already loaded before that call**.
+
+```csharp
+// Program.cs — entry assembly: handlers here are always registered ✓
+builder.Services.AddMediator();
+```
+
+Referenced class libraries load **lazily** on the CLR — a library's module initializer does not run just because the library is referenced. If a handler lives in a library whose types are first touched only when a request arrives (i.e., after `AddMediator()` has already applied the queue), that handler **may be registered too late**.
+
+### Escape hatches
+
+Keep handlers where they are guaranteed to be registered, or force the assembly to load early:
+
+1. **Keep handlers in the entry / composition assembly** — the assembly that calls `AddMediator()`. This is the simplest and recommended layout.
+2. **Touch the handler assembly at startup** — reference one of its types before (or when) calling `AddMediator()`, forcing the CLR to load it:
+
+```csharp
+_ = typeof(SomeHandlerInTheLibrary).Assembly; // force assembly load
+builder.Services.AddMediator();
+```
+
+3. **Register explicitly** — handlers in lazily-loaded libraries can always be registered the classic way:
+
+```csharp
+builder.Services.AddFeature<MyCommand, MyResponse, MyHandlerInAnotherLibrary>();
+builder.Services.AddNotification<OrderPlaced>().AddHandler<MyNotificationHandlerInAnotherLibrary>();
+```
+
+## 🧩 What Still Needs Explicit Registration
+
+The generator only discovers **handlers**. Everything else is registered explicitly, exactly as before:
+
+| Component | Registration |
+|---|---|
+| Request handlers (plain, non-generic, in an early-loaded assembly) | Automatic |
+| Notification handlers (plain, non-generic, in an early-loaded assembly) | Automatic |
+| Generic handlers | `AddFeature<TRequest, TResponse, THandler>()` / `AddNotification<TNotification>().AddHandler<THandler>()` (generator emits `FEAG002`) |
+| Pipeline behaviors (`IPipelineBehavior<,>`) | `.AddDecoration<TBehavior>()` on the feature builder |
+| Notification behaviors (`INotificationBehavior<,>`) | `.AddDecoration<TBehavior>()` on the notification builder |
+| Validators (`IValidator<T>`) | `.AddValidator<TValidator>()` (also wires the `ValidationBehavior`) |
+| Handlers with custom lifetimes or setup | Manual DI registration |
+
+If a request handler is registered **both** automatically and explicitly, the registrations simply stack; keep only the explicit one when you need a custom setup.

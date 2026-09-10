@@ -1,6 +1,27 @@
 # RA.Utilities.Feature Release Notes
 
+## Version 11.0.0
+![Date Badge](https://img.shields.io/badge/Publish-08%20September%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-11.0.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Feature/11.0.0)
+
+### 💥 Breaking Changes
+
+*   **`Result` removed from the mediator contract.** Handlers now return `Task<TResponse>` (or `Task` for void requests), and `IMediator.Send` returns `Task<TResponse>` / `Task`. Failures surface as exceptions: handlers throw typed exceptions (`NotFoundException`, `BadRequestException`, and the rest of the `RA.Utilities.Core.Exceptions` hierarchy), and `ValidationBehavior` throws a `BadRequestException` carrying the mapped `ValidationError` collection when validation fails. The `Result` monad remains available in `RA.Utilities.Core` for callers that still want it.
+*   **`RequestHandler` base classes simplified.** The explicit interface implementations are now plain passthroughs with no exception wrapping; unhandled handler exceptions propagate to the caller (the API layer's `GlobalExceptionHandler` converts them to HTTP responses).
+
+### ✨ New Features
+
+*   **Compile-time handler registration.** A source generator shipped inside the package discovers every `IRequestHandler<,>`, `IRequestHandler<>`, and `INotificationHandler<>` implementation in your assembly and emits a module initializer that registers them with the same lifetimes as the explicit builders (request handlers scoped, notification handlers transient). Calling `services.AddMediator()` applies those registrations — no explicit `AddFeature`/`AddNotification` calls needed. Explicit registration remains available for generic handlers, behaviors, and validators. See the [migration guide](https://redonalla.github.io/RA.Utilities/docs/Application/Feature/migration-guides) for details and the assembly-loading guarantee.
+
+### ⚡ Performance
+
+*   **No-context dispatch fast path.** `Send`/`Publish` calls without a typed context dispatch through the non-context overloads and allocate no pipeline context.
+*   **Non-async dispatch.** `SendCore` returns the composed pipeline task directly, avoiding an async state machine per call.
+*   **Notification fast path.** `Publish` invokes notification handlers directly when no notification behaviors are registered.
+*   Benchmarks show up to ~26% faster `Send` at pipeline depth 3 and ~20% faster `Publish` to three handlers versus 10.x.
+
 ## Version 10.0.2
+
 ![Date Badge](https://img.shields.io/badge/Publish-09%20August%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.2-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Feature/10.0.2)
 

@@ -18,9 +18,9 @@ This is a critical component for building robust and secure applications.
 ## 🔑 Key Benefits:
 
 1.  **Clean Handlers**: Your [`IRequestHandler`](../Abstractions/IRequestHandler.md) implementations are freed from the responsibility of validation, allowing them to focus purely on business logic.
-2.  **Short-Circuiting**: If validation fails, the behavior immediately stops the pipeline and returns a structured error response. The handler is never executed with invalid data.
+2.  **Short-Circuiting**: If validation fails, the behavior immediately stops the pipeline and **throws** a `BadRequestException`. The handler is never executed with invalid data.
 3.  **Centralized Logic**: Validation rules are defined in dedicated `FluentValidation` classes, keeping them separate from the business logic and making them easy to manage and reuse.
-4.  **Consistent Errors**: It guarantees that all validation failures across the application result in a consistent, predictable error response format.
+4.  **Consistent Errors**: It guarantees that all validation failures across the application result in a consistent, predictable error response format (the API layer's `GlobalExceptionHandler` converts the thrown `BadRequestException` into a `400 Bad Request` response carrying the structured `ValidationError` entries).
 
 ## ⚙️ How It Works
 
@@ -30,9 +30,9 @@ For every request sent through the mediator:
 1.  **Intercepts the Request**: The `ValidationBehavior` intercepts the [`IRequest`](../Abstractions/IRequest.md) before it reaches its handler.
 2.  **Resolves Validators**: It resolves all registered `IValidator<TRequest>` implementations for the specific request type from the DI container.
 3.  **Executes Validation**: It runs the `ValidateAsync` method on all resolved validators.
-4.  **Checks the Result**:
+4.  **Checks the Outcome**:
     - If there are no validation errors, it calls `await next()` to pass the request along the pipeline.
-    - If there are validation errors, it constructs a `Result.Failure` containing a `ValidationFailure` and returns it immediately.
+    - If there are validation errors, it **throws** a `BadRequestException` built from the collected failures (via `ValidationUtilities.CreateValidationErrorResult`). Invalid data never reaches your handler.
 
 ## 🚀 Usage Example
 
@@ -64,8 +64,8 @@ In your `Program.cs`, register the feature with its validator using the fluent b
   builder.Services.AddMediator();
 
   builder.Services
-      .AddFeature<CreateProductCommand, Result<int>, CreateProductHandler>()
+      .AddFeature<CreateProductCommand, int, CreateProductHandler>()
       .AddValidator<CreateProductCommandValidator>();
   ```
 
-With this setup, any `CreateProductCommand` sent through the mediator will be automatically validated.
+With this setup, any `CreateProductCommand` sent through the mediator will be automatically validated — and if it is invalid, `ValidationBehavior` throws a `BadRequestException` before the handler runs.

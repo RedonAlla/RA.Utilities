@@ -1,6 +1,5 @@
 using System.Threading;
 using System.Threading.Tasks;
-using RA.Utilities.Core.Results;
 using RA.Utilities.Feature.Abstractions;
 using RA.Utilities.Feature.Benchmarks.Shared;
 
@@ -10,14 +9,14 @@ namespace RA.Utilities.Feature.Benchmarks.Feature;
 /// Shared request/response handler for all ping requests. Handlers implement the
 /// <see cref="IRequestHandler{TRequest, TResponse}"/> interface directly (not the abstract
 /// <see cref="RA.Utilities.Feature.Handlers.RequestHandler{TRequest, TResponse}"/> base class,
-/// whose extra async wrapper is out of scope for these benchmarks).
+/// whose extra wrapper is out of scope for these benchmarks).
 /// </summary>
 /// <typeparam name="TRequest">The ping request type.</typeparam>
 internal sealed class PingResponseHandler<TRequest> : IRequestHandler<TRequest, PongResponse>
     where TRequest : IRequest<PongResponse>, IPingRequest
 {
-    public Task<Result<PongResponse>> HandleAsync(TRequest request, CancellationToken cancellationToken) =>
-        Task.FromResult(Result.Success(new PongResponse(request.Value)));
+    public Task<PongResponse> HandleAsync(TRequest request, CancellationToken cancellationToken) =>
+        Task.FromResult(new PongResponse(request.Value));
 }
 
 /// <summary>
@@ -27,8 +26,8 @@ internal sealed class PingResponseHandler<TRequest> : IRequestHandler<TRequest, 
 internal sealed class PingVoidHandler<TRequest> : IRequestHandler<TRequest>
     where TRequest : IRequest, IPingRequest
 {
-    public Task<Result> HandleAsync(TRequest request, CancellationToken cancellationToken) =>
-        Task.FromResult(Result.Success());
+    public Task HandleAsync(TRequest request, CancellationToken cancellationToken) =>
+        Task.CompletedTask;
 }
 
 /// <summary>
@@ -37,8 +36,8 @@ internal sealed class PingVoidHandler<TRequest> : IRequestHandler<TRequest>
 /// </summary>
 internal sealed class ContextReadingHandler : IRequestHandler<ContextPingRequest, PongResponse>
 {
-    public Task<Result<PongResponse>> HandleAsync(ContextPingRequest request, CancellationToken cancellationToken) =>
-        Task.FromResult(Result.Success(new PongResponse(request.Value)));
+    public Task<PongResponse> HandleAsync(ContextPingRequest request, CancellationToken cancellationToken) =>
+        Task.FromResult(new PongResponse(request.Value));
 }
 
 /// <summary>
