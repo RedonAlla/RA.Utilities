@@ -12,7 +12,7 @@ using RA.Utilities.Feature.Sample.Handlers;
 // Handlers auto-register from this assembly's own module initializer and from every assembly whose
 // module initializer has already run. The CLR loads referenced assemblies lazily, so touch the
 // handler assembly BEFORE AddMediator runs to guarantee its registrations are queued.
-// The mediator source generator registers the generated MediatorImpl the same way: AddMediator
+// The mediator source generator registers the generated Mediator the same way: AddMediator
 // applies the queued registrations, so IMediator resolves to the generated implementation — the
 // only mediator implementation in the package.
 HandlersAssembly.Touch();
@@ -27,7 +27,7 @@ ServiceProvider provider = services.BuildServiceProvider();
 // Inject the concrete generated mediator for monomorphized dispatch (each message has its own
 // typed Send overload, so calls bind directly with no interface or generic dispatch). The
 // IMediator interface remains available and dispatches through the same generated code.
-MediatorImpl mediator = provider.GetRequiredService<MediatorImpl>();
+Mediator mediator = provider.GetRequiredService<Mediator>();
 
 // Handler from the separate class library assembly.
 Pong pong = await mediator.Send(new Ping("hello"));

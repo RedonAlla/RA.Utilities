@@ -11,7 +11,7 @@ namespace RA.Utilities.Feature.Benchmarks.Feature;
 
 /// <summary>
 /// Benchmarks the source-generated mediator implementation: monomorphized per-message dispatch on
-/// the concrete <c>MediatorImpl</c> class, the interface-typed path through the generated
+/// the concrete <c>Mediator</c> class, the interface-typed path through the generated
 /// <c>typeof</c> dispatch chain, and the object-based dispatch. Each iteration resolves the
 /// mediator from a fresh scope to mirror per-request semantics.
 /// </summary>
@@ -34,7 +34,7 @@ public class GeneratedMediatorSendBenchmarks
     public async Task Send_ConcreteMonomorphic()
     {
         using IServiceScope scope = _scopeFactory.CreateScope();
-        MediatorImpl mediator = scope.ServiceProvider.GetRequiredService<MediatorImpl>();
+        Mediator mediator = scope.ServiceProvider.GetRequiredService<Mediator>();
         await mediator.Send(_pingZero, CancellationToken.None);
     }
 
@@ -42,7 +42,7 @@ public class GeneratedMediatorSendBenchmarks
     public async Task Send_ConcreteMonomorphic_ThreeBehaviors()
     {
         using IServiceScope scope = _scopeFactory.CreateScope();
-        MediatorImpl mediator = scope.ServiceProvider.GetRequiredService<MediatorImpl>();
+        Mediator mediator = scope.ServiceProvider.GetRequiredService<Mediator>();
         await mediator.Send(_pingThree, CancellationToken.None);
     }
 
@@ -58,7 +58,7 @@ public class GeneratedMediatorSendBenchmarks
     public async Task Send_ObjectDispatch()
     {
         using IServiceScope scope = _scopeFactory.CreateScope();
-        MediatorImpl mediator = scope.ServiceProvider.GetRequiredService<MediatorImpl>();
+        Mediator mediator = scope.ServiceProvider.GetRequiredService<Mediator>();
         await mediator.Send((object)_pingZero, CancellationToken.None);
     }
 
@@ -66,7 +66,7 @@ public class GeneratedMediatorSendBenchmarks
     public async Task Send_Void()
     {
         using IServiceScope scope = _scopeFactory.CreateScope();
-        MediatorImpl mediator = scope.ServiceProvider.GetRequiredService<MediatorImpl>();
+        Mediator mediator = scope.ServiceProvider.GetRequiredService<Mediator>();
         await mediator.Send(_voidPing, CancellationToken.None);
     }
 
@@ -74,7 +74,7 @@ public class GeneratedMediatorSendBenchmarks
     public async Task Send_WithContext()
     {
         using IServiceScope scope = _scopeFactory.CreateScope();
-        MediatorImpl mediator = scope.ServiceProvider.GetRequiredService<MediatorImpl>();
+        Mediator mediator = scope.ServiceProvider.GetRequiredService<Mediator>();
         var context = new PipelineContext<BenchmarkContext>();
         await mediator.Send(_contextPing, context, CancellationToken.None);
     }

@@ -14,9 +14,9 @@ namespace RA.Utilities.Tests.Generators;
 /// monomorphic per-message overloads, explicit interface implementations, the if-chain versus
 /// fast-dictionary dispatch switch, and the message/handler diagnostics (FEAG006-FEAG009).
 /// </summary>
-public class MediatorImplementationGeneratorTests
+public class MediatorementationGeneratorTests
 {
-    private const string GeneratedHintName = "RA.Utilities.Feature.MediatorImpl.g.cs";
+    private const string GeneratedHintName = "RA.Utilities.Feature.Mediator.g.cs";
 
     private const string BasicMessages = """
         using System.Threading;
@@ -67,14 +67,14 @@ public class MediatorImplementationGeneratorTests
     }
 
     [Fact]
-    public void MediatorImpl_IsStandalone_AndImplementsTheInterface()
+    public void Mediator_IsStandalone_AndImplementsTheInterface()
     {
         (_, GeneratorDriverRunResult runResult) = GeneratorTestHost.RunMediatorGenerator([BasicMessages]);
 
         string generated = GetGeneratedSource(runResult);
 
-        generated.Should().Contain("internal sealed class MediatorImpl : global::RA.Utilities.Feature.Abstractions.IMediator");
-        generated.Should().Contain("public MediatorImpl(global::System.IServiceProvider provider, global::Microsoft.Extensions.Logging.ILogger<MediatorImpl> logger)");
+        generated.Should().Contain("internal sealed class Mediator : global::RA.Utilities.Feature.Abstractions.IMediator");
+        generated.Should().Contain("public Mediator(global::System.IServiceProvider provider, global::Microsoft.Extensions.Logging.ILogger<Mediator> logger)");
         generated.Should().Contain("global::System.Threading.Tasks.Task global::RA.Utilities.Feature.Abstractions.IMediator.Send<TRequest>(TRequest request");
         generated.Should().Contain("global::System.Threading.Tasks.Task<TResponse> global::RA.Utilities.Feature.Abstractions.IMediator.Send<TRequest, TResponse>(TRequest request");
         generated.Should().Contain("global::System.Threading.Tasks.Task global::RA.Utilities.Feature.Abstractions.IMediator.Publish<TNotification>(TNotification notification");
@@ -90,7 +90,7 @@ public class MediatorImplementationGeneratorTests
 
         generated.Should().Contain("internal static class MediatorRegistrationInitializer");
         generated.Should().Contain("global::RA.Utilities.Feature.Generated.MediatorRegistrations.Add(static services =>");
-        generated.Should().Contain("AddScoped<MediatorImpl>(services)");
+        generated.Should().Contain("AddScoped<Mediator>(services)");
     }
 
     [Fact]
@@ -114,8 +114,8 @@ public class MediatorImplementationGeneratorTests
 
         string generated = GetGeneratedSource(runResult);
 
-        generated.Should().Contain("private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Func<MediatorImpl, object, global::System.Threading.CancellationToken, global::System.Threading.Tasks.Task<object?>>> s_sendObject");
-        generated.Should().Contain("private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Func<MediatorImpl, object, global::System.Threading.CancellationToken, global::System.Threading.Tasks.Task>> s_publish");
+        generated.Should().Contain("private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Func<Mediator, object, global::System.Threading.CancellationToken, global::System.Threading.Tasks.Task<object?>>> s_sendObject");
+        generated.Should().Contain("private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Func<Mediator, object, global::System.Threading.CancellationToken, global::System.Threading.Tasks.Task>> s_publish");
         generated.Should().Contain("[typeof(global::Sample.Request0)] = static (impl, request, cancellationToken) =>");
         generated.Should().Contain("s_sendObject.TryGetValue(requestType");
         generated.Should().Contain("s_publish.TryGetValue(notificationType");
@@ -346,7 +346,7 @@ public class MediatorImplementationGeneratorTests
     }
 
     [Fact]
-    public void SeamDefine_EmitsMediatorImpl_WithoutRegistrationInitializer()
+    public void SeamDefine_EmitsMediator_WithoutRegistrationInitializer()
     {
         CSharpParseOptions parseOptions = new CSharpParseOptions(LanguageVersion.Latest)
             .WithPreprocessorSymbols(GeneratorTestHost.DisableModuleInitializerDefine);
@@ -355,7 +355,7 @@ public class MediatorImplementationGeneratorTests
 
         string generated = GetGeneratedSource(runResult);
 
-        generated.Should().Contain("internal sealed class MediatorImpl");
+        generated.Should().Contain("internal sealed class Mediator");
         generated.Should().NotContain("MediatorRegistrationInitializer");
     }
 

@@ -50,8 +50,8 @@ The package provides several key components to achieve this clean architecture:
   * **Benefit**: Plain handlers and closed behaviors need no explicit `AddFeature` / `AddNotification` / `AddDecoration` calls — only validators and generic behaviors still require explicit registration.
 
 7. **Source-Generated Mediator ([`Generated Mediator`](./generated-mediator))**:
-  * **Purpose**: The same generator emits the `IMediator` implementation itself — a per-assembly `MediatorImpl` with monomorphized `Send` overloads that **inject the known handler and behaviors by concrete type and call them directly** (no interface lookups, no `GetServices`, no casts), plus fast dictionary dispatch above 8 messages and object-based dispatch.
-  * **Benefit**: At equal (scoped) handler lifetimes, benchmarks show the generated mediator **14-18% faster than MediatR with 9-14% fewer allocations** in every comparable send shape. Inject `IMediator` or the concrete `MediatorImpl` for the fastest path.
+  * **Purpose**: The same generator emits the `IMediator` implementation itself — a per-assembly `Mediator` with monomorphized `Send` overloads that **inject the known handler and behaviors by concrete type and call them directly** (no interface lookups, no `GetServices`, no casts), plus fast dictionary dispatch above 8 messages and object-based dispatch.
+  * **Benefit**: At equal (scoped) handler lifetimes, benchmarks show the generated mediator **14-18% faster than MediatR with 9-14% fewer allocations** in every comparable send shape. Inject `IMediator` or the concrete `Mediator` for the fastest path.
 
 8. **Exception-Based Errors ([`RA.Utilities.Core.Exceptions`](../../core/RA.Utilities.Core.Exceptions/index.mdx))**:
   * **Purpose**: Handlers communicate failures by throwing typed exceptions (`NotFoundException`, `ConflictException`, `BadRequestException`, ...).
@@ -84,7 +84,6 @@ The package has been fully rewritten to avoid reflection; handlers are discovere
 | [`Abstractions`](./Abstractions/index.mdx) | Core interfaces: `IMediator`, `IRequest`, `IRequestHandler`, `INotification`, `IPipelineBehavior`, `INotificationBehavior` |
 | [`Handlers`](./Handlers/index.mdx) | Abstract base classes: `RequestHandler<TRequest>`, `RequestHandler<TRequest, TResponse>` |
 | [`Behaviors`](./Behaviors/index.mdx) | Built-in pipeline and notification behaviors: logging, validation, metrics, retry |
-| [`Builders`](./Builders/index.mdx) | Fluent builders: `FeatureBuilder`, `NotificationFeatureBuilder` |
 | [`Extensions`](./Extensions/index.mdx) | DI registration extensions: `AddMediator()`, `AddFeature()`, `AddNotification()` |
 | [`Models`](./Models/index.mdx) | Delegates: `RequestHandlerDelegate`, `NotificationHandlerDelegate` |
 

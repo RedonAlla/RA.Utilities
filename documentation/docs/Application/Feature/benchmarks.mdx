@@ -17,7 +17,7 @@ The `RA.Utilities.Feature.Benchmarks` project compares the generated mediator ag
 
 ## 📊 Results (send shapes)
 
-| Scenario | MediatR | Generated `MediatorImpl` (concrete) | Delta |
+| Scenario | MediatR | Generated `Mediator` (concrete) | Delta |
 |---|---|---|---|
 | Send, 0 behaviors | 165.0 ns / 568 B | **144.9 ns / 504 B** | −12% time, −11% alloc |
 | Send, 3 behaviors | 251.7 ns / 1096 B | **207.3 ns / 1000 B** | −18% time, −9% alloc |
@@ -29,7 +29,7 @@ Additional generated-mediator shapes (no MediatR counterpart at the same pipelin
 | Path | Mean | Allocated |
 |---|---|---|
 | `IMediator.Send<TRequest, TResponse>(...)` (interface-typed) | 186.7 ns | 504 B |
-| `MediatorImpl.Send((object)request)` (object dispatch) | 146.8 ns | 504 B |
+| `Mediator.Send((object)request)` (object dispatch) | 146.8 ns | 504 B |
 
 MediatR reference points: 1 behavior at 211.2 ns / 808 B (the generated mediator runs a full **3-behavior** pipeline faster than that) and 3 void behaviors at 240.8 ns / 1000 B.
 

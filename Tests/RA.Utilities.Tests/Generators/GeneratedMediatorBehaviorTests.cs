@@ -13,11 +13,11 @@ using Xunit;
 namespace RA.Utilities.Tests.Generators;
 
 /// <summary>
-/// Loads a generated <c>MediatorImpl</c> from an in-memory compilation (compiled against the real
+/// Loads a generated <c>Mediator</c> from an in-memory compilation (compiled against the real
 /// RA.Utilities.Feature runtime, with the module-initializer test seam enabled) and verifies its
 /// dispatch behavior against a real DI container.
 /// </summary>
-public class MediatorImplBehaviorTests
+public class GeneratedMediatorBehaviorTests
 {
     private const string Sources = """
         using System;
@@ -430,7 +430,7 @@ public class MediatorImplBehaviorTests
     private static Host CreateHost(string sources = Sources)
     {
         Assembly assembly = GeneratorTestHost.CompileAndLoadMediator([sources]);
-        Type mediatorImplType = assembly.GetType("RA.Utilities.Feature.Generated.MediatorImpl")!;
+        Type mediatorImplType = assembly.GetType("RA.Utilities.Feature.Generated.Mediator")!;
 
         var services = new ServiceCollection();
         services.AddLogging();

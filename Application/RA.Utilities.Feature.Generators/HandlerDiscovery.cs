@@ -2,7 +2,6 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using RA.Utilities.Feature.Generators.Models;
 
 namespace RA.Utilities.Feature.Generators;

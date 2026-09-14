@@ -175,7 +175,7 @@ internal static class GeneratorTestHost
             includeRealRuntime: includeRealRuntime);
 
         GeneratorDriver driver = CSharpGeneratorDriver.Create(
-            new MediatorImplementationGenerator().AsSourceGenerator());
+            new MediatorementationGenerator().AsSourceGenerator());
 
         if (parseOptions is not null)
         {
@@ -191,7 +191,7 @@ internal static class GeneratorTestHost
     /// Compiles the given sources against the real <c>RA.Utilities.Feature</c> assembly and loads
     /// the emitted assembly. The module-initializer test seam is enabled, so no generated
     /// registrations reach the process-wide registration queues; tests register the generated
-    /// <c>MediatorImpl</c> and the handlers reflectively instead.
+    /// <c>Mediator</c> and the handlers reflectively instead.
     /// </summary>
     /// <param name="sources">The input sources (messages and handlers only).</param>
     /// <returns>The loaded assembly containing the generated mediator implementation.</returns>

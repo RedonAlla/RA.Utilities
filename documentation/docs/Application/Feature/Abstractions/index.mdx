@@ -22,7 +22,6 @@ The primary abstractions are:
 * **[`INotificationHandler<TNotification>`](../Abstractions/INotificationHandler.md)**: Interface for notification subscribers.
 * **[`INotificationBehavior<TNotification>`](../Abstractions/INotificationBehavior.md)**: Cross-cutting concerns that wrap notification handler execution (retry, metrics, logging).
 * **[`IMediator`](../Abstractions/IMediator.md)**: The central dispatcher — sends requests and publishes notifications.
-* **[`IFeatureBuilder`](../Builders/FeatureBuilder.md)**: Exposes the `IServiceCollection` from fluent builders.
 
 ## 🧠 Summary
 In summary, the `RA.Utilities.Feature.Abstractions` interfaces are the cornerstone of the CQRS pattern in this framework. For concrete handler implementations, see the [`Handlers`](../Handlers/index.mdx) namespace, which provides abstract base classes that handle the interface plumbing for you.

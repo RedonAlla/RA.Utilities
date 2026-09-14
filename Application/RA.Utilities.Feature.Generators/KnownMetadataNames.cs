@@ -76,7 +76,7 @@ internal static class KnownMetadataNames
 
     /// <summary>
     /// The preprocessor symbol that, when defined in the consuming compilation, makes the mediator
-    /// generator emit the <c>MediatorImpl</c> class without the module initializer that registers
+    /// generator emit the <c>Mediator</c> class without the module initializer that registers
     /// it. Used by test hosts to avoid polluting the process-wide registration queues.
     /// </summary>
     public const string DisableModuleInitializerDefine = "RA_UTILITIES_FEATURE_DISABLE_MODULE_INITIALIZER";

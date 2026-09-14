@@ -78,18 +78,18 @@ builder.Services.AddMediator();
 
 ### 3. Generated Mediator Details
 
-The generated `MediatorImpl` is the **only** `IMediator` implementation in the package:
+The generated `Mediator` is the **only** `IMediator` implementation in the package:
 
 - **Direct handler injection** — the generator knows each message's handler, registers it under its interface and as itself, and the generated `Send` resolves the handler by **concrete type** and calls it directly — no interface resolution, and the call devirtualizes.
 - **No delegate chain without behaviors** — when a request has no pipeline behaviors, the handler is invoked directly. Benchmarks (MediatR handlers registered scoped, matching this package's lifetime) show **14-18% faster sends and 9-14% fewer allocations than MediatR** across the send shapes.
 - **Closed behaviors auto-register** — non-generic `IPipelineBehavior<,>` / `IPipelineBehavior<>` / `INotificationBehavior<>` implementations are auto-registered under their interfaces (transient). Explicitly registered behaviors (`AddDecoration`, including generic closures — `FEAG010` notes the generic ones aren't auto-registered) resolve through the same channel.
 - **Fast dictionary lookups for object dispatch** — `Send(object)` / `Publish(object)` use `typeof` chains in small projects and static dictionaries once the project defines more than 8 messages; unknown types throw `HandlerNotFoundException`.
-- **Both `IMediator` and the concrete `MediatorImpl` are usable** — the concrete class is the fastest path.
+- **Both `IMediator` and the concrete `Mediator` are usable** — the concrete class is the fastest path.
 - **Compile-time message diagnostics** (`FEAG006`–`FEAG010`) — ambiguous message contracts, missing handlers, unsupported message shapes, and generic behaviors are reported at build time.
 
 ```csharp
 // Inject the concrete generated mediator for monomorphized dispatch.
-var mediator = provider.GetRequiredService<RA.Utilities.Feature.Generated.MediatorImpl>();
+var mediator = provider.GetRequiredService<RA.Utilities.Feature.Generated.Mediator>();
 Pong pong = await mediator.Send(new Ping("hello"));
 object? pongObject = await mediator.Send((object)new Ping("hello"));
 ```

@@ -16,7 +16,7 @@ internal static class GeneratedMediatorServices
 {
     public static IServiceCollection ConfigureSend(IServiceCollection services)
     {
-        services.AddSingleton<ILogger<Generated.MediatorImpl>>(NullLogger<Generated.MediatorImpl>.Instance);
+        services.AddSingleton<ILogger<Generated.Mediator>>(NullLogger<Generated.Mediator>.Instance);
         services.AddMediator();
 
         services.AddScoped<Abstractions.IRequestHandler<PingZeroRequest, PongResponse>, PingResponseHandler<PingZeroRequest>>();

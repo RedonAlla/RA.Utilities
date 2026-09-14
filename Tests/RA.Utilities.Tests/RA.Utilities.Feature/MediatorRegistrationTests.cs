@@ -25,7 +25,7 @@ public class MediatorRegistrationTests
         services.AddMediator();
         using ServiceProvider provider = services.BuildServiceProvider();
 
-        provider.GetRequiredService<IMediator>().GetType().Name.Should().Be("MediatorImpl");
+        provider.GetRequiredService<IMediator>().GetType().Name.Should().Be("Mediator");
     }
 
     [Fact]

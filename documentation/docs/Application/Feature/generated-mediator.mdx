@@ -5,8 +5,8 @@ title: Generated Mediator
 
 # Generated Mediator
 
-The **source generator** in the `RA.Utilities.Feature` package generates the `IMediator` implementation itself — the generated `MediatorImpl` is the **only** mediator in the package.
-Every assembly referencing the package gets its own `MediatorImpl` class — a complete, compile-time implementation of `IMediator` with **zero runtime reflection** — and `services.AddMediator()` registers it as the `IMediator` implementation automatically.
+The **source generator** in the `RA.Utilities.Feature` package generates the `IMediator` implementation itself — the generated `Mediator` is the **only** mediator in the package.
+Every assembly referencing the package gets its own `Mediator` class — a complete, compile-time implementation of `IMediator` with **zero runtime reflection** — and `services.AddMediator()` registers it as the `IMediator` implementation automatically.
 
 The generated implementation covers every message type visible to the compilation, including messages declared in **referenced class libraries**.
 
@@ -16,16 +16,16 @@ The generated implementation covers every message type visible to the compilatio
 - **Monomorphized `Send` methods.** One typed `Send` overload per message (`Send(Ping)`) — calls bind directly with no interface or generic dispatch, and the generic `IMediator` methods carry the same bodies, monomorphized by the JIT.
 - **No delegate allocation without behaviors.** When a request has no pipeline behaviors, the handler is invoked directly instead of building a delegate chain. Benchmarks: **12-18% faster sends and 9-14% fewer allocations than MediatR** (with MediatR handlers registered scoped, matching this package's lifetime) across the send shapes — see the [Benchmarks](./benchmarks) page for the full comparison, methodology, and how to run them.
 - **Fast dictionary lookups for object dispatch.** `Send(object)` / `Publish(object)` — where the static type is erased — use a chain of `typeof` comparisons in small projects and switch to static `Dictionary<Type, Delegate>` lookups once the project defines **more than 8 messages**, a threshold above which a dictionary pays for itself. Unknown message types throw `HandlerNotFoundException`.
-- **Both `IMediator` and the concrete class are available.** Inject `IMediator` or the concrete `MediatorImpl` for the best performance:
+- **Both `IMediator` and the concrete class are available.** Inject `IMediator` or the concrete `Mediator` for the best performance:
 
 ```csharp
 using RA.Utilities.Feature.Generated;
 
 public class OrdersService
 {
-    private readonly MediatorImpl _mediator;
+    private readonly Mediator _mediator;
 
-    public OrdersService(MediatorImpl mediator) => _mediator = mediator;
+    public OrdersService(Mediator mediator) => _mediator = mediator;
 
     public Task<CreateOrderResponse> CreateAsync(CreateOrderCommand command, CancellationToken ct) =>
         _mediator.Send(command, ct); // binds the monomorphized Send(CreateOrderCommand) overload
@@ -36,11 +36,11 @@ See the [Benchmarks](./benchmarks) page for the full side-by-side comparison wit
 
 ## 📦 How It Is Registered
 
-The generator emits a module initializer (per assembly) that queues the registration of that assembly's `MediatorImpl` on `RA.Utilities.Feature.Generated.MediatorRegistrations`.
+The generator emits a module initializer (per assembly) that queues the registration of that assembly's `Mediator` on `RA.Utilities.Feature.Generated.MediatorRegistrations`.
 `services.AddMediator()` applies the queued handler, behavior, and mediator registrations in one pass:
 
-- `IMediator` resolves to the generated `MediatorImpl`.
-- `MediatorImpl` is registered as itself, so it can be injected directly.
+- `IMediator` resolves to the generated `Mediator`.
+- `Mediator` is registered as itself, so it can be injected directly.
 
 ```csharp
 builder.Services.AddMediator();
@@ -54,9 +54,9 @@ The same assembly-loading guarantee as [auto registration](./auto-registration) 
 
 | Call | How it dispatches |
 |---|---|
-| `MediatorImpl.Send(ping)` (concrete, statically typed message) | Monomorphized overload — concrete handler injection + DI behavior resolution, direct calls |
+| `Mediator.Send(ping)` (concrete, statically typed message) | Monomorphized overload — concrete handler injection + DI behavior resolution, direct calls |
 | `IMediator.Send<Ping, Pong>(ping)` | Generated generic body — handler and behaviors resolved from DI (the JIT monomorphizes the instantiation) |
-| `MediatorImpl.Send((object)ping)` | `GetType()` chain (≤ 8 messages) or static dictionary lookup, then the monomorphized overload |
+| `Mediator.Send((object)ping)` | `GetType()` chain (≤ 8 messages) or static dictionary lookup, then the monomorphized overload |
 | `IMediator.Send<TRequest, TContext>(...)` / `Publish` context variants | Generated generic bodies with the same fast paths |
 | Unknown object message | `RA.Utilities.Feature.Exceptions.HandlerNotFoundException` |
 
@@ -79,7 +79,7 @@ The generated context overloads create the `PipelineContext<T>` when you don't p
 Both the concrete class and the interface expose object-based overloads on the concrete class (they are **not** part of the `IMediator` interface, so existing `IMediator` implementors are unaffected):
 
 ```csharp
-MediatorImpl mediator = /* ... */;
+Mediator mediator = /* ... */;
 object? pong = await mediator.Send((object)new Ping("hello"));
 await mediator.Publish((object)new OrderPlaced("order-1"));
 ```

@@ -68,12 +68,12 @@ internal readonly struct MediatorInputs : IEquatable<MediatorInputs>
 /// An incremental source generator that discovers the message types
 /// (<c>IRequest</c>, <c>IRequest&lt;TResponse&gt;</c>, and <c>INotification</c> implementations)
 /// visible to the compilation — including those declared in referenced class libraries — and
-/// emits a <c>MediatorImpl</c> class implementing <c>IMediator</c> with monomorphized per-message
+/// emits a <c>Mediator</c> class implementing <c>IMediator</c> with monomorphized per-message
 /// dispatch methods. A module initializer queues the DI registration so that
 /// <c>services.AddMediator()</c> resolves <c>IMediator</c> to the generated implementation.
 /// </summary>
 [Generator]
-public sealed class MediatorImplementationGenerator : IIncrementalGenerator
+public sealed class MediatorementationGenerator : IIncrementalGenerator
 {
     /// <inheritdoc/>
     public void Initialize(IncrementalGeneratorInitializationContext context)

@@ -6,13 +6,13 @@ sidebar_position: 2
 Namespace: RA.Utilities.Feature.Generated
 ```
 
-`MediatorRegistrations` is the runtime-side queue that the **mediator source generator** feeds: every assembly referencing the package emits a module initializer that calls `MediatorRegistrations.Add(...)` with the DI registrations of its generated `MediatorImpl`.
+`MediatorRegistrations` is the runtime-side queue that the **mediator source generator** feeds: every assembly referencing the package emits a module initializer that calls `MediatorRegistrations.Add(...)` with the DI registrations of its generated `Mediator`.
 
 ## 🎯 Purpose
 
-The generated `MediatorImpl` lives in *your* assembly, so the runtime package cannot reference it directly. The queue bridges that gap:
+The generated `Mediator` lives in *your* assembly, so the runtime package cannot reference it directly. The queue bridges that gap:
 
-1. At assembly load, the generated module initializer queues a registration callback (`AddScoped<MediatorImpl>()` plus `AddScoped<IMediator>(...)`).
+1. At assembly load, the generated module initializer queues a registration callback (`AddScoped<Mediator>()` plus `AddScoped<IMediator>(...)`).
 2. Your startup code calls `services.AddMediator()`.
 3. `AddMediator` applies the queued callbacks, so `IMediator` resolves to the generated implementation.
 
@@ -33,4 +33,4 @@ You never call `Add` yourself — it is for the generated initializer. `ApplyAll
 
 ## 🧠 Summary
 
-`MediatorRegistrations` is the plumbing between the generated `MediatorImpl` and `AddMediator()`. Its sibling [`HandlerRegistrations`](./HandlerRegistrations.md) carries the handler and behavior registrations through the same pattern. See the [Generated Mediator](../generated-mediator) guide for the full dispatch story.
+`MediatorRegistrations` is the plumbing between the generated `Mediator` and `AddMediator()`. Its sibling [`HandlerRegistrations`](./HandlerRegistrations.md) carries the handler and behavior registrations through the same pattern. See the [Generated Mediator](../generated-mediator) guide for the full dispatch story.

@@ -8,7 +8,7 @@ namespace RA.Utilities.Feature.Generated;
 /// Queue of mediator-registration callbacks produced by the mediator source generator
 /// (one entry per referencing assembly, added from each assembly's module initializer).
 /// <see cref="ApplyAll"/> is invoked by <c>AddMediator</c> so that the generated
-/// <c>MediatorImpl</c> becomes the <see cref="Abstractions.IMediator"/> implementation
+/// <c>Mediator</c> becomes the <see cref="Abstractions.IMediator"/> implementation
 /// without explicit configuration.
 /// </summary>
 public static class MediatorRegistrations

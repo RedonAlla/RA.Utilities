@@ -6,16 +6,16 @@
 
 ### 💥 Breaking Changes
 
-*   **Runtime mediator removed.** The `RA.Utilities.Feature.Mediator` class (and its dynamic object-dispatch machinery) is gone. The source-generated `MediatorImpl` is now the **only** `IMediator` implementation in the package, and `AddMediator()` simply applies the generated registrations. `MediatorOptions` and `UseGeneratedMediator` are removed.
+*   **Runtime mediator removed.** The `RA.Utilities.Feature.Mediator` class (and its dynamic object-dispatch machinery) is gone. The source-generated `Mediator` is now the **only** `IMediator` implementation in the package, and `AddMediator()` simply applies the generated registrations. `MediatorOptions` and `UseGeneratedMediator` are removed.
 
 ### ✨ New Features
 
-*   **Source-generated `IMediator` implementation.** The source generator emits a complete `IMediator` implementation (`MediatorImpl`) into every assembly that references the package, and `AddMediator()` registers it as the `IMediator` implementation.
+*   **Source-generated `IMediator` implementation.** The source generator emits a complete `IMediator` implementation (`Mediator`) into every assembly that references the package, and `AddMediator()` registers it as the `IMediator` implementation.
     *   **Direct handler injection** — the generator knows each message's handler: it registers handlers under their interfaces and as themselves, and the generated `Send` resolves the known handler **by concrete type** and calls it directly — no interface resolution, and the call devirtualizes. The generic `IMediator` methods carry the same bodies, monomorphized by the JIT.
     *   **No delegate chain without behaviors** — when a request has no pipeline behaviors, the handler is invoked directly. Benchmarks (MediatR handlers registered scoped, matching this package's lifetime) show **14-18% faster sends and 9-14% fewer allocations than MediatR** across the send shapes.
     *   **Closed behaviors auto-register** — non-generic `IPipelineBehavior<,>` / `IPipelineBehavior<>` / `INotificationBehavior<>` implementations are auto-registered under their interfaces (transient). Explicitly registered behaviors (`AddDecoration`, including generic closures) resolve through the same channel; generic behaviors report `FEAG010` because they are not auto-registered.
     *   **Fast dictionary lookups for object dispatch** — `Send(object)` / `Publish(object)` use `typeof` chains in small projects and switch to static dictionary lookups above a project-size threshold (more than 8 messages). Unknown message types throw `RA.Utilities.Feature.Exceptions.HandlerNotFoundException`.
-    *   **Both `IMediator` and the concrete `MediatorImpl` are usable** — the concrete class is the fastest path.
+    *   **Both `IMediator` and the concrete `Mediator` are usable** — the concrete class is the fastest path.
 *   **New message and handler diagnostics** (category `RA.Utilities.Feature.Generators`):
     *   `FEAG006` (Error) — message implements multiple message contracts (two `IRequest<TResponse>` interfaces, or a request contract together with `INotification`); excluded from generated dispatch.
     *   `FEAG007` (Warning) — request message has no handler in the compilation.
