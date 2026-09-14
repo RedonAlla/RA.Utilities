@@ -22,6 +22,18 @@ internal enum HandlerKind
     /// An <c>INotificationHandler&lt;TNotification&gt;</c> implementation, registered transient.
     /// </summary>
     Notification,
+
+    /// <summary>
+    /// An <c>IPipelineBehavior&lt;TRequest&gt;</c> or <c>IPipelineBehavior&lt;TRequest, TResponse&gt;</c>
+    /// implementation, registered as its concrete type so the generated mediator can inject it directly.
+    /// </summary>
+    PipelineBehavior,
+
+    /// <summary>
+    /// An <c>INotificationBehavior&lt;TNotification&gt;</c> implementation, registered as its concrete
+    /// type so the generated mediator can inject it directly.
+    /// </summary>
+    NotificationBehavior,
 }
 
 /// <summary>
@@ -79,6 +91,7 @@ internal readonly struct HandlerModel : IEquatable<HandlerModel>
         HandlerKind kind,
         string handlerFullyQualifiedName,
         string interfaceFullyQualifiedName,
+        string requestFullyQualifiedName,
         string typeName,
         Location location,
         DiagnosticModel? diagnostic)
@@ -86,6 +99,7 @@ internal readonly struct HandlerModel : IEquatable<HandlerModel>
         Kind = kind;
         HandlerFullyQualifiedName = handlerFullyQualifiedName;
         InterfaceFullyQualifiedName = interfaceFullyQualifiedName;
+        RequestFullyQualifiedName = requestFullyQualifiedName;
         TypeName = typeName;
         Location = location;
         Diagnostic = diagnostic;
@@ -97,6 +111,7 @@ internal readonly struct HandlerModel : IEquatable<HandlerModel>
     /// <param name="kind">The kind of handler contract the type implements.</param>
     /// <param name="handlerFullyQualifiedName">The fully qualified name of the handler class, including <c>global::</c>.</param>
     /// <param name="interfaceFullyQualifiedName">The fully qualified name of the closed handler interface, including <c>global::</c>.</param>
+    /// <param name="requestFullyQualifiedName">The fully qualified name of the handled message type, including <c>global::</c>; empty for notifications.</param>
     /// <param name="typeName">The simple name of the handler class, used in messages.</param>
     /// <param name="location">The location of the type declaration, used to anchor diagnostics.</param>
     /// <returns>The created model.</returns>
@@ -104,9 +119,10 @@ internal readonly struct HandlerModel : IEquatable<HandlerModel>
         HandlerKind kind,
         string handlerFullyQualifiedName,
         string interfaceFullyQualifiedName,
+        string requestFullyQualifiedName,
         string typeName,
         Location location) =>
-        new(kind, handlerFullyQualifiedName, interfaceFullyQualifiedName, typeName, location, null);
+        new(kind, handlerFullyQualifiedName, interfaceFullyQualifiedName, requestFullyQualifiedName, typeName, location, null);
 
     /// <summary>
     /// Creates a model that produces a diagnostic instead of source.
@@ -115,7 +131,7 @@ internal readonly struct HandlerModel : IEquatable<HandlerModel>
     /// <param name="typeName">The simple name of the type, used in messages.</param>
     /// <returns>The created model.</returns>
     public static HandlerModel CreateDiagnostic(DiagnosticModel diagnostic, string typeName) =>
-        new(HandlerKind.RequestResponse, string.Empty, string.Empty, typeName, diagnostic.Location, diagnostic);
+        new(HandlerKind.RequestResponse, string.Empty, string.Empty, string.Empty, typeName, diagnostic.Location, diagnostic);
 
     /// <summary>
     /// Gets the kind of handler contract the type implements.
@@ -131,6 +147,13 @@ internal readonly struct HandlerModel : IEquatable<HandlerModel>
     /// Gets the fully qualified name of the closed handler interface, including <c>global::</c>.
     /// </summary>
     public string InterfaceFullyQualifiedName { get; }
+
+    /// <summary>
+    /// Gets the fully qualified name of the handled message type (the request or notification
+    /// type argument of the handler interface), including <c>global::</c>; empty for diagnostic
+    /// models.
+    /// </summary>
+    public string RequestFullyQualifiedName { get; }
 
     /// <summary>
     /// Gets the simple name of the handler class, used in messages.
@@ -158,6 +181,7 @@ internal readonly struct HandlerModel : IEquatable<HandlerModel>
         Kind == other.Kind
         && string.Equals(HandlerFullyQualifiedName, other.HandlerFullyQualifiedName, StringComparison.Ordinal)
         && string.Equals(InterfaceFullyQualifiedName, other.InterfaceFullyQualifiedName, StringComparison.Ordinal)
+        && string.Equals(RequestFullyQualifiedName, other.RequestFullyQualifiedName, StringComparison.Ordinal)
         && string.Equals(TypeName, other.TypeName, StringComparison.Ordinal)
         && Diagnostic.Equals(other.Diagnostic);
 
@@ -170,6 +194,7 @@ internal readonly struct HandlerModel : IEquatable<HandlerModel>
         int hash = (int)Kind;
         hash = (hash * 397) ^ HandlerFullyQualifiedName.GetHashCode();
         hash = (hash * 397) ^ InterfaceFullyQualifiedName.GetHashCode();
+        hash = (hash * 397) ^ RequestFullyQualifiedName.GetHashCode();
         hash = (hash * 397) ^ TypeName.GetHashCode();
         return (hash * 397) ^ Diagnostic.GetHashCode();
     }

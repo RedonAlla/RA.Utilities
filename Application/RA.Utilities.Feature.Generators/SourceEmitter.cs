@@ -87,7 +87,8 @@ internal static class SourceEmitter
     private static void ReportDuplicateRequestHandlers(SourceProductionContext context, EquatableArray<HandlerModel> models)
     {
         foreach (IGrouping<string, HandlerModel> duplicate in models
-            .Where(model => !model.IsDiagnostic && model.Kind != HandlerKind.Notification)
+            .Where(model => !model.IsDiagnostic
+                && model.Kind is HandlerKind.RequestResponse or HandlerKind.VoidRequest)
             .GroupBy(model => model.InterfaceFullyQualifiedName, StringComparer.Ordinal)
             .Where(grouping => grouping.Count() > 1))
         {
@@ -108,6 +109,24 @@ internal static class SourceEmitter
             .ThenBy(model => model.HandlerFullyQualifiedName, StringComparer.Ordinal)
             .ToImmutableArray();
 
+    /// <summary>
+    /// Registers a discovered type as itself (concrete service), deduplicated so that a type
+    /// implementing several contracts is registered once.
+    /// </summary>
+    private static void AppendSelfRegistration(
+        System.Text.StringBuilder builder,
+        System.Collections.Generic.HashSet<string> selfRegistrations,
+        HandlerModel model,
+        string addMethod)
+    {
+        if (!selfRegistrations.Add(model.HandlerFullyQualifiedName))
+        {
+            return;
+        }
+
+        AppendLine(builder, 4, $"{KnownMetadataNames.ServiceCollectionServiceExtensions}.{addMethod}<{model.HandlerFullyQualifiedName}>(services);");
+    }
+
     private static string BuildSource(EquatableArray<HandlerModel> models)
     {
         var builder = new StringBuilder();
@@ -122,10 +141,31 @@ internal static class SourceEmitter
         AppendLine(builder, 3, $"global::{KnownMetadataNames.HandlerRegistrationsMetadataName}.{KnownMetadataNames.AddMethod}(static services =>");
         AppendLine(builder, 3, "{");
 
+        // Handlers are registered under their interfaces and as themselves (the generated
+        // mediator injects them by concrete type). Behaviors are registered under their
+        // interfaces, resolved by the generated mediator through GetServices — which also picks
+        // up explicitly registered (for example generic) behaviors registered via AddDecoration.
+        var selfRegistrations = new System.Collections.Generic.HashSet<string>(StringComparer.Ordinal);
+
         foreach (HandlerModel model in models)
         {
-            string addMethod = model.Kind == HandlerKind.Notification ? "AddTransient" : "AddScoped";
-            AppendLine(builder, 4, $"{KnownMetadataNames.ServiceCollectionServiceExtensions}.{addMethod}<{model.InterfaceFullyQualifiedName}, {model.HandlerFullyQualifiedName}>(services);");
+            switch (model.Kind)
+            {
+                case HandlerKind.RequestResponse:
+                case HandlerKind.VoidRequest:
+                    AppendLine(builder, 4, $"{KnownMetadataNames.ServiceCollectionServiceExtensions}.AddScoped<{model.InterfaceFullyQualifiedName}, {model.HandlerFullyQualifiedName}>(services);");
+                    AppendSelfRegistration(builder, selfRegistrations, model, "AddScoped");
+                    break;
+
+                case HandlerKind.Notification:
+                    AppendLine(builder, 4, $"{KnownMetadataNames.ServiceCollectionServiceExtensions}.AddTransient<{model.InterfaceFullyQualifiedName}, {model.HandlerFullyQualifiedName}>(services);");
+                    AppendSelfRegistration(builder, selfRegistrations, model, "AddTransient");
+                    break;
+
+                default:
+                    AppendLine(builder, 4, $"{KnownMetadataNames.ServiceCollectionServiceExtensions}.AddTransient<{model.InterfaceFullyQualifiedName}, {model.HandlerFullyQualifiedName}>(services);");
+                    break;
+            }
         }
 
         AppendLine(builder, 3, "});");

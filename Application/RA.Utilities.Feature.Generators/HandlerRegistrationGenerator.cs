@@ -1,5 +1,5 @@
-using System.Collections.Immutable;
-using System.Threading;
+using System;
+using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -32,22 +32,35 @@ public sealed class HandlerRegistrationGenerator : IIncrementalGenerator
             .Select(static (compilation, _) =>
                 compilation.GetTypeByMetadataName(KnownMetadataNames.ModuleInitializerAttributeMetadataName) is not null);
 
+        // The test seam disables the registration module initializer so test hosts can load the
+        // generated assembly without polluting the process-wide registration queues.
+        IncrementalValueProvider<bool> initializerDisabled = context.ParseOptionsProvider
+            .Select(static (parseOptions, _) =>
+                parseOptions is CSharpParseOptions csharpParseOptions
+                && csharpParseOptions.PreprocessorSymbolNames.Any(
+                    static symbol => string.Equals(symbol, KnownMetadataNames.DisableModuleInitializerDefine, StringComparison.Ordinal)));
+
         IncrementalValuesProvider<HandlerModel> handlers = context.SyntaxProvider
             .CreateSyntaxProvider(
                 static (node, _) => node is TypeDeclarationSyntax { BaseList: not null },
-                Transform)
+                static (syntaxContext, cancellationToken) => HandlerDiscovery.Transform(syntaxContext, cancellationToken))
             .SelectMany(static (models, _) => models);
 
         context.RegisterSourceOutput(
-            handlers.Collect().Combine(runtimeContractsPresent).Combine(moduleInitializersSupported),
+            handlers.Collect().Combine(runtimeContractsPresent).Combine(moduleInitializersSupported).Combine(initializerDisabled),
             static (productionContext, data) =>
             {
-                if (!data.Left.Right)
+                if (!data.Left.Left.Right)
                 {
                     return;
                 }
 
-                if (!data.Right)
+                if (data.Right)
+                {
+                    return;
+                }
+
+                if (!data.Left.Right)
                 {
                     productionContext.ReportDiagnostic(Diagnostic.Create(
                         Diagnostics.ModuleInitializersUnavailable,
@@ -55,7 +68,7 @@ public sealed class HandlerRegistrationGenerator : IIncrementalGenerator
                     return;
                 }
 
-                SourceEmitter.Emit(productionContext, data.Left.Left);
+                SourceEmitter.Emit(productionContext, data.Left.Left.Left);
             });
     }
 
@@ -64,146 +77,4 @@ public sealed class HandlerRegistrationGenerator : IIncrementalGenerator
         && compilation.GetTypeByMetadataName(KnownMetadataNames.VoidRequestHandlerInterfaceMetadataName) is not null
         && compilation.GetTypeByMetadataName(KnownMetadataNames.NotificationHandlerInterfaceMetadataName) is not null
         && compilation.GetTypeByMetadataName(KnownMetadataNames.HandlerRegistrationsMetadataName) is not null;
-
-    private static ImmutableArray<HandlerModel> Transform(GeneratorSyntaxContext context, CancellationToken cancellationToken)
-    {
-        if (context.SemanticModel.GetDeclaredSymbol(context.Node, cancellationToken)
-                is not INamedTypeSymbol typeSymbol
-            || typeSymbol.IsAbstract
-            || typeSymbol.IsStatic)
-        {
-            return [];
-        }
-
-        Compilation compilation = context.SemanticModel.Compilation;
-        INamedTypeSymbol? requestResponseHandlerInterface = compilation.GetTypeByMetadataName(KnownMetadataNames.RequestResponseHandlerInterfaceMetadataName);
-        INamedTypeSymbol? voidRequestHandlerInterface = compilation.GetTypeByMetadataName(KnownMetadataNames.VoidRequestHandlerInterfaceMetadataName);
-        INamedTypeSymbol? notificationHandlerInterface = compilation.GetTypeByMetadataName(KnownMetadataNames.NotificationHandlerInterfaceMetadataName);
-
-        if (requestResponseHandlerInterface is null || voidRequestHandlerInterface is null || notificationHandlerInterface is null)
-        {
-            return [];
-        }
-
-        // AllInterfaces (rather than only directly implemented interfaces) ensures that concrete
-        // classes deriving from an abstract handler base are registered as themselves. The match
-        // runs before the class-level validation below so that unrelated types are never flagged.
-        ImmutableArray<(HandlerKind Kind, INamedTypeSymbol Interface)>.Builder matched =
-            ImmutableArray.CreateBuilder<(HandlerKind, INamedTypeSymbol)>();
-
-        foreach (INamedTypeSymbol @interface in typeSymbol.AllInterfaces)
-        {
-            INamedTypeSymbol definition = @interface.OriginalDefinition;
-
-            if (SymbolEqualityComparer.Default.Equals(definition, requestResponseHandlerInterface))
-            {
-                matched.Add((HandlerKind.RequestResponse, @interface));
-            }
-            else if (SymbolEqualityComparer.Default.Equals(definition, voidRequestHandlerInterface))
-            {
-                matched.Add((HandlerKind.VoidRequest, @interface));
-            }
-            else if (SymbolEqualityComparer.Default.Equals(definition, notificationHandlerInterface))
-            {
-                matched.Add((HandlerKind.Notification, @interface));
-            }
-        }
-
-        if (matched.Count == 0)
-        {
-            return [];
-        }
-
-        // Class-level validation for actual handler implementations: generic handlers cannot be
-        // referenced without a type argument (explicit registration remains available), structs
-        // cannot be registered as class services, and inaccessible types cannot be referenced by
-        // the generated code at all.
-        if (typeSymbol.TypeKind == TypeKind.Struct)
-        {
-            return
-            [
-                HandlerModel.CreateDiagnostic(new DiagnosticModel(
-                    Diagnostics.StructHandlerNotSupported,
-                    context.Node.GetLocation(),
-                    typeSymbol.Name), typeSymbol.Name),
-            ];
-        }
-
-        if (typeSymbol.TypeParameters.Length > 0)
-        {
-            return
-            [
-                HandlerModel.CreateDiagnostic(new DiagnosticModel(
-                    Diagnostics.GenericHandlerNotSupported,
-                    context.Node.GetLocation(),
-                    typeSymbol.Name), typeSymbol.Name),
-            ];
-        }
-
-        if (!IsAccessibleToGeneratedCode(typeSymbol))
-        {
-            return
-            [
-                HandlerModel.CreateDiagnostic(new DiagnosticModel(
-                    Diagnostics.HandlerNotAccessible,
-                    context.Node.GetLocation(),
-                    typeSymbol.Name), typeSymbol.Name),
-            ];
-        }
-
-        ImmutableArray<HandlerModel>.Builder models = ImmutableArray.CreateBuilder<HandlerModel>();
-
-        foreach ((HandlerKind kind, INamedTypeSymbol @interface) in matched)
-        {
-            models.Add(HandlerModel.Create(
-                kind,
-                GetFullyQualifiedName(typeSymbol),
-                @interface.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                typeSymbol.Name,
-                context.Node.GetLocation()));
-        }
-
-        return models.ToImmutable();
-    }
-
-    /// <summary>
-    /// Determines whether the generated registration code (which lives in a plain static class in the
-    /// same assembly) can reference the given type.
-    /// </summary>
-    /// <param name="typeSymbol">The type to check, including its containing types.</param>
-    /// <returns><see langword="true"/> when the type is accessible to the generated code.</returns>
-    private static bool IsAccessibleToGeneratedCode(INamedTypeSymbol typeSymbol)
-    {
-        for (INamedTypeSymbol? current = typeSymbol; current is not null; current = current.ContainingType)
-        {
-            if (current.DeclaredAccessibility is not (Accessibility.Public or Accessibility.Internal or Accessibility.ProtectedOrInternal)
-                || current.IsFileLocal)
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private static string GetFullyQualifiedName(INamedTypeSymbol typeSymbol)
-    {
-        // Containers are emitted outermost first.
-        ImmutableArray<string>.Builder names = ImmutableArray.CreateBuilder<string>();
-        for (INamedTypeSymbol? current = typeSymbol; current is not null; current = current.ContainingType)
-        {
-            names.Add(current.Name);
-        }
-
-        names.Reverse();
-
-        string qualifiedName = string.Join(".", names);
-        string? @namespace = typeSymbol.ContainingNamespace.IsGlobalNamespace
-            ? null
-            : typeSymbol.ContainingNamespace.ToDisplayString();
-
-        return @namespace is null
-            ? $"global::{qualifiedName}"
-            : $"global::{@namespace}.{qualifiedName}";
-    }
 }

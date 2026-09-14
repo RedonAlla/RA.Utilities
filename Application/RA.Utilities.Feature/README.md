@@ -37,9 +37,9 @@ dotnet add package RA.Utilities.Feature
 
 ## ✨ Features
 
-### 1. Custom Mediator
+### 1. Source-Generated Mediator
 
-The package provides its own lightweight **`IMediator`** / **`Mediator`** implementation — no external MediatR dependency. It supports:
+The package provides its own lightweight mediator — no external MediatR dependency. The **`IMediator` implementation is source-generated** into your assembly by the package's generator and registered by `AddMediator()`. It supports:
 
 - **Request/Response** dispatch with a composable pipeline of behaviors
 - **Notification** publishing to zero or more handlers, each wrapped in its own behavior pipeline
@@ -76,7 +76,28 @@ builder.Services.AddMediator();
 
 **Assembly-loading caveat**: auto-registration covers the assembly that calls `AddMediator()` plus any assembly already loaded before that call (module initializers run when an assembly loads). Referenced class libraries load lazily on the CLR, so a handler in a library whose types are first touched at request time may be registered too late. Keep handlers in the entry/composition assembly, touch the handler assembly at startup (e.g. `typeof(SomeHandler)`), or register those handlers explicitly.
 
-### 3. Base Handlers
+### 3. Generated Mediator Details
+
+The generated `MediatorImpl` is the **only** `IMediator` implementation in the package:
+
+- **Direct handler injection** — the generator knows each message's handler, registers it under its interface and as itself, and the generated `Send` resolves the handler by **concrete type** and calls it directly — no interface resolution, and the call devirtualizes.
+- **No delegate chain without behaviors** — when a request has no pipeline behaviors, the handler is invoked directly. Benchmarks (MediatR handlers registered scoped, matching this package's lifetime) show **14-18% faster sends and 9-14% fewer allocations than MediatR** across the send shapes.
+- **Closed behaviors auto-register** — non-generic `IPipelineBehavior<,>` / `IPipelineBehavior<>` / `INotificationBehavior<>` implementations are auto-registered under their interfaces (transient). Explicitly registered behaviors (`AddDecoration`, including generic closures — `FEAG010` notes the generic ones aren't auto-registered) resolve through the same channel.
+- **Fast dictionary lookups for object dispatch** — `Send(object)` / `Publish(object)` use `typeof` chains in small projects and static dictionaries once the project defines more than 8 messages; unknown types throw `HandlerNotFoundException`.
+- **Both `IMediator` and the concrete `MediatorImpl` are usable** — the concrete class is the fastest path.
+- **Compile-time message diagnostics** (`FEAG006`–`FEAG010`) — ambiguous message contracts, missing handlers, unsupported message shapes, and generic behaviors are reported at build time.
+
+```csharp
+// Inject the concrete generated mediator for monomorphized dispatch.
+var mediator = provider.GetRequiredService<RA.Utilities.Feature.Generated.MediatorImpl>();
+Pong pong = await mediator.Send(new Ping("hello"));
+object? pongObject = await mediator.Send((object)new Ping("hello"));
+```
+
+See the [generated mediator documentation](https://redonalla.github.io/RA.Utilities/nuget-packages/Application/Feature/generated-mediator/) for the dispatch matrix and diagnostics.
+
+### 4. Base Handlers
+
 
 Abstract base classes that implement the `IRequestHandler` interfaces. Inherit from these to focus on business logic without boilerplate.
 
@@ -89,7 +110,7 @@ Each base class exposes a **public abstract** `HandleAsync` method — `Task Han
 
 Namespace: `RA.Utilities.Feature.Handlers`
 
-### 4. Pipeline Behaviors
+### 5. Pipeline Behaviors
 
 Pipeline behaviors wrap request handlers to add cross-cutting concerns. They implement `IPipelineBehavior<TRequest>` or `IPipelineBehavior<TRequest, TResponse>` and are composed into a chain via the mediator.
 
@@ -109,7 +130,7 @@ builder.Services
     .AddValidator<MyCommandValidator>();
 ```
 
-### 5. Notification System
+### 6. Notification System
 
 Publish fire-and-forget notifications to zero or more handlers. Each handler is wrapped in its own notification behavior pipeline, and one handler's failure does not prevent others from executing.
 
@@ -138,11 +159,11 @@ builder.Services
     .AddDecoration<NotificationLoggingBehavior<OrderPlaced>>();
 ```
 
-### 6. Fluent Validation Integration
+### 7. Fluent Validation Integration
 
 The `ValidationBehavior` automatically discovers and executes all registered `IValidator<TRequest>` implementations. If validation fails, the behavior **throws** a `BadRequestException` built from the collected `ValidationFailure` entries (via `ValidationUtilities.CreateValidationErrorResult`) — invalid data never reaches your handler, and the API layer's `GlobalExceptionHandler` turns it into a `400 Bad Request` response.
 
-### 7. Pipeline Context
+### 8. Pipeline Context
 
 The `PipelineContext<T>` provides a **strongly-typed** data carrier that flows through the entire pipeline. Each `Send` or `Publish` call gets its own isolated instance. Behaviors and handlers read and write properties on the user-defined `T` — no dictionaries, no magic strings, no boxing.
 
