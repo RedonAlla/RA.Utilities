@@ -14,7 +14,7 @@ The generated implementation covers every message type visible to the compilatio
 
 - **Direct handler injection.** The generator knows each message's handler: it registers handlers under their interfaces **and as themselves**, and the generated `Send` resolves the known handler by its **concrete type** and calls `HandleAsync` directly — no interface resolution, and the call devirtualizes.
 - **Monomorphized `Send` methods.** One typed `Send` overload per message (`Send(Ping)`) — calls bind directly with no interface or generic dispatch, and the generic `IMediator` methods carry the same bodies, monomorphized by the JIT.
-- **No delegate allocation without behaviors.** When a request has no pipeline behaviors, the handler is invoked directly instead of building a delegate chain. Benchmarks: **14-18% faster sends and 9-14% fewer allocations than MediatR** (with MediatR handlers registered scoped, matching this package's lifetime) across the send shapes.
+- **No delegate allocation without behaviors.** When a request has no pipeline behaviors, the handler is invoked directly instead of building a delegate chain. Benchmarks: **12-18% faster sends and 9-14% fewer allocations than MediatR** (with MediatR handlers registered scoped, matching this package's lifetime) across the send shapes — see the [Benchmarks](./benchmarks) page for the full comparison, methodology, and how to run them.
 - **Fast dictionary lookups for object dispatch.** `Send(object)` / `Publish(object)` — where the static type is erased — use a chain of `typeof` comparisons in small projects and switch to static `Dictionary<Type, Delegate>` lookups once the project defines **more than 8 messages**, a threshold above which a dictionary pays for itself. Unknown message types throw `HandlerNotFoundException`.
 - **Both `IMediator` and the concrete class are available.** Inject `IMediator` or the concrete `MediatorImpl` for the best performance:
 
@@ -32,14 +32,7 @@ public class OrdersService
 }
 ```
 
-Typical benchmark shapes (send, zero behaviors, MediatR handlers scoped):
-
-| Path | Relative cost |
-|---|---|
-| Concrete `MediatorImpl.Send(command)` | ~142 ns / 504 B |
-| `IMediator.Send<TRequest, TResponse>(...)` | ~188 ns / 504 B |
-| `MediatorImpl.Send((object)command)` | ~143 ns / 504 B |
-| MediatR (reference, scoped handlers) | ~166 ns / 568 B |
+See the [Benchmarks](./benchmarks) page for the full side-by-side comparison with MediatR (equal scoped lifetimes), the interface-typed and object-dispatch shapes, and the benchmark harness.
 
 ## 📦 How It Is Registered
 
@@ -66,6 +59,20 @@ The same assembly-loading guarantee as [auto registration](./auto-registration) 
 | `MediatorImpl.Send((object)ping)` | `GetType()` chain (≤ 8 messages) or static dictionary lookup, then the monomorphized overload |
 | `IMediator.Send<TRequest, TContext>(...)` / `Publish` context variants | Generated generic bodies with the same fast paths |
 | Unknown object message | `RA.Utilities.Feature.Exceptions.HandlerNotFoundException` |
+
+## 🧳 Typed Pipeline Context
+
+The generated mediator carries the typed [`PipelineContext<T>`](./Models/PipelineContext.md) through the pipeline exactly like `Send`/`Publish` without a context do — every message gets a generated context overload:
+
+```csharp
+// Send with a typed context:
+string greeting = await mediator.Send<GreetingContext>(new ContextGreetingRequest("context"));
+
+// Publish with a typed context:
+await mediator.Publish<GreetingContext>(new OrderPlacedNotification("order-1"));
+```
+
+The generated context overloads create the `PipelineContext<T>` when you don't pass one and hand it to **every pipeline member** — behaviors stamp it (`HandleAsync<TContext>`), handlers read it back. Behaviors and handlers that don't care about the context use the plain overloads; the default interface implementations bridge the two. Calls without a context type parameter allocate no context at all.
 
 ## ⚙️ Object-Based Dispatch
 

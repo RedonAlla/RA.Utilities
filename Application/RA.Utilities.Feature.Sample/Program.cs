@@ -2,7 +2,6 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using RA.Utilities.Feature;
 using RA.Utilities.Feature.Abstractions;
 using RA.Utilities.Feature.Extensions;
@@ -19,7 +18,9 @@ using RA.Utilities.Feature.Sample.Handlers;
 HandlersAssembly.Touch();
 
 var services = new ServiceCollection();
-services.AddSingleton<ILogger<MediatorImpl>>(NullLogger<MediatorImpl>.Instance);
+
+// A tiny console logger so the behaviors' context logging is visible in the demo output.
+services.AddSingleton(typeof(ILogger<>), typeof(SampleConsoleLogger<>));
 services.AddMediator();
 ServiceProvider provider = services.BuildServiceProvider();
 
@@ -43,6 +44,34 @@ await mediator.Publish(new OrderPlacedNotification("order-1"));
 string greeting = await mediator.Send(new LocalGreetingRequest("world"));
 Console.WriteLine($"Send: {greeting}");
 
+// Typed pipeline context: two closed behaviors wrap the handler. The first stamps a correlation
+// id before the handler runs; the handler writes its result into the context; both behaviors log
+// the context data before and after the handler — context flows in both directions through the
+// generated pipeline. The context type cannot be inferred, so it is named explicitly on the call.
+string contextGreeting = await mediator.Send<GreetingContext>(new ContextGreetingRequest("context"));
+Console.WriteLine($"Send (context): {contextGreeting}");
+
 #pragma warning disable CA1303 // Do not pass literals as localized parameters
 Console.WriteLine("Done.");
 #pragma warning restore CA1303 // Do not pass literals as localized parameters
+
+namespace RA.Utilities.Feature.Sample
+{
+    /// <summary>
+    /// A minimal logger writing to the console, so the demo output shows the pipeline logs.
+    /// </summary>
+    internal sealed class SampleConsoleLogger<T> : ILogger<T>
+    {
+        public IDisposable? BeginScope<TState>(TState state)
+            where TState : notnull => null;
+
+        public bool IsEnabled(LogLevel logLevel) => logLevel >= LogLevel.Information;
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+        {
+#pragma warning disable CA1303 // Do not pass literals as localized parameters
+            Console.WriteLine($"[{logLevel}] {typeof(T).Name}: {formatter(state, exception)}");
+#pragma warning restore CA1303 // Do not pass literals as localized parameters
+        }
+    }
+}
