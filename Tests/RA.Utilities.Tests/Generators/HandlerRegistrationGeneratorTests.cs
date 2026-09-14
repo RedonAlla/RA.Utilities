@@ -76,8 +76,11 @@ public class HandlerRegistrationGeneratorTests
                     global::RA.Utilities.Feature.Generated.HandlerRegistrations.Add(static services =>
                     {
                         global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddTransient<global::RA.Utilities.Feature.Abstractions.INotificationHandler<global::Sample.OrderPlaced>, global::Sample.EmailNotifier>(services);
+                        global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddTransient<global::Sample.EmailNotifier>(services);
                         global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddScoped<global::RA.Utilities.Feature.Abstractions.IRequestHandler<global::Sample.DoNothing>, global::Sample.DoNothingHandler>(services);
+                        global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddScoped<global::Sample.DoNothingHandler>(services);
                         global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddScoped<global::RA.Utilities.Feature.Abstractions.IRequestHandler<global::Sample.Ping, global::Sample.Pong>, global::Sample.PingHandler>(services);
+                        global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddScoped<global::Sample.PingHandler>(services);
                     });
                 }
             }

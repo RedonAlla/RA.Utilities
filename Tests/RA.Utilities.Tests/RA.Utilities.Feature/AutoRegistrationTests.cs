@@ -9,8 +9,8 @@ namespace RA.Utilities.Tests.RA.Utilities.Feature;
 
 /// <summary>
 /// Verifies the zero-config registration: the source generator runs on this test assembly,
-/// so <see cref="MediatorServiceCollectionExtensions.AddMediator"/> alone must register every
-/// handler implemented in the assembly.
+/// so <see cref="MediatorServiceCollectionExtensions.AddMediator(IServiceCollection)"/> alone must
+/// register every handler implemented in the assembly.
 /// </summary>
 public class AutoRegistrationTests
 {

@@ -45,11 +45,15 @@ The package provides several key components to achieve this clean architecture:
   * **Purpose**: Pass strongly-typed data through the entire pipeline — no dictionaries, no magic strings, no boxing.
   * **Benefit**: Behaviors and handlers read/write properties on a user-defined `T`. Each call gets its own isolated instance. Fully opt-in — existing `Send`/`Publish` calls compile unchanged.
 
-6. **Zero-Configuration Handler Registration ([`Auto Registration`](./auto-registration))**:
-  * **Purpose**: A source generator shipped in the package discovers all `IRequestHandler<,>` / `IRequestHandler<>` / `INotificationHandler<>` implementations and registers them when `AddMediator()` is called.
-  * **Benefit**: Plain handlers need no explicit `AddFeature` / `AddNotification` calls — only behaviors and validators still require explicit registration.
+6. **Zero-Configuration Handler and Behavior Registration ([`Auto Registration`](./auto-registration))**:
+  * **Purpose**: A source generator shipped in the package discovers all `IRequestHandler<,>` / `IRequestHandler<>` / `INotificationHandler<>` implementations **and closed pipeline behaviors**, and registers them when `AddMediator()` is called.
+  * **Benefit**: Plain handlers and closed behaviors need no explicit `AddFeature` / `AddNotification` / `AddDecoration` calls — only validators and generic behaviors still require explicit registration.
 
-7. **Exception-Based Errors ([`RA.Utilities.Core.Exceptions`](../../core/RA.Utilities.Core.Exceptions/index.mdx))**:
+7. **Source-Generated Mediator ([`Generated Mediator`](./generated-mediator))**:
+  * **Purpose**: The same generator emits the `IMediator` implementation itself — a per-assembly `MediatorImpl` with monomorphized `Send` overloads that **inject the known handler and behaviors by concrete type and call them directly** (no interface lookups, no `GetServices`, no casts), plus fast dictionary dispatch above 8 messages and object-based dispatch.
+  * **Benefit**: At equal (scoped) handler lifetimes, benchmarks show the generated mediator **14-18% faster than MediatR with 9-14% fewer allocations** in every comparable send shape. Inject `IMediator` or the concrete `MediatorImpl` for the fastest path.
+
+8. **Exception-Based Errors ([`RA.Utilities.Core.Exceptions`](../../core/RA.Utilities.Core.Exceptions/index.mdx))**:
   * **Purpose**: Handlers communicate failures by throwing typed exceptions (`NotFoundException`, `ConflictException`, `BadRequestException`, ...).
   * **Benefit**: A single `GlobalExceptionHandler` at the API layer maps them to consistent HTTP responses — no `Result` unwrapping at call sites. (The [`Result<T>` monad](../../core/RA.Utilities.Core/Results.md) still exists in `RA.Utilities.Core` for code that wants it.)
 

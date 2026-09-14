@@ -1,0 +1,22 @@
+---
+title: Generated
+sidebar_position: 90
+---
+
+```powershell
+Namespace: RA.Utilities.Feature.Generated
+```
+
+The `RA.Utilities.Feature.Generated` namespace holds the small runtime-side infrastructure that the package's **source generators** feed. You never call into these types directly — the generated module initializers and [`AddMediator()`](../Extensions/MediatorServiceCollectionExtensions.md) use them:
+
+* **[`HandlerRegistrations`](./HandlerRegistrations.md)**: The queue carrying the compile-time registrations of handlers and closed pipeline behaviors.
+* **[`MediatorRegistrations`](./MediatorRegistrations.md)**: The queue carrying the registration of the generated `MediatorImpl` (which itself is emitted into this namespace inside your own assembly).
+
+See the [Auto Registration](../auto-registration) and [Generated Mediator](../generated-mediator) guides for how the queues are applied.
+
+<br />
+<br />
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />

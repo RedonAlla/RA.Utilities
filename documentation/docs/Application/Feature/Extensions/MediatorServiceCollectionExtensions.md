@@ -11,13 +11,15 @@ It provides a simple, one-line extension method, `AddMediator`, that handles bot
 
 public static IServiceCollection AddMediator(this IServiceCollection services)
 {
-    services.AddScoped<IMediator, Mediator>();
     HandlerRegistrations.ApplyAll(services);
+    MediatorRegistrations.ApplyAll(services);
     return services;
 }
 ```
 
 Since v11.0.0, a source generator shipped in the package emits a module initializer for every assembly containing `IRequestHandler<,>` / `IRequestHandler<>` / `INotificationHandler<>` implementations. Those initializers queue DI registrations (request handlers **scoped**, notification handlers **transient**) which `AddMediator()` then applies — that is why plain handlers need no explicit `AddFeature` / `AddNotification` call. See the [Auto Registration](../auto-registration) guide for the assembly-loading guarantee and diagnostics.
+
+Since v11.1.0, the generator also emits the **`MediatorImpl` implementation of `IMediator`** per assembly — the only mediator in the package. `AddMediator()` applies those registrations, so `IMediator` resolves to the generated implementation. See the [Generated Mediator](../generated-mediator) guide for the dispatch strategy and the message/handler diagnostics.
 
 ## Why is this important?
 

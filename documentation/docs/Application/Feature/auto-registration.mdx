@@ -1,12 +1,12 @@
 ---
-sidebar_position: 2
 title: Auto Registration
+sidebar_position: 91
 ---
 
 # Auto Registration
 
 Starting with v11.0.0, handlers no longer need to be registered one by one.
-A **source generator** shipped inside the `RA.Utilities.Feature` NuGet package discovers handler implementations at compile time and emits the registration code for you — plain handlers are wired up with nothing more than `services.AddMediator()`.
+A **source generator** shipped inside the `RA.Utilities.Feature` NuGet package discovers handler and behavior implementations at compile time and emits the registration code for you — plain handlers are wired up with nothing more than `services.AddMediator()`, and since v11.1.0 closed pipeline behaviors are too.
 
 ## 🎯 How It Works
 
@@ -14,12 +14,14 @@ The generator ships as an analyzer inside the `RA.Utilities.Feature` package (`a
 
 For each assembly that references the package, the generator:
 
-1. **Scans** the assembly for every non-abstract, non-static class implementing one of the handler contracts:
+1. **Scans** the assembly for every non-abstract, non-static class implementing one of the handler or behavior contracts:
    - `IRequestHandler<TRequest, TResponse>` (request with response)
    - `IRequestHandler<TRequest>` (request without response)
    - `INotificationHandler<TNotification>` (notification subscriber)
+   - `IPipelineBehavior<TRequest, TResponse>` / `IPipelineBehavior<TRequest>` (request pipeline behaviors)
+   - `INotificationBehavior<TNotification>` (notification pipeline behaviors)
 2. **Validates** each candidate (see [diagnostics](#diagnostics) below).
-3. **Emits** a module initializer into that assembly that queues the handler registrations on a static queue in the `RA.Utilities.Feature` runtime (`RA.Utilities.Feature.Generated.HandlerRegistrations`).
+3. **Emits** a module initializer into that assembly that queues the registrations on a static queue in the `RA.Utilities.Feature` runtime (`RA.Utilities.Feature.Generated.HandlerRegistrations`): handlers under their interfaces **and as themselves** (so the generated mediator can inject them by concrete type), behaviors under their behavior interfaces.
 4. When your startup code calls `services.AddMediator()`, all queued registrations are **applied to the service collection** in one pass.
 
 ```csharp
@@ -48,8 +50,11 @@ The generator inspects the whole class hierarchy: matching interfaces are detect
 | `struct` handler | `FEAG004` error |
 | Two handlers for the same request pair in one assembly | `FEAG005` error |
 | Multiple notification handlers for the same notification | Allowed — fan-out is their purpose |
+| Closed (non-generic) behavior class | Auto-registered under its behavior interface (transient) — resolved by the generated mediator through DI |
+| Generic behavior class (`MyBehavior<TRequest, TResponse>`) | `FEAG010` warning — skipped; register explicitly with `AddDecoration` |
+| Multiple behaviors for the same message | Allowed — composed in registration order |
 
-## 🛠️ Diagnostics
+## 🛠️ Diagnostics {#diagnostics}
 
 All diagnostics use the category `RA.Utilities.Feature.Generators`:
 
@@ -60,6 +65,9 @@ All diagnostics use the category `RA.Utilities.Feature.Generators`:
 | `FEAG003` | Error | Handler (or one of its containing types) is **private or file-local**, so the generated code cannot reference it. Make it `internal`/`public` (or register explicitly). |
 | `FEAG004` | Error | Handler is a **struct**. Handlers are registered and resolved as class services. |
 | `FEAG005` | Error | **Two or more handlers** implement the same request handler pair (`IRequestHandler<TRequest, TResponse>` or `IRequestHandler<TRequest>`) in one assembly — the winning registration would be load-order dependent. A request may have exactly one handler; remove one of the implementations. |
+| `FEAG010` | Warning | Pipeline behavior is **generic** — it is not auto-registered. Register it explicitly with `AddDecoration`; the generated mediator resolves explicitly registered behaviors from DI. |
+
+The generator reports additional message and handler diagnostics — `FEAG006`–`FEAG009` — see [Generated Mediator diagnostics](./generated-mediator#message-and-handler-diagnostics).
 
 ## ⏳ Lifetimes
 
@@ -70,6 +78,10 @@ Generated registrations use the same lifetimes as the explicit fluent builders:
 | `IRequestHandler<TRequest, TResponse>` → handler | Scoped |
 | `IRequestHandler<TRequest>` → handler | Scoped |
 | `INotificationHandler<TNotification>` → handler | Transient |
+| Handler as its concrete type (for the generated mediator's direct injection) | Same as the interface registration |
+| Behavior under its interface (`IPipelineBehavior<,>` / `IPipelineBehavior<>` / `INotificationBehavior<>`) | Transient |
+
+Registering handlers as themselves is what lets the generated `Send` resolve `PingHandler` directly and call it without interface dispatch — see [Generated Mediator](./generated-mediator).
 
 ## 📥 Assembly-Loading Guarantee
 
@@ -107,15 +119,15 @@ builder.Services.AddNotification<OrderPlaced>().AddHandler<MyNotificationHandler
 
 ## 🧩 What Still Needs Explicit Registration
 
-The generator only discovers **handlers**. Everything else is registered explicitly, exactly as before:
+The generator discovers **handlers and closed behaviors**. Everything else is registered explicitly:
 
 | Component | Registration |
 |---|---|
 | Request handlers (plain, non-generic, in an early-loaded assembly) | Automatic |
 | Notification handlers (plain, non-generic, in an early-loaded assembly) | Automatic |
+| Closed pipeline behaviors (`IPipelineBehavior<,>` / `IPipelineBehavior<>` / `INotificationBehavior<>`) | Automatic — under their interfaces, resolved by the generated mediator through DI |
 | Generic handlers | `AddFeature<TRequest, TResponse, THandler>()` / `AddNotification<TNotification>().AddHandler<THandler>()` (generator emits `FEAG002`) |
-| Pipeline behaviors (`IPipelineBehavior<,>`) | `.AddDecoration<TBehavior>()` on the feature builder |
-| Notification behaviors (`INotificationBehavior<,>`) | `.AddDecoration<TBehavior>()` on the notification builder |
+| Generic behaviors | `.AddDecoration<TBehavior>()` (generator emits `FEAG010`) |
 | Validators (`IValidator<T>`) | `.AddValidator<TValidator>()` (also wires the `ValidationBehavior`) |
 | Handlers with custom lifetimes or setup | Manual DI registration |
 

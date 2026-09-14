@@ -1,0 +1,99 @@
+---
+sidebar_position: 3
+title: Generated Mediator
+---
+
+# Generated Mediator
+
+The **source generator** in the `RA.Utilities.Feature` package generates the `IMediator` implementation itself — the generated `MediatorImpl` is the **only** mediator in the package.
+Every assembly referencing the package gets its own `MediatorImpl` class — a complete, compile-time implementation of `IMediator` with **zero runtime reflection** — and `services.AddMediator()` registers it as the `IMediator` implementation automatically.
+
+The generated implementation covers every message type visible to the compilation, including messages declared in **referenced class libraries**.
+
+## 🚀 Why It Is Faster
+
+- **Direct handler injection.** The generator knows each message's handler: it registers handlers under their interfaces **and as themselves**, and the generated `Send` resolves the known handler by its **concrete type** and calls `HandleAsync` directly — no interface resolution, and the call devirtualizes.
+- **Monomorphized `Send` methods.** One typed `Send` overload per message (`Send(Ping)`) — calls bind directly with no interface or generic dispatch, and the generic `IMediator` methods carry the same bodies, monomorphized by the JIT.
+- **No delegate allocation without behaviors.** When a request has no pipeline behaviors, the handler is invoked directly instead of building a delegate chain. Benchmarks: **14-18% faster sends and 9-14% fewer allocations than MediatR** (with MediatR handlers registered scoped, matching this package's lifetime) across the send shapes.
+- **Fast dictionary lookups for object dispatch.** `Send(object)` / `Publish(object)` — where the static type is erased — use a chain of `typeof` comparisons in small projects and switch to static `Dictionary<Type, Delegate>` lookups once the project defines **more than 8 messages**, a threshold above which a dictionary pays for itself. Unknown message types throw `HandlerNotFoundException`.
+- **Both `IMediator` and the concrete class are available.** Inject `IMediator` or the concrete `MediatorImpl` for the best performance:
+
+```csharp
+using RA.Utilities.Feature.Generated;
+
+public class OrdersService
+{
+    private readonly MediatorImpl _mediator;
+
+    public OrdersService(MediatorImpl mediator) => _mediator = mediator;
+
+    public Task<CreateOrderResponse> CreateAsync(CreateOrderCommand command, CancellationToken ct) =>
+        _mediator.Send(command, ct); // binds the monomorphized Send(CreateOrderCommand) overload
+}
+```
+
+Typical benchmark shapes (send, zero behaviors, MediatR handlers scoped):
+
+| Path | Relative cost |
+|---|---|
+| Concrete `MediatorImpl.Send(command)` | ~142 ns / 504 B |
+| `IMediator.Send<TRequest, TResponse>(...)` | ~188 ns / 504 B |
+| `MediatorImpl.Send((object)command)` | ~143 ns / 504 B |
+| MediatR (reference, scoped handlers) | ~166 ns / 568 B |
+
+## 📦 How It Is Registered
+
+The generator emits a module initializer (per assembly) that queues the registration of that assembly's `MediatorImpl` on `RA.Utilities.Feature.Generated.MediatorRegistrations`.
+`services.AddMediator()` applies the queued handler, behavior, and mediator registrations in one pass:
+
+- `IMediator` resolves to the generated `MediatorImpl`.
+- `MediatorImpl` is registered as itself, so it can be injected directly.
+
+```csharp
+builder.Services.AddMediator();
+```
+
+:::note Assembly loading
+The same assembly-loading guarantee as [auto registration](./auto-registration) applies: the `IMediator` registration is queued by each assembly's module initializer, so the generated mediator of the **last loaded** assembly wins. Every assembly's generated mediator covers the messages visible to that assembly's compilation, including its referenced libraries.
+:::
+
+## 🧭 Dispatch Matrix
+
+| Call | How it dispatches |
+|---|---|
+| `MediatorImpl.Send(ping)` (concrete, statically typed message) | Monomorphized overload — concrete handler injection + DI behavior resolution, direct calls |
+| `IMediator.Send<Ping, Pong>(ping)` | Generated generic body — handler and behaviors resolved from DI (the JIT monomorphizes the instantiation) |
+| `MediatorImpl.Send((object)ping)` | `GetType()` chain (≤ 8 messages) or static dictionary lookup, then the monomorphized overload |
+| `IMediator.Send<TRequest, TContext>(...)` / `Publish` context variants | Generated generic bodies with the same fast paths |
+| Unknown object message | `RA.Utilities.Feature.Exceptions.HandlerNotFoundException` |
+
+## ⚙️ Object-Based Dispatch
+
+Both the concrete class and the interface expose object-based overloads on the concrete class (they are **not** part of the `IMediator` interface, so existing `IMediator` implementors are unaffected):
+
+```csharp
+MediatorImpl mediator = /* ... */;
+object? pong = await mediator.Send((object)new Ping("hello"));
+await mediator.Publish((object)new OrderPlaced("order-1"));
+```
+
+- Dispatch by runtime type with the same chain/dictionary strategy (no reflection).
+- Unknown message types throw `RA.Utilities.Feature.Exceptions.HandlerNotFoundException`.
+
+## 🛠️ Message and Handler Diagnostics {#message-and-handler-diagnostics}
+
+The generator reports problems with messages and message handlers at compile time (category `RA.Utilities.Feature.Generators`):
+
+| ID | Severity | Meaning |
+|---|---|---|
+| `FEAG006` | Error | Message implements **multiple message contracts** (two distinct `IRequest<TResponse>` interfaces, or a request contract together with `INotification`). It is excluded from the generated dispatch. |
+| `FEAG007` | Warning | Request message has **no handler** anywhere in the compilation — sending it would fail at runtime. |
+| `FEAG008` | Warning | Message is **generic or inaccessible** from the generated code — it dispatches through the generic interface methods instead. |
+| `FEAG009` | Warning | Handler implements **both** `IRequestHandler<TRequest>` and `IRequestHandler<TRequest, TResponse>` for the same message — split them into separate classes. |
+| `FEAG010` | Warning | Pipeline behavior is **generic** — it is not auto-registered. Register it explicitly with `AddDecoration`; the generated mediator resolves explicitly registered behaviors from DI. |
+
+See [Auto Registration diagnostics](./auto-registration#diagnostics) for `FEAG001`–`FEAG005` and the behavior registration model.
+
+### Behavior registration
+
+Closed (non-generic) pipeline behaviors — `IPipelineBehavior<TRequest>`, `IPipelineBehavior<TRequest, TResponse>`, `INotificationBehavior<TNotification>` — are **auto-registered under their interfaces** (transient) and resolved by the generated mediator through DI, in registration order. Explicitly registered behaviors (`AddDecoration`, including generic behavior closures) resolve through the same channel, so both auto-registered and explicit behaviors compose into the same pipeline.

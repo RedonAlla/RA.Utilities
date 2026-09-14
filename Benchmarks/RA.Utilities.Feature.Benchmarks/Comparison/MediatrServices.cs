@@ -10,6 +10,7 @@ namespace RA.Utilities.Feature.Benchmarks.Comparison;
 /// The assembly scan registers the closed handlers (MediatR's scan includes non-public
 /// types); the open generic handlers are registered explicitly per closing, since the
 /// scan excludes open generics unless <c>RegisterGenericHandlers</c> is enabled.
+/// The request handlers are registered scoped to match RA.Utilities.Feature's lifetime.
 /// </summary>
 internal static class MediatrServices
 {
@@ -36,12 +37,13 @@ internal static class MediatrServices
             config.AddBehavior<MediatRContextAwareBehavior>();
         });
 
-        services.AddTransient<IRequestHandler<MediatRPingZeroRequest, PongResponse>, MediatRPingResponseHandler<MediatRPingZeroRequest>>();
-        services.AddTransient<IRequestHandler<MediatRPingOneRequest, PongResponse>, MediatRPingResponseHandler<MediatRPingOneRequest>>();
-        services.AddTransient<IRequestHandler<MediatRPingThreeRequest, PongResponse>, MediatRPingResponseHandler<MediatRPingThreeRequest>>();
+        // Scoped, matching RA.Utilities.Feature's handler lifetime (one handler per request/scope).
+        services.AddScoped<IRequestHandler<MediatRPingZeroRequest, PongResponse>, MediatRPingResponseHandler<MediatRPingZeroRequest>>();
+        services.AddScoped<IRequestHandler<MediatRPingOneRequest, PongResponse>, MediatRPingResponseHandler<MediatRPingOneRequest>>();
+        services.AddScoped<IRequestHandler<MediatRPingThreeRequest, PongResponse>, MediatRPingResponseHandler<MediatRPingThreeRequest>>();
 
-        services.AddTransient<IRequestHandler<MediatRVoidPingRequest>, MediatRPingVoidHandler<MediatRVoidPingRequest>>();
-        services.AddTransient<IRequestHandler<MediatRVoidPingThreeRequest>, MediatRPingVoidHandler<MediatRVoidPingThreeRequest>>();
+        services.AddScoped<IRequestHandler<MediatRVoidPingRequest>, MediatRPingVoidHandler<MediatRVoidPingRequest>>();
+        services.AddScoped<IRequestHandler<MediatRVoidPingThreeRequest>, MediatRPingVoidHandler<MediatRVoidPingThreeRequest>>();
 
         return services;
     }

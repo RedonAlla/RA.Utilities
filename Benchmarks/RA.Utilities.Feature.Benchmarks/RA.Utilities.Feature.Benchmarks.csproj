@@ -6,8 +6,11 @@
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <!-- The global GenerateDocumentationFile=True would otherwise fail undocumented public
          benchmark classes with CS1591 under TreatWarningsAsErrors. BDN1605 is BenchmarkDotNet's
-         informational async-benchmark suggestion; preemptively silenced to keep output clean. -->
-    <NoWarn>$(NoWarn);CS1591;BDN1605</NoWarn>
+         informational async-benchmark suggestion; preemptively silenced to keep output clean.
+         The benchmark handlers are generic and registered explicitly, so the source generator
+         reports FEAG002 (generic handler) and FEAG007 (no discoverable handler) — both expected
+         here. -->
+    <NoWarn>$(NoWarn);CS1591;BDN1605;FEAG002;FEAG007;FEAG010</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +22,11 @@
 
   <ItemGroup>
     <ProjectReference Include="../../Application/RA.Utilities.Feature/RA.Utilities.Feature.csproj" />
+    <!-- Referencing the generator as an analyzer generates the MediatorImpl in this assembly, so
+         the generated-mediator benchmarks exercise the monomorphized dispatch. -->
+    <ProjectReference Include="../../Application/RA.Utilities.Feature.Generators/RA.Utilities.Feature.Generators.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false"
+                      SetTargetFramework="TargetFramework=netstandard2.0" />
   </ItemGroup>
 
 </Project>
