@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation;
 using FluentValidation.Results;
@@ -18,16 +19,43 @@ public static class ValidationUtilities
     /// <typeparam name="TRequest">The type of the request to validate.</typeparam>
     /// <param name="request">The request instance to validate.</param>
     /// <param name="validators">A collection of validators applicable to the request type.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>An array of <see cref="ValidationFailure"/> if any validation errors occur; otherwise, an empty array.</returns>
-    public static async Task<ValidationFailure[]> ValidateAsync<TRequest>(TRequest request, IEnumerable<IValidator<TRequest>> validators)
+    public static async Task<ValidationFailure[]> ValidateAsync<TRequest>(
+        TRequest request,
+        IEnumerable<IValidator<TRequest>> validators,
+        CancellationToken cancellationToken
+    )
     {
-        if (!validators.Any())
+        // DI already materializes the validator list as an array; the fallback keeps the method
+        // working with any IEnumerable without allocating a fresh snapshot on every request.
+        IValidator<TRequest>[] validatorArray =
+            validators as IValidator<TRequest>[] ?? validators.ToArray();
+
+        if (validatorArray.Length == 0)
         {
             return [];
         }
 
-        ValidationResult[] validationResults = await Task.WhenAll(
-            validators.Select(validator => validator.ValidateAsync(new ValidationContext<TRequest>(request))));
+        var context = new ValidationContext<TRequest>(request);
+
+        // Fast path: a single validator skips the Task.WhenAll machinery entirely.
+        if (validatorArray.Length == 1)
+        {
+            ValidationResult result =
+                await validatorArray[0].ValidateAsync(context, cancellationToken).ConfigureAwait(false);
+
+            return result.IsValid ? [] : [.. result.Errors];
+        }
+
+        var validationTasks = new Task<ValidationResult>[validatorArray.Length];
+        for (int i = 0; i < validatorArray.Length; i++)
+        {
+            validationTasks[i] = validatorArray[i].ValidateAsync(context, cancellationToken);
+        }
+
+        ValidationResult[] validationResults =
+            await Task.WhenAll(validationTasks).ConfigureAwait(false);
 
         ValidationFailure[] validationFailures = [.. validationResults
             .Where(validationResult => !validationResult.IsValid)

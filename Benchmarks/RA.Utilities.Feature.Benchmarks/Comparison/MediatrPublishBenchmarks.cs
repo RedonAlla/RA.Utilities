@@ -8,8 +8,10 @@ using RA.Utilities.Feature.Benchmarks.Shared;
 namespace RA.Utilities.Feature.Benchmarks.Comparison;
 
 /// <summary>
-/// Benchmarks the MediatR notification dispatch path, mirroring
-/// <c>FeaturePublishBenchmarks</c> scenario for scenario.
+/// Benchmarks the MediatR notification dispatch path, mirroring the fan-out scenarios of
+/// <c>NotificationBehaviorBenchmarks</c> (one handler and three handlers) scenario for
+/// scenario. MediatR has no notification pipeline, so the behavior scenarios have no
+/// counterpart here.
 /// </summary>
 [MemoryDiagnoser]
 public class MediatRPublishBenchmarks

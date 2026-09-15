@@ -5,7 +5,7 @@ title: Benchmarks
 
 # Benchmarks
 
-The `RA.Utilities.Feature.Benchmarks` project compares the generated mediator against **MediatR 12.5** (and, historically, against the pre-v11.1.0 runtime mediator) using [BenchmarkDotNet](https://benchmarkdotnet.org/), scenario for scenario.
+The `RA.Utilities.Feature.Benchmarks` project compares the generated mediator against **MediatR 14.2** using [BenchmarkDotNet](https://benchmarkdotnet.org/), scenario for scenario. Earlier revisions ran the same suite against MediatR 12.5 (and, historically, against the pre-v11.1.0 runtime mediator); the tables below are the current dataset.
 
 ## 🎯 Methodology
 
@@ -13,35 +13,85 @@ The `RA.Utilities.Feature.Benchmarks` project compares the generated mediator ag
 - **Fresh scope per iteration.** Each iteration resolves the mediator from a new `IServiceScope`, mirroring per-request semantics.
 - **Same payloads.** Both sides share the same `PongResponse` and request shapes; handlers return a plain response (no `Result` wrapper).
 - **Same pipeline depth.** Depth is modeled with distinct request types per depth on both sides (depth is fixed by the DI registrations).
-- **Hardware.** Apple M1, .NET 10, default job (≈15 warmup + ≈20 target iterations per benchmark); all classes run in the same session so machine conditions are identical within a table. Absolute numbers shift between sessions — compare **within** a run.
+- **Null loggers everywhere.** The behavior scenarios log through `NullLoggerFactory`-backed loggers on both sides, so each side measures its own behavior overhead, not a logging sink.
+- **Same validation work.** Both sides run identical FluentValidation rules through the same asynchronous `ValidateAsync` path, so the validation scenarios isolate dispatch, not validation style.
+- **Hardware.** Apple M1, .NET 10.0.11 (SDK 10.0.400), default job (≈15 warmup + ≈20 target iterations per benchmark). All classes ran in one session on 2026-09-15, so machine conditions are identical within a table; absolute numbers shift between sessions — compare **within** a run.
 
 ## 📊 Results (send shapes)
 
-| Scenario | MediatR | Generated `Mediator` (concrete) | Delta |
+| Scenario | MediatR 14.2 | Generated `Mediator` (concrete) | Delta |
 |---|---|---|---|
-| Send, 0 behaviors | 165.0 ns / 568 B | **144.9 ns / 504 B** | −12% time, −11% alloc |
-| Send, 3 behaviors | 251.7 ns / 1096 B | **207.3 ns / 1000 B** | −18% time, −9% alloc |
-| Send, void | 146.6 ns / 472 B | **129.2 ns / 408 B** | −12% time, −14% alloc |
-| Send, with context | 179.0 ns / 624 B | 207.5 ns / 872 B | +16% time, +248 B (see note) |
+| Send, 0 behaviors | 333.2 ns / 608 B | **248.9 ns / 504 B** | −25% time, −17% alloc |
+| Send, 3 behaviors | 499.6 ns / 1136 B | **401.5 ns / 1000 B** | −20% time, −12% alloc |
+| Send, void | 283.9 ns / 512 B | **244.4 ns / 408 B** | −14% time, −20% alloc |
+| Send, with context | 343.3 ns / 664 B | 391.1 ns / 872 B | +14% time, +208 B (see note) |
 
 Additional generated-mediator shapes (no MediatR counterpart at the same pipeline depth):
 
 | Path | Mean | Allocated |
 |---|---|---|
-| `IMediator.Send<TRequest, TResponse>(...)` (interface-typed) | 186.7 ns | 504 B |
-| `Mediator.Send((object)request)` (object dispatch) | 146.8 ns | 504 B |
+| `IMediator.Send<TRequest, TResponse>(...)` (interface-typed) | 359.8 ns | 504 B |
+| `Mediator.Send((object)request)` (object dispatch) | 289.7 ns | 504 B |
 
-MediatR reference points: 1 behavior at 211.2 ns / 808 B (the generated mediator runs a full **3-behavior** pipeline faster than that) and 3 void behaviors at 240.8 ns / 1000 B.
+MediatR reference points: 1 behavior at 428.3 ns / 848 B (the generated mediator runs a full **3-behavior** pipeline faster than that) and 3 void behaviors at 475.7 ns / 1040 B.
 
 ### Why the generated mediator wins
 
-- **Concrete handler injection** — the generator registers handlers as themselves, and the generated `Send` resolves `PingHandler` directly and calls it (devirtualized), where MediatR walks a runtime `request.GetType()` dictionary into a cached wrapper and resolves through a non-generic `GetService(Type)` path.
+- **Concrete handler injection** — the generator registers non-generic handlers as themselves, and the generated `Send` resolves the handler by concrete type and calls it (devirtualized), where MediatR walks a runtime `request.GetType()` dictionary into a cached wrapper and resolves through a non-generic `GetService(Type)` path. The benchmark handlers are generic (registered under their interfaces), so these measurements use the interface-resolution path — plain non-generic handlers get the faster concrete path.
 - **No delegate chain without behaviors** — with an empty pipeline the handler is invoked directly.
 - **Hand-rolled reverse loop** — behavior composition avoids the LINQ `Reverse().Aggregate(...)` iterator and closure chain MediatR pays on every call.
 
 ### The context caveat
 
 The context row is not apples-to-apples: MediatR has no `PipelineContext<T>`, so its benchmark carries the context data **inside the request record** (pre-created, zero extra allocation), while the generated mediator allocates a `PipelineContext<T>` and the `T` instance per call and runs a real context-aware behavior. On pure dispatch the two are at parity in that shape.
+
+## 📊 Results (notification fan-out)
+
+| Scenario | MediatR 14.2 | Generated `Mediator` (concrete) | Delta |
+|---|---|---|---|
+| Publish, 1 handler | 491.5 ns / 968 B | **285.4 ns / 624 B** | −42% time, −36% alloc |
+| Publish, 3 handlers | 751.9 ns / 1448 B | **367.0 ns / 896 B** | −51% time, −38% alloc |
+
+The generated `Publish` fans out to handlers resolved directly from the provider with a per-handler behavior wrap — no dictionary dispatch, no per-notification wrapper machinery.
+
+## 📊 Results (pipeline behaviors)
+
+The same comparison through the package's **real request behaviors** — `LoggingBehavior` and the validation behavior wired by `AddValidator` — against equivalent MediatR behaviors making the same log calls and running the same asynchronous validation work. The failing scenario measures the failure path: the behavior throws, and the benchmark catches it so the run stays green.
+
+| Scenario | MediatR 14.2 | Generated `Mediator` (concrete) | Delta |
+|---|---|---|---|
+| Send, no behaviors | 328.2 ns / 608 B | **272.7 ns / 504 B** | −17% time, −17% alloc |
+| Send, logging | 532.8 ns / 984 B | **443.1 ns / 864 B** | −17% time, −12% alloc |
+| Send, validation (passing) | 2281.8 ns / 4576 B | **1948.3 ns / 4032 B** | −15% time, −12% alloc |
+| Send, validation (failing) | 17,607.4 ns / 10,409 B | **16,106.1 ns / 9088 B** | −9% time, −13% alloc |
+| Send, logging + validation | 2387.0 ns / 4824 B | **2030.6 ns / 4272 B** | −15% time, −11% alloc |
+| Send, void, logging + validation | 1994.7 ns / 4552 B | **1989.0 ns / 4000 B** | 0% time, −12% alloc |
+
+Reading the numbers:
+
+- **Logging is cheap** — the behavior adds ~170 ns / 360 B over the bare send on this package's side, with the log calls short-circuited by the null logger.
+- **Validation cost is FluentValidation's** — ~1.7 µs / ~3.5 KB per passing request is the validator engine, not the wrapper; the dispatch advantage (−15%) survives it.
+- **The failure path is exception-dominated** — ~16 µs of throw/catch on both sides, nearly identical across frameworks.
+- **Behaviors are allocation-tuned** — the metrics behavior times with `Stopwatch.GetTimestamp()` (no per-call `Stopwatch` allocation), the retry behavior passes the handler delegate through without a closure, and validation snapshots validators with a single-validator fast path that skips the `Task.WhenAll` machinery (≈500 B less per validated request than the pre-tuning implementation).
+
+## 📊 Results (notification behaviors)
+
+The package's notification behaviors are **Feature-only** — MediatR has no notification pipeline. One no-op handler per scenario (two for the fan-out baselines); the retry recovery scenario uses a zero backoff delay so it measures the retry machinery (catch, warn, loop), not a 200 ms backoff timer.
+
+| Scenario | Mean | Allocated |
+|---|---|---|
+| Publish, 1 handler (baseline) | 285.4 ns | 624 B |
+| Publish, logging | 497.6 ns | 880 B |
+| Publish, metrics | 471.3 ns | 816 B |
+| Publish, retry (succeeds first attempt) | 407.0 ns | 824 B |
+| Publish, retry (succeeds second attempt) | 5,116.9 ns | 1112 B |
+| Publish, logging + metrics + retry | 689.3 ns | 1176 B |
+
+Reading the numbers:
+
+- Each behavior costs **~120–210 ns** over the bare publish; the stacked pipeline (+404 ns / +552 B) is roughly the sum of its parts.
+- **Retry's happy path is just the try/catch loop** (+122 ns / +200 B); its recovery path costs ~4.8 µs — dominated by the exception itself, not the retry loop.
+- **Metrics is nearly free after the allocation tuning** (+186 ns / +192 B, down from +232 B when it allocated a `Stopwatch` per publish).
 
 ## 🛠️ Running the benchmarks
 
@@ -53,18 +103,19 @@ NuGetAudit=false dotnet run -c Release \
   --filter '*SendBenchmarks*' --job default
 ```
 
-- `--filter '*MediatrSendBenchmarks*'` — the MediatR comparison only.
-- `--filter '*GeneratedMediatorSendBenchmarks*'` — the generated mediator only.
+- `--filter '*SendBenchmarks*'` — the MediatR and generated-mediator send comparison.
+- `--filter '*PublishBenchmarks*'` — the notification fan-out comparison.
+- `--filter '*BehaviorBenchmarks*'` — the pipeline-behavior and notification-behavior scenarios (Feature and MediatR mirror).
 - `--job short` for a quick smoke run.
 
 The benchmark sources live in `Benchmarks/RA.Utilities.Feature.Benchmarks/`:
 
 | Folder | Contents |
 |---|---|
-| `Shared/` | `DiHost` scope factory and the shared payload types |
-| `Comparison/` | MediatR handlers, behaviors, requests, and benchmarks |
-| `Feature/` | The generated-mediator scenarios: handlers (registered explicitly — generic handler types are not auto-registered), closed no-op behaviors (auto-registered by the generator), and the benchmark classes |
+| `Shared/` | `DiHost` scope factory, the shared payload types, and `BenchmarkLogging` (null-logger registration) |
+| `Comparison/` | MediatR handlers, behaviors, requests, validators, and benchmarks |
+| `Feature/` | The generated-mediator scenarios: handlers, closed no-op behaviors, the package-behavior scenarios (requests, handlers, validators, `BehaviorServices`), and the benchmark classes |
 
 ## 🧠 Summary
 
-At equal lifetimes, the generated mediator is **12-18% faster with 9-14% fewer allocations** than MediatR across the send shapes, interface-typed dispatch is within a few percent of the concrete path, and object-based dispatch costs the same as a monomorphic send. See the [Generated Mediator](./generated-mediator) guide for the dispatch matrix behind these numbers.
+At equal lifetimes against MediatR 14.2, the generated mediator is **14–25% faster with 12–20% fewer allocations** across the send shapes, **42–51% faster** on notification fan-out, and **9–17% faster** through equivalent logging/validation pipelines (the void pipeline at time parity, −12% allocations). Interface-typed dispatch is within ~45% of the concrete path, and object-based dispatch costs about the same as a monomorphic send. The package's own behaviors add single-digit hundreds of nanoseconds each and stack additively. See the [Generated Mediator](./generated-mediator) guide for the dispatch matrix behind these numbers.

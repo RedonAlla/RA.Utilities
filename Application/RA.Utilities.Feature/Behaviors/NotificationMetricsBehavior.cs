@@ -27,27 +27,22 @@ public class NotificationMetricsBehavior<TNotification> : INotificationBehavior<
     }
 
     /// <inheritdoc/>
-    public async Task HandleAsync(TNotification notification, NotificationHandlerDelegate next, CancellationToken cancellationToken)
-    {
-        _logger.LogDebug("MetricsBehavior..");
-        var timer = Stopwatch.StartNew();
-        await next();
-        timer.Stop();
-
-        if (timer.ElapsedMilliseconds > 500)
-            _logger.LogWarning("Long running notification: {NotificationName} ({ElapsedMilliseconds}ms)", typeof(TNotification).Name, timer.ElapsedMilliseconds);
-    }
+    public Task HandleAsync(TNotification notification, NotificationHandlerDelegate next, CancellationToken cancellationToken)
+        => MeasuredAsync(next);
 
     /// <inheritdoc/>
-    public async Task HandleAsync<TContext>(TNotification notification, NotificationHandlerContextDelegate<TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
+    public Task HandleAsync<TContext>(TNotification notification, NotificationHandlerContextDelegate<TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
         where TContext : class, new()
+        => MeasuredAsync(() => next(context));
+
+    private async Task MeasuredAsync(NotificationHandlerDelegate next)
     {
         _logger.LogDebug("MetricsBehavior..");
-        var timer = Stopwatch.StartNew();
-        await next(context);
-        timer.Stop();
+        long start = Stopwatch.GetTimestamp();
+        await next().ConfigureAwait(false);
+        TimeSpan elapsed = Stopwatch.GetElapsedTime(start);
 
-        if (timer.ElapsedMilliseconds > 500)
-            _logger.LogWarning("Long running notification: {NotificationName} ({ElapsedMilliseconds}ms)", typeof(TNotification).Name, timer.ElapsedMilliseconds);
+        if (elapsed.TotalMilliseconds > 500)
+            _logger.LogWarning("Long running notification: {NotificationName} ({ElapsedMilliseconds}ms)", typeof(TNotification).Name, elapsed.TotalMilliseconds);
     }
 }

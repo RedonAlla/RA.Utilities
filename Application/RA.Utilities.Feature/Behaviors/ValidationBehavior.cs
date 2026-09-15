@@ -28,26 +28,26 @@ public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TReques
         _validators = validators ?? [];
 
     /// <inheritdoc/>
-    public async Task<TResponse> HandleAsync(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
-    {
-        ValidationFailure[] validationFailures =
-            await ValidationUtilities.ValidateAsync(request, _validators);
-
-        if (validationFailures.Length == 0)
-            return await next();
-
-        throw ValidationUtilities.CreateValidationErrorResult(validationFailures);
-    }
+    public Task<TResponse> HandleAsync(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+        => HandleAsyncCore(request, next, cancellationToken);
 
     /// <inheritdoc/>
-    public async Task<TResponse> HandleAsync<TContext>(TRequest request, RequestHandlerContextDelegate<TResponse, TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
+    public Task<TResponse> HandleAsync<TContext>(
+        TRequest request,
+        RequestHandlerContextDelegate<TResponse, TContext> next,
+        PipelineContext<TContext> context,
+        CancellationToken cancellationToken
+    )
         where TContext : class, new()
+        => HandleAsyncCore(request, () => next(context), cancellationToken);
+
+    private async Task<TResponse> HandleAsyncCore(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
         ValidationFailure[] validationFailures =
-            await ValidationUtilities.ValidateAsync(request, _validators);
+            await ValidationUtilities.ValidateAsync(request, _validators, cancellationToken).ConfigureAwait(false);
 
         if (validationFailures.Length == 0)
-            return await next(context);
+            return await next().ConfigureAwait(false);
 
         throw ValidationUtilities.CreateValidationErrorResult(validationFailures);
     }
@@ -71,30 +71,27 @@ public class ValidationBehavior<TRequest> : IPipelineBehavior<TRequest>
         _validators = validators ?? [];
 
     /// <inheritdoc/>
-    public async Task HandleAsync(TRequest request, RequestHandlerDelegate next, CancellationToken cancellationToken)
-    {
-        ValidationFailure[] validationFailures =
-            await ValidationUtilities.ValidateAsync(request, _validators);
-
-        if (validationFailures.Length == 0)
-        {
-            await next();
-            return;
-        }
-
-        throw ValidationUtilities.CreateValidationErrorResult(validationFailures);
-    }
+    public Task HandleAsync(TRequest request, RequestHandlerDelegate next, CancellationToken cancellationToken)
+        => HandleAsyncCore(request, next, cancellationToken);
 
     /// <inheritdoc/>
-    public async Task HandleAsync<TContext>(TRequest request, RequestHandlerContextDelegate<TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
+    public Task HandleAsync<TContext>(
+        TRequest request,
+        RequestHandlerContextDelegate<TContext> next,
+        PipelineContext<TContext> context,
+        CancellationToken cancellationToken
+    )
         where TContext : class, new()
+        => HandleAsyncCore(request, () => next(context), cancellationToken);
+
+    private async Task HandleAsyncCore(TRequest request, RequestHandlerDelegate next, CancellationToken cancellationToken)
     {
         ValidationFailure[] validationFailures =
-            await ValidationUtilities.ValidateAsync(request, _validators);
+            await ValidationUtilities.ValidateAsync(request, _validators, cancellationToken).ConfigureAwait(false);
 
         if (validationFailures.Length == 0)
         {
-            await next(context);
+            await next().ConfigureAwait(false);
             return;
         }
 

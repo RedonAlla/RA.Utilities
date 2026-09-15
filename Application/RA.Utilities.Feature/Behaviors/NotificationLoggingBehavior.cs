@@ -28,19 +28,18 @@ public class NotificationLoggingBehavior<TNotification> : INotificationBehavior<
     }
 
     /// <inheritdoc/>
-    public async Task HandleAsync(TNotification notification, NotificationHandlerDelegate next, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("[Notification Logging] Start. Notification: {@Notification}", notification);
-        await next();
-        _logger.LogInformation("[Notification Logging] Finished. Notification: {@Notification}", notification);
-    }
+    public Task HandleAsync(TNotification notification, NotificationHandlerDelegate next, CancellationToken cancellationToken)
+        => LoggedAsync(notification, next);
 
     /// <inheritdoc/>
-    public async Task HandleAsync<TContext>(TNotification notification, NotificationHandlerContextDelegate<TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
+    public Task HandleAsync<TContext>(TNotification notification, NotificationHandlerContextDelegate<TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
         where TContext : class, new()
+        => LoggedAsync(notification, () => next(context));
+
+    private async Task LoggedAsync(TNotification notification, NotificationHandlerDelegate next)
     {
         _logger.LogInformation("[Notification Logging] Start. Notification: {@Notification}", notification);
-        await next(context);
+        await next().ConfigureAwait(false);
         _logger.LogInformation("[Notification Logging] Finished. Notification: {@Notification}", notification);
     }
 }

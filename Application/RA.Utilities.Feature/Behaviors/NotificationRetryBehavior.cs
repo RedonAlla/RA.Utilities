@@ -35,15 +35,15 @@ public class NotificationRetryBehavior<TNotification> : INotificationBehavior<TN
     }
 
     /// <inheritdoc/>
-    public async Task HandleAsync(TNotification notification, NotificationHandlerDelegate next, CancellationToken cancellationToken)
-        => await RetryLoop(() => next(), notification, cancellationToken);
+    public Task HandleAsync(TNotification notification, NotificationHandlerDelegate next, CancellationToken cancellationToken)
+        => RetryLoop(next, notification, cancellationToken);
 
     /// <inheritdoc/>
-    public async Task HandleAsync<TContext>(TNotification notification, NotificationHandlerContextDelegate<TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
+    public Task HandleAsync<TContext>(TNotification notification, NotificationHandlerContextDelegate<TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
         where TContext : class, new()
-        => await RetryLoop(() => next(context), notification, cancellationToken);
+        => RetryLoop(() => next(context), notification, cancellationToken);
 
-    private async Task RetryLoop(Func<Task> action, TNotification notification, CancellationToken cancellationToken)
+    private async Task RetryLoop(NotificationHandlerDelegate action, TNotification notification, CancellationToken cancellationToken)
     {
         int attempt = 0;
         while (true)
@@ -51,7 +51,7 @@ public class NotificationRetryBehavior<TNotification> : INotificationBehavior<TN
             try
             {
                 attempt++;
-                await action();
+                await action().ConfigureAwait(false);
                 break;
             }
             catch (Exception ex)
@@ -61,7 +61,7 @@ public class NotificationRetryBehavior<TNotification> : INotificationBehavior<TN
                     _logger.LogWarning(ex,
                         "[Notification Retry] Attempt {Attempt} failed for {NotificationType}. Retrying... Notification: {@Notification}",
                         attempt, typeof(TNotification).Name, notification);
-                    await Task.Delay(_baseDelayMilliseconds * attempt, cancellationToken);
+                    await Task.Delay(_baseDelayMilliseconds * attempt, cancellationToken).ConfigureAwait(false);
                 }
                 else
                 {
