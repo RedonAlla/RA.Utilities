@@ -2,11 +2,11 @@
 
   <PropertyGroup>
 		<Version>10.0.0</Version>
-    <Title>RA Core Results</Title>
-		<Description>RA.Utilities.Core.Results is a lightweight .NET library designed to enhance error handling by providing a functional `Result` type. It helps you write cleaner, more predictable, and more robust code by avoiding exceptions for expected operational failures. This approach allows for a clear and explicit representation of success or failure, making your application's control flow easier to follow and maintain.</Description>
-		<PackageTags>RA;Utilities;Core;Results;Result;ErrorHandling;Functional</PackageTags>
-		<PackageIcon>core.png</PackageIcon>
-		<PackageId>RA.Utilities.Core.Results</PackageId>
+    <Title>RA Core Response</Title>
+		<Description>RA.Utilities.Core.Response is a lightweight .NET library designed to enhance error handling by providing a functional `Result` type. It helps you write cleaner, more predictable, and more robust code by avoiding exceptions for expected operational failures. This approach allows for a clear and explicit representation of success or failure, making your application's control flow easier to follow and maintain.</Description>
+		<PackageTags>RA;Utilities;Core;Response;Response;ErrorHandling;Functional</PackageTags>
+		<PackageIcon>core-models.png</PackageIcon>
+		<PackageId>RA.Utilities.Core.Response</PackageId>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageReleaseNotesFile>releasenotes.md</PackageReleaseNotesFile>
 		<NoWarn>$(NoWarn);NU5104</NoWarn>

@@ -29,6 +29,7 @@ This release replaces the reflection-based endpoint registration with a compile-
 
 *   Nested and internal endpoint types are fully supported; types that merely inherit the static contract from a base class are not registered twice.
 *   Updated `README.md` with the new `IEndpointGroup`/`IEndpoint` usage, compile-time validation behavior, and the simplified `app.MapEndpoints()` `Program.cs` flow.
+*   Response models extracted to the standalone `RA.Utilities.Api.Response` package (revived under a new package id); `RA.Utilities.Api` now depends on it. The `RA.Utilities.Api.Results` namespace and all public types are unchanged.
 
 ## Version 10.0.6
 ![Date Badge](https://img.shields.io/badge/Publish-02%20August%202026-lightblue?logo=fastly&logoColor=white)

@@ -18,7 +18,7 @@ jobs:
       id: downloads
       run: |
         # Corrected package names (no trailing spaces)
-        PACKAGES=("RA.Utilities.Core.Results" "RA.Utilities.Core.Constants" "RA.Utilities.Core.Exceptions" "RA.Utilities.Api" "RA.Utilities.Api.Middlewares" "RA.Utilities.Api.Results" "RA.Utilities.OpenApi" "RA.Utilities.Authorization" "RA.Utilities.Authentication.JwtBearer" "RA.Utilities.Feature" "RA.Utilities.Data.Entities" "RA.Utilities.Data.Abstractions" "RA.Utilities.Data.EntityFramework" "RA.Utilities.Integrations" "RA.Utilities.Logging.Shared" "RA.Utilities.Logging.Core")
+        PACKAGES=("RA.Utilities.Core.Results" "RA.Utilities.Core.Constants" "RA.Utilities.Core.Exceptions" "RA.Utilities.Api" "RA.Utilities.Api.Response" "RA.Utilities.Api.Middlewares" "RA.Utilities.OpenApi" "RA.Utilities.Authorization" "RA.Utilities.Authentication.JwtBearer" "RA.Utilities.Feature" "RA.Utilities.Data.Entities" "RA.Utilities.Data.Abstractions" "RA.Utilities.Data.EntityFramework" "RA.Utilities.Integrations" "RA.Utilities.Logging.Shared" "RA.Utilities.Logging.Core")
         TOTAL=0
         for package in "${PACKAGES[@]}"; do
           # Use the NuGet Search API, which provides total downloads directly

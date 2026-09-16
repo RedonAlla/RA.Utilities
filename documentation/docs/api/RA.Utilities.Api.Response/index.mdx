@@ -1,0 +1,45 @@
+---
+title: RA.Utilities.Api.Response
+sidebar_position: 3
+slug: /api/RA.Utilities.Api.Response
+sidebar_class_name: nav_session ra_utilities_api_response
+---
+
+import DocCardList from '@theme/DocCardList';
+import LogoSvg from '../../../../Assets/Images/results.svg';
+
+<p align="center">
+<LogoSvg width={'15rem'} height={'15rem'} className="header_icon" />
+</p>
+
+# RA.Utilities.Api.Response
+
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Api.Response?logo=nuget&label=NuGet)](https://www.nuget.org/packages/RA.Utilities.Api.Response/)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Api.Response.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api.Response/)
+[![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
+[![Publish NuGet](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml/badge.svg)](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
+
+The `RA.Utilities.Api.Results` namespace contains a comprehensive set of standardized response models for ASP.NET Core APIs. These types are published in the standalone `RA.Utilities.Api.Response` NuGet package. `RA.Utilities.Api` also ships them as a transitive dependency, so both packages provide the same `RA.Utilities.Api.Results` namespace.
+
+## Available Response Types
+
+All response types inherit from `Response<T>` and provide a consistent JSON envelope with `responseCode`, `responseType`, `responseMessage`, and `result` properties.
+
+| Response Class | HTTP Code | ResponseType | Result Type |
+|---|---|---|---|
+| `SuccessResponse<T>` | 200 | `Success` | `T` |
+| `BadRequestResponse` | 400 | `BadRequest` | `BadRequestResult[]` |
+| `UnauthorizedResponse` | 401 | `Unauthorized` | `ErrorResult` |
+| `ForbiddenResponse` | 403 | `Forbidden` | `ErrorResult` |
+| `NotFoundResponse` | 404 | `NotFound` | `NotFoundResult` |
+| `ConflictResponse` | 409 | `Conflict` | `ConflictResult` |
+| `UnprocessableResponse` | 422 | `Unprocessable` | `ErrorResult` |
+| `TooManyRequestsResponse` | 429 | `TooManyRequests` | `ErrorResult` |
+| `ErrorResponse` | 500 | `Error` | `ErrorResult` |
+| `ServiceUnavailableResponse` | 503 | `ServiceUnavailable` | `ErrorResult` |
+| `GatewayTimeoutResponse` | 504 | `GatewayTimeout` | `ErrorResult` |
+
+<br />
+
+<DocCardList />

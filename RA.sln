@@ -82,6 +82,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RA.Utilities.Feature.Sample
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RA.Utilities.Feature.Sample.Handlers", "Application\RA.Utilities.Feature.Sample.Handlers\RA.Utilities.Feature.Sample.Handlers.csproj", "{0ACAB4D7-D8E0-4D7C-8529-805EAE3D4C4D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RA.Utilities.Api.Response", "Api\RA.Utilities.Api.Response\RA.Utilities.Api.Response.csproj", "{2491FDBD-65AD-4CA7-930D-5F7077F31980}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -380,6 +382,18 @@ Global
 		{0ACAB4D7-D8E0-4D7C-8529-805EAE3D4C4D}.Release|x64.Build.0 = Release|Any CPU
 		{0ACAB4D7-D8E0-4D7C-8529-805EAE3D4C4D}.Release|x86.ActiveCfg = Release|Any CPU
 		{0ACAB4D7-D8E0-4D7C-8529-805EAE3D4C4D}.Release|x86.Build.0 = Release|Any CPU
+		{2491FDBD-65AD-4CA7-930D-5F7077F31980}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2491FDBD-65AD-4CA7-930D-5F7077F31980}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2491FDBD-65AD-4CA7-930D-5F7077F31980}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2491FDBD-65AD-4CA7-930D-5F7077F31980}.Debug|x64.Build.0 = Debug|Any CPU
+		{2491FDBD-65AD-4CA7-930D-5F7077F31980}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2491FDBD-65AD-4CA7-930D-5F7077F31980}.Debug|x86.Build.0 = Debug|Any CPU
+		{2491FDBD-65AD-4CA7-930D-5F7077F31980}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2491FDBD-65AD-4CA7-930D-5F7077F31980}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2491FDBD-65AD-4CA7-930D-5F7077F31980}.Release|x64.ActiveCfg = Release|Any CPU
+		{2491FDBD-65AD-4CA7-930D-5F7077F31980}.Release|x64.Build.0 = Release|Any CPU
+		{2491FDBD-65AD-4CA7-930D-5F7077F31980}.Release|x86.ActiveCfg = Release|Any CPU
+		{2491FDBD-65AD-4CA7-930D-5F7077F31980}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -410,5 +424,6 @@ Global
 		{9A9CD35F-4E5A-479A-B317-CAE7AF8E87DD} = {A74F262E-BDE7-D5D2-89E9-785413424D0A}
 		{132227AE-5B2B-4912-8B51-BCE43B6AC41A} = {A74F262E-BDE7-D5D2-89E9-785413424D0A}
 		{0ACAB4D7-D8E0-4D7C-8529-805EAE3D4C4D} = {A74F262E-BDE7-D5D2-89E9-785413424D0A}
+		{2491FDBD-65AD-4CA7-930D-5F7077F31980} = {D82C56D6-B2CD-F611-9E31-04638F7EC30E}
 	EndGlobalSection
 EndGlobal

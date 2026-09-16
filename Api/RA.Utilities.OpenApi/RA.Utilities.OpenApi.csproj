@@ -29,6 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../RA.Utilities.Api.Response/RA.Utilities.Api.Response.csproj" />
     <ProjectReference Include="../RA.Utilities.Api/RA.Utilities.Api.csproj" />
   </ItemGroup>
 

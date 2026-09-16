@@ -18,8 +18,8 @@ const packagesList: Array<PackageListType> = [
     category: 'Api',
     packages: [
       'RA.Utilities.Api',
+      'RA.Utilities.Api.Response',
       'RA.Utilities.Api.Middlewares',
-      'RA.Utilities.Api.Results',
       'RA.Utilities.Authentication.JwtBearer',
       'RA.Utilities.Authorization', 
       'RA.Utilities.OpenApi',

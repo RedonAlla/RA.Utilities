@@ -40,10 +40,10 @@ const packages: Package[] = [
     layer: 'api',
   },
   {
-    name: 'RA.Utilities.Api.Results',
-    shortName: 'Api.Results ⚠️',
-    description: 'Deprecated — merged into RA.Utilities.Api. All response types now available under the RA.Utilities.Api.Results namespace.',
-    link: '/nuget-packages/api/RA.Utilities.Api/',
+    name: 'RA.Utilities.Api.Response',
+    shortName: 'Api.Response',
+    description: 'Standardized response models for consistent API responses — `SuccessResponse<T>`, `ErrorResponse`, and typed error responses.',
+    link: '/nuget-packages/api/RA.Utilities.Api.Response/',
     layer: 'api',
   },
   {

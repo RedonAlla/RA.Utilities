@@ -153,12 +153,12 @@ using RA.Utilities.Api.Mapper;
 return SuccessResult.Ok(product);
 ```
 
-#### 3. Response Models Consolidated
+#### 3. Response Models Extracted to a Standalone Package
 
-All response model types from `RA.Utilities.Api.Results` were merged into `RA.Utilities.Api`. Remove the `RA.Utilities.Api.Results` package reference:
+The response model types are published in the standalone `RA.Utilities.Api.Response` package again. `RA.Utilities.Api` depends on it, so existing projects receive the types transitively — no package changes are required. To reference the models directly:
 
 ```bash
-dotnet remove package RA.Utilities.Api.Results
+dotnet add package RA.Utilities.Api.Response
 ```
 
 No using-directive changes are needed — the types remain in the `RA.Utilities.Api.Results` namespace.

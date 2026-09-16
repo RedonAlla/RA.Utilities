@@ -25,17 +25,19 @@ return SuccessResult.Ok(product);
 
 ### I removed the `RA.Utilities.Api.Results` NuGet package and now my code won't compile
 
-**Cause**: In v10.0.6, all response model types were merged from `RA.Utilities.Api.Results` into `RA.Utilities.Api`. The types are now in the same namespace (`RA.Utilities.Api.Results`) but ship with the `RA.Utilities.Api` package.
+**Cause**: The response models were consolidated into `RA.Utilities.Api` in v10.0.6 and later revived as the standalone `RA.Utilities.Api.Response` package. `RA.Utilities.Api` depends on it, so the types arrive transitively — but a project that relied on the old `RA.Utilities.Api.Results` package id may have dropped the reference entirely.
 
-**Fix**: Remove the `RA.Utilities.Api.Results` package reference and ensure `RA.Utilities.Api` (v10.0.6+) is referenced. No code changes are needed — the `using RA.Utilities.Api.Results;` directive still works.
+**Fix**: Add the revived package, or ensure `RA.Utilities.Api` (v10.1.0+) is referenced:
 
 ```bash
-# Remove the old package
-dotnet remove package RA.Utilities.Api.Results
+# Add the standalone response models package
+dotnet add package RA.Utilities.Api.Response
 
-# Ensure you have the latest Api package
-dotnet add package RA.Utilities.Api --version 10.0.6
+# Alternatively, the models arrive transitively via the Api package
+dotnet add package RA.Utilities.Api --version 10.1.0
 ```
+
+No code changes are needed — the `using RA.Utilities.Api.Results;` directive still works.
 
 ### `ApplicationBuilderExtensions` or `ServiceCollectionExtensions` no longer compile
 
@@ -239,7 +241,7 @@ return result.Match<IResult>(
 
 ### Where can I find the response model types?
 
-All response model types live in the `RA.Utilities.Api.Results` namespace within the `RA.Utilities.Api` package:
+All response model types are provided by the `RA.Utilities.Api.Response` package (referenced transitively by `RA.Utilities.Api`):
 
 - `SuccessResponse<T>` — HTTP 200
 - `BadRequestResponse` — HTTP 400
