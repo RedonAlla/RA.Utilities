@@ -31,7 +31,7 @@ This is a .NET 10.0 solution producing ~17 NuGet packages that provide reusable 
 
 | Layer | Projects | Purpose |
 |---|---|---|
-| **Core** | `RA.Utilities.Core`, `.Core.Constants`, `.Core.Exceptions` | Zero-dependency foundation: `Result` monad, exception hierarchy, HTTP constants |
+| **Core** | `RA.Utilities.Core.Results`, `.Core.Constants`, `.Core.Exceptions` | Zero-dependency foundation: `Result` monad, exception hierarchy, HTTP constants |
 | **Application** | `RA.Utilities.Feature`, `RA.Utilities.Application.Validation` | Custom mediator, CQRS handlers, pipeline behaviors, FluentValidation utilities |
 | **Api** | `.Api`, `.Api.Results`, `.Api.Middlewares`, `.OpenApi`, `.Authentication.JwtBearer`, `.Authorization` | ASP.NET Core middleware, endpoint registration, typed HTTP responses, OpenAPI transformers, JWT auth |
 | **Data** | `.Data.Entities`, `.Data.Abstractions`, `.Data.EntityFramework` | Entity base classes, repository interfaces (read/write/composite), EF Core implementations |

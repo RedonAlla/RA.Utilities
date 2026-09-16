@@ -14,7 +14,7 @@ In 10.x, handlers and `Send` calls returned `Result` / `Result<T>`, and failures
 - `IMediator.Send<TRequest, TResponse>` returns `Task<TResponse>`; `Send<TRequest>` (void) returns `Task`. Context overloads add a `PipelineContext<TContext>? context = null` parameter. `Publish` is unchanged.
 - Errors are **exceptions**. Handlers throw typed exceptions from `RA.Utilities.Core.Exceptions` (`NotFoundException`, `BadRequestException`, `ConflictException`, `ForbiddenException`, `UnauthorizedException`, `UnprocessableException`, `GatewayTimeoutException`, `ServiceUnavailableException`, `TooManyRequestsException`). `ValidationBehavior` now **throws** a `BadRequestException` instead of returning a failure `Result`.
 - The API layer's `GlobalExceptionHandler` maps those exceptions to HTTP responses.
-- The `Result` / `Result<T>` monad still exists in `RA.Utilities.Core` for callers who want it — it just no longer participates in the mediator contract.
+- The `Result` / `Result<T>` monad still exists in `RA.Utilities.Core.Results` for callers who want it — it just no longer participates in the mediator contract.
 
 ### Signature changes at a glance
 

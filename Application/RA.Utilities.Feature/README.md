@@ -26,7 +26,7 @@ dotnet add package RA.Utilities.Feature
 
 ## 🔗 Dependencies
 
--   [`RA.Utilities.Core`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/RA.Utilities.Core/)
+-   [`RA.Utilities.Core.Results`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/RA.Utilities.Core.Results/)
 -   [`RA.Utilities.Core.Exceptions`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/RA.Utilities.Core.Exceptions/)
 -   [`RA.Utilities.Application.Validation`](https://redonalla.github.io/RA.Utilities/nuget-packages/application/RA.Utilities.Application.Validation/)
 -   [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/)

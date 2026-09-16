@@ -1,14 +1,14 @@
 ## Version 10.0.0
 ![Date Badge](https://img.shields.io/badge/Publish-19%20November%202025-lightblue?logo=fastly&logoColor=white)
-[![NuGet version](https://img.shields.io/badge/NuGet-10.0.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core/10.0.0)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Results/10.0.0)
 
 The project version has been updated from `10.0.100-rc.2` to the stable release version `10.0.0` in preparation for a production release.
 
 ## Version 10.0.100-rc.2
 ![Date Badge](https://img.shields.io/badge/Publish-18%20Octomber%202025-lightblue?logo=fastly&logoColor=white)
-[![NuGet version](https://img.shields.io/badge/NuGet-10.0.100--rc.2-orange?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core/10.0.100-rc.2)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.100--rc.2-orange?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Results/10.0.100-rc.2)
 
-This is the initial release of `RA.Utilities.Core`, a lightweight .NET library designed to enhance error handling by providing a functional `Result` type. It helps you write cleaner, more predictable, and more robust code by avoiding exceptions for expected operational failures.
+This is the initial release of `RA.Utilities.Core.Results`, a lightweight .NET library designed to enhance error handling by providing a functional `Result` type. It helps you write cleaner, more predictable, and more robust code by avoiding exceptions for expected operational failures.
 
 
 ### ✨ Key Features
@@ -35,5 +35,5 @@ This is the initial release of `RA.Utilities.Core`, a lightweight .NET library d
 Install the package via the .NET CLI:
 
 ```bash
-dotnet add package RA.Utilities.Core
+dotnet add package RA.Utilities.Core.Results
 ```

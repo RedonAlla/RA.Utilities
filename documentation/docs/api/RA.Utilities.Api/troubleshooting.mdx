@@ -228,7 +228,7 @@ Both approaches work depending on your error handling style:
 
 - **`throw`**: Best when using `GlobalExceptionHandler` middleware. The exception propagates up and the handler catches it, logs it, and returns a structured response.
 
-- **`return` with `Result<T>`**: Best when using the functional `Result` pattern from `RA.Utilities.Core`. Use `.Match()` to map success/failure to `IResult`:
+- **`return` with `Result<T>`**: Best when using the functional `Result` pattern from `RA.Utilities.Core.Results`. Use `.Match()` to map success/failure to `IResult`:
 
 ```csharp
 return result.Match<IResult>(

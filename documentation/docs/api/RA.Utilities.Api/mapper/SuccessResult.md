@@ -85,7 +85,7 @@ Your application or domain layer should return a `Result<T>` to indicate the out
 
 ```csharp showLineNumbers
 // Services/ProductService.cs
-using RA.Utilities.Core;
+using RA.Utilities.Core.Results;
 using RA.Utilities.Core.Exceptions;
 
 public class ProductService

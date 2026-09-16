@@ -7,7 +7,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Api", "Api", "{D82C56D6-B2C
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{FBF56CC3-7AE6-AD2D-3F14-7F97FD322CD6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RA.Utilities.Core", "Core\RA.Utilities.Core\RA.Utilities.Core.csproj", "{DBD00038-A52D-4625-8B16-7723FECE9ED3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RA.Utilities.Core.Results", "Core\RA.Utilities.Core.Results\RA.Utilities.Core.Results.csproj", "{DBD00038-A52D-4625-8B16-7723FECE9ED3}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Assets", "Assets", "{F9C182FD-9162-FD69-8F9D-F6E4642E19CF}"
 EndProject

@@ -85,7 +85,7 @@ This release modernizes the `RA.Utilities.Feature` package, providing a foundati
     *   If validation fails, the pipeline is short-circuited, and a `Result.Failure` containing a `ValidationException` is returned immediately, preventing invalid data from reaching your business logic.
 
 *   **Seamless `Result<T>` Integration**:
-    *   Designed from the ground up to work with the `Result<T>` type from `RA.Utilities.Core`, promoting explicit and predictable error handling for business logic failures.
+    *   Designed from the ground up to work with the `Result<T>` type from `RA.Utilities.Core.Results`, promoting explicit and predictable error handling for business logic failures.
 
 *   **Updated Documentation**:
     *   The `README.md` has been updated to provide a clear, step-by-step guide for creating a complete feature slice, including the command, validator, handler, and DI registration.

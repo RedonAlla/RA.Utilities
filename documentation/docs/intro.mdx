@@ -18,7 +18,7 @@ RA.Utilities provides a set of reusable, opinionated building blocks primarily a
 <div class="hero-cta">
   <div class="hero-cta__content">
     <h2 style={{fontSize: '1.4rem', marginBottom: '0.35rem', fontWeight: 700}}>
-      Start with <code>RA.Utilities.Core</code>
+      Start with <code>RA.Utilities.Core.Results</code>
     </h2>
     <p style={{marginBottom: '1rem', color: 'var(--ifm-font-color-secondary)'}}>
       The <strong>Result monad</strong>, exception hierarchy, and HTTP constants are the foundation every other package builds on.
@@ -47,7 +47,7 @@ Each package is opt-in — adopt only the layers your project needs.
 
 ```bash
 # Start with the foundation
-dotnet add package RA.Utilities.Core
+dotnet add package RA.Utilities.Core.Results
 dotnet add package RA.Utilities.Core.Exceptions
 
 # Add the mediator and CQRS support
@@ -107,7 +107,7 @@ flowchart TD
     end
 
     subgraph corelayer["Core Layer"]
-        corepkg["RA.Utilities.Core"]
+        corepkg["RA.Utilities.Core.Results"]
         coreconst["RA.Utilities.Core.Constants"]
         coreexc["RA.Utilities.Core.Exceptions"]
     end

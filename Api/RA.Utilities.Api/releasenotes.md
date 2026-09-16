@@ -156,7 +156,7 @@ This release modernizes the `RA.Utilities.Api` package, introducing a suite of t
     *   These helpers simplify the creation of successful API responses (e.g., `Ok`, `Created`, `Accepted`, `NoContent`) and automatically wrap the payload in the standard `SuccessResponse<T>` model, ensuring consistency with error responses.
 
 *   **Seamless `Result<T>` Integration**:
-    *   The `SuccessResult` helpers and the exception handling middleware work together to provide a clean way to handle the `Result<T>` type from `RA.Utilities.Core`.
+    *   The `SuccessResult` helpers and the exception handling middleware work together to provide a clean way to handle the `Result<T>` type from `RA.Utilities.Core.Results`.
     *   Use the `Match` method on a `Result` to map success outcomes to `SuccessResult.Ok()` and failure outcomes to `ErrorResultResponse.Result()`.
 
 *   **Comprehensive Documentation**:

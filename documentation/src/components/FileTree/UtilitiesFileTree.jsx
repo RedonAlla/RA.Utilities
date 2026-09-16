@@ -32,7 +32,7 @@ const treeData = {
       name: 'Core',
       icon: 'folder',
       children: [
-        { name: 'RA.Utilities.Core', icon: 'csproj', children: [] },
+        { name: 'RA.Utilities.Core.Results', icon: 'csproj', children: [] },
         { name: 'RA.Utilities.Core.Constants', icon: 'csproj', children: [] },
         { name: 'RA.Utilities.Core.Exceptions', icon: 'csproj', children: [] },
       ],

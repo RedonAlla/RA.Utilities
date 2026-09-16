@@ -7,12 +7,12 @@ The `RA.Utilities.Api.Mapper` namespace contains a set of static helper classes 
 simplify the creation of API responses in ASP.NET Core Minimal APIs.
 
 Their main purpose is to bridge the gap between your application's internal logic (like the `Result<T>` pattern and custom exceptions)
-and the [`IResult`](../../../core/RA.Utilities.Core/Results.md) objects that ASP.NET Core uses to generate HTTP responses.
+and the [`IResult`](../../../core/RA.Utilities.Core.Results/Results.md) objects that ASP.NET Core uses to generate HTTP responses.
 
 #### Let's break down the purpose of each class in that namespace.
 
 #### 1. [`SuccessResult`](./SuccessResult)
-* **Purpose**: This class is a factory for creating consistent, successful [`IResult`](../../../core/RA.Utilities.Core/Results.md) objects.
+* **Purpose**: This class is a factory for creating consistent, successful [`IResult`](../../../core/RA.Utilities.Core.Results/Results.md) objects.
 * **How it works**: It provides simple static methods like `Ok()`, `Ok<T>()`, `Created()`, and `Accepted()`
 that wrap your data in a standardized [`SuccessResult`](./SuccessResult) object and return the correct HTTP status code (200, 201, 202, etc.).
 This keeps your endpoint logic clean and ensures all success responses from your API have a uniform structure.
@@ -40,7 +40,7 @@ public static class SuccessResult
 * **Purpose**: This class is responsible for transforming specific exception types into structured error **response bodies** (DTOs).
 * **How it works*: It has methods that take a specific exception (e.g., [`NotFoundException`](../../../core/RA.Utilities.Core.Exceptions/NotFoundException.md), [`ConflictException`](../../../core/RA.Utilities.Core.Exceptions/ConflictException.md))
 and map its properties to a corresponding response model (e.g., [`NotFoundResponse`](../Results/NotFoundResponse.md), [`ConflictResponse`](../Results/ConflictResponse.md)).
-It deals with the "*what*" of the error—creating the JSON payload—but does not create the final [`IResult`](../../../core/RA.Utilities.Core/Results.md) itself.
+It deals with the "*what*" of the error—creating the JSON payload—but does not create the final [`IResult`](../../../core/RA.Utilities.Core.Results/Results.md) itself.
 It's an internal helper used by [`ErrorResultResponse`](../../RA.Utilities.Api/mapper/ErrorResultResponse.md).
 
 ```csharp
@@ -69,7 +69,7 @@ public static class ErrorResultMapper
 #### 3. [`ErrorResultResponse`](./ErrorResultResponse)
 
 * **Purpose**: This is the key class for handling failures.
-It takes an `Exception` and creates the final, appropriate [`IResult`](../../../core/RA.Utilities.Core/Results.md) with the correct HTTP status code and a standardized error body.
+It takes an `Exception` and creates the final, appropriate [`IResult`](../../../core/RA.Utilities.Core.Results/Results.md) with the correct HTTP status code and a standardized error body.
 * **How it works**: Its `Result(Exception)` method uses a switch expression to determine the exception type.
 It then calls the appropriate method from ErrorResultMapper to get the error body and wraps that body in a `JsonResult` with the correct status code (e.g., 404 Not Found, 409 Conflict).
 
@@ -94,7 +94,7 @@ public static class ErrorResultResponse
 
 ## 🚀 Example
 The mapper classes in `RA.Utilities.Api.Mapper` are designed to work together seamlessly with the `Result<T>` type
-`from RA.Utilities.Core` to create clean and consistent API endpoints.
+`from RA.Utilities.Core.Results` to create clean and consistent API endpoints.
 
 The core pattern is to have your application/service layer return a `Result<T>` object,
 and then use the `.Match()` method in your Minimal API endpoint to map the success and
@@ -108,7 +108,7 @@ It should simply return a `Result` indicating the outcome of an operation.
 A success result will contain the value, and a failure result will contain a specific exception (like [`NotFoundException`](../../../core/RA.Utilities.Core.Exceptions/NotFoundException.md)).
 
 ```csharp showLineNumbers
-using RA.Utilities.Core;
+using RA.Utilities.Core.Results;
 using RA.Utilities.Core.Exceptions;
 
 // A simple Product record for the example

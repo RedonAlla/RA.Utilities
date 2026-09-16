@@ -7,7 +7,7 @@ sidebar_class_name: nav_session ra_utilities_mediator
 import LogoSvg from '../../../../Assets/Images/mediator.svg';
 
 <p align="center">
-<LogoSvg width={'15rem'} height={'15rem'} />
+<LogoSvg width={'15rem'} height={'15rem'} className="header_icon" />
 </p>
 
 [![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Feature.svg?logo=nuget&label=NuGet)](https://www.nuget.org/packages/RA.Utilities.Feature/)
@@ -55,7 +55,7 @@ The package provides several key components to achieve this clean architecture:
 
 8. **Exception-Based Errors ([`RA.Utilities.Core.Exceptions`](../../core/RA.Utilities.Core.Exceptions/index.mdx))**:
   * **Purpose**: Handlers communicate failures by throwing typed exceptions (`NotFoundException`, `ConflictException`, `BadRequestException`, ...).
-  * **Benefit**: A single `GlobalExceptionHandler` at the API layer maps them to consistent HTTP responses — no `Result` unwrapping at call sites. (The [`Result<T>` monad](../../core/RA.Utilities.Core/Results.md) still exists in `RA.Utilities.Core` for code that wants it.)
+  * **Benefit**: A single `GlobalExceptionHandler` at the API layer maps them to consistent HTTP responses — no `Result` unwrapping at call sites. (The [`Result<T>` monad](../../core/RA.Utilities.Core.Results/Results.md) still exists in `RA.Utilities.Core.Results` for code that wants it.)
 
 9. **Benchmarked against MediatR ([`Benchmarks`](./benchmarks))**:
   * **Purpose**: A BenchmarkDotNet harness comparing the generated mediator against MediatR 12.5 at equal scoped lifetimes, scenario for scenario.
@@ -104,7 +104,7 @@ Install-Package RA.Utilities.Feature
 ## 🔗 Dependencies
 
 -  [`RA.Utilities.Core.Exceptions`](../../core/RA.Utilities.Core.Exceptions/index.mdx)
--  [`RA.Utilities.Core`](../../core/RA.Utilities.Core/index.mdx)
+-  [`RA.Utilities.Core.Results`](../../core/RA.Utilities.Core.Results/index.mdx)
 -  [`RA.Utilities.Application.Validation`](../FeatureValidation/index.mdx)
 -  [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/)
 -  [`Microsoft.Extensions.DependencyInjection.Abstractions`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection)

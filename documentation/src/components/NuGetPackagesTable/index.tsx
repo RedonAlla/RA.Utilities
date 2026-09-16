@@ -9,7 +9,7 @@ const packagesList: Array<PackageListType> = [
   {
     category: 'Core',
     packages: [
-      'RA.Utilities.Core',
+      'RA.Utilities.Core.Results',
       'RA.Utilities.Core.Constants', 
       'RA.Utilities.Core.Exceptions',
     ]

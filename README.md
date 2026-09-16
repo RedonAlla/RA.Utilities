@@ -4,8 +4,8 @@
 [![Publish NuGet](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml/badge.svg)](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml)
 [![codecov](https://codecov.io/gh/RedonAlla/RA.Utilities/branch/main/graph/badge.svg)](https://codecov.io/gh/RedonAlla/RA.Utilities)
 <br />
-[![NuGet](https://img.shields.io/nuget/v/RA.Utilities.Core.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core/)
-[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Core.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core/)
+[![NuGet](https://img.shields.io/nuget/v/RA.Utilities.Core.Results.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Results/)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Core.Results.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Results/)
 
 ## High-Level Purpose
 The main goal is to provide a set of reusable, opinionated building blocks that solve common problems in web API development. By using these packages, you can:
@@ -38,7 +38,7 @@ RA.Utilities/
 │   └── 📁 RA.Utilities.Feature/
 │
 ├── 📁 Core/
-│   ├── 📁 RA.Utilities.Core/
+│   ├── 📁 RA.Utilities.Core.Results/
 │   ├── 📁 RA.Utilities.Core.Constants/
 │   └── 📁 RA.Utilities.Core.Exceptions/
 │
@@ -109,7 +109,7 @@ flowchart TD
     end
 
     subgraph corelayer["Core Layer"]
-        corepkg["RA.Utilities.Core"]
+        corepkg["RA.Utilities.Core.Results"]
         coreconst["RA.Utilities.Core.Constants"]
         coreexc["RA.Utilities.Core.Exceptions"]
     end
@@ -151,7 +151,7 @@ The solution is broken down into several NuGet packages, each addressing a speci
 | ------------- | ----------------------- | ------- |
 | **API & Web** | `RA.Utilities.Api`, `RA.Utilities.Api.Middlewares`, `RA.Utilities.Api.Results`, `RA.Utilities.OpenApi`, `RA.Utilities.Authentication.JwtBearer`, `RA.Utilities.Authorization` |	Provides helpers for standardized API responses (`SuccessResponse`), middleware for logging and header validation, automates OpenAPI/Swagger documentation, and simplifies access to authenticated user data. |
 | **Application Logic** | `RA.Utilities.Feature` |	This is the heart of the CQRS implementation. It provides base classes for your feature "handlers" and a validation pipeline to automatically validate incoming requests. |
-| **Core Building Blocks** |	`RA.Utilities.Core.Constants`, `RA.Utilities.Core.Exceptions` |	Offers shared constants (like HTTP status codes) and a set of standardized exceptions (`NotFoundException`, `ConflictException`) to create clear, semantic error handling. |
+| **Core Building Blocks** |	`RA.Utilities.Core.Results`, `RA.Utilities.Core.Constants`, `RA.Utilities.Core.Exceptions` |	Offers a functional `Result` type, shared constants (like HTTP status codes) and a set of standardized exceptions (`NotFoundException`, `ConflictException`) to create clear, semantic error handling. |
 | **Data Access** | `RA.Utilities.Data.Abstractions`, `RA.Utilities.Data.EntityFramework` | Provides abstractions and implementations for talking to the database. |
 | **Integrations** | `RA.Utilities.Integrations` | Simplifies and standardizes HTTP client calls to external APIs, with built-in support for configuration, logging, and resilience policies. |
 | **Logging** | `RA.Utilities.Logging.Core`, `RA.Utilities.Logging.Shared` | Provides a one-line setup for production-ready structured logging with Serilog. |

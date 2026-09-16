@@ -55,7 +55,7 @@ sidebar_class_name: nav_session <snake_case_package>
 import DocCardList from '@theme/DocCardList';
 import LogoSvg from '<relative-path-to-svg>';
 
-<p align="center"><LogoSvg width={'12rem'} height={'12rem'} /></p>
+<p align="center"><LogoSvg width={'12rem'} height={'12rem'} className="header_icon"/></p>
 
 # <PackageName>
 

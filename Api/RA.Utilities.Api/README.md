@@ -392,7 +392,7 @@ A request that returns a product would yield the following JSON body, wrapped in
 
 ### 7. Using the `Result` Type with Endpoints
 
-While the exception middleware is great for handling unexpected errors, the `Result` type from `RA.Utilities.Core` is perfect for handling expected business-level failures (e.g., validation errors, resource not found) without throwing exceptions.
+While the exception middleware is great for handling unexpected errors, the `Result` type from `RA.Utilities.Core.Results` is perfect for handling expected business-level failures (e.g., validation errors, resource not found) without throwing exceptions.
 
 You can combine the `IEndpoint` pattern with the `Result` type to create robust and highly readable API endpoints. The `Match` method from the `Result` type is used to transform the success or failure outcome into a standard ASP.NET Core `IResult`.
 
@@ -404,7 +404,7 @@ Your application or domain layer should return a `Result<T>` to indicate the out
 
 ```csharp
 // Services/ProductService.cs
-using RA.Utilities.Core;
+using RA.Utilities.Core.Results;
 using RA.Utilities.Core.Exceptions;
 
 public class ProductService

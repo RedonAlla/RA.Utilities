@@ -12,10 +12,10 @@ type Package = {
 
 const packages: Package[] = [
   {
-    name: 'RA.Utilities.Core',
+    name: 'RA.Utilities.Core.Results',
     shortName: 'Core',
     description: 'Result monad, implicit conversions, and functional patterns for predictable error handling without exceptions.',
-    link: '/nuget-packages/core/RA.Utilities.Core/',
+    link: '/nuget-packages/core/RA.Utilities.Core.Results/',
     layer: 'core',
   },
   {
