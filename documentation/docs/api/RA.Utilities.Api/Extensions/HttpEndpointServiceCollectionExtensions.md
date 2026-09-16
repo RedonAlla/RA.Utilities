@@ -8,7 +8,7 @@ This is a core pattern for implementing a clean Vertical Slice Architecture.
 
 Unlike the previous reflection-based registration, the discovery happens entirely at **compile time**:
 
-* The `RA.Utilities.Api.Generators` source generator (shipped inside this package as a build-time analyzer) scans your assembly for every [`IEndpointGroup`](../IEndpointGroup.md) and [`IEndpoint`](../IEndpoint.md) implementation and extends this partial class with the `MapEndpoints()` method.
+* The `RA.Utilities.Api.Generators` source generator (shipped inside this package as a build-time analyzer) scans your assembly for every [`IEndpointGroup`](../Abstractions/IEndpointGroup.md) and [`IEndpoint`](../Abstractions/IEndpoint.md) implementation and extends this partial class with the `MapEndpoints()` method.
 * `MapEndpoints()` creates every group exactly once (before any endpoint is mapped) and then maps every endpoint into the group matching its `GroupName`.
 * No reflection, no DI scanning, and no manual registration list.
 

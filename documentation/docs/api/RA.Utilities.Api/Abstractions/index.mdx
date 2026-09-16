@@ -1,0 +1,30 @@
+---
+title: Abstractions
+sidebar_position: 2
+---
+
+```powershell
+Namespace: RA.Utilities.Api.Abstractions
+```
+
+The interfaces within the `RA.Utilities.Api.Abstractions` namespace define the core contracts for the package's compile-time endpoint registration pattern.
+
+## ✨ Purpose and Function
+
+These interfaces keep each endpoint in its own feature-focused file while organizing endpoints into shared route groups — the foundation of a clean Vertical Slice Architecture for Minimal APIs. Both are static-abstract contracts discovered by the source generator at compile time, so no reflection or DI scanning is involved.
+
+The primary abstractions are:
+
+* **[`IEndpoint`](./IEndpoint.md)**: Implemented per endpoint. Declares the `GroupName` of the group it belongs to and the `MapEndpoint` method that maps its routes onto the group's `RouteGroupBuilder`.
+* **[`IEndpointGroup`](./IEndpointGroup.md)**: Implemented per feature. Declares a unique `GroupName` and the `MapGroup` method that receives the application's `IEndpointRouteBuilder` and returns the configured `RouteGroupBuilder` every endpoint in the group inherits.
+
+## 🧠 Summary
+
+In summary, the `RA.Utilities.Api.Abstractions` interfaces are the cornerstone of the endpoint mapping pattern. See [`HttpEndpointServiceCollectionExtensions`](../Extensions/HttpEndpointServiceCollectionExtensions.md) for how `app.MapEndpoints()` wires them together at compile time.
+
+<br />
+<br />
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />
