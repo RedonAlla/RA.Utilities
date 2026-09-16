@@ -11,9 +11,6 @@
   --ifm-color-primary-lighter: #856be1;
   --ifm-color-primary-lightest: #b9aaee;
 
-  --ifm-menu-color: #1c1e21;
-
-
   //--ifm-global-shadow-lw: none;
   --docusaurus-highlighted-code-line-bg: #dfe7ff;
   --doc-sidebar-width: 415px !important;
@@ -41,6 +38,10 @@
   --search-local-muted-color: var(--ifm-font-color-secondary);
   --search-local-hit-color: var(--ifm-font-color-base);
   // -------- Search ----------
+}
+
+[data-theme='light'] {
+  --ifm-menu-color: #1c1e21;
 }
 
 [data-theme='dark'] {
