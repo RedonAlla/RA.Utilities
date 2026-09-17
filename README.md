@@ -118,6 +118,7 @@ flowchart TD
 
     subgraph analyzers["Build-time analyzers"]
         apigen["RA.Utilities.Api.Generators"]
+        feagen["RA.Utilities.Feature.Generators"]
         intgen["RA.Utilities.Integrations.Generators"]
     end
 
@@ -128,6 +129,7 @@ flowchart TD
     apipkg --> apiresults
     apipkg -. analyzer .-> apigen
     openapi --> apipkg
+    openapi --> apiresults
     apiresults --> coreconst
 
     %% Integrations
@@ -136,7 +138,7 @@ flowchart TD
     integrations -. analyzer .-> intgen
 
     %% Application Logic
-    feature --> corepkg
+    feature -. analyzer .-> feagen
     feature --> validation
     validation --> coreexc
 

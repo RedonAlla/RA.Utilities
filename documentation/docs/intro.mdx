@@ -75,7 +75,8 @@ Whether you are starting a new project or refactoring an existing one, RA.Utilit
 
 ## 🗺️ Solution Structure
 
-The tree below shows how every `RA.Utilities` package depends on the others. Each node's children are the packages it depends on — every branch points inward, toward the `Core` layer, per the Dependency Rule. Solid edges are runtime package references; **dashed edges** are compile-time analyzers shipped inside the package (`RA.Utilities.Api.Generators` inside `RA.Utilities.Api`, `RA.Utilities.Integrations.Generators` inside `RA.Utilities.Integrations`). `RA.Utilities.Authentication.JwtBearer`, `RA.Utilities.Authorization`, and `RA.Utilities.Logging.Core` are standalone packages with no `RA.Utilities` dependencies.
+The tree below shows how every `RA.Utilities` package depends on the others.
+Each node's children are the packages it depends on — every branch points inward, toward the `Core` layer, per the Dependency Rule. Solid edges are runtime package references; **dashed edges** are compile-time analyzers shipped inside the package (`RA.Utilities.Api.Generators` inside `RA.Utilities.Api`, `RA.Utilities.Feature.Generators` inside `RA.Utilities.Feature`, `RA.Utilities.Integrations.Generators` inside `RA.Utilities.Integrations`). `RA.Utilities.Authentication.JwtBearer`, `RA.Utilities.Authorization`, `RA.Utilities.Logging.Core`, and `RA.Utilities.Core.Results` are standalone packages with no `RA.Utilities` dependencies.
 
 ```mermaid
 flowchart TD
@@ -115,6 +116,7 @@ flowchart TD
 
     subgraph analyzers["Build-time analyzers"]
         apigen["RA.Utilities.Api.Generators"]
+        feagen["RA.Utilities.Feature.Generators"]
         intgen["RA.Utilities.Integrations.Generators"]
     end
 
@@ -125,6 +127,7 @@ flowchart TD
     apipkg --> apiresults
     apipkg -. analyzer .-> apigen
     openapi --> apipkg
+    openapi --> apiresults
     apiresults --> coreconst
 
     %% Integrations
@@ -133,7 +136,7 @@ flowchart TD
     integrations -. analyzer .-> intgen
 
     %% Application Logic
-    feature --> corepkg
+    feature -. analyzer .-> feagen
     feature --> validation
     validation --> coreexc
 
