@@ -2,9 +2,9 @@
 
   <PropertyGroup>
 		<Version>10.0.2</Version>
-    <Title>RA Core Constants</Title>
-		<Description>Provides a centralized and consistent set of core constants for the RA Utilities ecosystem. This includes common response types, HTTP status codes, and default messages to streamline development and reduce magic strings.</Description>
-		<PackageTags>RA;Utilities;Core;Constants;HTTP;StatusCodes;Responses;Messages</PackageTags>
+    <Title>RA Utilities Core Constants</Title>
+		<Description>Provides a centralized and consistent set of core constants for the RA.Utilities ecosystem, including response types, HTTP status codes, default response messages, and standard HTTP header names. Shared by the other RA.Utilities packages to eliminate magic strings and promote consistency, with zero dependencies.</Description>
+		<PackageTags>RA;Utilities;Core;Constants;HTTP;StatusCodes;Responses;Messages;Headers</PackageTags>
 		<PackageIcon>constant.png</PackageIcon>
 		<PackageId>RA.Utilities.Core.Constants</PackageId>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
