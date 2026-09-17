@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
@@ -108,7 +109,9 @@ internal sealed class HeadersParameterTransformer : IOpenApiDocumentTransformer
         {
             Type = headerDef.Type,
             Format = headerDef.Format,
-            Example = headerDef.Value is not null ? JsonValue.Create(headerDef.Value) : null
+            Examples = headerDef.Value is not null
+                ? new List<JsonNode> { JsonSerializer.SerializeToNode(headerDef.Value)! }
+                : null
         };
     }
 }

@@ -289,7 +289,7 @@ public class GeneratedMediatorBehaviorTests
         MethodInfo closedSend = send.MakeGenericMethod(contextRequestType, typeof(string), contextDataType);
 
         object?[] arguments = [contextRequest, pipelineContext, CancellationToken.None];
-        Task<string> task = (Task<string>)closedSend.Invoke(mediator, arguments)!;
+        var task = (Task<string>)closedSend.Invoke(mediator, arguments)!;
 
         (await task).Should().Be("written-by-behavior");
     }
@@ -475,7 +475,7 @@ public class GeneratedMediatorBehaviorTests
         MethodInfo closedSend = GetGenericSendMethod(2).MakeGenericMethod(request.GetType(), responseType);
 
         object?[] arguments = [request, CancellationToken.None];
-        Task task = (Task)closedSend.Invoke(mediator, arguments)!;
+        var task = (Task)closedSend.Invoke(mediator, arguments)!;
         await task;
         return task.GetType().GetProperty("Result")!.GetValue(task);
     }
@@ -499,7 +499,7 @@ public class GeneratedMediatorBehaviorTests
         object?[] arguments = new object?[] { request, CancellationToken.None };
         // The generated reference-type-response path reinterprets the Task<TResponse> without
         // changing its runtime type, so unwrap through the non-generic Task.
-        Task task = (Task)method.Invoke(mediator, arguments)!;
+        var task = (Task)method.Invoke(mediator, arguments)!;
         await task;
         return task.GetType().GetProperty("Result")!.GetValue(task);
     }

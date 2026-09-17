@@ -37,21 +37,22 @@ public static class ValidationUtilities
             return [];
         }
 
-        var context = new ValidationContext<TRequest>(request);
-
         // Fast path: a single validator skips the Task.WhenAll machinery entirely.
         if (validatorArray.Length == 1)
         {
             ValidationResult result =
-                await validatorArray[0].ValidateAsync(context, cancellationToken).ConfigureAwait(false);
+                await validatorArray[0].ValidateAsync(new ValidationContext<TRequest>(request), cancellationToken).ConfigureAwait(false);
 
             return result.IsValid ? [] : [.. result.Errors];
         }
 
+        // Each validator gets its own context: FluentValidation's ValidationResult wraps the
+        // context's failure list, so sharing one context would leak every validator's failures
+        // into every result.
         var validationTasks = new Task<ValidationResult>[validatorArray.Length];
         for (int i = 0; i < validatorArray.Length; i++)
         {
-            validationTasks[i] = validatorArray[i].ValidateAsync(context, cancellationToken);
+            validationTasks[i] = validatorArray[i].ValidateAsync(new ValidationContext<TRequest>(request), cancellationToken);
         }
 
         ValidationResult[] validationResults =

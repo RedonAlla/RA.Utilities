@@ -56,13 +56,19 @@ public class FirstContextLoggingBehavior : IPipelineBehavior<ContextGreetingRequ
     {
         var data = (GreetingContext)(object)context.Data;
         data.CorrelationId = Guid.NewGuid().ToString("N");
-        _logger.LogInformation("Before handler — CorrelationId: {CorrelationId}, HandlerResult: {HandlerResult}",
-            data.CorrelationId, data.HandlerResult ?? "(not written yet)");
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            _logger.LogInformation("Before handler — CorrelationId: {CorrelationId}, HandlerResult: {HandlerResult}",
+                data.CorrelationId, data.HandlerResult ?? "(not written yet)");
+        }
 
         string result = await next(context);
 
-        _logger.LogInformation("After handler — CorrelationId: {CorrelationId}, HandlerResult: {HandlerResult}",
-            data.CorrelationId, data.HandlerResult);
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            _logger.LogInformation("After handler — CorrelationId: {CorrelationId}, HandlerResult: {HandlerResult}",
+                data.CorrelationId, data.HandlerResult);
+        }
         return result;
     }
 }
@@ -91,13 +97,19 @@ public class SecondContextLoggingBehavior : IPipelineBehavior<ContextGreetingReq
         where TContext : class, new()
     {
         var data = (GreetingContext)(object)context.Data;
-        _logger.LogInformation("Before handler — CorrelationId: {CorrelationId}, HandlerResult: {HandlerResult}",
-            data.CorrelationId, data.HandlerResult ?? "(not written yet)");
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            _logger.LogInformation("Before handler — CorrelationId: {CorrelationId}, HandlerResult: {HandlerResult}",
+                data.CorrelationId, data.HandlerResult ?? "(not written yet)");
+        }
 
         string result = await next(context);
 
-        _logger.LogInformation("After handler — CorrelationId: {CorrelationId}, HandlerResult: {HandlerResult}",
-            data.CorrelationId, data.HandlerResult);
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            _logger.LogInformation("After handler — CorrelationId: {CorrelationId}, HandlerResult: {HandlerResult}",
+                data.CorrelationId, data.HandlerResult);
+        }
         return result;
     }
 }

@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using FluentValidation;
@@ -85,7 +86,7 @@ public class ValidationUtilitiesTests
         var request = new TestRequest();
 
         // Act
-        ValidationFailure[] failures = await ValidationUtilities.ValidateAsync(request, []);
+        ValidationFailure[] failures = await ValidationUtilities.ValidateAsync(request, [], CancellationToken.None);
 
         // Assert
         failures.Should().BeEmpty();
@@ -103,7 +104,7 @@ public class ValidationUtilitiesTests
 
         // Act
         ValidationFailure[] failures = await ValidationUtilities.ValidateAsync(
-            request, new IValidator<TestRequest>[] { new NameRequiredValidator(), new AgePositiveValidator() });
+            request, new IValidator<TestRequest>[] { new NameRequiredValidator(), new AgePositiveValidator() }, CancellationToken.None);
 
         // Assert
         failures.Should().BeEmpty();
@@ -120,7 +121,7 @@ public class ValidationUtilitiesTests
         var request = new TestRequest { Name = string.Empty, Age = 25 };
 
         // Act
-        ValidationFailure[] failures = await ValidationUtilities.ValidateAsync(request, [new NameRequiredValidator()]);
+        ValidationFailure[] failures = await ValidationUtilities.ValidateAsync(request, [new NameRequiredValidator()], CancellationToken.None);
 
         // Assert
         failures.Should().ContainSingle()
@@ -139,7 +140,7 @@ public class ValidationUtilitiesTests
 
         // Act
         ValidationFailure[] failures = await ValidationUtilities.ValidateAsync(
-            request, new IValidator<TestRequest>[] { new NameRequiredValidator(), new AgePositiveValidator() });
+            request, new IValidator<TestRequest>[] { new NameRequiredValidator(), new AgePositiveValidator() }, CancellationToken.None);
 
         // Assert
         failures.Should().HaveCount(2);
@@ -159,7 +160,7 @@ public class ValidationUtilitiesTests
 
         // Act
         ValidationFailure[] failures = await ValidationUtilities.ValidateAsync(
-            request, new IValidator<TestRequest>[] { new NameRequiredValidator(), new AgePositiveValidator() });
+            request, new IValidator<TestRequest>[] { new NameRequiredValidator(), new AgePositiveValidator() }, CancellationToken.None);
 
         // Assert
         failures.Should().ContainSingle()
@@ -177,7 +178,7 @@ public class ValidationUtilitiesTests
         var request = new TestRequest { Name = string.Empty, Age = 0 };
 
         // Act
-        ValidationFailure[] failures = await ValidationUtilities.ValidateAsync(request, [new TwoRuleValidator()]);
+        ValidationFailure[] failures = await ValidationUtilities.ValidateAsync(request, [new TwoRuleValidator()], CancellationToken.None);
 
         // Assert
         failures.Should().HaveCount(2);
@@ -195,7 +196,7 @@ public class ValidationUtilitiesTests
         var request = new TestRequest();
 
         // Act
-        ValidationFailure[] failures = await ValidationUtilities.ValidateAsync(request, [validator]);
+        ValidationFailure[] failures = await ValidationUtilities.ValidateAsync(request, [validator], CancellationToken.None);
 
         // Assert
         failures.Should().HaveCount(2);
