@@ -1,90 +1,90 @@
 ---
-sidebar_position: 4
+sidebar_position: 6
 ---
 
 ```bash
 Namespace: RA.Utilities.Data.Entities
 ```
 
-The primary purpose of the `AuditableBaseEntity` class is to extend the functionality of [`BaseEntity`](./BaseEntity.md) by adding **auditing capabilities**.
-While [`BaseEntity`](./BaseEntity.md) tracks when a record was created or modified, `AuditableBaseEntity` also tracks who performed those actions.
+# AuditableBaseEntity&lt;TKey&gt;
 
-This is essential for applications that require accountability, security, and a clear audit trail for data changes.
+`AuditableBaseEntity<TKey>` inherits from [`WriteEntity<TKey>`](./WriteEntity.md) and adds user auditing capabilities to your data models.
 
+While [`WriteEntity<TKey>`](./WriteEntity.md) tracks **when** a record was created or modified (`CreatedAt`, `LastModifiedAt`), `AuditableBaseEntity<TKey>` also tracks **who** performed those actions (`CreatedBy`, `LastModifiedBy`). This provides full accountability for security, compliance, and enterprise audit requirements.
 
-## 🧠 Here's a breakdown of its purpose:
+## Type Parameters
 
-#### 1. Unique Identification:
-It provides a standard `Id` property, usually a `Guid`, which serves as the primary key for uniquely identifying each entity instance.
-
-#### 2. Timestamping:
-It includes `CreatedAt` and `LastModifiedAt` properties.
-These properties automatically record when an entity was initially created and when it was last updated, providing valuable historical context for data changes.
-By using `AuditableBaseEntity`, you can easily answer questions like "Who created this customer record?" or "Who was the last person to update this order?".
+| Parameter | Description |
+|---|---|
+| **`TKey`** | The data type of the entity's primary key identifier. |
 
 ## Properties
-The `AuditableBaseEntity class includes its own `CreatedAt` and `LastModifiedAt` properties,
-and also inherits several key properties from its parent, [`BaseEntity`](./BaseEntity.md).
 
-| Property | Type |	Description	| Source |
-| -------- | ---- |	----------	| ------ |
-| **Id** | `Guid` |	The unique identifier for the entity. | [`BaseEntity`](./BaseEntity.md) |
-| **CreatedAt** | `DateTime` |	The timestamp of when the entity was created. | [`BaseEntity`](./BaseEntity.md) |
-| **LastModifiedAt** | `DateTime?` |	The timestamp of when the entity was last modified.	| [`BaseEntity`](./BaseEntity.md) |
-| **CreatedBy** | `string` |	The identifier of the user who created the entity. | - |
-| **LastModifiedBy** | `string?` |	The identifier of the user who last modified the entity. | - |
+| Property | Type | Description | Source |
+|---|---|---|---|
+| **`Id`** | `TKey` | The unique identifier for the entity. | Inherited from [`CoreEntity<TKey>`](./CoreEntity.md) |
+| **`CreatedAt`** | `DateTime` | Gets or sets the creation timestamp of the entity. | Inherited from [`WriteEntity<TKey>`](./WriteEntity.md) |
+| **`LastModifiedAt`** | `DateTime?` | Gets or sets the last modification timestamp of the entity. | Inherited from [`WriteEntity<TKey>`](./WriteEntity.md) |
+| **`CreatedBy`** | `string?` | Gets or sets the identifier of the user who created the entity. | Defined in `AuditableBaseEntity<TKey>` |
+| **`LastModifiedBy`** | `string?` | Gets or sets the identifier of the user who last modified the entity. | Defined in `AuditableBaseEntity<TKey>` |
 
-This structure ensures that any entity requiring auditing capabilities also has the fundamental properties for unique identification and timestamping, providing a robust and consistent data model.
+:::info User Identifiers
+The `CreatedBy` and `LastModifiedBy` fields are strings, allowing you to store usernames, user emails, subject claims (`sub`), or GUID user identifiers as appropriate for your authentication system.
+:::
 
-## Example: `Order` Entity
+## Class Definition
 
-When you need to track which user created or last modified a record, inheriting from `AuditableBaseEntity` is the perfect solution.
-It provides all the standard properties from [`BaseEntity`](./BaseEntity.md) and adds the necessary auditing fields.
+```csharp showLineNumbers
+using System;
 
-Let's create an `Order` entity for an e-commerce system as an example.
+namespace RA.Utilities.Data.Entities;
 
+/// <summary>
+/// Base class for entities that track creation and modification user identifiers,
+/// inheriting common properties from <see cref="WriteEntity{TKey}"/>.
+/// </summary>
+/// <typeparam name="TKey">The type of the unique identifier.</typeparam>
+public abstract class AuditableBaseEntity<TKey> : WriteEntity<TKey>
+{
+    /// <summary>
+    /// Gets or sets the identifier of the user who created the entity.
+    /// </summary>
+    public string? CreatedBy { get; set; }
 
+    /// <summary>
+    /// Gets or sets the identifier of the user who last modified the entity.
+    /// </summary>
+    public string? LastModifiedBy { get; set; }
+}
+```
+
+## Usage Example
 
 ```csharp showLineNumbers
 using System;
 using RA.Utilities.Data.Entities;
 
-namespace YourApp.Domain.Entities;
+namespace MyApp.Domain.Entities;
 
-/// <summary>
-/// Represents a customer order in the system.
-/// It inherits from AuditableBaseEntity to track creation and modification by users.
-/// </summary>
-public class Order : AuditableBaseEntity
+public class Order : AuditableBaseEntity<Guid>
 {
-    /// <summary>
-    /// Gets or sets the ID of the customer who placed the order.
-    /// </summary>
     public Guid CustomerId { get; set; }
-
-    /// <summary>
-    /// Gets or sets the date the order was placed.
-    /// </summary>
-    public DateTime OrderDate { get; set; }
-
-    /// <summary>
-    /// Gets or sets the total amount for the order.
-    /// </summary>
     public decimal TotalAmount { get; set; }
+    public string Status { get; set; } = "Pending";
 }
 ```
 
-### Resulting Properties
-By inheriting from `AuditableBaseEntity`, the `Order` class is automatically equipped with properties for identification, timestamping, and auditing.
-Here is a complete list of its properties:
+### Resulting Structure
 
-| Property | Type |	Description	| Source |
-| -------- | ---- |	-----------	| ------ |
-| **Id** | `Guid` |	The unique identifier for the product. | Inherited from [`BaseEntity`](./BaseEntity.md) |
-| **CreatedAt** | `DateTime` |	The timestamp of when the product was created. | Inherited from [`BaseEntity`](./BaseEntity.md) |
-| **LastModifiedAt** | `DateTime?` | The timestamp of when the product was last modified. | Inherited from [`BaseEntity`](./BaseEntity.md) |
-| **CreatedBy** | `string` |	The identifier of the user who created the order. |	Inherited from `AuditableBaseEntity` |
-| **LastModifiedBy** | `string?` |	The identifier of the user who last modified the order. | Inherited from `AuditableBaseEntity` |
-| **CustomerId** | `Guid` | The ID of the customer who placed the order. |	Defined in `Order` |
-| **OrderDate** | `DateTime	` | The date the order was placed. | Defined in `Order` |
-| **TotalAmount** | `decimal` |	The total amount for the order. | Defined in `Order` |
+An instance of `Order` exposes the complete audit and identification trail:
+
+| Property | Type | Role | Origin |
+|---|---|---|---|
+| **`Id`** | `Guid` | Primary key | Inherited from `CoreEntity<Guid>` |
+| **`CreatedAt`** | `DateTime` | Creation time | Inherited from `WriteEntity<Guid>` |
+| **`LastModifiedAt`** | `DateTime?` | Update time | Inherited from `WriteEntity<Guid>` |
+| **`CreatedBy`** | `string?` | Creator identifier | Inherited from `AuditableBaseEntity<Guid>` |
+| **`LastModifiedBy`** | `string?` | Modifier identifier | Inherited from `AuditableBaseEntity<Guid>` |
+| **`CustomerId`** | `Guid` | Foreign key | Defined in `Order` |
+| **`TotalAmount`** | `decimal` | Order amount | Defined in `Order` |
+| **`Status`** | `string` | Order status | Defined in `Order` |

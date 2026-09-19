@@ -1,10 +1,13 @@
+using System;
+
 namespace RA.Utilities.Data.Entities;
 
 /// <summary>
-/// Base class for entities that need to track creation and modification users,
-/// inheriting common properties from <see cref="BaseEntity"/>.
+/// Base class for entities that track creation and modification user identifiers,
+/// inheriting common properties from <see cref="WriteEntity{TKey}"/>.
 /// </summary>
-public abstract class AuditableBaseEntity : BaseEntity
+/// <typeparam name="TKey">The type of the unique identifier.</typeparam>
+public abstract class AuditableBaseEntity<TKey> : WriteEntity<TKey>
 {
     /// <summary>
     /// Gets or sets the identifier of the user who created the entity.

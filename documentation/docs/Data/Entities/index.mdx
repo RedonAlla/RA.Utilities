@@ -8,7 +8,7 @@ import DocCardList from '@theme/DocCardList';
 import LogoSvg from '../../../../Assets/Images/entity.svg';
 
 <p align="center">
-<LogoSvg width={'15rem'} height={'15rem'} className="header_icon" />
+  <LogoSvg width={'12rem'} height={'12rem'} className="header_icon" />
 </p>
 
 # RA.Utilities.Data.Entities
@@ -16,48 +16,272 @@ import LogoSvg from '../../../../Assets/Images/entity.svg';
 [![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Data.Entities.svg?logo=nuget&label=NuGet)](https://www.nuget.org/packages/RA.Utilities.Data.Entities/)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Data.Entities.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.Entities/)
 [![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
-[![Publish NuGet](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml/badge.svg)](https://github.com/RedonAlla/RA.Utilities/actions/runs/58029320252)
+[![Publish NuGet](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml/badge.svg)](https://github.com/RedonAlla/RA.Utilities/actions)
 [![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
 
-The primary purpose of the `RA.Utilities.Data.Entities` package is to provide a standardized and reusable foundation for data entities within your applications.
-It establishes a common structure for all your data models, which helps to reduce repetitive (boilerplate) code and enforce consistency across your project.
+`RA.Utilities.Data.Entities` provides a standardized, strongly typed foundation of generic base classes for domain and data models in
+.NET and Entity Framework Core applications.
 
-## Base Classes for Common Properties:
-The package provides several base classes that you can inherit from, so you don't have to redefine common properties in every single entity class you create.
+It eliminates repetitive boilerplate code and guarantees consistency across your data layer by offering standardized primary keys,
+distinct creation and modification timestamping, user auditing, and soft-delete capabilities.
 
-* **BaseEntity**:
-This is the most fundamental base class.
-When your entity inherits from it, it automatically gets properties for its unique identifier and timestamps (`Id`, `CreatedDate`, `UpdatedDate`).
-* **AuditableBaseEntity**:
-This class inherits from `BaseEntity` and adds properties to track who created or modified the entity (`CreatedBy`, `LastModifiedBy`).
-This is very useful for auditing purposes.
-* **SoftDeleteEntity**:
-This class also inherits from `BaseEntity` and adds an `IsDeleted` flag.
-This enables "soft-delete" functionality, where records are marked as deleted but not physically removed from the database, preserving data history.
+---
 
-## 🧩 How It Fits into the Ecosystem
-The `RA.Utilities.Data.Entities` package is a foundational piece of the `RA.Utilities` ecosystem.
-The abstractions it provides are consumed by other packages, such as [`RA.Utilities.Data.Abstractions`](../Abstractions/index.mdx) and [`RA.Utilities.Data.EntityFramework`](../EntityFramework/index.mdx).
+## 🎯 Purpose
 
-In short, `RA.Utilities.Data.Entities` solves the common problem of defining the basic structure of data models,
-allowing you to focus on the unique properties of your entities while ensuring a consistent and maintainable data layer.
+In enterprise applications, data models often share common infrastructural requirements: unique identification, audit trails, and deletion tracking.
+Manually implementing these properties on every entity introduces typos, inconsistent naming conventions, and maintenance overhead.
 
-## 🛠️ Installation
+This package solves these problems by providing:
+* **Uniformity**: Standardized property names (`Id`, `CreatedAt`, `LastModifiedAt`, `CreatedBy`, `LastModifiedBy`, `IsDeleted`) across the entire codebase.
+* **Flexible Key Typing**: Complete freedom to use `Guid`, `int`, `long`, `string`, or custom strongly typed IDs via the generic type parameter `TKey`.
+* **Segregated Concerns**: Clean separation between append-only/immutable entities (`BaseEntity<TKey>`) and mutable entities (`WriteEntity<TKey>`).
+* **Zero Dependencies**: Pure .NET base classes with no external package requirements.
 
-You can install the package via the .NET CLI:
+### ✨ Key Features
 
+- **Generic Identifiers (`TKey`)** — Type-safe primary key support on every base class.
+- **Append-Only Tracking** — Lightweight `CreatedAt` tracking via `BaseEntity<TKey>`.
+- **Full Lifecycle Timestamps** — Dual `CreatedAt` and `LastModifiedAt` tracking via `WriteEntity<TKey>`.
+- **Soft Deletion** — Built-in `IsDeleted` lifecycle flag via `SoftDeleteEntity<TKey>`.
+- **User Auditing** — Track who created and modified records via `AuditableBaseEntity<TKey>`.
+- **Zero Configuration** — Ready to use instantly without dependency injection or external configuration.
+
+---
+
+## 🛠️ Getting Started
+
+### Prerequisites
+
+- **.NET 10.0** or later
+
+### Installation
+
+**.NET CLI**
 ```bash
 dotnet add package RA.Utilities.Data.Entities
 ```
 
-Or through the NuGet Package Manager console:
-
+**Package Manager Console**
 ```powershell
 Install-Package RA.Utilities.Data.Entities
 ```
 
+**PackageReference (csproj)**
+```xml
+<PackageReference Include="RA.Utilities.Data.Entities" Version="10.1.0" />
+```
 
-<br />
-<br />
+### Hello World
+
+The simplest way to use the package is to inherit from `WriteEntity<TKey>` for your domain entities:
+
+```csharp showLineNumbers
+using System;
+using RA.Utilities.Data.Entities;
+
+public class Product : WriteEntity<Guid>
+{
+    public string Name { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+}
+```
+
+No service registration or dependency injection setup is required.
+The `Product` entity immediately inherits `Id` (Guid), `CreatedAt` (DateTime), and `LastModifiedAt` (DateTime?).
+
+---
+
+## 🧠 Core Concepts
+
+The package organizes data model concerns into a clear, single-inheritance hierarchy rooted at `CoreEntity<TKey>`.
+
+| Class | Base Class | Primary Role | Key Properties |
+|---|---|---|---|
+| [`CoreEntity<TKey>`](./CoreEntity.md) | *None* (Root) | Unique identity contract | `Id` |
+| [`BaseEntity<TKey>`](./BaseEntity.md) | `CoreEntity<TKey>` | Immutable / append-only entities | `Id`, `CreatedAt` |
+| [`WriteEntity<TKey>`](./WriteEntity.md) | `CoreEntity<TKey>` | Standard mutable entities | `Id`, `CreatedAt`, `LastModifiedAt` |
+| [`SoftDeleteEntity<TKey>`](./SoftDeleteEntity.md) | `WriteEntity<TKey>` | Soft-deletable records | `Id`, `CreatedAt`, `LastModifiedAt`, `IsDeleted` |
+| [`AuditableBaseEntity<TKey>`](./AuditableBaseEntity.md) | `WriteEntity<TKey>` | User-audited records | `Id`, `CreatedAt`, `LastModifiedAt`, `CreatedBy`, `LastModifiedBy` |
+
+### Inheritance Architecture
+
+```
+CoreEntity<TKey> (Id)
+├── BaseEntity<TKey> (CreatedAt)
+└── WriteEntity<TKey> (CreatedAt, LastModifiedAt)
+    ├── SoftDeleteEntity<TKey> (IsDeleted)
+    └── AuditableBaseEntity<TKey> (CreatedBy, LastModifiedBy)
+```
+
+### Terminology
+
+- **`TKey`**: The data type of the entity's primary key (e.g., `Guid`, `long`, `int`, `string`).
+- **Creation Timestamp (`CreatedAt`)**: Set once when the entity is first persisted; represents when the record was born.
+- **Modification Timestamp (`LastModifiedAt`)**: Updated whenever the entity's state changes; `null` if the entity has never been updated since creation.
+- **Soft Deletion (`IsDeleted`)**: Flag indicating that an entity is logically deleted without removing its row from storage, preserving relational integrity.
+- **Auditing (`CreatedBy` / `LastModifiedBy`)**: Captures user identifiers (usernames, user IDs, or system agents) responsible for lifecycle operations.
+
+---
+
+## 📖 How-To Guides
+
+### 1. Create an Append-Only or Event Log Entity
+
+Use [`BaseEntity<TKey>`](./BaseEntity.md) for immutable records such as event store entries, access logs, or transaction histories where records are inserted once and never modified.
+
+```csharp showLineNumbers
+using RA.Utilities.Data.Entities;
+
+public class SecurityAuditLog : BaseEntity<long>
+{
+    public string EventType { get; set; } = string.Empty;
+    public string IpAddress { get; set; } = string.Empty;
+    public string Details { get; set; } = string.Empty;
+}
+```
+
+### 2. Create a Mutable Entity with Timestamps
+
+Use [`WriteEntity<TKey>`](./WriteEntity.md) for domain models that can be updated over time.
+
+```csharp showLineNumbers
+using System;
+using RA.Utilities.Data.Entities;
+
+public class Customer : WriteEntity<Guid>
+{
+    public string FullName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
+}
+```
+
+### 3. Implement Soft Deletion
+
+Inherit from [`SoftDeleteEntity<TKey>`](./SoftDeleteEntity.md) to enable logical deletion.
+
+```csharp showLineNumbers
+using System;
+using RA.Utilities.Data.Entities;
+
+public class Article : SoftDeleteEntity<Guid>
+{
+    public string Title { get; set; } = string.Empty;
+    public string Content { get; set; } = string.Empty;
+}
+```
+
+### 4. Track User Identity on Data Changes
+
+Inherit from [`AuditableBaseEntity<TKey>`](./AuditableBaseEntity.md) to record the user responsible for creating and modifying entities.
+
+```csharp showLineNumbers
+using System;
+using RA.Utilities.Data.Entities;
+
+public class Invoice : AuditableBaseEntity<Guid>
+{
+    public string InvoiceNumber { get; set; } = string.Empty;
+    public decimal Subtotal { get; set; }
+    public decimal Tax { get; set; }
+}
+```
+
+### 5. Combine Soft Deletion with User Auditing
+
+When you require both soft deletion and user auditing, create a composite base class in your domain layer:
+
+```csharp showLineNumbers
+using System;
+using RA.Utilities.Data.Entities;
+
+/// <summary>
+/// Combines user auditing and soft deletion support for domain entities.
+/// </summary>
+/// <typeparam name="TKey">The type of the primary key.</typeparam>
+public abstract class AuditableSoftDeleteEntity<TKey> : AuditableBaseEntity<TKey>
+{
+    /// <summary>
+    /// Gets or sets a value indicating whether the entity is marked as deleted.
+    /// </summary>
+    public bool IsDeleted { get; set; }
+}
+
+public class Order : AuditableSoftDeleteEntity<Guid>
+{
+    public DateTime OrderDate { get; set; }
+    public decimal TotalAmount { get; set; }
+    public Guid CustomerId { get; set; }
+}
+```
+
+### 6. Configure with Entity Framework Core
+
+These base entities work naturally with EF Core.
+You can configure table mappings, keys, and global query filters in your `DbContext`:
+
+```csharp showLineNumbers
+using System;
+using Microsoft.EntityFrameworkCore;
+using RA.Utilities.Data.Entities;
+
+public class ApplicationDbContext : DbContext
+{
+    public DbSet<Product> Products => Set<Product>();
+    public DbSet<Article> Articles => Set<Article>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<Product>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Price).HasPrecision(18, 2);
+        });
+
+        // Global query filter to automatically filter out soft-deleted records
+        modelBuilder.Entity<Article>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            // highlight-next-line
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+    }
+}
+```
+
+---
+
+## ⚙️ Configuration
+
+This package has no configuration options and requires no dependency injection setup. All types are abstract base classes ready for direct inheritance.
+
+---
+
+## 🙌 Contributing & Support
+
+### Found a bug or have a suggestion?
+- **GitHub Issues**: [Open an issue](https://github.com/RedonAlla/RA.Utilities/issues)
+- **Discussions**: [Join the discussion](https://github.com/RedonAlla/RA.Utilities/discussions)
+
+### Contributing
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/my-new-feature`)
+3. Commit your changes (`git commit -am 'Add some feature'`)
+4. Push to the branch (`git push origin feature/my-new-feature`)
+5. Submit a Pull Request
+
+### Links
+| Resource | URL |
+|---|---|
+| **NuGet** | [RA.Utilities.Data.Entities on NuGet](https://www.nuget.org/packages/RA.Utilities.Data.Entities/) |
+| **Source** | [GitHub — RedonAlla/RA.Utilities](https://github.com/RedonAlla/RA.Utilities) |
+| **License** | [MIT License](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE) |
+| **Documentation** | [Official Documentation](https://redonalla.github.io/RA.Utilities/nuget-packages/Data/Entities/) |
+
+---
 
 <DocCardList />

@@ -1,0 +1,105 @@
+---
+title: Troubleshooting & FAQ
+sidebar_position: 8
+sidebar_class_name: nav_session ra_utilities_data_entity
+---
+
+# Troubleshooting & FAQ
+
+## Common Issues
+
+### Compiler error CS0305: "Using the generic type requires 1 type arguments"
+
+**Cause**: You upgraded to `v10.1.0` where `CoreEntity`, `BaseEntity`, `WriteEntity`, `AuditableBaseEntity`, and `SoftDeleteEntity` were made generic.
+
+**Fix**: Supply the primary key type argument, for example `<Guid>`, `<int>`, or `<long>`:
+
+```csharp showLineNumbers
+// Change from:
+public class Product : BaseEntity { }
+
+// To:
+public class Product : WriteEntity<Guid> { }
+```
+
+### Compiler error CS1061: BaseEntity does not contain 'LastModifiedAt'
+
+**Cause**: In `v10.1.0`, `LastModifiedAt` was moved from `BaseEntity<TKey>` to `WriteEntity<TKey>` to optimize `BaseEntity` for append-only records.
+
+**Fix**: Change your entity's base class from `BaseEntity<TKey>` to `WriteEntity<TKey>`:
+
+```csharp showLineNumbers
+// highlight-next-line
+public class Product : WriteEntity<Guid>
+{
+    // Id, CreatedAt, and LastModifiedAt are available here
+}
+```
+
+### Cannot set 'Id' property: protected setter
+
+**Cause**: `CoreEntity<TKey>.Id` defines `public virtual TKey Id { get; protected set; }`. This prevents unintended ID changes from external callers.
+
+**Fix**: If you need to set the ID in application code, set it via a constructor or a dedicated method in your entity:
+
+```csharp showLineNumbers
+public class CustomOrder : WriteEntity<Guid>
+{
+    public CustomOrder(Guid id)
+    {
+        Id = id; // Allowed in derived class constructor
+    }
+}
+```
+
+:::tip EF Core Compatibility
+Entity Framework Core automatically reads and writes properties with protected or private setters using backing fields. You do not need a public setter for EF Core key generation or materialization.
+:::
+
+### How can I combine Soft Deletion and User Auditing?
+
+**Answer**: Create a composite base class in your domain layer that inherits from `AuditableBaseEntity<TKey>` and implements `IsDeleted`:
+
+```csharp showLineNumbers
+using RA.Utilities.Data.Entities;
+
+public abstract class FullAuditedEntity<TKey> : AuditableBaseEntity<TKey>
+{
+    public bool IsDeleted { get; set; }
+}
+```
+
+Then inherit from `FullAuditedEntity<TKey>`:
+
+```csharp showLineNumbers
+public class Employee : FullAuditedEntity<Guid>
+{
+    public string Name { get; set; } = string.Empty;
+}
+```
+
+### How are CreatedAt and LastModifiedAt populated automatically?
+
+**Answer**: Use the EF Core save changes interceptor provided in [`RA.Utilities.Data.EntityFramework`](../EntityFramework/index.mdx):
+
+```csharp showLineNumbers
+services.AddDbContext<AppDbContext>((sp, options) =>
+{
+    options.UseSqlServer(connectionString)
+           .AddInterceptors(new BaseEntitySaveChangesInterceptor());
+});
+```
+
+---
+
+## Known Limitations
+
+- **Single-column primary keys only**: The base classes assume a single typed key (`Id`). For composite primary keys, do not inherit from `CoreEntity<TKey>`; configure composite keys directly in EF Core using `HasKey(e => new { e.Key1, e.Key2 })`.
+- **System DateTime**: Timestamps use `System.DateTime` rather than `DateTimeOffset`. Ensure your application or database interceptor consistently writes UTC timestamps (`DateTime.UtcNow`).
+
+---
+
+## Performance Tips
+
+- **Use appropriate key types**: Prefer 64-bit integer identifiers (`long` / `BIGINT`) or sequential GUIDs for high-volume write workloads to reduce index fragmentation in relational databases.
+- **Index `IsDeleted` on high-volume tables**: When using `SoftDeleteEntity<TKey>` with EF Core global query filters, add an index on `IsDeleted` (or composite index with commonly queried foreign keys) to maintain fast scan performance.

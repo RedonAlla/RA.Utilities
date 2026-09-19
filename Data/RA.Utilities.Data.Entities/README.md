@@ -6,9 +6,10 @@
 [![Documentation](https://img.shields.io/badge/Documentation-read-brightgreen.svg?logo=readthedocs&logoColor=fff)](https://redonalla.github.io/RA.Utilities/nuget-packages/Data/Entities/)
 [![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
 
-This package provides a set of abstract base classes for data entities within the RA.Utilities ecosystem. It helps solve the problem of boilerplate and inconsistency in data models by providing a clear inheritance structure with standard properties like `Id`, `CreatedAt`, and `LastModifiedAt`.
+This package provides a set of abstract base classes for data entities within the RA.Utilities ecosystem.
+It helps solve the problem of boilerplate and inconsistency in data models by providing a clear generic inheritance structure with standard properties like `Id`, `CreatedAt`, `LastModifiedAt`, and audit metadata.
 
-The primary goal is to promote consistency and reduce repetitive code when creating data entities for use with an ORM like Entity Framework Core.
+The primary goal is to promote consistency, type safety, and code reuse when creating data entities for use with an ORM like Entity Framework Core.
 
 ## Getting started
 
@@ -21,60 +22,85 @@ dotnet add package RA.Utilities.Data.Entities
 Or through the NuGet Package Manager in Visual Studio.
 
 ## ✨ Features & Hierarchy
-The package provides a clear inheritance hierarchy for your entities.
-You can choose the base class that best fits your needs.
 
-### 1. CoreEntity
-This is the root abstract class for all entities.
-It provides a single property.
+The package provides a clear inheritance hierarchy for your entities, supporting any primary key type (`Guid`, `int`, `long`, `string`, etc.) via the generic parameter `TKey`.
 
-| Property | Type   | Description |
-| -------- |------- | ----------- |
-| Id       | `Guid` | A virtual property for the entity's unique identifier. |
+```
+CoreEntity<TKey>
+├── BaseEntity<TKey>
+└── WriteEntity<TKey>
+    ├── SoftDeleteEntity<TKey>
+    └── AuditableBaseEntity<TKey>
+```
 
-### 2. BaseEntity
-Inherits from `CoreEntity` and adds timestamp auditing fields.
-This is a great starting point for most entities. 
+### 1. CoreEntity&lt;TKey&gt;
+The root abstract class for all entities. It provides a strongly typed unique identifier.
 
-| Property | Type   | Description | Source |
-| -------- |------- | ----------- | ------ |
-| **Id** | `Guid` |	The unique identifier for the category.	| Inherited from `CoreEntity` |
-| CreatedAt  | `DateTime`  | The date and time when the entity was created. | |
-| ModifiedAt | `DateTime?` | The date and time when the entity was last modified. | |
+| Property | Type | Description |
+| -------- | ---- | ----------- |
+| `Id` | `TKey` | A virtual property for the entity's unique identifier. |
 
-### 3. SoftDeleteEntity
-Inherits from `BaseEntity` and adds support for soft deletion.
-Instead of permanently deleting a record, you can mark it as deleted.
+### 2. BaseEntity&lt;TKey&gt;
+Inherits from `CoreEntity<TKey>` and adds creation timestamp tracking. This is ideal for immutable, append-only, or event log entities.
 
-| Property | Type   | Description | Source |
-| -------- |------- | ----------- | ------ |
-| **Id** | `Guid` |	The unique identifier for the category.	| Inherited from `BaseEntity` |
-| CreatedAt  | `DateTime`  | The date and time when the entity was created. | Inherited from `BaseEntity` |
-| ModifiedAt | `DateTime?` | The date and time when the entity was last modified. | Inherited from `BaseEntity` |
-| IsDeleted | `bool` | A flag to indicate if the entity is considered deleted. | |
+| Property | Type | Description | Source |
+| -------- | ---- | ----------- | ------ |
+| `Id` | `TKey` | The unique identifier for the entity. | Inherited from `CoreEntity<TKey>` |
+| `CreatedAt` | `DateTime` | The date and time when the entity was created. | Defined in `BaseEntity<TKey>` |
 
-### 4. AuditableBaseEntity
-Inherits from `BaseEntity` and adds properties to track which user created or modified the entity.
+### 3. WriteEntity&lt;TKey&gt;
+Inherits from `CoreEntity<TKey>` and adds both creation and modification timestamps. This is the recommended starting point for standard mutable entities.
 
-| Property | Type   | Description | Source |
-| -------- |------- | ----------- | ------ |
-| **Id** | `Guid` |	The unique identifier for the category.	| Inherited from `BaseEntity` |
-| CreatedAt  | `DateTime`  | The date and time when the entity was created. | Inherited from `BaseEntity` |
-| ModifiedAt | `DateTime?` | The date and time when the entity was last modified. | Inherited from `BaseEntity` |
-| CreatedBy | `string?` | Identifier for the user who created the entity. |  |
-| LastModifiedBy | `string?` | Identifier for the user who last modified the entity.  |  |
+| Property | Type | Description | Source |
+| -------- | ---- | ----------- | ------ |
+| `Id` | `TKey` | The unique identifier for the entity. | Inherited from `CoreEntity<TKey>` |
+| `CreatedAt` | `DateTime` | The date and time when the entity was created. | Defined in `WriteEntity<TKey>` |
+| `LastModifiedAt` | `DateTime?` | The date and time when the entity was last modified. | Defined in `WriteEntity<TKey>` |
+
+### 4. SoftDeleteEntity&lt;TKey&gt;
+Inherits from `WriteEntity<TKey>` and adds support for soft deletion. Instead of physically removing records from the database, entities can be marked as deleted.
+
+| Property | Type | Description | Source |
+| -------- | ---- | ----------- | ------ |
+| `Id` | `TKey` | The unique identifier for the entity. | Inherited from `CoreEntity<TKey>` |
+| `CreatedAt` | `DateTime` | The date and time when the entity was created. | Inherited from `WriteEntity<TKey>` |
+| `LastModifiedAt` | `DateTime?` | The date and time when the entity was last modified. | Inherited from `WriteEntity<TKey>` |
+| `IsDeleted` | `bool` | A flag indicating whether the entity is marked as deleted. | Defined in `SoftDeleteEntity<TKey>` |
+
+### 5. AuditableBaseEntity&lt;TKey&gt;
+Inherits from `WriteEntity<TKey>` and adds properties to track which user created or modified the entity.
+
+| Property | Type | Description | Source |
+| -------- | ---- | ----------- | ------ |
+| `Id` | `TKey` | The unique identifier for the entity. | Inherited from `CoreEntity<TKey>` |
+| `CreatedAt` | `DateTime` | The date and time when the entity was created. | Inherited from `WriteEntity<TKey>` |
+| `LastModifiedAt` | `DateTime?` | The date and time when the entity was last modified. | Inherited from `WriteEntity<TKey>` |
+| `CreatedBy` | `string?` | The identifier of the user who created the entity. | Defined in `AuditableBaseEntity<TKey>` |
+| `LastModifiedBy` | `string?` | The identifier of the user who last modified the entity. | Defined in `AuditableBaseEntity<TKey>` |
 
 ## 🚀 Usage Examples
 
-To use the package, have your entity classes inherit from one of the provided base classes. 
-
-### Example 1: Basic Entity,
-For a simple entity that only needs an ID and timestamps, use `BaseEntity`.
+### Example 1: Creation-Only Entity (`BaseEntity<TKey>`)
+For append-only entities (such as logs or audit trails) that only require an ID and creation timestamp:
 
 ```csharp
 using RA.Utilities.Data.Entities;
 
-public class Product : BaseEntity
+public class AuditLog : BaseEntity<long>
+{
+    public string Action { get; set; } = string.Empty;
+    public string Details { get; set; } = string.Empty;
+}
+```
+
+### Example 2: Mutable Entity with Timestamps (`WriteEntity<TKey>`)
+For standard entities requiring creation and modification timestamps:
+
+```csharp
+using System;
+using RA.Utilities.Data.Entities;
+
+public class Product : WriteEntity<Guid>
 {
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
@@ -82,29 +108,26 @@ public class Product : BaseEntity
 }
 ```
 
-When you create an instance of this `Product` class, it will have the following properties:
+When you instantiate `Product`, it contains:
+* `Id` (`Guid`)
+* `CreatedAt` (`DateTime`)
+* `LastModifiedAt` (`DateTime?`)
+* `Name` (`string`)
+* `Description` (`string?`)
+* `Price` (`decimal`)
 
-*   `Id` (Guid)
-*   `CreatedAt` (DateTime)
-*   `LastModifiedAt` (DateTime?)
-*   `Name` (string)
-*   `Description` (string?)
-*   `Price` (decimal)
-
-
-### Example 2: Soft-Deletable and Auditable Entity
-If you need an entity that supports both soft-deletion and user auditing, you can create a new base class that combines `SoftDeleteEntity` and `AuditableBaseEntity` features. 
-First, define a combined base class:
-
-This is a non-generic version that provides a `Guid` as the primary key type.
+### Example 3: Auditable and Soft-Deletable Entity
+If you need an entity that combines both soft deletion and user auditing, define a combined base class:
 
 ```csharp
+using System;
 using RA.Utilities.Data.Entities;
 
 /// <summary>
 /// Represents an entity that supports both soft deletion and user auditing.
 /// </summary>
-public abstract class AuditableSoftDeleteEntity : AuditableBaseEntity
+/// <typeparam name="TKey">The type of the unique identifier.</typeparam>
+public abstract class AuditableSoftDeleteEntity<TKey> : AuditableBaseEntity<TKey>
 {
     /// <summary>
     /// Gets or sets a value indicating whether the entity is marked as deleted.
@@ -113,9 +136,10 @@ public abstract class AuditableSoftDeleteEntity : AuditableBaseEntity
 }
 ```
 
-Then, inherit from your new base class:
+Then inherit from your base class:
+
 ```csharp
-public class Order : AuditableSoftDeleteEntity
+public class Order : AuditableSoftDeleteEntity<Guid>
 {
     public DateTime OrderDate { get; set; }
     public decimal TotalAmount { get; set; }
@@ -123,12 +147,11 @@ public class Order : AuditableSoftDeleteEntity
 }
 ```
 
-This Order entity now includes `Id`, `CreatedAt`, `LastModifiedAt`, `CreatedBy`, `LastModifiedBy`, and `IsDeleted`.
+The `Order` entity includes `Id`, `CreatedAt`, `LastModifiedAt`, `CreatedBy`, `LastModifiedBy`, and `IsDeleted`.
 
 ### Using with Entity Framework Core
 
-These base entities work seamlessly with EF Core. You can configure the properties in your `DbContext`.
-
+These base entities integrate seamlessly with EF Core. You can configure them in your `DbContext`:
 
 ```csharp
 using Microsoft.EntityFrameworkCore;
@@ -151,7 +174,7 @@ public class AppDbContext : DbContext
 
 ## Additional documentation
 
-For more information on how this package fits into the larger RA.Utilities ecosystem, please see the main [officiary documentation](https://redonalla.github.io/RA.Utilities/nuget-packages/Data/Entities/).
+For more information on how this package fits into the larger RA.Utilities ecosystem, please see the main [official documentation](https://redonalla.github.io/RA.Utilities/nuget-packages/Data/Entities/).
 
 ## Feedback
 

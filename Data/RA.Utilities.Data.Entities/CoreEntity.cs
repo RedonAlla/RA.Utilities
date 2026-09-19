@@ -5,10 +5,11 @@ namespace RA.Utilities.Data.Entities;
 /// <summary>
 /// Represents the base class for all entities, providing a unique identifier.
 /// </summary>
-public abstract class CoreEntity
+/// <typeparam name="TKey">The type of the unique identifier.</typeparam>
+public abstract class CoreEntity<TKey>
 {
     /// <summary>
-    /// Gets or sets the unique identifier for the entity.
+    /// Gets the unique identifier for the entity.
     /// </summary>
-    public virtual Guid Id { get; set; }
+    public virtual TKey Id { get; protected set; }
 }

@@ -1,0 +1,140 @@
+---
+title: Migration Guides
+sidebar_position: 7
+sidebar_class_name: nav_session ra_utilities_data_entity
+---
+
+# Migration Guides
+
+## v10.0.1 → v10.1.0
+
+v10.1.0 makes all entity classes generic over the primary key type (`TKey`) and introduces [`WriteEntity<TKey>`](./WriteEntity.md) to decouple creation-only timestamp tracking from full update tracking.
+
+---
+
+### Breaking Changes
+
+#### 1. All Entity Base Classes Are Now Generic (TKey)
+
+`CoreEntity`, `BaseEntity`, `AuditableBaseEntity`, and `SoftDeleteEntity` now require a type argument specifying the primary key type (e.g. `<Guid>`, `<int>`, `<long>`, `<string>`).
+
+#### 2. LastModifiedAt Removed from BaseEntity
+
+`BaseEntity<TKey>` is now dedicated to creation-only tracking (`CreatedAt`). Mutable entities that require update tracking (`LastModifiedAt`) must inherit from the new [`WriteEntity<TKey>`](./WriteEntity.md) class.
+
+#### 3. Inheritance Hierarchy Realignment
+
+[`AuditableBaseEntity<TKey>`](./AuditableBaseEntity.md) and [`SoftDeleteEntity<TKey>`](./SoftDeleteEntity.md) now inherit directly from [`WriteEntity<TKey>`](./WriteEntity.md) instead of `BaseEntity`.
+
+---
+
+### Why these changes?
+
+* **Flexibility in Keys**: Real-world projects often use numeric IDs (`int`/`long`), natural keys (`string`), or `Guid` values. Forcing a hardcoded `Guid` made the package unusable for legacy databases or high-performance scenarios.
+* **Separation of Concerns**: Immutable event streams, logs, and ledger entries should not carry an unused `LastModifiedAt` property. Decoupling this into `WriteEntity<TKey>` gives clean domain semantics.
+
+---
+
+### What changed
+
+| Feature | Before (v10.0.1) | After (v10.1.0) |
+|---|---|---|
+| Primary Key Type | Fixed `Guid` | Generic `TKey` (`Guid`, `int`, `long`, `string`, etc.) |
+| `CoreEntity` | `CoreEntity` | `CoreEntity<TKey>` |
+| `BaseEntity` Properties | `Id`, `CreatedAt`, `LastModifiedAt` | `Id`, `CreatedAt` |
+| Modification Tracking | In `BaseEntity` | In `WriteEntity<TKey>` |
+| `SoftDeleteEntity` Base Class | `BaseEntity` | `WriteEntity<TKey>` |
+| `AuditableBaseEntity` Base Class | `BaseEntity` | `WriteEntity<TKey>` |
+
+---
+
+### Migration Steps
+
+#### Step 1: Add the generic primary key type parameter to existing entities
+
+If your entities used the default `Guid` key type, update their inheritance declaration to specify `<Guid>`:
+
+**Before (v10.0.1):**
+```csharp
+public class Category : BaseEntity
+{
+    public string Name { get; set; } = string.Empty;
+}
+```
+
+**After (v10.1.0):**
+```csharp
+// If Category is mutable (needs LastModifiedAt):
+public class Category : WriteEntity<Guid>
+{
+    public string Name { get; set; } = string.Empty;
+}
+
+// If Category is immutable / append-only (needs only CreatedAt):
+public class Category : BaseEntity<Guid>
+{
+    public string Name { get; set; } = string.Empty;
+}
+```
+
+#### Step 2: Switch mutable entities from BaseEntity to WriteEntity
+
+If your code references `LastModifiedAt` on entities that inherited from `BaseEntity`, change their base class to `WriteEntity<TKey>`:
+
+**Before (v10.0.1):**
+```csharp
+public class Product : BaseEntity
+{
+    public string Name { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+}
+
+// product.LastModifiedAt was available here
+```
+
+**After (v10.1.0):**
+```csharp
+public class Product : WriteEntity<Guid>
+{
+    public string Name { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+}
+
+// product.LastModifiedAt is provided by WriteEntity<Guid>
+```
+
+#### Step 3: Update SoftDeleteEntity and AuditableBaseEntity references
+
+Add the key type parameter to derived classes:
+
+**Before (v10.0.1):**
+```csharp
+public class Order : AuditableBaseEntity
+{
+    public decimal TotalAmount { get; set; }
+}
+
+public class Article : SoftDeleteEntity
+{
+    public string Title { get; set; } = string.Empty;
+}
+```
+
+**After (v10.1.0):**
+```csharp
+public class Order : AuditableBaseEntity<Guid>
+{
+    public decimal TotalAmount { get; set; }
+}
+
+public class Article : SoftDeleteEntity<Guid>
+{
+    public string Title { get; set; } = string.Empty;
+}
+```
+
+---
+
+## Full Changelog
+
+For a detailed history of all changes across versions, see the [Package Release Notes](https://github.com/RedonAlla/RA.Utilities/blob/main/Data/RA.Utilities.Data.Entities/releasenotes.md).

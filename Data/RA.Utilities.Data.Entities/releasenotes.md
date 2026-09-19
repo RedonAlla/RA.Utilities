@@ -1,5 +1,55 @@
 # Release Notes for RA.Utilities.Data.Entities
 
+## Version 10.1.0
+![Date Badge](https://img.shields.io/badge/Publish-19%20September%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.1.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.Entities/10.1.0)
+
+This release introduces generic primary key support across all entity base classes, establishes a new `WriteEntity<TKey>` abstraction for mutable entities, and refines the inheritance hierarchy to cleanly separate creation-only entities from mutable and auditable entities.
+
+### ⚠️ Breaking Changes
+
+*   **Generic Primary Key (`TKey`)**: All entity base classes (`CoreEntity<TKey>`, `BaseEntity<TKey>`, `WriteEntity<TKey>`, `AuditableBaseEntity<TKey>`, `SoftDeleteEntity<TKey>`) are now generic over `TKey` instead of using a hardcoded `Guid`. Existing entities must specify their key type (e.g., `BaseEntity<Guid>`).
+*   **`BaseEntity<TKey>` Streamlined**: `LastModifiedAt` has been removed from `BaseEntity<TKey>` to optimize it for immutable or append-only records that only track creation. For entities that require modification tracking, inherit from `WriteEntity<TKey>`.
+*   **Inheritance Hierarchy Realignment**: `AuditableBaseEntity<TKey>` and `SoftDeleteEntity<TKey>` now inherit from `WriteEntity<TKey>` instead of `BaseEntity`.
+
+### ✨ New Features
+
+*   **`WriteEntity<TKey>` Base Class**: Introduced a dedicated base class inheriting from `CoreEntity<TKey>` that provides both `CreatedAt` (`DateTime`) and `LastModifiedAt` (`DateTime?`) timestamps for entities that can be updated.
+*   **Custom Key Support**: Full flexibility to use any identifier type (e.g., `Guid`, `int`, `long`, `string`).
+
+### 📝 Improvements
+
+*   **Standardized XML Documentation**: Added complete XML documentation comments across all base entity classes and properties, including `<typeparam name="TKey">` tags to enhance developer experience in IDEs.
+
+### 🚀 Getting Started (Updated)
+
+#### Example: Creation-Only Entity (`BaseEntity<TKey>`)
+```csharp
+public class AuditLog : BaseEntity<long>
+{
+    public string Action { get; set; } = string.Empty;
+}
+```
+
+#### Example: Mutable Entity with Timestamps (`WriteEntity<TKey>`)
+```csharp
+public class Product : WriteEntity<Guid>
+{
+    public string Name { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+}
+```
+
+#### Example: Auditable Entity (`AuditableBaseEntity<TKey>`)
+```csharp
+public class Order : AuditableBaseEntity<Guid>
+{
+    public decimal TotalAmount { get; set; }
+}
+```
+
+---
+
 ## Version 10.0.1
 ![Date Badge](https://img.shields.io/badge/Publish-14%20December%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.Entities/10.0.1)

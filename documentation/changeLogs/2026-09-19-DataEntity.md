@@ -2,6 +2,27 @@
 title: RA.Utilities.Data.Entities
 authors: [RedonAlla]
 ---
+## Version 10.1.0
+![Date Badge](https://img.shields.io/badge/Publish-19%20September%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.1.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.Entities/10.1.0)
+
+This release introduces generic primary key support across all entity base classes, establishes a new `WriteEntity<TKey>` abstraction for mutable entities, and cleanly separates creation-only entities from mutable and auditable models.
+
+<!-- truncate -->
+
+### ⚠️ Breaking Changes
+* **Generic Primary Key (`TKey`)**: All entity base classes (`CoreEntity<TKey>`, `BaseEntity<TKey>`, `WriteEntity<TKey>`, `AuditableBaseEntity<TKey>`, `SoftDeleteEntity<TKey>`) are now generic over `TKey` instead of using a hardcoded `Guid`. **Migration**: Update all entity declarations to specify their primary key type, e.g. `BaseEntity<Guid>`.
+* **`BaseEntity<TKey>` Streamlined**: `LastModifiedAt` has been removed from `BaseEntity<TKey>` to optimize it for append-only records. **Migration**: For mutable entities requiring modification tracking, inherit from `WriteEntity<TKey>`.
+* **Inheritance Hierarchy Realignment**: `AuditableBaseEntity<TKey>` and `SoftDeleteEntity<TKey>` now inherit from `WriteEntity<TKey>` instead of `BaseEntity`.
+
+### ✨ New Features
+* **`WriteEntity<TKey>` Base Class**: Introduced a dedicated base class inheriting from `CoreEntity<TKey>` that provides both `CreatedAt` (`DateTime`) and `LastModifiedAt` (`DateTime?`) timestamps for entities that can be updated.
+* **Custom Key Types**: Entities can now use any identifier type (e.g., `Guid`, `int`, `long`, `string`).
+
+### 📝 Improvements
+* **Standardized XML Documentation**: Comprehensive XML doc comments added and refined across all classes and properties, including `<typeparam name="TKey">` documentation for improved IntelliSense guidance.
+
+---
 
 ## Version 10.0.1
 ![Date Badge](https://img.shields.io/badge/Publish-14%20December%202025-lightblue?logo=fastly&logoColor=white)

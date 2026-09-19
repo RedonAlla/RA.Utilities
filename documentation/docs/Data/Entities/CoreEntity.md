@@ -1,46 +1,76 @@
 ---
-sidebar_position: 1
+sidebar_position: 2
 ---
 
 ```bash
 Namespace: RA.Utilities.Data.Entities
 ```
 
-This is the root abstract class for all entities.
-It is meant to be inherited by other entities.
-This enforces a pattern where every entity in your system must be built upon this common foundation.
-`CoreEntity`: The name itself signifies its role. It is the ***"core"*** or the absolute minimum that any entity in your system must have.
+# CoreEntity&lt;TKey&gt;
+
+`CoreEntity<TKey>` is the root abstract class for all entities within the `RA.Utilities.Data.Entities` package. It defines the foundational contract for unique identity across your data model.
+
+By making identity generic via `TKey`, this class allows entities to use whatever identifier type best fits the domain or database schema (such as `Guid`, `int`, `long`, or `string`), while still enforcing a consistent naming and property convention across the entire application.
+
+## Type Parameters
+
+| Parameter | Description |
+|---|---|
+| **`TKey`** | The data type of the entity's primary key identifier. |
 
 ## Properties
 
-| Property | Type   | Description |
-| -------- |------- | ----------- |
-| Id       | `Guid` | A virtual property for the entity's unique identifier. |
+| Property | Type | Accessors | Description |
+|---|---|---|---|
+| **`Id`** | `TKey` | `get; protected set;` | The unique identifier for the entity. |
 
-### Its Role in the Entity Hierarchy
-The `CoreEntity` class sits at the very top of your entity inheritance chain.
-Other, more specialized base classes build upon it.
-For example, your [`BaseEntity`](./BaseEntity.md) class inherits from `CoreEntity` to add timestamping properties:
+:::info Protected Setter
+The `Id` property uses a `protected set;` accessor. This protects the identifier from unintentional external mutation while allowing Entity Framework Core, object-relational mappers, and derived constructors to populate the key value.
+:::
 
-```csharp
-public abstract class BaseEntity : CoreEntity
+## Class Definition
+
+```csharp showLineNumbers
+namespace RA.Utilities.Data.Entities;
+
+/// <summary>
+/// Represents the base class for all entities, providing a unique identifier.
+/// </summary>
+/// <typeparam name="TKey">The type of the unique identifier.</typeparam>
+public abstract class CoreEntity<TKey>
 {
-    public DateTime CreatedAt { get; set; }
-    public DateTime? LastModifiedAt { get; set; }
+    /// <summary>
+    /// Gets the unique identifier for the entity.
+    /// </summary>
+    public virtual TKey Id { get; protected set; }
 }
 ```
 
-This creates a clear and logical hierarchy:
+## Role in the Entity Hierarchy
 
-* 1. **`CoreEntity`**: Provides the `Id`.
-* 1. **`BaseEntity`**: Inherits `Id` and adds `CreatedAt` and `LastModifiedAt`.
-* 1. **`AuditableBaseEntity`** or **`SoftDeleteEntity`**: Inherit from `BaseEntity` and add even more specific functionality.
+`CoreEntity<TKey>` sits at the root of the inheritance chain:
 
-### 🧠 Summary of Purpose
-The `CoreEntity` class enforces a fundamental design principle in your data model:
+```
+CoreEntity<TKey>
+├── BaseEntity<TKey>          (adds CreatedAt)
+└── WriteEntity<TKey>         (adds CreatedAt, LastModifiedAt)
+    ├── SoftDeleteEntity<TKey> (adds IsDeleted)
+    └── AuditableBaseEntity<TKey> (adds CreatedBy, LastModifiedBy)
+```
 
-* **Consistency**: Every entity has a primary key with the same name (`Id`) and type (`Guid`).
-* **Reusability**: It eliminates the need to declare an `Id` property in every single entity class, adhering to the ***Don't Repeat Yourself (DRY)*** principle.
-* **Architectural Foundation**: It serves as the root of the entity hierarchy, providing a stable base upon which more complex entities can be built.
+## Usage Example
 
-By starting with this simple, abstract class, you create a clean, predictable, and scalable data model for your entire application.
+```csharp showLineNumbers
+using RA.Utilities.Data.Entities;
+
+public class Country : CoreEntity<string>
+{
+    public Country(string isoCode, string name)
+    {
+        Id = isoCode; // e.g. "US", "DE"
+        Name = name;
+    }
+
+    public string Name { get; set; }
+}
+```
