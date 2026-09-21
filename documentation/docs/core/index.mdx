@@ -1,13 +1,14 @@
 ---
 title: Core
 sidebar_position: 2
+sidebar_class_name: nav_session ra_utilities_value_objects
 ---
 
 ```bash
 Namespace: RA.Utilities.Core.Results
 ```
 
-The the projects within the Core solution folder (`RA.Utilities.Core.Results`, `RA.Utilities.Core.Constants`, and `RA.Utilities.Core.Exceptions`) serve as the foundational, innermost layer of your Clean Architecture.
+The the projects within the Core solution folder (`RA.Utilities.Core.Results`, `RA.Utilities.Core.Constants`, `RA.Utilities.Core.Exceptions`, and `RA.Utilities.Core.ValueObjects`) serve as the foundational, innermost layer of your Clean Architecture.
 They are designed to have zero dependencies on any other layer in your solution, which is a critical principle for creating a decoupled and maintainable system.
 
 Here’s how they support the rest of the solution:
@@ -37,6 +38,15 @@ This is the simplest but arguably one of the most important packages for maintai
 * **How it Supports Other Layers**: Any project that needs to reference a common value can depend on this package. For example:
   * The `DefaultHeadersMiddleware` in `RA.Utilities.Api.Middlewares` needs to know the exact string for the `X-Request-Id` header. Instead of hardcoding it, it can reference a constant from this package.
   * If you have specific claim types or authorization policy names, they would live here and be used by both the RA.Utilities.Authorization package (to define the policy) and the application layer (to require the policy).
+
+## 4. `RA.Utilities.Core.ValueObjects` - Strongly-Typed Domain Primitives
+
+This package provides validated, normalized value objects like `Email`, `Currency`, `SSN`, and `Money`.
+
+* **Purpose**: To eliminate primitive obsession by wrapping simple concepts in types that guarantee validity. An `Email` that exists is always a normalized, valid email — invalid states are unrepresentable.
+* **How it Supports Other Layers**:
+  * **Application Layer (`RA.Utilities.Feature`)**: Business logic and CQRS handlers accept value objects instead of raw strings, so validation happens once at the boundary and never needs re-checking in the domain.
+  * **API Layer (`RA.Utilities.Api`)**: `IParsable<T>` implementations enable minimal API route, query, and header binding with automatic `400 Bad Request` on invalid input, while the built-in `System.Text.Json` converters keep serialization contracts clean.
 
 ## Summary
 In essence, the `Core` packages form the stable, central foundation of your entire ecosystem. They enforce the Dependency Rule of Clean Architecture: all dependencies flow inwards.

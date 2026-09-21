@@ -1,0 +1,93 @@
+---
+title: Troubleshooting & FAQ
+---
+
+# Troubleshooting & FAQ
+
+Common issues when working with `RA.Utilities.Core.ValueObjects` and how to resolve them.
+
+---
+
+## Why did deserialization throw a `JsonException` instead of my value object type?
+
+The built-in converters (`ValueObjectJsonConverter<T>`) throw a `JsonException` when the JSON value is `null`, empty, or fails validation — by design, so invalid data never reaches your domain. The exception message includes the JSON value that failed.
+
+```csharp
+try
+{
+    var order = JsonSerializer.Deserialize<Order>(json);
+}
+catch (JsonException ex)
+{
+    // ex.Message contains the offending value, e.g.:
+    // "The JSON value 'usd12' could not be converted to RA.Utilities.Core.ValueObjects.Currency."
+}
+```
+
+**Fix:** Validate at the edge (e.g., an endpoint filter or `TryParse` in minimal APIs) and surface the error before deserialization, or catch `JsonException` in middleware.
+
+---
+
+## `Email.Parse` throws even though the string "looks valid" — why?
+
+Validation runs on the **trimmed, lowercased** value, but a handful of inputs are rejected outright:
+
+- Empty or whitespace-only → `REQUIRED_EMAIL`
+- Longer than 254 characters → `EMAIL_MAX_LENGTH`
+- No `@`, empty local part, or empty domain → `INVALID_EMAIL`
+
+If you believe a valid email is being rejected, normalize it first (`input.Trim().ToLowerInvariant()`) and confirm it meets the rules in the [Email reference](./Email.md#validation-rules).
+
+---
+
+## My two `Currency` instances aren't equal — but the strings match?
+
+Equality compares the **normalized** `Value` exactly. Normalization (trim + uppercase/lowercase, depending on the type) happens in the constructor, so any instance that exists is already canonical: `new Currency(" usd ")` equals `Currency.Parse("USD")`.
+
+If two values you expect to be equal aren't, check the actual normalized form:
+
+```csharp
+var a = Currency.Parse(codeFromUser);
+var b = Currency.Parse(codeFromDatabase);
+a.Value.Should().Be(b.Value); // both trimmed + upper-cased
+```
+
+See [Equality and conversions](./Currency.md#equality-and-conversions).
+
+---
+
+## I get a `BadRequestException` from a constructor — is that expected?
+
+Yes. Unlike typical .NET value objects that throw `ArgumentException`, these types throw `BadRequestException` (with structured `ValidationError` details) so they compose with the RA.Utilities error pipeline. Catch it, or return it as a `Result.Failure` via the implicit conversion in `RA.Utilities.Core`.
+
+---
+
+## Can I store these in Entity Framework Core?
+
+Yes — they serialize to plain JSON strings via `System.Text.Json`. For EF Core, either:
+
+- Serialize as a string with a `ValueConverter<Currency, string>`, or
+- Use `OwnsOne` with the converter applied to the property.
+
+No special EF package is required.
+
+---
+
+## Why can't I assign a string directly to an `Email` parameter?
+
+There is deliberately no implicit conversion **from `string` to a value object** — it would bypass validation and re-introduce primitive obsession. The opposite direction is fine: each value object implicitly converts *to* `string` (lossless), so `string code = someCurrency;` works.
+
+---
+
+## Known limitations
+
+- **Currency validates format, not ISO membership** — `Currency.Parse("XXX")` succeeds because `XXX` is structurally valid (3 letters). Business-level currency lists are your responsibility.
+- **`Money` has no built-in JSON converter** — `Email`, `Currency`, and `SSN` do; `Money` serializes as a regular object. Register your own converter if you need a custom shape.
+- **Case is normalized on parse** — `Email` → lowercase, `Currency`/`SSN` → uppercase. Round-tripping preserves the normalized form, not the original casing.
+
+---
+
+## Still stuck?
+
+- [Open an issue](https://github.com/RedonAlla/RA.Utilities/issues)
+- [Start a discussion](https://github.com/RedonAlla/RA.Utilities/discussions)

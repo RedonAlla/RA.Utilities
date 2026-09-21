@@ -1,0 +1,287 @@
+---
+title: RA.Utilities.Core.ValueObjects
+sidebar_class_name: nav_session ra_utilities_core_valueobjects
+---
+
+import DocCardList from '@theme/DocCardList';
+import LogoSvg from '../../../../Assets/Images/value-object.svg';
+
+<p align="center">
+<LogoSvg width={'12rem'} height={'12rem'} className="header_icon" />
+</p>
+
+# RA.Utilities.Core.ValueObjects
+
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Core.ValueObjects?logo=nuget&label=NuGet)](https://www.nuget.org/packages/RA.Utilities.Core.ValueObjects/)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Core.ValueObjects.svg)](https://www.nuget.org/packages/RA.Utilities.Core.ValueObjects/)
+[![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
+[![Publish NuGet](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml/badge.svg)](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?label=License&logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
+
+`RA.Utilities.Core.ValueObjects` provides strongly-typed, validated value objects like [`Email`](./Email.md), [`Currency`](./Currency.md), [`SSN`](./SSN.md), and [`Money`](./Money.md). It solves the problem of passing raw, unvalidated strings and decimals around your domain, where formatting inconsistencies and invalid data can silently propagate.
+
+## 🎯 Purpose
+
+A value object is validated and normalized *once*, at the boundary of your system. After that, an `Email` that exists is always a valid, normalized email address. This approach has several key benefits:
+
+- **Type Safety**: You can't accidentally pass a currency code where an email is expected; the compiler enforces intent.
+- **Fail Fast**: Invalid input throws a `BadRequestException` with structured `ValidationError` details that `RA.Utilities.Api` middleware can translate into standardized HTTP 400 responses automatically.
+- **Consistent Normalization**: Values are trimmed and case-normalized on creation, so `new Email(" User@Gmail.com ")` and `new Email("user@gmail.com")` are equal.
+- **Value Equality**: All value objects are records, so they compare by value, not by reference.
+- **Decoupled Logic**: Your domain code works with guaranteed-valid values and never needs defensive re-validation or duplicate format checks.
+
+### ✨ Key Features
+
+- **4 value object types** — `Email` (normalized address with `LocalPart`/`Domain`), `Currency` (ISO 4217 code), `SSN` (letter + 8 digits + letter), `Money` (amount + currency with guarded arithmetic)
+- **Structured validation errors** — `BadRequestException` with `ValidationError` entries carrying error codes from `BaseErrorCode`, property names, and attempted values
+- **Built-in JSON support** — generic `ValueObjectJsonConverter<T>` serializes value objects as plain strings and deserializes back through validation
+- **`IParsable<T>` support** — `Parse`/`TryParse` enable route, query, and header binding in ASP.NET Core minimal APIs
+- **Extensible** — implement `IValueObject<TSelf>` and reuse the generic converter for your own string-based value objects
+
+---
+
+## 🛠️ Getting Started {#getting-started}
+
+### Prerequisites
+
+- **.NET 10.0** or later
+- **`RA.Utilities.Core.Exceptions`** (included as a dependency)
+
+### Installation
+
+**.NET CLI**
+
+```bash
+dotnet add package RA.Utilities.Core.ValueObjects
+```
+
+**Package Manager Console**
+
+```powershell
+Install-Package RA.Utilities.Core.ValueObjects
+```
+
+**PackageReference (csproj)**
+
+```xml
+<PackageReference Include="RA.Utilities.Core.ValueObjects" Version="10.0.0" />
+```
+
+### Hello World
+
+The simplest usage — validate and normalize user input at the boundary of your system:
+
+```csharp showLineNumbers
+using RA.Utilities.Core.ValueObjects;
+
+// highlight-next-line
+var email = new Email("  User@Gmail.com  ");
+
+email.Value;      // "user@gmail.com"  (trimmed and lower-cased)
+email.LocalPart;  // "user"
+email.Domain;     // "gmail.com"
+```
+
+Invalid input throws a `BadRequestException` immediately:
+
+```csharp showLineNumbers
+// highlight-next-line
+new Email("not-an-email"); // throws BadRequestException with a ValidationError
+```
+
+No DI registration needed. The built-in JSON converter is applied automatically through the `[JsonConverter]` attribute on each value object.
+
+---
+
+## 🧠 Core Concepts
+
+### Available Value Objects
+
+| Value object | Normalization                       | Validation                                                    | Typical use                          |
+|--------------|-------------------------------------|---------------------------------------------------------------|--------------------------------------|
+| [`Email`](./Email.md)    | trimmed, lower-cased                | required, max 254 chars, email format                         | user identities, notifications       |
+| [`Currency`](./Currency.md) | trimmed, upper-cased             | required, exactly 3 characters (ISO 4217)                     | pricing, payments, multi-currency    |
+| [`SSN`](./SSN.md)        | trimmed, upper-cased                | required, max 10 chars, `^[A-Z][0-9]{8}[A-Z]$`                | personal identifiers                 |
+| [`Money`](./Money.md)    | —                                   | `PositiveMoney` rejects negative amounts; `Add` checks currency | amounts that must carry a currency |
+
+### Shared behavior: `IValueObject<TSelf>`
+
+`Email`, `Currency`, and `SSN` implement `IValueObject<TSelf>`, which combines a normalized `Value` string with `IParsable<TSelf>`:
+
+```csharp
+public interface IValueObject<TSelf> : IParsable<TSelf>
+    where TSelf : IValueObject<TSelf>
+{
+    string Value { get; }
+}
+```
+
+This lets you write generic algorithms over any value object, and it is what powers the shared JSON converter.
+
+### How validation flows through the system
+
+```
+Boundary (API/DTO)                    Domain                        API Layer
+──────────────────                    ──────                        ─────────
+new Email(input)              →       guaranteed-valid       →      BadRequestException
+throws BadRequestException            Email instance                caught by middleware
+if invalid                                                          → HTTP 400 + JSON body
+
+JsonSerializer.Deserialize<T>   →     same validation          →    JsonException on
+                                      via T.Parse                       invalid JSON
+
+MapGet("/{email}")              →     TryParse binds route     →    automatic 400 on
+minimal API binding                   values with validation            invalid route values
+```
+
+### Terminology
+
+- **Value object**: A type identified only by its value (not identity), validated and normalized on creation. Two instances with the same value are equal.
+- **Normalization**: Trimming and case-folding applied on creation, so equal values always have identical representations.
+- **`IValueObject<TSelf>`**: Interface for string-backed value objects; provides `Value` and `IParsable<TSelf>`.
+- **`ValueObjectJsonConverter<T>`**: Generic `System.Text.Json` converter shared by all value objects; serializes as a plain string, deserializes through `Parse`.
+- **`BadRequestException`**: Thrown by constructors when validation fails, carrying `ValidationError` entries with error codes from `BaseErrorCode`.
+
+---
+
+## 📖 How-To Guides
+
+### Validate an email address
+
+```csharp showLineNumbers
+public void RegisterUser(string emailInput)
+{
+    // highlight-next-line
+    var email = new Email(emailInput); // throws BadRequestException if invalid
+
+    var existing = _userRepository.FindByEmail(email);
+    if (existing is not null)
+    {
+        throw new ConflictException(nameof(User), email);
+    }
+    // ... registration logic
+}
+```
+
+### Enforce a valid currency on a price
+
+```csharp showLineNumbers
+public Money GetPrice(string currencyCode)
+{
+    // highlight-next-line
+    var currency = new Currency(currencyCode); // exactly 3 characters, e.g. "EUR"
+    return new Money(19.99m, currency);
+}
+```
+
+### Reject negative amounts and mismatched currencies
+
+```csharp showLineNumbers
+// highlight-next-line
+var price = Money.PositiveMoney(19.99m, new Currency("EUR")); // throws if negative
+var shipping = Money.PositiveMoney(4.99m, new Currency("EUR"));
+
+var total = price.Add(shipping); // 24.98 EUR
+
+// highlight-next-line
+total.Add(new Money(5m, new Currency("USD"))); // throws BadRequestException (CurrencyMismatch)
+```
+
+### Bind value objects in minimal APIs
+
+`Parse`/`TryParse` support lets minimal APIs bind value objects from route, query, and header values, with automatic 400 responses for invalid input:
+
+```csharp showLineNumbers
+// highlight-next-line
+app.MapGet("/users/{email}", (Email email) => $"Looking up {email.LocalPart}");
+```
+
+### Serialize to and from JSON
+
+Value objects serialize as plain strings and deserialize back through validation:
+
+```csharp showLineNumbers
+var json = JsonSerializer.Serialize(new Email("User@Gmail.com"));
+// json == "\"user@gmail.com\""
+
+// highlight-next-line
+var email = JsonSerializer.Deserialize<Email>("\" User@Gmail.com \"");
+// email.Value == "user@gmail.com" (normalized)
+
+JsonSerializer.Deserialize<Currency>("\"EURO\""); // throws JsonException
+```
+
+### Create a custom value object
+
+Implement `IValueObject<TSelf>` and reuse the generic converter:
+
+```csharp showLineNumbers
+using System.Text.Json.Serialization;
+using RA.Utilities.Core.ValueObjects;
+using RA.Utilities.Core.ValueObjects.Converters;
+
+// highlight-next-line
+[JsonConverter(typeof(ValueObjectJsonConverter<Sku>))]
+public sealed partial record Sku : IValueObject<Sku>
+{
+    public string Value { get; }
+
+    public Sku(string? value)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        Value = value.Trim().ToUpperInvariant();
+    }
+
+    public static Sku Parse(string s, IFormatProvider? provider) => new(s);
+
+    public static bool TryParse(string? s, IFormatProvider? provider, out Sku result)
+    {
+        if (string.IsNullOrWhiteSpace(s))
+        {
+            result = null!;
+            return false;
+        }
+        result = new Sku(s);
+        return true;
+    }
+}
+```
+
+---
+
+## ⚙️ Configuration
+
+This package has **no configuration options**. There is no DI registration, no `appsettings.json` entries, and no options classes. Value objects are created directly — the API layer's `GlobalExceptionHandler` handles translation to HTTP 400 responses automatically when you use `RA.Utilities.Api`.
+
+---
+
+## ✨ Available Value Objects
+
+<DocCardList />
+
+---
+
+## 🙌 Contributing & Support
+
+### Found a bug or have a suggestion?
+
+- **GitHub Issues**: [Report a bug or request a feature](https://github.com/RedonAlla/RA.Utilities/issues)
+- **Discussions**: [Ask questions or start a discussion](https://github.com/RedonAlla/RA.Utilities/discussions)
+
+### Contributing
+
+Contributions are welcome! Please follow the standard workflow:
+
+1. **Fork** the [RA.Utilities repository](https://github.com/RedonAlla/RA.Utilities)
+2. **Create a branch** from `main` with a descriptive name (e.g., `feature/add-phone-value-object`)
+3. **Make your changes** — new value objects must implement `IValueObject<TSelf>`, include validation, XML doc comments, and unit tests
+4. **Submit a pull request** to the `main` branch with a clear description
+
+### Links
+
+| Resource | URL |
+|---|---|
+| **NuGet** | [RA.Utilities.Core.ValueObjects](https://www.nuget.org/packages/RA.Utilities.Core.ValueObjects/) |
+| **Source** | [GitHub — RedonAlla/RA.Utilities](https://github.com/RedonAlla/RA.Utilities) |
+| **License** | [MIT](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file) |
+| **Build Status** | [GitHub Actions](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml) |
