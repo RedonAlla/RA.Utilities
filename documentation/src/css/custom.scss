@@ -74,6 +74,14 @@
   fill: #ac99ea;
 }
 
+[data-theme='light'] .header_icon_stroke {
+  stroke: #512bd4;
+}
+
+[data-theme='dark'] .header_ico_stroke {
+  stroke: #ac99ea;
+}
+
 .cardContainer_fWXF {
   box-shadow: none !important;
 }
