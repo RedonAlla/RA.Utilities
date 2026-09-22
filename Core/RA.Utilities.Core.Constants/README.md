@@ -22,7 +22,7 @@ Or through the NuGet Package Manager in Visual Studio.
 
 ## ✨ Available Constants
 
-The package currently provides the following static classes:
+The package currently provides the following constant classes:
 
 ### `BaseResponseCode`
 
@@ -69,6 +69,41 @@ Contains default string messages for common API responses. This helps maintain a
 | `InternalServerError` | "An unexpected error occurred on the server."          | Error    |
 | `ServiceUnavailable`  | "The service is temporarily unavailable. Please try again later." | Error    |
 | `GatewayTimeout`      | "The server, while acting as a gateway or proxy, did not receive a timely response from the upstream server." | Error    |
+
+### `BaseErrorCode`
+
+Contains machine-readable error codes (`const string`) for field-level validation failures. While `BaseResponseCode` covers transport-level concerns, `BaseErrorCode` describes *why* a request was rejected. The codes are used by the value objects in `RA.Utilities.Core.ValueObjects` (`Email`, `Currency`, `SSN`, `Money`) to populate structured `ValidationError` entries.
+
+| Constant Name      | Value              | Triggered When                                            |
+|--------------------|--------------------|-----------------------------------------------------------|
+| `EmailRequired`    | `REQUIRED_EMAIL`   | The 'Email address' field is missing.                     |
+| `EmailMaxLength`   | `EMAIL_MAX_LENGTH` | The 'Email address' field exceeds the maximum length.     |
+| `EmailNotValid`    | `INVALID_EMAIL`    | The 'Email address' format is invalid.                    |
+| `CurrencyRequired` | `REQUIRED_CURRENCY`| The 'Currency' field is missing.                          |
+| `CurrencyLength`   | `CURRENCY_LENGTH`  | The 'Currency' field is not exactly 3 characters.         |
+| `CurrencyMismatch` | `CURRENCY_MISMATCH`| Two currency values that must match are different.        |
+| `PositiveMoney`    | `POSITIVE_MONEY`   | The 'Amount' value is negative (less than 0).             |
+| `SsnRequired`      | `REQUIRED_SSN`     | The 'SSN' field is missing.                                |
+| `SsnLength`        | `SSN_LENGTH`       | The 'SSN' field is not exactly 10 characters.              |
+| `SsnNotValid`      | `NOT_VALID_SSN`    | The 'SSN' format is invalid.                               |
+
+### `BaseErrorMessage`
+
+Contains the human-readable messages (`const string`) matching the codes in `BaseErrorCode`. The code identifies the failure programmatically, while the message explains it to humans.
+
+| Constant Name        | Message                                    |
+|----------------------|--------------------------------------------|
+| `EmailRequired`      | "The 'Email address' field is required."   |
+| `EmailNotValid`      | "'Email address' format is invalid."       |
+| `CurrencyRequired`   | "The 'Currency' field is required."        |
+| `CurrencyLength`     | "'Currency' must be exact 3 characters."   |
+| `CurrencyMismatch`   | "Currency mismatch"                        |
+| `PositiveMoney`      | "POSITIVE_MONEY"                           |
+| `SsnRequired`        | "The 'SSN' field is required."             |
+| `SsnLength`          | "'SSN' must be exact 10 characters."       |
+| `SsnNotValid`        | "'SSN' format is invalid."                 |
+
+> **Note:** There is no `EmailMaxLength` message constant — the maximum-length message is built dynamically by the `Email` value object because it interpolates the configured limit into the text.
 
 ### `HeaderParameters`
 

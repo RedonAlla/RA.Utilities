@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-		<Version>10.0.2</Version>
+		<Version>10.0.3</Version>
     <Title>RA Utilities Core Constants</Title>
 		<Description>Provides a centralized and consistent set of core constants for the RA.Utilities ecosystem, including response types, HTTP status codes, default response messages, and standard HTTP header names. Shared by the other RA.Utilities packages to eliminate magic strings and promote consistency, with zero dependencies.</Description>
 		<PackageTags>RA;Utilities;Core;Constants;HTTP;StatusCodes;Responses;Messages;Headers</PackageTags>

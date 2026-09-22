@@ -34,6 +34,7 @@ The primary goal of this package is to ensure consistency across different proje
 
 - **HTTP Status Codes** — `BaseResponseCode` provides named constants for all common HTTP status codes (200–504)
 - **Standardized Messages** — `BaseResponseMessages` delivers consistent, production-ready API response text
+- **Validation Error Codes & Messages** — `BaseErrorCode` and `BaseErrorMessage` standardize field-level validation failures (email, currency, money, SSN)
 - **Semantic Response Types** — `ResponseType` is an extensible type-safe enum pattern for API outcome classification
 - **HTTP Header Names** — `HeaderParameters` centralizes common header name strings for tracing, auth, and location
 - **Zero Dependencies** — No external package dependencies; pairs seamlessly with `RA.Utilities.Core.Exceptions`
@@ -64,7 +65,7 @@ Install-Package RA.Utilities.Core.Constants
 **PackageReference (csproj)**
 
 ```xml
-<PackageReference Include="RA.Utilities.Core.Constants" Version="10.0.2" />
+<PackageReference Include="RA.Utilities.Core.Constants" Version="10.0.3" />
 ```
 
 ### Hello World
@@ -87,18 +88,22 @@ No DI registration, no setup, no configuration. Just add the `using` directive a
 
 ## 🧠 Core Concepts
 
-The package provides four static classes, each serving a distinct role in your API layer:
+The package provides six constant classes, each serving a distinct role in your API layer:
 
 | Class | Role | Example |
 |---|---|---|
 | [`BaseResponseCode`](./BaseResponseCode) | HTTP status codes as `int` constants | `BaseResponseCode.NotFound` → `404` |
 | [`BaseResponseMessages`](./BaseResponseMessages) | Human-readable response messages as `string` constants | `BaseResponseMessages.NotFound` → `"The requested resource was not found."` |
+| [`BaseErrorCode`](./BaseErrorCode) | Machine-readable validation error codes as `string` constants | `BaseErrorCode.EmailRequired` → `"REQUIRED_EMAIL"` |
+| [`BaseErrorMessage`](./BaseErrorMessage) | Human-readable validation error messages as `string` constants | `BaseErrorMessage.EmailRequired` → `"The 'Email address' field is required."` |
 | [`ResponseType`](./ResponseType) | Semantic outcome labels using a type-safe enum pattern (`record`) | `ResponseType.NotFound` → `"NotFound"` |
 | [`HeaderParameters`](./HeaderParameters) | HTTP header name strings | `HeaderParameters.XRequestId` → `"x-request-id"` |
 
 ### How they work together
 
 `BaseResponseCode` and `BaseResponseMessages` handle the transport-level concerns (what HTTP code and what message), while `ResponseType` adds a machine-readable semantic label inside the JSON response body. `HeaderParameters` ensures header access is consistent across middleware, endpoints, and HTTP clients.
+
+`BaseErrorCode` and `BaseErrorMessage` operate one level deeper: they describe *why* a request was rejected at the field level. Each code/message pair (e.g., `BaseErrorCode.EmailRequired` + `BaseErrorMessage.EmailRequired`) populates a structured `ValidationError`, which the value objects in `RA.Utilities.Core.ValueObjects` throw and the `RA.Utilities.Api` middleware translates into standardized HTTP 400 responses.
 
 ```
 HTTP Response
@@ -178,6 +183,27 @@ public IActionResult GetTraceId()
     return BadRequest(BaseResponseMessages.BadRequest);
 }
 ```
+
+### Reject invalid input with a structured validation error
+
+```csharp showLineNumbers
+using RA.Utilities.Core.Constants;
+using RA.Utilities.Core.Exceptions;
+
+if (string.IsNullOrWhiteSpace(request.Email))
+{
+    // Pair the machine-readable code with its human-readable message
+    // highlight-next-line
+    throw new BadRequestException(new ValidationError(BaseErrorMessage.EmailRequired)
+    {
+        PropertyName = "Email",
+        // highlight-next-line
+        ErrorCode = BaseErrorCode.EmailRequired
+    });
+}
+```
+
+See [`BaseErrorCode`](./BaseErrorCode) and [`BaseErrorMessage`](./BaseErrorMessage) for the full catalog and the JSON shape these errors produce.
 
 ### Create a custom ResponseType
 
