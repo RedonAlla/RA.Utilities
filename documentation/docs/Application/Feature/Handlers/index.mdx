@@ -18,7 +18,7 @@ Inheriting from these base classes instead of implementing the interfaces direct
 - **Context support for free** — a protected virtual context-aware `HandleAsync` overload lets you consume [`PipelineContext<T>`](../Models/PipelineContext.md) data when you need it
 
 :::note
-Since v11.0.0 the base classes are **pure passthroughs**: they no longer take an `ILogger`, no longer log requests, and no longer catch exceptions. Failures are reported by **throwing** typed exceptions from `RA.Utilities.Core.Exceptions` (mapped to HTTP responses by the API layer's `GlobalExceptionHandler`). For request-level logging, register the [`LoggingBehavior`](../Behaviors/LoggingBehavior.md).
+Since v10.2.0 the base classes are **pure passthroughs**: they no longer take an `ILogger`, no longer log requests, and no longer catch exceptions. Failures are reported by **throwing** typed exceptions from `RA.Utilities.Core.Exceptions` (mapped to HTTP responses by the API layer's `GlobalExceptionHandler`). For request-level logging, register the [`LoggingBehavior`](../Behaviors/LoggingBehavior.md).
 :::
 
 ## 📦 Available Base Classes

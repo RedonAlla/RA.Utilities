@@ -4,7 +4,7 @@ title: Migration Guides
 
 # Migration Guides
 
-## v10.0.6 → v11.0.0
+## v10.0.6 → v10.2.0
 
 ### Breaking Changes:
 
@@ -21,7 +21,7 @@ The instance-based `IEndpoint` interface (`void MapEndpoint(IEndpointRouteBuilde
 
 ### What changed
 
-| Aspect | v10.0.6 | v11.0.0 |
+| Aspect | v10.0.6 | v10.2.0 |
 |---|---|---|
 | Endpoint contract | `IEndpoint` with `void MapEndpoint(IEndpointRouteBuilder)` | `IEndpoint` with `static abstract string GroupName` + `static abstract void MapEndpoint(RouteGroupBuilder)` |
 | Group definition | — | `IEndpointGroup` (new) |
@@ -42,7 +42,7 @@ public class ProductEndpoints : IEndpoint
     }
 }
 
-// ✅ v11.0.0
+// ✅ v10.2.0
 internal sealed class GetProductsEndpoint : IEndpoint
 {
     public static string GroupName => "Products";
@@ -78,7 +78,7 @@ builder.Services.AddEndpoints(typeof(Program).Assembly);
 var app = builder.Build();
 app.MapEndpoints();
 
-// ✅ v11.0.0
+// ✅ v10.2.0
 var app = builder.Build();
 app.MapEndpoints();
 ```

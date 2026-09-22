@@ -8,7 +8,7 @@ Namespace: RA.Utilities.Feature.Handlers
 
 `RequestHandler` is an abstract base class that implements the [`IRequestHandler`](../Abstractions/IRequestHandler.md) interface. It implements the interface's plumbing so derived handlers only override a single `HandleAsync` method with their business logic.
 
-Since v11.0.0 the base classes are pure passthroughs: **no exception-to-`Result` wrapping** (exceptions propagate to the caller), and no logger is required. Errors are reported by throwing typed exceptions from `RA.Utilities.Core.Exceptions`, which the API layer's `GlobalExceptionHandler` converts to HTTP responses.
+Since v10.2.0 the base classes are pure passthroughs: **no exception-to-`Result` wrapping** (exceptions propagate to the caller), and no logger is required. Errors are reported by throwing typed exceptions from `RA.Utilities.Core.Exceptions`, which the API layer's `GlobalExceptionHandler` converts to HTTP responses.
 
 ## 📦 Two Variants
 

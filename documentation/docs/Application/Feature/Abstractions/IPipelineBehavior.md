@@ -99,7 +99,7 @@ public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TReques
 }
 ```
 
-In this example, if validation fails, the handler is never executed, ensuring that your business logic only ever deals with valid data. Since v11.0.0 the pipeline is exception-based: behaviors return plain `Task<TResponse>` values (or `Task` for void requests) and signal failures by throwing typed exceptions — no `Result` wrapper involved.
+In this example, if validation fails, the handler is never executed, ensuring that your business logic only ever deals with valid data. Since v10.2.0 the pipeline is exception-based: behaviors return plain `Task<TResponse>` values (or `Task` for void requests) and signal failures by throwing typed exceptions — no `Result` wrapper involved.
 
 ## 🧠 Summary
 In summary, `IPipelineBehavior` is a fundamental pattern for building clean, maintainable, and robust applications by separating business logic from cross-cutting concerns.

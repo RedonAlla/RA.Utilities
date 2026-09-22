@@ -17,7 +17,7 @@ public static IServiceCollection AddMediator(this IServiceCollection services)
 }
 ```
 
-Since v11.0.0, a source generator shipped in the package emits a module initializer for every assembly containing `IRequestHandler<,>` / `IRequestHandler<>` / `INotificationHandler<>` implementations. Those initializers queue DI registrations (request handlers **scoped**, notification handlers **transient**) which `AddMediator()` then applies — that is why plain handlers need no explicit `AddFeature` / `AddNotification` call. See the [Auto Registration](../auto-registration) guide for the assembly-loading guarantee and diagnostics.
+Since v10.2.0 a source generator shipped in the package emits a module initializer for every assembly containing `IRequestHandler<,>` / `IRequestHandler<>` / `INotificationHandler<>` implementations. Those initializers queue DI registrations (request handlers **scoped**, notification handlers **transient**) which `AddMediator()` then applies — that is why plain handlers need no explicit `AddFeature` / `AddNotification` call. See the [Auto Registration](../auto-registration) guide for the assembly-loading guarantee and diagnostics.
 
 Since v11.1.0, the generator also emits the **`Mediator` implementation of `IMediator`** per assembly — the only mediator in the package. `AddMediator()` applies those registrations, so `IMediator` resolves to the generated implementation. See the [Generated Mediator](../generated-mediator) guide for the dispatch strategy and the message/handler diagnostics.
 

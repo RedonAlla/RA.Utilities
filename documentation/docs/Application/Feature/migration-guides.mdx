@@ -4,11 +4,11 @@ title: Migration Guides
 
 # Migration Guides
 
-## v10.x → v11.0.0
+## v10.x → v10.2.0
 
 ### 💥 Breaking Change: `Result` removed from the mediator contract — errors are now exceptions
 
-In 10.x, handlers and `Send` calls returned `Result` / `Result<T>`, and failures were expressed as failure results. In 11.0.0 the mediator contract is built on plain values and exceptions:
+In 10.x, handlers and `Send` calls returned `Result` / `Result<T>`, and failures were expressed as failure results. In 10.2.0 the mediator contract is built on plain values and exceptions:
 
 - Handlers return plain values — `Task<TResponse>` for request/response handlers, `Task` for void request handlers. `INotificationHandler<TNotification>` is unchanged (`Task`).
 - `IMediator.Send<TRequest, TResponse>` returns `Task<TResponse>`; `Send<TRequest>` (void) returns `Task`. Context overloads add a `PipelineContext<TContext>? context = null` parameter. `Publish` is unchanged.
@@ -18,7 +18,7 @@ In 10.x, handlers and `Send` calls returned `Result` / `Result<T>`, and failures
 
 ### Signature changes at a glance
 
-| Member | Before (10.x) | After (11.0.0) |
+| Member | Before (10.x) | After (10.2.0) |
 |---|---|---|
 | `IRequestHandler<TRequest, TResponse>.HandleAsync` | `Task<Result<TResponse>>` | `Task<TResponse>` |
 | `IRequestHandler<TRequest>.HandleAsync` (void) | `Task<Result>` | `Task` |
@@ -50,7 +50,7 @@ public class CreateProductHandler : RequestHandler<CreateProductCommand, Result<
 }
 ```
 
-**After (11.0.0):**
+**After (10.2.0):**
 
 ```csharp
 public record CreateProductCommand(string Name, decimal Price) : IRequest<int>;
@@ -82,7 +82,7 @@ public class DeleteProductHandler : RequestHandler<DeleteProductCommand>
 }
 ```
 
-**After (11.0.0):**
+**After (10.2.0):**
 
 ```csharp
 public class DeleteProductHandler : RequestHandler<DeleteProductCommand>
@@ -110,7 +110,7 @@ if (product is null)
     return new NotFoundException(nameof(Product), query.ProductId);
 ```
 
-**After (11.0.0):**
+**After (10.2.0):**
 
 ```csharp
 if (await _productRepository.DoesProductExistAsync(command.Name))
@@ -136,7 +136,7 @@ if (result.IsSuccess)
 return Results.Problem(...);
 ```
 
-**After (11.0.0):**
+**After (10.2.0):**
 
 ```csharp
 var product = await mediator.Send<GetProductQuery, Product>(query);
@@ -162,7 +162,7 @@ public class CreateProductHandler : RequestHandler<CreateProductCommand, Result<
     ...
 }
 
-// After (11.0.0): no logger parameter — throw typed exceptions instead
+// After (10.2.0): no logger parameter — throw typed exceptions instead
 public class CreateProductHandler : RequestHandler<CreateProductCommand, int>
 {
     public CreateProductHandler(IProductRepository repo) { }
@@ -185,7 +185,7 @@ builder.Services
     .AddValidator<CreateProductCommandValidator>();
 ```
 
-**After (11.0.0):**
+**After (10.2.0):**
 
 ```csharp
 builder.Services.AddMediator(); // registers IMediator + all handlers in the assembly
@@ -217,7 +217,7 @@ Auto-registration covers plain request and notification handlers only. Still reg
 
 ---
 
-> The guides below document earlier **10.x** versions of the package and show 10.x-era signatures (handlers returning `Result<T>`, explicit per-feature registration). When migrating to 11.0.0 follow the guide above.
+> The guides below document earlier **10.x** versions of the package and show 10.x-era signatures (handlers returning `Result<T>`, explicit per-feature registration). When migrating to 10.2.0 follow the guide above.
 
 ## v10.0.1 → v10.1.0
 

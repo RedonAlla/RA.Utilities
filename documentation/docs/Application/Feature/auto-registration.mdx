@@ -5,7 +5,7 @@ sidebar_position: 91
 
 # Auto Registration
 
-Starting with v11.0.0, handlers no longer need to be registered one by one.
+Starting with v10.2.0 handlers no longer need to be registered one by one.
 A **source generator** shipped inside the `RA.Utilities.Feature` NuGet package discovers handler and behavior implementations at compile time and emits the registration code for you — plain handlers are wired up with nothing more than `services.AddMediator()`, and since v11.1.0 closed pipeline behaviors are too.
 
 ## 🎯 How It Works

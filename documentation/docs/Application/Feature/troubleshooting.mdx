@@ -9,7 +9,7 @@ sidebar_position: 99
 
 ### `Send<TRequest, TResponse>()` throws `InvalidOperationException: No handler registered`
 
-**Cause**: No `IRequestHandler<TRequest, TResponse>` (or `IRequestHandler<TRequest>`) was registered when the request was sent. Since v11.0.0 handlers are auto-registered by the source generator, so the usual culprits are:
+**Cause**: No `IRequestHandler<TRequest, TResponse>` (or `IRequestHandler<TRequest>`) was registered when the request was sent. Since v10.2.0 handlers are auto-registered by the source generator, so the usual culprits are:
 
 1. `AddMediator()` was never called — it applies the generator's registrations to the service collection.
 2. The handler lives in a **class library that loads lazily** — auto-registration only covers the assembly that calls `AddMediator()` plus any assembly loaded before that call (see the [Auto Registration](auto-registration) guide).
@@ -37,7 +37,7 @@ Also verify that `CreateProductCommand` implements `IRequest<int>` — the `TRes
 
 **Cause**: The abstract method on `RequestHandler<TRequest, TResponse>` returns `Task<TResponse>` where `TResponse` is the **plain response type**. If you carried the v10-era `Result<T>` wrapper into the base type, the signature no longer matches.
 
-**Fix**: Since v11.0.0, `TResponse` is your plain return type — return the value directly and throw typed exceptions on failure:
+**Fix**: Since v10.2.0 `TResponse` is your plain return type — return the value directly and throw typed exceptions on failure:
 
 ```csharp
 // ❌ Wrong (v10-era) — Result<int> was the response type; exceptions were returned as failures
@@ -132,7 +132,7 @@ Also verify that `AddMediator()` was called before publishing — it is the call
 
 ### No request logging appears — the `RequestHandler` base class doesn't log anymore
 
-**Cause**: Since v11.0.0 the `RequestHandler` base classes are pure passthroughs — they no longer accept an `ILogger`, no longer log request start/finish, and no longer catch exceptions.
+**Cause**: Since v10.2.0 the `RequestHandler` base classes are pure passthroughs — they no longer accept an `ILogger`, no longer log request start/finish, and no longer catch exceptions.
 
 **Fix**: Register the `LoggingBehavior` on the feature when you want request logging. It logs the request and the response (or just the request, for the no-response variant):
 
@@ -275,11 +275,11 @@ public class CreateProductHandler : RequestHandler<CreateProductCommand, int>
 
 ### Do I need to call `AddMediator()` before `AddFeature()`?
 
-No — `AddMediator()` and the `AddFeature`/`AddNotification` registrations can be called in any order, because they all target the same `IServiceCollection`. But note that since v11.0.0 `AddMediator()` is the call that **applies the generator's auto-registrations**: module initializers only queue handler registrations, and `AddMediator()` applies the queue. If `AddMediator()` is never called, `Send` and `Publish` fail at runtime (no `IMediator`, and no auto-registered handlers).
+No — `AddMediator()` and the `AddFeature`/`AddNotification` registrations can be called in any order, because they all target the same `IServiceCollection`. But note that since v10.2.0 `AddMediator()` is the call that **applies the generator's auto-registrations**: module initializers only queue handler registrations, and `AddMediator()` applies the queue. If `AddMediator()` is never called, `Send` and `Publish` fail at runtime (no `IMediator`, and no auto-registered handlers).
 
 ### Can I use this without the fluent builder?
 
-Yes, but it's more verbose — and since v11.0.0 plain handlers don't need the builder at all (the source generator registers them when `AddMediator()` is called). The fluent builder remains the convenient way to register behaviors and validators, and it is syntactic sugar over standard DI registrations:
+Yes, but it's more verbose — and since v10.2.0 plain handlers don't need the builder at all (the source generator registers them when `AddMediator()` is called). The fluent builder remains the convenient way to register behaviors and validators, and it is syntactic sugar over standard DI registrations:
 
 ```csharp
 // Fluent builder (recommended)
@@ -295,7 +295,7 @@ builder.Services.AddTransient<IPipelineBehavior<CreateProductCommand, int>, Vali
 
 ### How do I unit test a handler that inherits from `RequestHandler`?
 
-Test the public `HandleAsync` method directly — it's the one the mediator calls. Since v11.0.0 the method returns the value (or throws), so assert on the value or on the thrown exception — there is no `Result` to unwrap and the base class performs no logging or catching of its own:
+Test the public `HandleAsync` method directly — it's the one the mediator calls. Since v10.2.0 the method returns the value (or throws), so assert on the value or on the thrown exception — there is no `Result` to unwrap and the base class performs no logging or catching of its own:
 
 ```csharp
 [Fact]
