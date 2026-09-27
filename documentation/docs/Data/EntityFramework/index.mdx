@@ -26,10 +26,10 @@ It uses Entity Framework Core to build a ready-to-use, generic data access layer
 In short, it's the "engine" that connects your application's abstract data access patterns (like the Repository and Unit of Work) to a real database using EF Core.
 
 ## 🔑 Key Components and Benefits
-Tis package accelerates the setup of a data access layer by providing several key components:
+This package accelerates the setup of a data access layer by providing several key components:
 
 #### 1. Generic Repository Implementations:
-* **[`RepositoryBase<T>`](./ReadRepositoryBase.md)**: A full implementation of [`IRepositoryBase<T>`](../Abstractions/IReadRepositoryBase.md) that provides complete CRUD (`Create`, `Read`, `Update`, `Delete`) functionality out of the box.
+* **[`RepositoryBase<T>`](./RepositoryBase.md)**: A full implementation of [`IRepositoryBase<T>`](../Abstractions/IRepositoryBase.md) that provides complete CRUD (`Create`, `Read`, `Update`, `Delete`) functionality out of the box.
 * **[`ReadRepositoryBase<T>`](./ReadRepositoryBase.md)**: A read-only repository that is optimized for querying data. It uses `AsNoTracking()` by default for better performance, which is ideal for CQS (Command Query Separation) patterns.
 * **[`WriteRepositoryBase<T>`](./WriteRepositoryBase.md)**: A write-only repository for command operations (`Add`, `Update`, `Delete`).
 
@@ -41,7 +41,7 @@ This package is a crucial part of the `RA.Utilities` ecosystem.
 It sits in the **Infrastructure/Data Layer** and depends on:
 
 * **[`RA.Utilities.Data.Abstractions`](../Abstractions/index.mdx)**:
-It implements the interfaces ([`IRepositoryBase`](../Abstractions/IReadRepositoryBase.md), etc.) from this package.
+It implements the interfaces ([`IRepositoryBase<T>`](../Abstractions/IRepositoryBase.md), [`IReadRepositoryBase<T>`](../Abstractions/IReadRepositoryBase.md), [`IWriteRepositoryBase<T>`](../Abstractions/IWriteRepositoryBase.md)) from this package.
 * **[`RA.Utilities.Data.Entities`](../Entities/index.mdx)**: It works with the entity base classes defined in this package.
 
 By using this package, you can avoid writing repetitive data access code and focus on your application's business logic,
@@ -59,9 +59,13 @@ This makes your code more decoupled, maintainable, and easier to test.
 ## ⭕️ Core Components
 The package offers several key components to achieve this:
 
-* **[`RepositoryBase<T>`](../EntityFramework/RepositoryBase.md)**: A full generic repository with both read and write functionality.
-* **[`ReadRepositoryBase<T>`](../EntityFramework/ReadRepositoryBase.md)**: A read-only version optimized for performance (`AsNoTracking()`), ideal for query operations in a CQRS architecture.
-* **[`WriteRepositoryBase<T>`](../EntityFramework/WriteRepositoryBase.md)`**: A write-only version for add, update, and delete operations.
+* **[`RepositoryBase<T>`](./RepositoryBase.md)**: A full generic repository with both read and write functionality.
+* **[`ReadRepositoryBase<T>`](./ReadRepositoryBase.md)**: A read-only version optimized for performance (`AsNoTracking()`), ideal for query operations in a CQRS architecture.
+* **[`WriteRepositoryBase<T>`](./WriteRepositoryBase.md)**: A write-only version for add, update, and delete operations.
+* **[`BaseEntitySaveChangesInterceptor`](./Interceptors/BaseEntitySaveChangesInterceptor.md)**: A `SaveChanges` interceptor that automatically maintains timestamp properties (`CreatedAt`, `LastModifiedAt`) on entities that expose them.
+* **[`DependencyInjectionExtensions`](./Extensions/DependencyInjectionExtensions.md)**: One-line registration extensions (`AddRepositoryBase()`, `AddReadRepositoryBase()`, `AddWriteRepositoryBase()`).
+
+All repository implementations constrain their entity type to any reference type implementing the `IEntity` marker interface (`where T : class, IEntity`).
 
 By using this package, you can quickly set up a robust and well-architected data access layer for your .NET applications.
 
@@ -81,7 +85,8 @@ Install-Package RA.Utilities.Data.EntityFramework
 
 ## 🔗 Dependencies
 
--   **[`RA.Utilities.Data.Abstractions`](../Abstractions/index.mdx)**: Provides the core interfaces (`IRepository<T>`, `IUnitOfWork`, etc.) that this package implements.
+-   **[`RA.Utilities.Data.Abstractions`](../Abstractions/index.mdx)** (10.0.3 or later): Provides the core interfaces (`IRepositoryBase<T>`, `IReadRepositoryBase<T>`, `IWriteRepositoryBase<T>`, `IUnitOfWork`) that this package implements.
+-   **[`RA.Utilities.Data.Entities`](../Entities/index.mdx)** (10.1.1 or later, transitively via the abstractions): Provides the `IEntity` marker interface that the repository type parameters constrain to.
 -   **[`Microsoft.EntityFrameworkCore`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.entityframeworkcore)**: The underlying ORM used for the implementations.
 
 

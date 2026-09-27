@@ -6,7 +6,7 @@ namespace RA.Utilities.Data.Entities;
 /// Represents the base class for all entities, providing a unique identifier.
 /// </summary>
 /// <typeparam name="TKey">The type of the unique identifier.</typeparam>
-public abstract class CoreEntity<TKey>
+public abstract class CoreEntity<TKey> : IEntity
 {
     /// <summary>
     /// Gets the unique identifier for the entity.

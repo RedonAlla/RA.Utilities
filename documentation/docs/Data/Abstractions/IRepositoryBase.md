@@ -24,12 +24,14 @@ namespace RA.Utilities.Data.Abstractions;
 /// <summary>
 /// Defines a base interface for both read and write repository operations on entities.
 /// </summary>
-/// <typeparam name="T">The type of the entity.</typeparam>
-public interface IRepositoryBase<T> : IReadRepositoryBase<T>, IWriteRepositoryBase<T> where T : BaseEntity
+/// <typeparam name="T">The type of the entity. Must implement <see cref="IEntity"/>.</typeparam>
+public interface IRepositoryBase<T> : IReadRepositoryBase<T>, IWriteRepositoryBase<T> where T : IEntity
 {
 
 }
 ```
+
+The type parameter is constrained to the [`IEntity`](../Entities/IEntity.md) marker interface, so entities built on the [`CoreEntity<TKey>`](../Entities/CoreEntity.md) hierarchy — or any custom entity that implements `IEntity` directly — can be used.
 
 ## Why is this useful?
 This design supports the **Command Query Separation (CQS)** principle by providing separate `IReadRepositoryBase` and `IWriteRepositoryBase` interfaces.

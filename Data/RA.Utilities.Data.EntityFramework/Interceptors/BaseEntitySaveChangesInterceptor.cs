@@ -9,10 +9,15 @@ using RA.Utilities.Data.Entities;
 namespace RA.Utilities.Data.EntityFramework.Interceptors;
 
 /// <summary>
-/// Intercepts SaveChanges operations to automatically update BaseEntity properties like CreatedAt and LastModifiedAt.
+/// Intercepts SaveChanges operations to automatically update timestamp properties like
+/// <see cref="BaseEntity{TKey}.CreatedAt"/> and <see cref="WriteEntity{TKey}.LastModifiedAt"/>
+/// on entities derived from <see cref="BaseEntity{TKey}"/> or <see cref="WriteEntity{TKey}"/>.
 /// </summary>
 public class BaseEntitySaveChangesInterceptor : SaveChangesInterceptor
 {
+    private const string CreatedAtProperty = nameof(BaseEntity<>.CreatedAt);
+    private const string LastModifiedAtProperty = nameof(WriteEntity<>.LastModifiedAt);
+
     /// <inheritdoc/>
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
     {
@@ -38,16 +43,17 @@ public class BaseEntitySaveChangesInterceptor : SaveChangesInterceptor
             return;
         }
 
-        foreach (EntityEntry<BaseEntity> entry in context.ChangeTracker.Entries<BaseEntity>())
+        foreach (EntityEntry entry in context.ChangeTracker.Entries())
         {
-            if (entry.State is EntityState.Added)
+
+            if (entry.State is EntityState.Added && entry.Metadata.FindProperty(CreatedAtProperty) is not null)
             {
-                entry.Entity.CreatedAt = DateTime.UtcNow;
+                entry.Property(CreatedAtProperty).CurrentValue = DateTime.UtcNow;
             }
 
-            if (entry.State is EntityState.Modified)
+            if (entry.State is EntityState.Modified && entry.Metadata.FindProperty(LastModifiedAtProperty) is not null)
             {
-                entry.Entity.LastModifiedAt = DateTime.UtcNow;
+                entry.Property(LastModifiedAtProperty).CurrentValue = DateTime.UtcNow;
             }
         }
     }

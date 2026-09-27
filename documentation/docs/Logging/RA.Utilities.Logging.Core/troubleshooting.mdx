@@ -12,8 +12,9 @@ title: Troubleshooting & FAQ
 
 **Fix**: Upgrade to v10.0.1, where the enricher resolves `HttpContext` lazily on each `Enrich()` call. Also verify that:
 
-1. `AddLoggingWithConfiguration()` is called in `Program.cs` (it registers the enricher and `IHttpContextAccessor`).
-2. Your client or upstream proxy sends the `x-request-id` header.
+1. The enricher is activated through the `Serilog` → `Enrich` configuration or `.Enrich.WithRequestIdEnricher()`.
+2. `builder.Services.AddHttpContextAccessor()` is called in `Program.cs`.
+3. Your client or upstream proxy sends the `x-request-id` header.
 
 If you need the `XRequestId` property even without the header, the enricher cannot fabricate one — consider setting the header in your own middleware before the log event is emitted.
 
@@ -86,16 +87,21 @@ string traceId = Activity.Current?.GetActivityId(); // may be a random GUID
 string? traceId = Activity.Current?.GetActivityId(); // null when no trace context
 ```
 
-### `IHttpContextAccessor` is not registered — enricher throws NullReferenceException
+### `RequestIdEnricher` does not see an HTTP context
 
-**Cause**: The `RequestIdEnricher` depends on `IHttpContextAccessor`. If you're registering the enricher manually (not via `AddLoggingWithConfiguration`), the accessor may not be in the DI container.
+**Cause**: `AddLoggingWithConfiguration()` no longer registers `IHttpContextAccessor` automatically as of v10.1.0. The enricher is null-safe, so it does not throw; without an HTTP context, `XRequestId` is omitted and `TraceId` is only added when `Activity.Current` is available.
 
-**Fix Option 1** — Use `AddLoggingWithConfiguration()` which registers the accessor automatically.
-
-**Fix Option 2** — Register it manually if you're configuring Serilog by hand:
+**Fix** — Register the accessor yourself whenever you activate the enricher, whether through configuration or the fluent extension:
 
 ```csharp
-builder.Services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+builder.Services.AddHttpContextAccessor();
+builder.AddLoggingWithConfiguration();
+```
+
+For manual Serilog configuration, keep the same service registration before building the application:
+
+```csharp
+builder.Services.AddHttpContextAccessor();
 
 Log.Logger = new LoggerConfiguration()
     .Enrich.WithRequestIdEnricher()

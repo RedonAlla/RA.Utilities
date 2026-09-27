@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,24 +8,24 @@ using RA.Utilities.Data.Entities;
 namespace RA.Utilities.Data.EntityFramework;
 
 /// <summary>
-/// RepositoryBase combines read and write capabilities by reusing ReadRepositoryBase and WriteRepositoryBase.
-/// It inherits read behavior and delegates write operations to an internal write base instance.
 /// A generic repository that provides both read and write operations for an entity.
-/// It inherits from <see cref="WriteRepositoryBase{T}"/>, which provides the write logic,
-/// which in turn inherits from <see cref="ReadRepositoryBase{T}"/> for read logic.
+/// It inherits read behavior from <see cref="ReadRepositoryBase{T, TKey}"/> and delegates
+/// write operations to an internal <see cref="WriteRepositoryBase{T, TKey}"/> instance.
 /// </summary>
-/// <typeparam name="T">Entity type (must inherit BaseEntity).</typeparam>
-public class RepositoryBase<T> : ReadRepositoryBase<T>, IRepositoryBase<T>
-    where T : CoreEntity
+/// <typeparam name="T">Entity type (must inherit from <see cref="CoreEntity{TKey}"/>).</typeparam>
+/// <typeparam name="TKey">The type of the entity's unique identifier.</typeparam>
+public class RepositoryBase<T, TKey> : ReadRepositoryBase<T, TKey>, IRepositoryBase<T, TKey>
+    where T : CoreEntity<TKey>
+    where TKey : notnull
 {
-    private readonly WriteRepositoryBase<T> _writeRepository;
+    private readonly WriteRepositoryBase<T, TKey> _writeRepository;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="RepositoryBase{T}"/> class.
+    /// Initializes a new instance of the <see cref="RepositoryBase{T, TKey}"/> class.
     /// </summary>
     public RepositoryBase(DbContext dbContext) : base(dbContext)
     {
-        _writeRepository = new WriteRepositoryBase<T>(dbContext);
+        _writeRepository = new WriteRepositoryBase<T, TKey>(dbContext);
     }
 
     #region IWriteRepositoryBase Implementation (delegated)
@@ -48,11 +47,11 @@ public class RepositoryBase<T> : ReadRepositoryBase<T>, IRepositoryBase<T>
         => _writeRepository.UpdateRangeAsync(entities, cancellationToken);
 
     /// <inheritdoc/>
-    public virtual Task DeleteAsync<TId>(TId id, CancellationToken cancellationToken = default) where TId : notnull
+    public virtual Task DeleteAsync(TKey id, CancellationToken cancellationToken = default)
         => _writeRepository.DeleteAsync(id, cancellationToken);
 
     /// <inheritdoc/>
-    public virtual Task<int> DeleteRangeAsync(List<Guid> ids, CancellationToken cancellationToken = default)
+    public virtual Task<int> DeleteRangeAsync(IEnumerable<TKey> ids, CancellationToken cancellationToken = default)
         => _writeRepository.DeleteRangeAsync(ids, cancellationToken);
 
     /// <inheritdoc/>

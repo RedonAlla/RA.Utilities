@@ -1,6 +1,6 @@
 ---
 title: Troubleshooting & FAQ
-sidebar_position: 8
+sidebar_position: 9
 sidebar_class_name: nav_session ra_utilities_data_entity
 ---
 
@@ -88,6 +88,17 @@ services.AddDbContext<AppDbContext>((sp, options) =>
     options.UseSqlServer(connectionString)
            .AddInterceptors(new BaseEntitySaveChangesInterceptor());
 });
+```
+
+### Do my entities have to inherit from `CoreEntity<TKey>`?
+
+**Answer**: Only if you want the built-in `Id` and timestamp plumbing. The root contract of the hierarchy is the [`IEntity`](./IEntity.md) marker interface — since v10.1.1 every base class implements it, and the repository abstractions in `RA.Utilities.Data.Abstractions` constrain to `where T : IEntity`. A custom entity that does not fit the base-class hierarchy can implement `IEntity` directly and still be used with those repositories:
+
+```csharp showLineNumbers
+public class LegacyRecord : IEntity
+{
+    public long Id { get; set; }
+}
 ```
 
 ---

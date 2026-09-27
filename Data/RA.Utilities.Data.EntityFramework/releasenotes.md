@@ -1,5 +1,35 @@
 # Release Notes for RA.Utilities.Data.EntityFramework
 
+## Version 10.0.2
+![Date Badge](https://img.shields.io/badge/Publish-27%20September%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.2-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.EntityFramework/10.0.2)
+
+This release aligns the repository implementations with the `IEntity` marker interface introduced in `RA.Utilities.Data.Entities` 10.1.1, reworks the delete operations, and fixes timestamp handling in the save-changes interceptor.
+
+### ✨ Enhancements
+* ⁠Change the generic type constraint to the `IEntity` marker interface in all repository implementations. The `class` constraint is kept because EF Core's `DbSet<T>` requires reference types.
+
+```csharp
++ public class RepositoryBase<T> : ReadRepositoryBase<T>, IRepositoryBase<T> where T : class, IEntity
+- public class RepositoryBase<T> : ReadRepositoryBase<T>, IRepositoryBase<T> where T : CoreEntity
+
++ public class ReadRepositoryBase<T> : IReadRepositoryBase<T> where T : class, IEntity
+- public class ReadRepositoryBase<T> : IReadRepositoryBase<T> where T : CoreEntity
+
++ public class WriteRepositoryBase<T> : IWriteRepositoryBase<T> where T : class, IEntity
+- public class WriteRepositoryBase<T> : IWriteRepositoryBase<T> where T : CoreEntity
+```
+
+### 🔄 Behavior Changes
+* `DeleteAsync` and `DeleteRangeAsync` now mark entities for deletion in the change tracker instead of deleting them immediately. The deletion is persisted when `SaveChangesAsync` (or the unit of work) is called, so it participates in the same transaction as any other pending changes. Previously, the delete statement executed immediately.
+* `DeleteRangeAsync` accepts a `List<Guid>` of keys and returns the number of entities that were found and marked for deletion.
+
+### 🐛 Bug Fixes
+* `BaseEntitySaveChangesInterceptor` now detects timestamp properties through EF Core model metadata instead of a typed `Entries<BaseEntity>()` scan. As a result, the `LastModifiedAt` property of `WriteEntity<TKey>` descendants is now updated correctly (previously it was never set).
+
+### 📦 Dependencies
+* Requires `RA.Utilities.Data.Abstractions` **10.0.3** and `RA.Utilities.Data.Entities` **10.1.1** or later.
+
 ## Version 10.0.1
 ![Date Badge](https://img.shields.io/badge/Publish-14%20December%202025-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.EntityFramework/10.0.1)

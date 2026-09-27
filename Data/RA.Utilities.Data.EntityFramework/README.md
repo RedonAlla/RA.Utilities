@@ -12,7 +12,7 @@ This package provides concrete implementations of the repository and unit of wor
 * **Generic Repository Implementations**: Provides ready-to-use base classes for repository patterns, saving you from writing boilerplate CRUD (Create, Read, Update, Delete) code.
 * **Command Query Separation (CQS)**: Offers distinct `ReadRepositoryBase<T>` and `WriteRepositoryBase<T>` classes to help you build a clean architecture where read and write operations are separated.
 * **Performance-Optimized Queries**: The `ReadRepositoryBase<T>` uses `AsNoTracking()` by default for more efficient data retrieval.
-* **Automatic Timestamping**: Includes a `BaseEntitySaveChangesInterceptor` that automatically sets `CreatedAt` and `LastModifiedAt` properties on your entities when they are saved.
+* **Automatic Timestamping**: Includes a `BaseEntitySaveChangesInterceptor` that automatically sets the `CreatedAt` and `LastModifiedAt` properties on entities that expose them (the `BaseEntity<TKey>` and `WriteEntity<TKey>` base classes) when they are saved.
 * **Simplified Dependency Injection**: Provides extension methods to register your repositories with a single line of code in `Program.cs`.
 
 ## Installation
@@ -36,7 +36,7 @@ This package provides concrete implementations for the interfaces defined in `RA
 * **`WriteRepositoryBase<T>`**: A write-only repository implementing `IWriteRepositoryBase<T>`. It is designed for "Command" operations like adding, updating, and deleting entities.
 
 ### Interceptors
-* **`BaseEntitySaveChangesInterceptor`**: An Entity Framework Core interceptor that automatically populates timestamp properties (`CreatedAt`, `LastModifiedAt`) on entities inheriting from `BaseEntity` before changes are saved to the database. This ensures consistent and accurate auditing without manual intervention.
+* **`BaseEntitySaveChangesInterceptor`**: An Entity Framework Core interceptor that automatically populates timestamp properties (`CreatedAt`, `LastModifiedAt`) on entities exposing them (the `BaseEntity<TKey>` and `WriteEntity<TKey>` base classes) before changes are saved to the database. This ensures consistent and accurate auditing without manual intervention.
 
 ### Dependency Injection Extensions
 
@@ -100,13 +100,16 @@ public interface IProductRepository : IRepositoryBase<Product>
 
 public class ProductRepository : RepositoryBase<Product>, IProductRepository
 {
+    private readonly ApplicationDbContext _dbContext;
+
     public ProductRepository(ApplicationDbContext dbContext) : base(dbContext)
     {
+        _dbContext = dbContext;
     }
 
     public async Task<Product?> GetProductByNameAsync(string name)
     {
-        return await _dbSet.FirstOrDefaultAsync(p => p.Name == name);
+        return await _dbContext.Products.FirstOrDefaultAsync(p => p.Name == name);
     }
 }
 ```
@@ -136,6 +139,9 @@ public class ProductService
         
         // The BaseEntitySaveChangesInterceptor will automatically set CreatedAt
         await _productRepository.AddAsync(newProduct);
+
+        // Write operations are only persisted when SaveChangesAsync is called.
+        await _productRepository.SaveChangesAsync();
     }
 }
 ```

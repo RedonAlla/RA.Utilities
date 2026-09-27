@@ -13,14 +13,16 @@ namespace RA.Utilities.Data.EntityFramework;
 /// Provides a generic base implementation for write-only repository operations on entities using Entity Framework Core.
 /// </summary>
 /// <typeparam name="T">The type of the entity.</typeparam>
-public class WriteRepositoryBase<T> : IWriteRepositoryBase<T>
-    where T : CoreEntity
+/// <typeparam name="TKey">The type of the entity's unique identifier.</typeparam>
+public class WriteRepositoryBase<T, TKey> : IWriteRepositoryBase<T, TKey>
+    where T : CoreEntity<TKey>
+    where TKey : notnull
 {
     private readonly DbContext _dbContext;
     private readonly DbSet<T> _dbSet;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="WriteRepositoryBase{T}"/> class.
+    /// Initializes a new instance of the <see cref="WriteRepositoryBase{T, TKey}"/> class.
     /// </summary>
     /// <param name="dbContext">The database context to be used by the repository.</param>
     public WriteRepositoryBase(DbContext dbContext)
@@ -32,7 +34,7 @@ public class WriteRepositoryBase<T> : IWriteRepositoryBase<T>
     /// <inheritdoc />
     public virtual async Task<T> AddAsync(T entity, CancellationToken cancellationToken = default)
     {
-        await _dbSet.AddAsync(entity, cancellationToken);
+        await _dbSet.AddAsync(entity, cancellationToken).ConfigureAwait(false);
         return entity;
     }
 
@@ -59,16 +61,25 @@ public class WriteRepositoryBase<T> : IWriteRepositoryBase<T>
     }
 
     /// <inheritdoc />
-    public virtual async Task DeleteAsync<TId>(TId id, CancellationToken cancellationToken = default) where TId : notnull
+    public virtual async Task DeleteAsync(TKey id, CancellationToken cancellationToken = default)
     {
-        _ = await _dbSet.Where(e => e.Id.Equals(id)).ExecuteDeleteAsync(cancellationToken);
+        T? entity = await _dbSet.FindAsync([id], cancellationToken);
+        if (entity is not null)
+        {
+            _dbSet.Remove(entity);
+        }
     }
 
     /// <inheritdoc />
-    public virtual async Task<int> DeleteRangeAsync(List<Guid> ids, CancellationToken cancellationToken = default)
+    public virtual async Task<int> DeleteRangeAsync(IEnumerable<TKey> ids, CancellationToken cancellationToken = default)
     {
-        _ = await _dbSet.Where(e => ids.Contains(e.Id)).ExecuteDeleteAsync(cancellationToken);
-        return ids.Count;
+        List<T> entities = await _dbSet
+            .Where(e => ids.Contains(e.Id))
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        _dbSet.RemoveRange(entities);
+        return entities.Count;
     }
 
     /// <inheritdoc />

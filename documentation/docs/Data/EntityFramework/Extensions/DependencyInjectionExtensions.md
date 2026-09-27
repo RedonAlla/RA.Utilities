@@ -30,6 +30,8 @@ This approach has several key benefits:
 ## ✨ Available Extension Methods
 The class provides three distinct methods to support different architectural needs, such as **Command Query Separation (CQS)**:
 
+The registrations are open-generic, so the repositories work for any entity type `T` that is a reference type implementing the [`IEntity`](../../Entities/IEntity.md) marker interface.
+
 1. **`AddReadRepositoryBase()`**:
 Registers the generic, read-only repository ([`IReadRepositoryBase<>`](../../Abstractions/IReadRepositoryBase.md) and [`ReadRepositoryBase<>`](../../EntityFramework/ReadRepositoryBase.md)).
 This is ideal for services that only need to query data.

@@ -42,7 +42,7 @@ This improves the overall consistency and readability of the architecture.
 In this specific project, you can see it being used by `IReadRepositoryBase<T>`, which means any interface that inherits from `IReadRepositoryBase<T>` (like `IRepositoryBase<T>`) is also marked as an `IRepository`.
 
 ```csharp
-public interface IReadRepositoryBase<T> : IRepository where T : notnull, CoreEntity
+public interface IReadRepositoryBase<T> : IRepository where T : notnull, IEntity
 {
     // ... read methods
 }

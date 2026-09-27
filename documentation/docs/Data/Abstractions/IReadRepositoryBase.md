@@ -42,7 +42,7 @@ It's the most direct way to fetch a specific record when you know its ID.
 | Parameter         | Type                | Description                                                              |
 | :---------------- | :------------------ | :----------------------------------------------------------------------- |
 | `id`              | `TId`               | The unique identifier of the entity to retrieve.                         |
-| `cancellationToken` | `CancellationToken` | (Optional) A token to observe while waiting for the task to complete. ß |
+| `cancellationToken` | `CancellationToken` | (Optional) A token to observe while waiting for the task to complete. |
 
 #### Example
 

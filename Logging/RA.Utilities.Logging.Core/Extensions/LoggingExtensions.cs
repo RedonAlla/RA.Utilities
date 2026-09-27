@@ -2,7 +2,6 @@ using System;
 using Destructurama;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using RA.Utilities.Logging.Core.Enrichers;
 using Serilog;
 using Serilog.Configuration;
@@ -35,11 +34,11 @@ public static class LoggingExtensions
     /// This extension method configures Serilog by:
     /// <list type="bullet">
     /// <item><description>Reading logging configuration from the application's <see cref="Microsoft.Extensions.Configuration.IConfiguration"/>.</description></item>
-    /// <item><description>Enriching logs with a request ID using <see cref="WithRequestIdEnricher"/>.</description></item>
     /// <item><description>Enriching logs with detailed exception information.</description></item>
     /// <item><description>Enabling destructuring of System.Text.Json types.</description></item>
-    /// <item><description>Ensuring <see cref="IHttpContextAccessor"/> is registered as a singleton service, which is required by <see cref="RequestIdEnricher"/>.</description></item>
     /// </list>
+    /// If the <see cref="RequestIdEnricher"/> is activated through the logging configuration (for example via <see cref="WithRequestIdEnricher"/>),
+    /// register <see cref="IHttpContextAccessor"/> yourself, for example with <c>builder.Services.AddHttpContextAccessor()</c>.
     /// </remarks>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="builder"/> is <c>null</c>.</exception>
     public static void AddLoggingWithConfiguration(this WebApplicationBuilder builder)
@@ -51,7 +50,5 @@ public static class LoggingExtensions
                         .Enrich.WithExceptionDetails()
                         .Destructure.SystemTextJsonTypes()
         );
-
-        builder.Services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
     }
 }

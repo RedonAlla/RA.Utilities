@@ -11,6 +11,8 @@ It helps solve the problem of boilerplate and inconsistency in data models by pr
 
 The primary goal is to promote consistency, type safety, and code reuse when creating data entities for use with an ORM like Entity Framework Core.
 
+The hierarchy is rooted at the `IEntity` marker interface, a memberless contract implemented by every base class. Generic abstractions — such as the repository contracts in `RA.Utilities.Data.Abstractions` — constrain to `where T : IEntity`, so even custom entities outside the base-class hierarchy remain usable.
+
 ## Getting started
 
 You can install the package via the .NET CLI:
@@ -26,21 +28,25 @@ Or through the NuGet Package Manager in Visual Studio.
 The package provides a clear inheritance hierarchy for your entities, supporting any primary key type (`Guid`, `int`, `long`, `string`, etc.) via the generic parameter `TKey`.
 
 ```
-CoreEntity<TKey>
-├── BaseEntity<TKey>
-└── WriteEntity<TKey>
-    ├── SoftDeleteEntity<TKey>
-    └── AuditableBaseEntity<TKey>
+IEntity (marker)
+└── CoreEntity<TKey>
+    ├── BaseEntity<TKey>
+    └── WriteEntity<TKey>
+        ├── SoftDeleteEntity<TKey>
+        └── AuditableBaseEntity<TKey>
 ```
 
-### 1. CoreEntity&lt;TKey&gt;
-The root abstract class for all entities. It provides a strongly typed unique identifier.
+### 1. IEntity
+The marker interface at the root of the hierarchy. It defines no members; its purpose is to give generic abstractions (such as the repository contracts in `RA.Utilities.Data.Abstractions`) a common constraint for "any entity".
+
+### 2. CoreEntity&lt;TKey&gt;
+The root abstract class for all entities. It implements `IEntity` and provides a strongly typed unique identifier.
 
 | Property | Type | Description |
 | -------- | ---- | ----------- |
 | `Id` | `TKey` | A virtual property for the entity's unique identifier. |
 
-### 2. BaseEntity&lt;TKey&gt;
+### 3. BaseEntity&lt;TKey&gt;
 Inherits from `CoreEntity<TKey>` and adds creation timestamp tracking. This is ideal for immutable, append-only, or event log entities.
 
 | Property | Type | Description | Source |
@@ -48,7 +54,7 @@ Inherits from `CoreEntity<TKey>` and adds creation timestamp tracking. This is i
 | `Id` | `TKey` | The unique identifier for the entity. | Inherited from `CoreEntity<TKey>` |
 | `CreatedAt` | `DateTime` | The date and time when the entity was created. | Defined in `BaseEntity<TKey>` |
 
-### 3. WriteEntity&lt;TKey&gt;
+### 4. WriteEntity&lt;TKey&gt;
 Inherits from `CoreEntity<TKey>` and adds both creation and modification timestamps. This is the recommended starting point for standard mutable entities.
 
 | Property | Type | Description | Source |
@@ -57,7 +63,7 @@ Inherits from `CoreEntity<TKey>` and adds both creation and modification timesta
 | `CreatedAt` | `DateTime` | The date and time when the entity was created. | Defined in `WriteEntity<TKey>` |
 | `LastModifiedAt` | `DateTime?` | The date and time when the entity was last modified. | Defined in `WriteEntity<TKey>` |
 
-### 4. SoftDeleteEntity&lt;TKey&gt;
+### 5. SoftDeleteEntity&lt;TKey&gt;
 Inherits from `WriteEntity<TKey>` and adds support for soft deletion. Instead of physically removing records from the database, entities can be marked as deleted.
 
 | Property | Type | Description | Source |
@@ -67,7 +73,7 @@ Inherits from `WriteEntity<TKey>` and adds support for soft deletion. Instead of
 | `LastModifiedAt` | `DateTime?` | The date and time when the entity was last modified. | Inherited from `WriteEntity<TKey>` |
 | `IsDeleted` | `bool` | A flag indicating whether the entity is marked as deleted. | Defined in `SoftDeleteEntity<TKey>` |
 
-### 5. AuditableBaseEntity&lt;TKey&gt;
+### 6. AuditableBaseEntity&lt;TKey&gt;
 Inherits from `WriteEntity<TKey>` and adds properties to track which user created or modified the entity.
 
 | Property | Type | Description | Source |

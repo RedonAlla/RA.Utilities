@@ -41,7 +41,6 @@ This allows you to test your business logic in isolation without needing a real 
 
 #### 3. Enforces Consistency:
 It promotes a standardized way to perform data operations across your entire application, making the codebase easier to understand and maintain.
-Async-First Design: All data operations defined in the interfaces are asynchronous, which encourages the development of scalable and responsive applications.
 
 #### 4. Async-First Design:
 All data operations defined in the interfaces are asynchronous, which encourages the development of scalable and responsive applications.
@@ -52,8 +51,10 @@ The package provides the following key interfaces:
 
 * **`IRepositoryBase<T>`**:
 A generic interface that defines standard CRUD (`Create`, `Read`, `Update`, `Delete`) operations for any entity.
-It provides methods like `GetByIdAsync`, `GetAllAsync`, `AddAsync`, `Update`, and `Remove`.
-* **IDbContext**: An abstraction for the `DbContext` itself, allowing repositories to depend on an interface rather than a concrete `DbContext` class.
+It provides methods like `GetByIdAsync`, `ListAsync`, `AddAsync`, `UpdateAsync`, `DeleteAsync`, and `SaveChangesAsync`.
+* **`IDbContext`**: An abstraction for the `DbContext` itself, allowing repositories to depend on an interface rather than a concrete `DbContext` class.
+
+All repository interfaces constrain their entity type to the `IEntity` marker interface (`where T : IEntity`), so any entity implementing it — including custom entities outside the `CoreEntity<TKey>` hierarchy — can be used.
 
 ## 🧩 How It Fits into the Ecosystem
 This package is a foundational part of the `RA.Utilities` data access strategy.
@@ -82,8 +83,8 @@ Install-Package RA.Utilities.Data.Abstractions
 
 ## 🔗 Dependencies
 
--   **[`RA.Utilities.Data.Entities`](../Entities/index.mdx)**:
-This package provides the base `IEntity` interface and `BaseEntity` class required by the repository pattern.
+-   **[`RA.Utilities.Data.Entities`](../Entities/index.mdx)** (10.1.1 or later):
+This package provides the [`IEntity`](../Entities/IEntity.md) marker interface that the repository interfaces constrain to (`where T : IEntity`) and the `CoreEntity<TKey>` base classes for your entities.
 
 <br />
 <br />

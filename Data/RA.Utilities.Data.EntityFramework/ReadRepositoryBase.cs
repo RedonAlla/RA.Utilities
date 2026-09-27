@@ -14,8 +14,8 @@ namespace RA.Utilities.Data.EntityFramework;
 /// Provides a generic base implementation for read-only repository operations on entities using Entity Framework Core.
 /// </summary>
 /// <typeparam name="T">The type of the entity.</typeparam>
-public class ReadRepositoryBase<T> : IReadRepositoryBase<T>
-    where T : CoreEntity
+/// <typeparam name="TKey">The type of the entity's unique identifier.</typeparam>
+public class ReadRepositoryBase<T, TKey> : IReadRepositoryBase<T, TKey> where T : CoreEntity<TKey> where TKey : notnull
 {
     private readonly DbSet<T> _dbSet;
 
@@ -25,7 +25,7 @@ public class ReadRepositoryBase<T> : IReadRepositoryBase<T>
     protected DbContext dataContext;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ReadRepositoryBase{T}"/> class.
+    /// Initializes a new instance of the <see cref="ReadRepositoryBase{T, TKey}"/> class.
     /// </summary>
     /// <param name="dbContext">The database context to be used by the repository.</param>
     public ReadRepositoryBase(DbContext dbContext)
@@ -36,9 +36,10 @@ public class ReadRepositoryBase<T> : IReadRepositoryBase<T>
     }
 
     /// <inheritdoc />
-    public virtual async Task<T?> GetByIdAsync<TId>(TId id, CancellationToken cancellationToken = default) where TId : notnull
+    public virtual async Task<T?> GetByIdAsync(TKey id, CancellationToken cancellationToken = default)
     {
-        return await _dbSet.FindAsync([id], cancellationToken);
+        return await _dbSet.FindAsync([id], cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -80,6 +81,8 @@ public class ReadRepositoryBase<T> : IReadRepositoryBase<T>
             query = query.Take(take.Value);
         }
 
-        return await query.AsNoTracking().ToListAsync(cancellationToken);
+        return await query.AsNoTracking()
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
     }
 }

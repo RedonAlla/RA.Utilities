@@ -21,32 +21,33 @@ These methods are automatically called by Entity Framework Core just before it w
 
 #### 3. Detecting Changes:
 Inside these methods, it calls the UpdateEntities helper method.
-This method uses the `DbContext.ChangeTracker` to find all tracked entities that inherit from `BaseEntity`.
+This method iterates over **all** tracked entities (`context.ChangeTracker.Entries()`) and uses EF Core's model metadata (`entry.Metadata.FindProperty(...)`) to detect whether an entity exposes the relevant timestamp properties.
 
 #### 4. Applying Timestamps:
 It then checks the state of each entity:
 
-  * If an entity's state is `Added`, it means it's a new record.
-  The interceptor sets its `CreatedAt` property to the current UTC time.
-  * If an entity's state is `Modified`, it means an existing record has been changed.
-  The interceptor sets its `LastModifiedAt` property to the current UTC time.
+  * If an entity's state is `Added` and it defines a `CreatedAt` property (the case for `BaseEntity<TKey>` and `WriteEntity<TKey>` descendants), the interceptor sets that property to the current UTC time.
+  * If an entity's state is `Modified` and it defines a `LastModifiedAt` property (the case for `WriteEntity<TKey>` descendants), the interceptor sets that property to the current UTC time.
 
 Here is the key logic from the `UpdateEntities` method that accomplishes this:
 
 ```csharp
-foreach (EntityEntry<BaseEntity> entry in context.ChangeTracker.Entries<BaseEntity>())
+foreach (EntityEntry entry in context.ChangeTracker.Entries())
 {
-    if (entry.State is EntityState.Added)
+    if (entry.State is EntityState.Added && entry.Metadata.FindProperty(CreatedAtProperty) is not null)
     {
-        entry.Entity.CreatedAt = DateTime.UtcNow;
+        entry.Property(CreatedAtProperty).CurrentValue = DateTime.UtcNow;
     }
 
-    if (entry.State is EntityState.Modified)
+    if (entry.State is EntityState.Modified && entry.Metadata.FindProperty(LastModifiedAtProperty) is not null)
     {
-        entry.Entity.LastModifiedAt = DateTime.UtcNow;
+        entry.Property(LastModifiedAtProperty).CurrentValue = DateTime.UtcNow;
     }
 }
 ```
+
+> [!NOTE]
+> Because the detection is metadata-based, the interceptor no longer depends on a specific entity base class and, as of v10.0.2, also updates the `LastModifiedAt` property of `WriteEntity<TKey>` descendants correctly.
 
 ## 💭 Why Is This Useful?
   * **Consistency**: It guarantees that auditing fields are always populated correctly.

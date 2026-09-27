@@ -9,10 +9,10 @@ It abstracts away all the complex boilerplate code required to configure Serilog
 By calling its main method, `AddLoggingWithConfiguration()`, a developer can instantly get a powerful, pre-configured logger that includes:
 
 * Integration with the .NET host and configuration system (`appsettings.json`).
-* Custom enrichment via `RequestIdEnricher` to add `XRequestId` and `TraceId` correlation IDs to every log.
 * Detailed exception logging via `Serilog.Exceptions`.
 * Proper handling of `System.Text.Json` types for better structured logs.
-* Automatic registration of `IHttpContextAccessor` in the DI container.
+
+The optional [`RequestIdEnricher`](../Enrichers/index.md) adds `XRequestId` and `TraceId` correlation IDs when activated through the `Serilog` → `Enrich` configuration or `.Enrich.WithRequestIdEnricher()`. Register `IHttpContextAccessor` yourself with `builder.Services.AddHttpContextAccessor()` when you enable it.
 
 In short, it's a "batteries-included" extension that makes it incredibly simple for a developer to implement a consistent and robust logging strategy with minimal effort. Common Serilog sinks (Console, File, Async) and enrichers (Sensitive Data) are included as package dependencies so they can be configured declaratively via `appsettings.json` without additional NuGet references.
 
@@ -20,7 +20,7 @@ In short, it's a "batteries-included" extension that makes it incredibly simple 
 
 ### 1. `AddLoggingWithConfiguration()`
 
-This is the main extension method. It configures Serilog as the logging provider for the application with a set of sensible, production-ready defaults. It abstracts away the boilerplate code for setting up Serilog, including reading from configuration, adding enrichers for request tracing and exceptions, and handling JSON destructuring.
+This is the main extension method. It configures Serilog as the logging provider for the application with a set of sensible, production-ready defaults. It abstracts away the boilerplate code for setting up Serilog, including reading from configuration, adding the exception-details enricher, and handling JSON destructuring.
 
 #### Parameters
 | Parameter | Type | Description |
@@ -28,6 +28,9 @@ This is the main extension method. It configures Serilog as the logging provider
 | **builder** | `WebApplicationBuilder` | The application builder to configure. This is the `this` parameter for the extension method. |
 
 This method returns `void` as it directly configures the `Host` property of the provided `WebApplicationBuilder`.
+
+> [!NOTE]
+> `RequestIdEnricher` is not activated by this method. Activate it through Serilog configuration or the fluent extension, then register `IHttpContextAccessor` with `builder.Services.AddHttpContextAccessor()`.
 
 #### Example
 This example shows how to use `AddLoggingWithConfiguration` in your `Program.cs` to set up Serilog for your entire application.
@@ -42,7 +45,10 @@ This example shows how to use `AddLoggingWithConfiguration` in your `Program.cs`
       "Override": {
         "Microsoft.AspNetCore": "Warning"
       }
-    }
+    },
+    "Enrich": [
+      { "Name": "WithRequestIdEnricher" }
+    ]
   }
 }
 ```
@@ -56,7 +62,8 @@ using Serilog;
 var builder = WebApplication.CreateBuilder(args);
 
 // highlight-start
-// Add the RA Serilog configuration in one line
+// Register this when WithRequestIdEnricher is enabled in appsettings.json.
+builder.Services.AddHttpContextAccessor();
 builder.AddLoggingWithConfiguration();
 // highlight-end
 
@@ -101,8 +108,7 @@ This is a fluent helper method that adds the custom `RequestIdEnricher` to the S
 | `LoggerConfiguration` | The logger configuration, allowing for further chaining of configuration methods. |
 
 #### Example
-This method is typically used within the Serilog setup block.
-While `AddLoggingWithConfiguration` calls it for you, here is how you would use it if you were configuring Serilog manually:
+This method is typically used within the Serilog setup block. `AddLoggingWithConfiguration` does **not** call it for you; activate the same extension by name from `appsettings.json` or use it when configuring Serilog manually. When the enricher is active, register `IHttpContextAccessor` with `builder.Services.AddHttpContextAccessor()`.
 
 ```csharp
 using RA.Utilities.Logging.Core.Extensions;

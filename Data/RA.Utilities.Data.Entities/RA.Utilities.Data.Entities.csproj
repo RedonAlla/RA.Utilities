@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-		<Version>10.1.0</Version>
+		<Version>10.1.1</Version>
 		<Title>RA Utilities Data Entities</Title>                                                                                                                                                                                                                             
     <Description>
 			Provides strongly typed, generic base classes for domain and data entities in .NET and EF Core.

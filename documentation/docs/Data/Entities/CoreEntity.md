@@ -1,5 +1,5 @@
 ---
-sidebar_position: 2
+sidebar_position: 3
 ---
 
 ```bash
@@ -8,7 +8,7 @@ Namespace: RA.Utilities.Data.Entities
 
 # CoreEntity&lt;TKey&gt;
 
-`CoreEntity<TKey>` is the root abstract class for all entities within the `RA.Utilities.Data.Entities` package. It defines the foundational contract for unique identity across your data model.
+`CoreEntity<TKey>` is the root abstract class for all entities within the `RA.Utilities.Data.Entities` package. It implements the [`IEntity`](./IEntity.md) marker interface and defines the foundational contract for unique identity across your data model.
 
 By making identity generic via `TKey`, this class allows entities to use whatever identifier type best fits the domain or database schema (such as `Guid`, `int`, `long`, or `string`), while still enforcing a consistent naming and property convention across the entire application.
 
@@ -37,7 +37,7 @@ namespace RA.Utilities.Data.Entities;
 /// Represents the base class for all entities, providing a unique identifier.
 /// </summary>
 /// <typeparam name="TKey">The type of the unique identifier.</typeparam>
-public abstract class CoreEntity<TKey>
+public abstract class CoreEntity<TKey> : IEntity
 {
     /// <summary>
     /// Gets the unique identifier for the entity.
@@ -48,14 +48,15 @@ public abstract class CoreEntity<TKey>
 
 ## Role in the Entity Hierarchy
 
-`CoreEntity<TKey>` sits at the root of the inheritance chain:
+`CoreEntity<TKey>` sits directly below the [`IEntity`](./IEntity.md) marker at the root of the inheritance chain:
 
 ```
-CoreEntity<TKey>
-├── BaseEntity<TKey>          (adds CreatedAt)
-└── WriteEntity<TKey>         (adds CreatedAt, LastModifiedAt)
-    ├── SoftDeleteEntity<TKey> (adds IsDeleted)
-    └── AuditableBaseEntity<TKey> (adds CreatedBy, LastModifiedBy)
+IEntity (marker — no members)
+└── CoreEntity<TKey>
+    ├── BaseEntity<TKey>          (adds CreatedAt)
+    └── WriteEntity<TKey>         (adds CreatedAt, LastModifiedAt)
+        ├── SoftDeleteEntity<TKey> (adds IsDeleted)
+        └── AuditableBaseEntity<TKey> (adds CreatedBy, LastModifiedBy)
 ```
 
 ## Usage Example

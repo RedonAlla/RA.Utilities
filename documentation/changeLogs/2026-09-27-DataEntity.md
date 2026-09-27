@@ -2,6 +2,24 @@
 title: RA.Utilities.Data.Entities
 authors: [RedonAlla]
 ---
+
+## Version 10.1.1
+![Date Badge](https://img.shields.io/badge/Publish-27%20September%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.1.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.Entities/10.1.1)
+
+This release introduces the `IEntity` marker interface and makes `CoreEntity<TKey>` implement it, providing a lightweight common contract for entity types.
+
+<!-- truncate -->
+
+### ✨ New Features
+
+* **`IEntity` marker interface**: Add a memberless interface that custom entities can implement without inheriting from a supplied base class.
+
+### 📝 Improvements
+
+* **`CoreEntity<TKey>` implements `IEntity`**: All entity types based on the supplied entity hierarchy now satisfy the marker interface automatically.
+* **Repository compatibility**: The marker supports repository abstractions that accept any entity implementing `IEntity`, including custom entity hierarchies.
+
 ## Version 10.1.0
 ![Date Badge](https://img.shields.io/badge/Publish-19%20September%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.1.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.Entities/10.1.0)

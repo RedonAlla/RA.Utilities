@@ -27,7 +27,7 @@ Instead of creating a complex inheritance chain, it reuses functionality by hold
 ```csharp showLineNumbers
 // 1. Inherits from ReadRepositoryBase<T>
 public class RepositoryBase<T> : ReadRepositoryBase<T>, IRepositoryBase<T>
-    where T : BaseEntity
+    where T : class, IEntity
 {
     // 2. Composes WriteRepositoryBase<T>
     private readonly WriteRepositoryBase<T> _writeRepository;
@@ -47,6 +47,9 @@ public class RepositoryBase<T> : ReadRepositoryBase<T>, IRepositoryBase<T>
     // ... other delegated write methods
 }
 ```
+
+The type parameter is constrained to any reference type implementing the [`IEntity`](../Entities/IEntity.md) marker interface.
+The additional `class` constraint is required because EF Core's `DbSet<T>` only supports reference types.
 
 ## 🛠️ When to Use It
 You would use `RepositoryBase<T>` (or inject [`IRepositoryBase<T>`](../Abstractions/IRepositoryBase.md)) in services where the separation between commands and queries is not strictly required.

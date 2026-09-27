@@ -27,9 +27,12 @@ Setting up a comprehensive logging solution from scratch can be repetitive. This
 **Configured automatically by `AddLoggingWithConfiguration`:**
 
 - **Configuration-driven**: Reads Serilog settings from `appsettings.json` via `ReadFrom.Configuration`, so log levels, sinks, and enrichers are controlled declaratively.
-- **Request ID enrichment**: Adds `XRequestId` and `TraceId` properties to every log event via `RequestIdEnricher`, sourced from the `x-request-id` header, `HttpContext.TraceIdentifier`, or the current `Activity`.
 - **Exception details**: Uses `Serilog.Exceptions` to destructure exceptions with full stack trace detail.
 - **System.Text.Json destructuring**: Uses `Destructurama.SystemTextJson` so that `JsonElement` and related types log as readable values instead of `ValueKind` enum names.
+
+**Optional — activate `RequestIdEnricher` yourself:**
+
+- **Request ID enrichment**: Adds `XRequestId` and `TraceId` properties from the `x-request-id` header, `HttpContext.TraceIdentifier`, or the current `Activity`. Add `{ "Name": "WithRequestIdEnricher" }` to `Serilog` → `Enrich`, or call `.Enrich.WithRequestIdEnricher()` manually, and register `IHttpContextAccessor` with `builder.Services.AddHttpContextAccessor()`.
 
 **Available for `appsettings.json` configuration** (packages are included as dependencies — no additional NuGet install needed):
 
@@ -80,6 +83,7 @@ Add a `Serilog` section to your `appsettings.json` file. The `AddLoggingWithConf
     ],
     "Enrich": [
       { "Name": "WithExceptionDetails" },
+      { "Name": "WithRequestIdEnricher" },
       {
         "Name": "WithSensitiveDataMasking",
         "Args": {
@@ -124,6 +128,9 @@ Call `AddLoggingWithConfiguration()` on your `WebApplicationBuilder`. This shoul
 using RA.Utilities.Logging.Core.Extensions; // Add this using statement
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Required when WithRequestIdEnricher is enabled in appsettings.json
+builder.Services.AddHttpContextAccessor();
 
 // Configure Serilog with opinionated defaults
 builder.AddLoggingWithConfiguration();

@@ -12,16 +12,16 @@ namespace RA.Utilities.Data.Abstractions;
 /// Defines a base interface for read-only repository operations on entities.
 /// </summary>
 /// <typeparam name="T">The type of the entity.</typeparam>
-public interface IReadRepositoryBase<T> : IRepository where T : notnull, CoreEntity
+/// <typeparam name="TKey">The type of the entity's unique identifier.</typeparam>
+public interface IReadRepositoryBase<T, TKey> : IRepository where T : CoreEntity<TKey> where TKey : notnull
 {
     /// <summary>
     /// Retrieves an entity by its ID asynchronously.
     /// </summary>
-    /// <typeparam name="TId">The type of the entity's ID.</typeparam>
     /// <param name="id">The ID of the entity to retrieve.</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
     /// <returns>A <see cref="Task"/> that represents the asynchronous operation. The task result contains the entity if found, otherwise <see langword="null"/>.</returns>
-    Task<T?> GetByIdAsync<TId>(TId id, CancellationToken cancellationToken = default) where TId : notnull;
+    Task<T?> GetByIdAsync(TKey id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Lists entities of type <typeparamref name="T"/> asynchronously based on the provided criteria.

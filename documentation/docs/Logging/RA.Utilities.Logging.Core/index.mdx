@@ -31,10 +31,10 @@ developers can call a single extension method to get a "batteries-included" logg
 Calling `builder.AddLoggingWithConfiguration()` in `Program.cs` configures these capabilities **automatically**:
 
 * **Configuration-driven**: Reads Serilog settings from `appsettings.json` via `ReadFrom.Configuration`.
-* **Request ID enrichment**: Adds `XRequestId` and `TraceId` properties to every log event via `RequestIdEnricher`, sourced from the `x-request-id` header, `HttpContext.TraceIdentifier`, or the current `Activity`.
 * **Exception details enrichment**: Uses `Serilog.Exceptions` to destructure exceptions with full stack trace detail.
 * **System.Text.Json destructuring**: Uses `Destructurama.SystemTextJson` so `JsonElement` and related types log as readable values.
-* **DI integration**: Registers `IHttpContextAccessor` as a singleton so the enricher can access the HTTP context at runtime.
+
+**Optional request ID enrichment**: The [`RequestIdEnricher`](./Enrichers/index.md) adds `XRequestId` and `TraceId` properties to log events from the `x-request-id` header, `HttpContext.TraceIdentifier`, or the current `Activity`. Activate it in the `Serilog` → `Enrich` section of `appsettings.json` (for example, `{ "Name": "WithRequestIdEnricher" }`) or call `.Enrich.WithRequestIdEnricher()` when configuring Serilog manually. It requires `IHttpContextAccessor`, which you register with `builder.Services.AddHttpContextAccessor()`.
 
 ## 📦 Included Dependencies
 

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,7 +9,8 @@ namespace RA.Utilities.Data.Abstractions;
 /// Defines a base interface for write repository operations on entities.
 /// </summary>
 /// <typeparam name="T">The type of the entity.</typeparam>
-public interface IWriteRepositoryBase<T> where T : CoreEntity
+/// <typeparam name="TKey">The type of the entity's unique identifier.</typeparam>
+public interface IWriteRepositoryBase<T, TKey> where T : CoreEntity<TKey> where TKey : notnull
 {
     /// <summary>
     /// Adds a new entity asynchronously.
@@ -50,16 +50,15 @@ public interface IWriteRepositoryBase<T> where T : CoreEntity
     /// <param name="id">The ID of the entity to delete.</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
     /// <returns>A <see cref="Task"/> that represents the asynchronous operation.</returns>
-    Task DeleteAsync<TId>(TId id, CancellationToken cancellationToken = default) where TId : notnull;
+    Task DeleteAsync(TKey id, CancellationToken cancellationToken = default);
 
-    //TODO Generic Id
     /// <summary>
     /// Deletes a range of entities by their IDs asynchronously.
     /// </summary>
-    /// <param name="ids">The list of IDs of the entities to delete.</param>
+    /// <param name="ids">The IDs of the entities to delete.</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
     /// <returns>A <see cref="Task"/> that represents the asynchronous operation. The task result contains the number of entities deleted.</returns>
-    Task<int> DeleteRangeAsync(List<Guid> ids, CancellationToken cancellationToken = default);
+    Task<int> DeleteRangeAsync(IEnumerable<TKey> ids, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Saves all changes made in this context to the underlying database asynchronously.

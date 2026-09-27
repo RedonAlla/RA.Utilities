@@ -32,6 +32,8 @@ Implementations of this interface are optimized for querying and should not modi
 
 * **`IRepositoryBase<T>`**: A convenience interface that inherits from both `IReadRepositoryBase<T>` and `IWriteRepositoryBase<T>`, providing a full suite of CRUD operations.
 
+All repository interfaces constrain their entity type to the `IEntity` marker interface (`where T : IEntity`), so custom entities outside the `CoreEntity<TKey>` hierarchy can be used as well. This requires `RA.Utilities.Data.Entities` 10.1.1 or later.
+
 ### IDbContext and IUnitOfWork
 * **`IDbContext`**: A marker interface that your `DbContext` should implement.
 This allows repository implementations to depend on an abstraction rather than a concrete `DbContext`, which is crucial for unit testing.
@@ -46,14 +48,14 @@ These abstractions are designed to be implemented in your Infrastructure layer a
 In your Application layer, define an interface for your entity that inherits from the base abstractions.
 
 ```csharp
-// An example of a concrete repository implementation
+// An example of a specific repository contract
 using RA.Utilities.Data.Abstractions;
 using YourApp.Domain.Entities;
 
-public class ProductRepository : IRepositoryBase<Product>
+public interface IProductRepository : IRepositoryBase<Product>
 {
     // You can add custom, entity-specific query methods here
-    Task<Product?> GetProductBySkuAsync(string sku);
+    Task<Product?> GetProductBySkuAsync(string sku, CancellationToken cancellationToken);
 }
 ```
 
@@ -64,33 +66,23 @@ In your Infrastructure layer, implement the interface. You can inherit from `Rep
 using RA.Utilities.Data.EntityFramework;
 using YourApp.Domain.Entities;
 using YourApp.Persistence;
-public class ProductRepository : IRepository<Product, int>
+
+public class ProductRepository : RepositoryBase<Product>
 {
-    private readonly AppDbContext _context;
-
-    public ProductRepository(AppDbContext context)
+    public ProductRepository(AppDbContext context) : base(context)
     {
-        _context = context;
     }
 
-    public async Task<Product> GetProductBySkuAsync(int id, CancellationToken cancellationToken)
-    {
-        return await _dbContext.Set<Product>().FirstOrDefaultAsync(p => p.Sku == sku);
-    }
-
-    public void Add(Product entity)
-    {
-        _context.Products.Add(entity);
-    }
-
-    // ... other method implementations
+    // The standard CRUD operations (GetByIdAsync, ListAsync, AddAsync,
+    // UpdateAsync, DeleteAsync, SaveChangesAsync) are inherited for free.
+    // Add custom, entity-specific query methods here.
 }
 ```
 
 ## Additional documentation
 
 For more information on how this package fits into the larger RA.Utilities ecosystem, please see the
-[officially documentation](http://localhost:3000/RA.Utilities/nuget-packages/Data/Abstractions/).
+[official documentation](https://redonalla.github.io/RA.Utilities/nuget-packages/Data/Abstractions/).
 
 ## Feedback
 

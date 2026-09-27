@@ -3,6 +3,31 @@ title: RA.Utilities.Data.Abstractions
 authors: [RedonAlla]
 ---
 
+## Version 10.0.3
+![Date Badge](https://img.shields.io/badge/Publish-27%20September%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.3-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.Abstractions/10.0.3)
+
+This release broadens repository entity constraints from the `CoreEntity<TKey>` base class to the `IEntity` marker interface, allowing custom entity hierarchies to use the repository contracts.
+
+<!-- truncate -->
+
+### ✨ Enhancements
+
+```csharp
++ public interface IReadRepositoryBase<T> : IRepository where T : notnull, IEntity
+- public interface IReadRepositoryBase<T> : IRepository where T : notnull, CoreEntity
+
++ public interface IWriteRepositoryBase<T> where T : IEntity
+- public interface IWriteRepositoryBase<T> where T : CoreEntity
+
++ public interface IRepositoryBase<T> : IReadRepositoryBase<T>, IWriteRepositoryBase<T> where T : IEntity
+- public interface IRepositoryBase<T> : IReadRepositoryBase<T>, IWriteRepositoryBase<T> where T : CoreEntity
+```
+
+### 📦 Dependencies
+
+* **`RA.Utilities.Data.Entities` 10.1.1 or later**: Provides the `IEntity` marker interface required by the repository constraints.
+
 ## Version 10.0.2
 ![Date Badge](https://img.shields.io/badge/Publish-11%20January%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.2-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.Abstractions/10.0.2)
@@ -14,7 +39,6 @@ authors: [RedonAlla]
 public interface IRepository;
 ```
 
-<!-- truncate -->
 
 ## Version 10.0.1
 ![Date Badge](https://img.shields.io/badge/Publish-14%20December%202025-lightblue?logo=fastly&logoColor=white)
@@ -64,17 +88,17 @@ This release of `RA.Utilities.Data.Abstractions` provides a collection of essent
 ### 🚀 Getting Started
 
 1.  **Define Your Entities**: Create your entities using the base classes from `RA.Utilities.Data.Entities`.
-    ```csharp
-    public class Product : BaseEntity { /* ... */ }
-    ```
+```csharp
+public class Product : BaseEntity { /* ... */ }
+```
 
 2.  **Define Repository Interfaces**: In your application/domain layer, create specific repository interfaces.
-    ```csharp
-    public interface IProductRepository : IRepositoryBase<Product>
-    {
-        // Add custom query methods here
-    }
-    ```
+```csharp
+public interface IProductRepository : IRepositoryBase<Product>
+{
+    // Add custom query methods here
+}
+```
 
 3.  **Implement in Infrastructure**: Create concrete implementations of these interfaces in your infrastructure layer, typically using the `RA.Utilities.Data.EntityFramework` package.
 

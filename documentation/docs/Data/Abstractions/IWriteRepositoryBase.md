@@ -9,6 +9,8 @@ Namespace: RA.Utilities.Data.Abstractions
 The `IWriteRepositoryBase<T>` interface is a specialized contract that defines a set of **write-only** operations for a generic repository.
 Its primary purpose is to provide a standardized way to create, update, and delete entities in a data source.
 
+All write operations are *marked* on the underlying change tracker and are only persisted when `SaveChangesAsync` is called, allowing multiple operations to be composed into a single, atomic transaction.
+
 This design is a direct application of the **Command Query Separation (CQS)** principle, which states that methods should either be *commands* that change the state of the system (like the ones in this interface) or *queries* that return data, but not both.
 
 ## 🔑 Key Features and Benefits
@@ -21,6 +23,7 @@ It defines a comprehensive set of methods for all common data modification tasks
 *   `AddAsync` / `AddRangeAsync`: For creating one or more entities.
 *   `UpdateAsync` / `UpdateRangeAsync`: For modifying existing entities.
 *   `DeleteAsync` / `DeleteRangeAsync`: For removing entities.
+*   `SaveChangesAsync`: For persisting all marked changes.
 
 #### 3. Promotes a Clean Architecture
 It allows you to build services that are clearly defined as "command handlers," whose sole responsibility is to change the state of the application, leading to a more maintainable and understandable architecture.
@@ -28,59 +31,70 @@ It allows you to build services that are clearly defined as "command handlers," 
 
 ## ⚙️ Methods
 
-| Method               | Return Type | Description                               |
-| :------------------- | :---------- | :---------------------------------------- |
-| `AddAsync`           | `Task<T>`   | Adds a single new entity.                 |
-| `AddRangeAsync`      | `Task<int>` | Adds a collection of new entities.        |
-| `UpdateAsync`        | `Task<T>`   | Updates a single existing entity.         |
-| `UpdateRangeAsync`   | `Task<int>` | Updates a collection of existing entities.|
-| `DeleteAsync`        | `Task`      | Deletes a single entity by its ID.        |
-| `DeleteRangeAsync`   | `Task<int>` | Deletes a collection of entities by their IDs. |
+| Method               | Return Type | Description                                           |
+| :------------------- | :---------- | :---------------------------------------------------- |
+| `AddAsync`           | `Task<T>`   | Marks a single new entity to be added.                |
+| `AddRangeAsync`      | `Task<int>` | Marks a collection of new entities to be added.      |
+| `UpdateAsync`        | `Task<T>`   | Marks a single existing entity as modified.           |
+| `UpdateRangeAsync`   | `Task<int>` | Marks a collection of existing entities as modified.   |
+| `DeleteAsync`        | `Task`      | Marks an existing entity for deletion.                |
+| `DeleteRangeAsync`   | `Task<int>` | Marks a collection of existing entities for deletion. |
+| `SaveChangesAsync`   | `Task<int>` | Persists all pending changes to the data source.      |
 
 ### `AddAsync`
 Marks a single new entity to be added to the database.
 
-| Parameter	| Type	| Description |
-| --------	| ----	| ----------- |
-| `entity` | `T`	| The entity to add. |
-| `cancellationToken` | `CancellationToken` |	(Optional) A token to observe while waiting for the task to complete. |
+| Parameter           | Type                | Description                                                                  |
+| :------------------ | :------------------ | :--------------------------------------------------------------------------- |
+| `entity`            | `T`                 | The entity to add.                                                           |
+| `cancellationToken` | `CancellationToken` | (Optional) A token to observe while waiting for the task to complete.        |
 
 ### `AddRangeAsync`
 Marks a collection of new entities to be added.
 
-| Parameter	| Type	| Description |
-| --------	| ----	| ----------- |
-| `entities` | `IEnumerable<T>`	| The collection of entities to add. |
-| `cancellationToken` | `CancellationToken`	| (Optional) A token to observe while waiting for the task to complete. |
+| Parameter           | Type                | Description                                                                  |
+| :------------------ | :------------------ | :--------------------------------------------------------------------------- |
+| `entities`          | `IEnumerable<T>`    | The collection of entities to add.                                           |
+| `cancellationToken` | `CancellationToken` | (Optional) A token to observe while waiting for the task to complete.        |
 
 ### `UpdateAsync`
 Marks an existing entity as modified.
 
-| Parameter	| Type	| Description |
-| --------	| ----	| ----------- |
-| `entity` | `T`	| The entity to update.	|
-| `cancellationToken`	| CancellationToken	|	(Optional) A token to observe while waiting for the task to complete.
+| Parameter           | Type                | Description                                                                  |
+| :------------------ | :------------------ | :--------------------------------------------------------------------------- |
+| `entity`            | `T`                 | The entity to update.                                                        |
+| `cancellationToken` | `CancellationToken` | (Optional) A token to observe while waiting for the task to complete.        |
 
 ### `UpdateRangeAsync`
 Marks a collection of existing entities as modified.
 
-| Parameter	| Type	| Description |
-| --------	| ----	| ----------- |
-| `entities` | `IEnumerable<T>`	| The collection of entities to update.	|
-| `cancellationToken` | `CancellationToken	|	(Optional) A token to observe while waiting for the task to complete.	|
+| Parameter           | Type                | Description                                                                  |
+| :------------------ | :------------------ | :--------------------------------------------------------------------------- |
+| `entities`          | `IEnumerable<T>`    | The collection of entities to update.                                        |
+| `cancellationToken` | `CancellationToken` | (Optional) A token to observe while waiting for the task to complete.        |
 
 ### `DeleteAsync`
-Marks an existing entity for deletion.
+Marks an existing entity for deletion. The method is generic over the key type, so any non-nullable identifier can be used.
 
-| Parameter	| Type	| Description |
-| --------	| ----	| ----------- |
-| `id` | `TId`	| The unique identifier of the entity to delete.	|
-| `cancellationToken` | `CancellationToken`	| (Optional) A token to observe while waiting for the task to complete.	|
+| Parameter           | Type                | Description                                                                  |
+| :------------------ | :------------------ | :--------------------------------------------------------------------------- |
+| `id`                | `TId`               | The unique identifier of the entity to delete.                               |
+| `cancellationToken` | `CancellationToken` | (Optional) A token to observe while waiting for the task to complete.        |
 
 ### `DeleteRangeAsync`
 Marks a collection of existing entities for deletion.
 
-| Parameter	| Type	| Description |
-| --------	| ----	| ----------- |
-| `ids` | `IEnumerable<TId>`	| A collection of unique identifiers of the entities to delete.	|
-| `cancellationToken` | `CancellationToken`	| (Optional) A token to observe while waiting for the task to complete.	|
+| Parameter           | Type                | Description                                                                  |
+| :------------------ | :------------------ | :--------------------------------------------------------------------------- |
+| `ids`               | `List<Guid>`        | A collection of unique identifiers of the entities to delete.                 |
+| `cancellationToken` | `CancellationToken` | (Optional) A token to observe while waiting for the task to complete.        |
+
+> [!NOTE]
+> The current signature is hard-coded to `Guid` keys. Support for other key types is planned for a future release.
+
+### `SaveChangesAsync`
+Persists all pending changes to the data source. Until it is called, write operations only mark entities in the change tracker.
+
+| Parameter           | Type                | Description                                                                  |
+| :------------------ | :------------------ | :--------------------------------------------------------------------------- |
+| `cancellationToken` | `CancellationToken` | (Optional) A token to observe while waiting for the task to complete.        |

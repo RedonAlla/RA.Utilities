@@ -3,6 +3,28 @@ title: RA.Utilities.Logging.Core
 authors: [RedonAlla]
 ---
 
+## Version 10.1.0
+![Date Badge](https://img.shields.io/badge/Publish-27%20September%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.1.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Logging.Core/10.1.0)
+
+This release makes HTTP-context registration explicit when request ID enrichment is enabled, avoiding an implicit ASP.NET Core service registration for applications that do not use it.
+
+<!-- truncate -->
+
+### ⚠️ Breaking Changes
+
+* **`IHttpContextAccessor` is no longer registered automatically**: `AddLoggingWithConfiguration` no longer registers `IHttpContextAccessor`. If you activate `RequestIdEnricher` through `appsettings.json` or `.Enrich.WithRequestIdEnricher()`, register it in your application:
+
+  ```csharp
+  builder.Services.AddHttpContextAccessor();
+  builder.AddLoggingWithConfiguration();
+  ```
+
+### 📝 Improvements
+
+* **Request ID enrichment remains opt-in**: Activate `RequestIdEnricher` through the Serilog `Enrich` configuration or the fluent `WithRequestIdEnricher` extension.
+* **XML documentation clarified**: `AddLoggingWithConfiguration` now documents the explicit `IHttpContextAccessor` registration requirement for applications that enable request ID enrichment.
+
 ## Version 10.0.1
 ![Date Badge](https://img.shields.io/badge/Publish-05%20August%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-v10.0.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Logging.Core/10.0.1)

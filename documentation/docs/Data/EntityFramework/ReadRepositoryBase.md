@@ -9,6 +9,8 @@ Namespace: RA.Utilities.Data.EntityFramework
 The `ReadRepositoryBase<T>` class is a concrete implementation of a generic, **read-only repository** using ***Entity Framework Core***.
 Its primary purpose is to provide a standardized and efficient way to query data from a database without allowing any modifications.
 
+It works with any entity type that is a reference type implementing the [`IEntity`](../Entities/IEntity.md) marker interface (`where T : class, IEntity`).
+
 This class is a direct application of the **Command Query Separation (CQS)** principle, which is a core concept in the `RA.Utilities` ecosystem.
 It ensures that methods are either "Queries" (retrieving data) or "Commands" (changing data), but not both.
 

@@ -1,10 +1,27 @@
 ---
 title: Migration Guides
-sidebar_position: 7
+sidebar_position: 8
 sidebar_class_name: nav_session ra_utilities_data_entity
 ---
 
 # Migration Guides
+
+## v10.1.0 → v10.1.1
+
+v10.1.1 is a **purely additive** patch release. It introduces the [`IEntity`](./IEntity.md) marker interface and makes `CoreEntity<TKey>` (and, through inheritance, every other base class) implement it.
+
+**No action is required** — existing entities keep compiling and behaving exactly as before.
+
+If you have a custom entity outside the `CoreEntity<TKey>` hierarchy and want it to flow through the repository abstractions in `RA.Utilities.Data.Abstractions` (v10.0.3+), you can now implement `IEntity` directly:
+
+```csharp showLineNumbers
+public class LegacyRecord : IEntity
+{
+    public long Id { get; set; }
+}
+```
+
+---
 
 ## v10.0.1 → v10.1.0
 

@@ -1,5 +1,30 @@
 # Release Notes for RA.Utilities.Data.Abstractions
 
+## Version 10.0.3
+![Date Badge](https://img.shields.io/badge/Publish-27%20September%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.3-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.Abstractions/10.0.3)
+
+This release decouples the repository contracts from the concrete entity base classes.
+All repository interfaces now constrain their entity type to the `IEntity` marker interface (introduced in `RA.Utilities.Data.Entities` 10.1.1) instead of `CoreEntity`,
+so custom entities outside the `CoreEntity<TKey>` hierarchy can now flow through the repository abstractions.
+
+### ✨ Enhancements
+* ⁠Change the generic type constraint from `CoreEntity` to the `IEntity` marker interface in all repository interfaces.
+
+```csharp
++ public interface IReadRepositoryBase<T> : IRepository where T : notnull, IEntity
+- public interface IReadRepositoryBase<T> : IRepository where T : notnull, CoreEntity
+
++ public interface IWriteRepositoryBase<T> where T : IEntity
+- public interface IWriteRepositoryBase<T> where T : CoreEntity
+
++ public interface IRepositoryBase<T> : IReadRepositoryBase<T>, IWriteRepositoryBase<T> where T : IEntity
+- public interface IRepositoryBase<T> : IReadRepositoryBase<T>, IWriteRepositoryBase<T> where T : CoreEntity
+```
+
+### 📦 Dependencies
+* Requires `RA.Utilities.Data.Entities` **10.1.1** or later (for the `IEntity` marker interface).
+
 ## Version 10.0.2
 ![Date Badge](https://img.shields.io/badge/Publish-11%20January%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.2-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.Abstractions/10.0.2)

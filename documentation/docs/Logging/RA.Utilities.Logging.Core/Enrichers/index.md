@@ -36,4 +36,4 @@ By adding these properties to every log message, you can easily group all logs r
 
 ## Dependency
 
-This enricher depends on `IHttpContextAccessor` to access the HTTP context. When registered via `AddLoggingWithConfiguration`, the accessor is automatically added as a singleton service.
+This enricher depends on `IHttpContextAccessor` to access the HTTP context. Register it in your application with `builder.Services.AddHttpContextAccessor()` when you activate the enricher. Without an HTTP context, the enricher still uses `Activity.Current` as a `TraceId` fallback when one is available.
