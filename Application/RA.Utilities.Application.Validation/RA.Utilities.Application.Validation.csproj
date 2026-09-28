@@ -2,11 +2,11 @@
 
   <PropertyGroup>
 		<Version>10.0.1</Version>
-		<Title>RA Utilities - Application Validation</Title>
-		<Description>Provides a utilities validators that uses FluentValidation to validate incoming requests.</Description>
-		<PackageTags>RA.Utilities, validation, fluentvalidation</PackageTags>
+		<Title>RA Utilities Application Validation</Title>
+    <Description>RA.Utilities.Application.Validation provides reusable validators and helpers built on FluentValidation for validating incoming requests. It aggregates multiple validators asynchronously and converts FluentValidation failures into structured BadRequestException/ValidationError results.</Description>
+    <PackageTags>RA;Utilities;Application;Validation;FluentValidation;Validators;ErrorHandling</PackageTags>
+    <PackageId>RA.Utilities.Application.Validation</PackageId>
 		<PackageIcon>validation.png</PackageIcon>
-		<PackageId>RA.Utilities.Application.Validation</PackageId>
 		<PackageReleaseNotesFile>releasenotes.md</PackageReleaseNotesFile>
     <AssemblyTitle>RA.Utilities.Application.Validation</AssemblyTitle>
 	</PropertyGroup>
