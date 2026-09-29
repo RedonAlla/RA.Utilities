@@ -35,8 +35,8 @@ Implementations of this interface are optimized for querying and should not modi
 All repository interfaces constrain their entity type to the `IEntity` marker interface (`where T : IEntity`), so custom entities outside the `CoreEntity<TKey>` hierarchy can be used as well. This requires `RA.Utilities.Data.Entities` 10.1.1 or later.
 
 ### IDbContext and IUnitOfWork
-* **`IDbContext`**: A marker interface that your `DbContext` should implement.
-This allows repository implementations to depend on an abstraction rather than a concrete `DbContext`, which is crucial for unit testing.
+* **`IDbContext`**: An abstraction that your `DbContext` should implement.
+It exposes `SaveChangesAsync(CancellationToken)` so changes can be persisted through the abstraction, and allows repository implementations to depend on an interface rather than a concrete `DbContext`, which is crucial for unit testing.
 * **`IUnitOfWork`**: Defines a contract for managing transactions.
 Its `SaveChangesAsync()` method ensures that all changes made across multiple repositories are saved as a single, atomic operation.
 

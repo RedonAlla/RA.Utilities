@@ -52,7 +52,7 @@ The package provides the following key interfaces:
 * **`IRepositoryBase<T>`**:
 A generic interface that defines standard CRUD (`Create`, `Read`, `Update`, `Delete`) operations for any entity.
 It provides methods like `GetByIdAsync`, `ListAsync`, `AddAsync`, `UpdateAsync`, `DeleteAsync`, and `SaveChangesAsync`.
-* **`IDbContext`**: An abstraction for the `DbContext` itself, allowing repositories to depend on an interface rather than a concrete `DbContext` class.
+* **`IDbContext`**: An abstraction for the `DbContext` itself. It defines `SaveChangesAsync(CancellationToken)` so changes can be persisted through the abstraction, allowing repositories to depend on an interface rather than a concrete `DbContext` class.
 
 All repository interfaces constrain their entity type to the `IEntity` marker interface (`where T : IEntity`), so any entity implementing it — including custom entities outside the `CoreEntity<TKey>` hierarchy — can be used.
 

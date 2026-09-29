@@ -3,6 +3,36 @@ title: RA.Utilities.Data.Abstractions
 authors: [RedonAlla]
 ---
 
+## Version 10.0.4
+![Date Badge](https://img.shields.io/badge/Publish-29%20September%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.4-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.Abstractions/10.0.4)
+
+`IDbContext` is no longer an empty marker interface — it now defines a `SaveChangesAsync(CancellationToken)` contract so consumers can persist changes through the abstraction.
+
+<!-- truncate -->
+
+### ⚠️ Breaking Changes
+
+* **`IDbContext` now requires `SaveChangesAsync`**: any class implementing `IDbContext` must now implement `Task<int> SaveChangesAsync(CancellationToken)`. Code that only *consumes* the interface (via DI, mocks, etc.) is unaffected.
+  **Migration**: add a `SaveChangesAsync` implementation to your context. Entity Framework Core's `DbContext` already exposes a matching method, so EF Core-based implementations only need to declare the interface.
+
+```csharp
++ Task<int> SaveChangesAsync(CancellationToken cancellationToken);
+
+// EF Core example — no additional code required:
+public class AppDbContext : DbContext, IDbContext { }
+```
+
+### ✨ Enhancements
+
+```csharp
+- public interface IDbContext;
++ public interface IDbContext
++ {
++     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
++ }
+```
+
 ## Version 10.0.3
 ![Date Badge](https://img.shields.io/badge/Publish-27%20September%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.3-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.Abstractions/10.0.3)
