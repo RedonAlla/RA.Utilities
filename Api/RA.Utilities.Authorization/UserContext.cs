@@ -12,7 +12,7 @@ namespace RA.Utilities.Authorization;
 /// This service is registered as Transient and relies on <see cref="IHttpContextAccessor"/>
 /// to get the user information for the current request.
 /// </summary>
-internal class UserContext : IUserContext
+internal sealed class UserContext : IUserContext
 {
     private readonly ClaimsPrincipal? _user;
 
