@@ -18,35 +18,39 @@ import LogoSvg from '../../../../Assets/Images/authorization.svg';
 [![Publish NuGet](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml/badge.svg)](https://github.com/RedonAlla/RA.Utilities/actions/runs/56274253042)
 [![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
 
-`RA.Utilities.Authorization` provides a strongly-typed, injectable `AppUser` service that wraps `HttpContext.User` so you never hand-parse claims, role-check with magic strings, or inject `IHttpContextAccessor` into your business logic. One line in `Program.cs` and you have typed access to user identity everywhere.
+`RA.Utilities.Authorization` provides a strongly-typed, injectable `IUserContext` service that wraps `HttpContext.User` so you never hand-parse claims,
+role-check with magic strings, or inject `IHttpContextAccessor` into your business logic.
+One line in `Program.cs` and you have typed access to user identity everywhere.
 
 ## 🎯 Purpose
 
-In any ASP.NET Core application with authentication, you constantly need the current user's ID, email, roles, and custom claims. The built-in approach — injecting `IHttpContextAccessor` and manually navigating `HttpContext.User.Claims` — is verbose, error-prone, and hard to test.
+In any ASP.NET Core application with authentication, you constantly need the current user's ID, email, roles, and custom claims.
+The built-in approach — injecting `IHttpContextAccessor` and manually navigating `HttpContext.User.Claims` — is verbose, error-prone, and hard to test.
 
 This package replaces all of that with a single injectable service:
 
 ```csharp
-builder.Services.AddAppUser();
+builder.Services.AddUserContext();
 ```
 
 From any controller, Minimal API endpoint, or service, you write:
 
 ```csharp
-app.MapGet("/me", (AppUser user) => new { user.UserId, user.Name, user.Email });
+app.MapGet("/me", (IUserContext user) => new { user.UserId, user.Name, user.Email });
 ```
 
 The main benefits are:
 
-- **Simplified Access**: No more [`IHttpContextAccessor`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.ihttpcontextaccessor) in your controllers and services. Just inject `AppUser`.
+- **Simplified Access**: No more [`IHttpContextAccessor`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.ihttpcontextaccessor) in your controllers and services.
+Just inject `IUserContext`.
 - **Strongly-Typed**: Get the user's ID as a `Guid` via `UserId`, or as a string via `Id`. Email, Name, roles, and custom claims are all accessible through simple properties and methods.
-- **Testable**: Easily mock `AppUser` in your unit tests to simulate different authenticated users and scenarios.
+- **Testable**: Easily mock `IUserContext` in your unit tests to simulate different authenticated users and scenarios.
 - **Reduced Boilerplate**: Drastically cuts down on repetitive code for accessing user claims.
 - **OIDC-aware scope checking**: `HasScope("api.read")` correctly handles space-separated scopes per the OAuth 2.0 standard.
 
 ### ✨ Key Features
 
-- **One-call registration** — `AddAppUser()` registers `AppUser` as transient and adds `IHttpContextAccessor`
+- **One-call registration** — `AddUserContext()` registers `IUserContext` as scoped and adds `IHttpContextAccessor`
 - **Typed user ID** — `Guid UserId` (parsed from NameIdentifier) and `string? Id` (raw)
 - **Common claim properties** — `Name`, `Email`, `IsAuthenticated`, `IsInRole(string)`
 - **Claim helpers** — `GetClaimValue(string)` and `GetClaimValues(string)` for custom claims
@@ -79,7 +83,7 @@ Install-Package RA.Utilities.Authorization
 **PackageReference (csproj)**
 
 ```xml
-<PackageReference Include="RA.Utilities.Authorization" Version="10.0.1" />
+<PackageReference Include="RA.Utilities.Authorization" Version="10.0.2" />
 ```
 
 ### Hello World
@@ -91,11 +95,11 @@ using RA.Utilities.Authorization;
 var builder = WebApplication.CreateBuilder(args);
 
 // highlight-next-line
-builder.Services.AddAppUser();
+builder.Services.AddUserContext();
 
 var app = builder.Build();
 
-app.MapGet("/me", (AppUser user) => new
+app.MapGet("/me", (IUserContext user) => new
 {
     // highlight-start
     IsAuthenticated = user.IsAuthenticated,
@@ -112,9 +116,9 @@ app.Run();
 
 ## 🧠 Core Concepts
 
-### How `AppUser` works
+### How `UserContext` works
 
-`AppUser` is a transient service that wraps `ClaimsPrincipal` from the current `HttpContext`:
+`IUserContext` is implemented by the internal `UserContext` class, a scoped service that wraps `ClaimsPrincipal` from the current `HttpContext`:
 
 ```
 HTTP Request
@@ -123,10 +127,10 @@ HTTP Request
 IHttpContextAccessor.HttpContext.User  (ClaimsPrincipal)
      │
      ▼
-AppUser constructor ─── stores ClaimsPrincipal? _user
+UserContext constructor ─── stores ClaimsPrincipal? _user
      │
      ▼
-Your controller/service injects AppUser
+Your controller/service injects IUserContext
      │
      ▼
 _user.GetUserId()     → Guid           (via ClaimsPrincipalExtensions)
@@ -136,16 +140,16 @@ _user.IsInRole(...)   → bool
 _user.HasClaim(...)   → bool           (HasClaim, HasScope)
 ```
 
-`AppUser` is registered as **transient** — it's lightweight (just holds a reference to the `ClaimsPrincipal`) and reconstructing it per injection is cheap. `IHttpContextAccessor` (registered as a singleton behind `AsyncLocal`) provides the per-request `HttpContext`.
+`UserContext` is registered as **scoped** — its lifetime aligns with the HTTP request, and `IHttpContextAccessor` (registered as a singleton behind `AsyncLocal`) provides the per-request `HttpContext`.
 
-### Extension methods vs AppUser
+### Extension methods vs IUserContext
 
 | Use case | Approach |
 |---|---|
 | Already have a `ClaimsPrincipal` (e.g., in middleware) | `user.GetUserId()`, `user.HasClaim(type, value)` |
-| In a controller or service (DI-managed) | Inject `AppUser` and use `.UserId`, `.Name`, `.HasClaim(type, value)` |
+| In a controller or service (DI-managed) | Inject `IUserContext` and use `.UserId`, `.Name`, `.HasClaim(type, value)` |
 
-The extension methods are the building blocks; `AppUser` is the ergonomic wrapper.
+The extension methods are the building blocks; `IUserContext` is the ergonomic wrapper.
 
 ### Terminology
 
@@ -164,9 +168,9 @@ The extension methods are the building blocks; `AppUser` is the ergonomic wrappe
 [Authorize]
 public class OrdersController : ControllerBase
 {
-    private readonly AppUser _user;
+    private readonly IUserContext _user;
 
-    public OrdersController(AppUser user) => _user = user;
+    public OrdersController(IUserContext user) => _user = user;
 
     [HttpGet]
     public IActionResult GetOrders()
@@ -186,7 +190,7 @@ public class OrdersController : ControllerBase
 ### Access the current user in a Minimal API endpoint
 
 ```csharp showLineNumbers
-app.MapGet("/profile", (AppUser user) =>
+app.MapGet("/profile", (IUserContext user) =>
 {
     // highlight-start
     return new
@@ -203,7 +207,7 @@ app.MapGet("/profile", (AppUser user) =>
 ### Check OIDC scopes
 
 ```csharp showLineNumbers
-app.MapGet("/admin", (AppUser user) =>
+app.MapGet("/admin", (IUserContext user) =>
 {
     // highlight-start
     if (!user.HasScope("admin.access"))
@@ -219,9 +223,9 @@ app.MapGet("/admin", (AppUser user) =>
 ```csharp showLineNumbers
 public class TenantService
 {
-    private readonly AppUser _user;
+    private readonly IUserContext _user;
 
-    public TenantService(AppUser user) => _user = user;
+    public TenantService(IUserContext user) => _user = user;
 
     public string? GetTenantId()
     {
@@ -257,21 +261,20 @@ public static class AuthorizationMiddleware
 }
 ```
 
-### Mock AppUser in unit tests
+### Mock IUserContext in unit tests
+
+Because `IUserContext` is an interface, mocking it requires no `HttpContext` at all:
 
 ```csharp
-// AppUser is a concrete class — just construct it with a mock IHttpContextAccessor
-var mockAccessor = new Mock<IHttpContextAccessor>();
-var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new[]
-{
-    new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
-    new Claim(ClaimTypes.Email, "test@example.com"),
-    new Claim(ClaimTypes.Role, "Admin"),
-}, "test"));
+// highlight-next-line
+var mockUser = new Mock<IUserContext>();
 
-mockAccessor.Setup(a => a.HttpContext).Returns(new DefaultHttpContext { User = claimsPrincipal });
+mockUser.SetupGet(u => u.IsAuthenticated).Returns(true);
+mockUser.SetupGet(u => u.UserId).Returns(Guid.NewGuid());
+mockUser.SetupGet(u => u.Email).Returns("test@example.com");
+mockUser.Setup(u => u.IsInRole("Admin")).Returns(true);
 
-var user = new AppUser(mockAccessor.Object);
+var user = mockUser.Object;
 
 Assert.True(user.IsAuthenticated);
 Assert.NotEqual(Guid.Empty, user.UserId);
@@ -283,23 +286,24 @@ Assert.True(user.IsInRole("Admin"));
 
 ## ⚙️ Configuration
 
-This package has **no configuration options**. There is no `appsettings.json` section, no options class, and no additional setup beyond calling `AddAppUser()`. The service reads directly from `IHttpContextAccessor.HttpContext.User` at injection time.
+This package has **no configuration options**. There is no `appsettings.json` section, no options class, and no additional setup beyond calling `AddUserContext()`.
+The service reads directly from `IHttpContextAccessor.HttpContext.User` at injection time.
 
 ---
 
 ## ✨ Available Components
 
-### Service Classes
+### Service Interfaces
 
-| Class | Registration | Purpose |
+| Interface | Registration | Purpose |
 |---|---|---|
-| `AppUser` | Transient (via `AddAppUser()`) | Strongly-typed access to the current user's claims |
+| `IUserContext` | Scoped (via `AddUserContext()`) | Strongly-typed access to the current user's claims, implemented internally by `UserContext` |
 
 ### Extension Methods
 
 | Method | Type | Purpose |
 |---|---|---|
-| `AddAppUser()` | `IServiceCollection` | Registers `AppUser` and `IHttpContextAccessor` |
+| `AddUserContext()` | `IServiceCollection` | Registers `IUserContext` and `IHttpContextAccessor` |
 | `GetUserId()` | `ClaimsPrincipal?` | Parses NameIdentifier claim into `Guid` |
 | `HasClaim(type, value)` | `ClaimsPrincipal?` | Checks for a claim with the given type and value |
 | `HasScope(value)` | `ClaimsPrincipal?` | Checks for an OIDC scope (space-separated or individual) |

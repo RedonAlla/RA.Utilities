@@ -4,17 +4,89 @@ title: Migration Guides
 
 # Migration Guides
 
+## v10.0.1 → v10.0.2
+
+### Breaking Change: `AppUser` replaced by `IUserContext`
+
+The concrete `AppUser` class has been removed.
+The same functionality is now exposed through the `IUserContext` interface, implemented internally by `UserContext`.
+The registration method was renamed accordingly, and the service lifetime changed from transient to scoped.
+
+### What changed
+
+| v10.0.1 | v10.0.2 |
+|---|---|
+| `AppUser` (concrete class) | `IUserContext` (interface) + internal `UserContext` |
+| `AddAppUser()` | `AddUserContext()` |
+| Transient | Scoped |
+
+### Why this change?
+
+Programming against an interface decouples your application code from the implementation,
+follows the Dependency Inversion Principle, and simplifies unit testing — you can mock `IUserContext` directly instead of constructing a concrete class with a mocked `IHttpContextAccessor`. The scoped lifetime aligns the service with the request lifetime, which is the natural fit for request-bound state.
+
+### Migration Steps
+
+#### 1. Update service registration
+
+```csharp
+// ❌ v10.0.1
+builder.Services.AddAppUser();
+
+// ✅ v10.0.2
+builder.Services.AddUserContext();
+```
+
+#### 2. Update injection sites
+
+```csharp
+// ❌ v10.0.1
+public OrdersController(AppUser user) => _user = user;
+
+// ✅ v10.0.2
+public OrdersController(IUserContext user) => _user = user;
+```
+
+#### 3. Update unit tests
+
+```csharp
+// ❌ v10.0.1 — construct with a mocked IHttpContextAccessor
+var mockAccessor = new Mock<IHttpContextAccessor>();
+mockAccessor.Setup(a => a.HttpContext)
+    .Returns(new DefaultHttpContext { User = claimsPrincipal });
+var user = new AppUser(mockAccessor.Object);
+
+// ✅ v10.0.2 — mock the interface directly
+var mockUser = new Mock<IUserContext>();
+mockUser.SetupGet(u => u.UserId).Returns(Guid.NewGuid());
+var user = mockUser.Object;
+```
+
+#### 4. Scoped lifetime note
+
+No action is needed for typical request-scoped usage. If you previously captured an `AppUser` beyond a request's scope (e.g., in fire-and-forget tasks),
+resolve `IUserContext` within the operation's own scope instead.
+
+### Verify the upgrade
+
+Build your solution — every remaining reference to `AppUser` or `AddAppUser()` fails to compile,
+so the compiler walks you through all call sites.
+
+---
+
 ## v10.0.0 → v10.0.1
 
 ### Breaking Change: `HasClaim` signature changed
 
 **`HasClaim(string claimValue)` → `HasClaim(string claimType, string claimValue)`**
 
-The old signature accepted only a claim value and hardcoded the claim type to the literal string `"claim"`, which never matched real claims from any standard auth provider. The new signature requires both a claim type and value.
+The old signature accepted only a claim value and hardcoded the claim type to the literal string `"claim"`,
+which never matched real claims from any standard auth provider. The new signature requires both a claim type and value.
 
 ### Why this change?
 
-The old `HasClaim(string claimValue)` was functionally broken — it checked `c.Type == "claim"`, but no JWT issuer, OIDC provider, or cookie auth middleware emits a claim type literally named `"claim"`. The method would always return `false`.
+The old `HasClaim(string claimValue)` was functionally broken — it checked `c.Type == "claim"`,
+but no JWT issuer, OIDC provider, or cookie auth middleware emits a claim type literally named `"claim"`. The method would always return `false`.
 
 The fix adds a `claimType` parameter. The new signature `HasClaim(string claimType, string claimValue)` matches the standard `ClaimsPrincipal.HasClaim(string type, string value)` pattern.
 
@@ -42,9 +114,9 @@ principal.HasClaim("my_claim_type", "SomeValue");
 
 ### Other Changes (non-breaking)
 
-- **New `Guid UserId` property on `AppUser`** — typed access to the user ID without calling the extension method
+- **New `Guid UserId` property** — typed access to the user ID without calling the extension method
 - **`HasScope` now handles OIDC space-separated scopes** — a `"scope"` claim with value `"api.read api.write"` now correctly matches both individual scopes
-- **`AppUser` constructor validates `IHttpContextAccessor`** — throws `ArgumentNullException` instead of silently accepting null
+- **Constructor validates `IHttpContextAccessor`** — throws `ArgumentNullException` instead of silently accepting null
 - **Field renamed** — internal `User` field renamed to `_user` (no external impact)
 - **`FindFirstValue` extension removed** — shadowed the built-in `ClaimsPrincipal.FindFirstValue(string)` method. Use the built-in directly.
 - **`GetUserId` throws `InvalidOperationException` instead of `ApplicationException`** — more specific exception type

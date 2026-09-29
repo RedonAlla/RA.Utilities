@@ -1,5 +1,5 @@
 ---
-title: AppUser
+title: IUserContext
 sidebar_position: 1
 ---
 
@@ -7,30 +7,55 @@ sidebar_position: 1
 Namespace: RA.Utilities.Authorization
 ```
 
-The `AppUser` class is a strongly-typed, injectable service that simplifies access to the claims of the currently authenticated user.
+The `IUserContext` interface is a strongly-typed, injectable contract that simplifies access to the claims of the currently authenticated user.
+It is implemented internally by the `UserContext` class, which wraps the user's `ClaimsPrincipal` from the current `HttpContext`.
+
+> **v10.0.2 change**: `IUserContext` replaces the concrete `AppUser` class from earlier versions.
+Register it with `AddUserContext()` and inject `IUserContext` instead of `AppUser`. See the [migration guide](./migration-guides.mdx).
 
 ### 🎯 Purpose
 
 In a typical application, retrieving user information involves injecting [`IHttpContextAccessor`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.ihttpcontextaccessor) into your controllers or services and manually parsing the [`ClaimsPrincipal`](https://learn.microsoft.com/en-us/dotnet/api/system.security.claims.claimsprincipal). This is repetitive and makes unit testing difficult.
 
-`AppUser` solves these problems by:
+`IUserContext` solves these problems by:
 
-1. **Abstracting `HttpContext`**: It wraps the user's `ClaimsPrincipal`, providing a clean, injectable service that doesn't require a direct dependency on `HttpContext`.
+1. **Abstracting `HttpContext`**: It exposes the user's claims through a clean, injectable interface that doesn't require a direct dependency on `HttpContext`.
 2. **Simplifying Claim Access**: It offers simple properties for common claims like `Id`, `Name`, and `Email` without needing to know the underlying claim type strings.
-3. **Enhancing Testability**: Because it's an injectable concrete class, you can easily mock `AppUser` in your unit tests to simulate various user scenarios without constructing a complex `HttpContext`.
+3. **Enhancing Testability**: Because it's an interface, you can mock `IUserContext` directly in your unit tests — no `IHttpContextAccessor` or `HttpContext` construction required.
 
 ### ✨ Key Benefits:
 
-1. **Simplified Access**: Inject `AppUser` instead of `IHttpContextAccessor` to get user data.
+1. **Simplified Access**: Inject `IUserContext` instead of `IHttpContextAccessor` to get user data.
 2. **Strongly-Typed**: Provides `string? Id` and `Guid UserId` properties, plus `Name` and `Email`.
-3. **Testability**: Easily mock `AppUser` in unit tests to simulate different user scenarios.
+3. **Testability**: Mock `IUserContext` with any mocking framework to simulate different user scenarios.
 4. **Reduced Boilerplate**: Eliminates repetitive code for accessing user claims.
+
+```csharp showLineNumbers
+namespace RA.Utilities.Authorization;
+
+/// <summary>
+/// Provides a strongly-typed way to access the claims of the currently authenticated user.
+/// </summary>
+public interface IUserContext
+{
+    bool IsAuthenticated { get; }
+    string? Id { get; }
+    Guid UserId { get; }
+    string? Email { get; }
+    string? Name { get; }
+    string? GetClaimValue(string claimType);
+    IEnumerable<string> GetClaimValues(string claimType);
+    bool HasClaim(string claimType, string claimValue);
+    bool HasScope(string scopeValue);
+    bool IsInRole(string roleName);
+}
+```
 
 ### 🚀 Usage
 
 #### Step 1: Register the Service
 
-In your `Program.cs`, call `AddAppUser()` to register the service.
+In your `Program.cs`, call `AddUserContext()` to register `IUserContext` (as scoped) along with its required `IHttpContextAccessor`.
 
 ```csharp showLineNumbers
 // Program.cs
@@ -39,12 +64,12 @@ using RA.Utilities.Authorization.Extensions;
 var builder = WebApplication.CreateBuilder(args);
 
 // highlight-next-line
-builder.Services.AddAppUser();
+builder.Services.AddUserContext();
 ```
 
-#### Step 2: Inject and Use `AppUser`
+#### Step 2: Inject and Use `IUserContext`
 
-Inject `AppUser` into your controllers or services to access user information.
+Inject `IUserContext` into your controllers or services to access user information.
 
 ```csharp showLineNumbers
 using Microsoft.AspNetCore.Mvc;
@@ -56,9 +81,9 @@ using RA.Utilities.Authorization;
 [Authorize]
 public class ProfileController : ControllerBase
 {
-    private readonly AppUser _user;
+    private readonly IUserContext _user;
 
-    public ProfileController(AppUser user)
+    public ProfileController(IUserContext user)
     {
         _user = user;
     }

@@ -3,6 +3,35 @@ title: RA.Utilities.Authorization
 authors: [RedonAlla]
 ---
 
+## Version 10.0.2
+![Date Badge](https://img.shields.io/badge/Publish-29%20September%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.2-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Authorization/10.0.2)
+
+`AppUser` is replaced by the `IUserContext` abstraction with an internal `UserContext` implementation, and registration moves from `AddAppUser()` to `AddUserContext()`.
+
+<!-- truncate -->
+
+### ⚠️ Breaking Changes
+
+* **`AppUser` removed**: the concrete `AppUser` class is replaced by the `IUserContext` interface (implemented internally by `UserContext`). Inject `IUserContext` instead of `AppUser`.
+  **Migration**:
+
+```csharp
+- builder.Services.AddAppUser();
++ builder.Services.AddUserContext();
+
+- public OrdersController(AppUser user) => _user = user;
++ public OrdersController(IUserContext user) => _user = user;
+```
+
+* **Registration lifetime changed to scoped**: `AddUserContext()` registers the service as **scoped** (was transient). **Migration**: no action needed for typical request-scoped usage; the service remains safe to inject into controllers, Minimal API endpoints, and services.
+
+### ✨ New Features
+
+* **`IUserContext` interface**: defines the full contract — `IsAuthenticated`, `Id`, `UserId`, `Email`, `Name`, `GetClaimValue`, `GetClaimValues`, `HasClaim`, `HasScope`, `IsInRole` — so consumers can mock it directly in unit tests without mocking `IHttpContextAccessor`.
+
+---
+
 ## Version 10.0.1
 ![Date Badge](https://img.shields.io/badge/Publish-07%20August%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Authorization/10.0.1)

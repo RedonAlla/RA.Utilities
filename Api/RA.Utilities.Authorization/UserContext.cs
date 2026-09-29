@@ -12,16 +12,16 @@ namespace RA.Utilities.Authorization;
 /// This service is registered as Transient and relies on <see cref="IHttpContextAccessor"/>
 /// to get the user information for the current request.
 /// </summary>
-public class AppUser
+internal class UserContext : IUserContext
 {
     private readonly ClaimsPrincipal? _user;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="AppUser"/> class.
+    /// Initializes a new instance of the <see cref="UserContext"/> class.
     /// </summary>
     /// <param name="httpContextAccessor">The HTTP context accessor, injected by the DI container.</param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="httpContextAccessor"/> is null.</exception>
-    public AppUser(IHttpContextAccessor httpContextAccessor)
+    public UserContext(IHttpContextAccessor httpContextAccessor)
     {
         ArgumentNullException.ThrowIfNull(httpContextAccessor);
         _user = httpContextAccessor.HttpContext?.User;

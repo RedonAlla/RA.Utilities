@@ -7,11 +7,13 @@ sidebar_position: 2
 Namespace: RA.Utilities.Authorization.Extensions
 ```
 
-The `ClaimsPrincipalExtensions` class provides convenient extension methods for `ClaimsPrincipal`, simplifying common claim-related tasks.
+The `ClaimsPrincipalExtensions` class provides convenient extension methods for `ClaimsPrincipal`,
+simplifying common claim-related tasks.
 
 ### 🎯 Purpose
 
-Instead of writing repetitive code to find, parse, and validate claims, these extension methods provide clean, readable, and reusable shortcuts.
+Instead of writing repetitive code to find, parse, and validate claims,
+these extension methods provide clean, readable, and reusable shortcuts.
 
 ## ✨ Available Methods
 
@@ -54,4 +56,5 @@ if (User.HasScope("api.read"))
 }
 ```
 
-These extensions are used by the `AppUser` service to build its higher-level API, but are also available for use directly on any `ClaimsPrincipal`.
+These extensions are used by the `UserContext` service (the internal implementation of `IUserContext`) to build its higher-level API,
+but are also available for use directly on any `ClaimsPrincipal`.

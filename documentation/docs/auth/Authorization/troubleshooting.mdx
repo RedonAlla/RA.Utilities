@@ -9,7 +9,8 @@ sidebar_position: 99
 
 ### `InvalidOperationException: User id is unavailable`
 
-**Cause**: `AppUser.UserId` or `ClaimsPrincipal.GetUserId()` is called but the user is not authenticated, or the NameIdentifier claim is missing or not a valid `Guid`.
+**Cause**: `IUserContext.UserId` or `ClaimsPrincipal.GetUserId()` is called but the user is not authenticated,
+or the `NameIdentifier` claim is missing or not a valid `Guid`.
 
 **Fix**: Check `IsAuthenticated` before accessing `UserId`:
 
@@ -26,9 +27,10 @@ Or use the nullable `Id` property instead:
 string? id = user.Id; // Returns null instead of throwing
 ```
 
-### `AppUser` properties are all null / `IsAuthenticated` is false
+### `IUserContext` properties are all null / `IsAuthenticated` is false
 
-**Cause**: The user is not authenticated. `AppUser` reads from `HttpContext.User`, which is only populated when the request has been authenticated by middleware.
+**Cause**: The user is not authenticated.
+`IUserContext` reads from `HttpContext.User`, which is only populated when the request has been authenticated by middleware.
 
 **Fix**: Ensure authentication middleware is registered and ordered correctly:
 
@@ -44,7 +46,7 @@ app.MapEndpoints();
 Also verify the endpoint requires authentication:
 
 ```csharp
-app.MapGet("/me", (AppUser user) => ...).RequireAuthorization();
+app.MapGet("/me", (IUserContext user) => ...).RequireAuthorization();
 ```
 
 ### `HasScope` returns `false` even though the token has the scope
@@ -72,21 +74,23 @@ if (user.HasClaim("scp", "api.read"))
 }
 ```
 
-### `AddAppUser()` is not recognized
+### `AddUserContext()` is not recognized
 
-**Cause**: Missing using directive.
+**Cause**: Missing using directive — or you're still calling the old name after upgrading.
 
-**Fix**: Add the namespace:
+**Fix**: Add the namespace and use the current method name:
 
 ```csharp
 using RA.Utilities.Authorization.Extensions;
 
-builder.Services.AddAppUser();
+builder.Services.AddUserContext();
 ```
+
+> **Upgrading from v10.0.1 or earlier?** `AddAppUser()` was renamed to `AddUserContext()` in v10.0.2. See the [migration guide](./migration-guides.mdx).
 
 ### `HasClaim` gives a compilation error about too few arguments
 
-**Cause**: You're using the v10.0.0 signature `HasClaim(string claimValue)` after upgrading to v10.0.1.
+**Cause**: You're using the v10.0.0 signature `HasClaim(string claimValue)` after upgrading to v10.0.1 or later.
 
 **Fix**: Add the `claimType` parameter:
 
@@ -94,7 +98,7 @@ builder.Services.AddAppUser();
 // ❌ v10.0.0
 user.HasClaim("CanDeleteUsers");
 
-// ✅ v10.0.1
+// ✅ v10.0.1+
 user.HasClaim("permission", "CanDeleteUsers");
 ```
 
@@ -111,33 +115,35 @@ user.HasClaim("permission", "CanDeleteUsers");
 
 Use `UserId` when you know the user is authenticated and your IDs are GUIDs. Use `Id` when you need the raw string or are handling the null case yourself.
 
-### Does `AppUser` work with Minimal APIs?
+### Does `IUserContext` work with Minimal APIs?
 
 Yes. Inject it directly into endpoint handlers:
 
 ```csharp
-app.MapGet("/me", (AppUser user) => new { user.UserId, user.Email });
+app.MapGet("/me", (IUserContext user) => new { user.UserId, user.Email });
 ```
 
-### Can I use `AppUser` outside of a request context (e.g., background jobs)?
+### Can I use `IUserContext` outside of a request context (e.g., background jobs)?
 
-No. `AppUser` reads from `IHttpContextAccessor.HttpContext.User`, which is only available during an HTTP request. For background jobs, construct a `ClaimsPrincipal` manually or pass the relevant user information as parameters.
+No. `IUserContext` reads from `IHttpContextAccessor.HttpContext.User`, which is only available during an HTTP request. For background jobs, construct a `ClaimsPrincipal` manually or pass the relevant user information as parameters.
 
-### How do I add custom properties to `AppUser`?
+### How do I add custom properties to `IUserContext`?
 
-`AppUser` is a concrete class, so you can subclass it or create extension methods. For most cases, use `GetClaimValue`:
+Since `IUserContext` is an interface, the simplest approach is an extension method over it:
 
 ```csharp
-public static class AppUserExtensions
+public static class UserContextExtensions
 {
-    public static string? GetDepartment(this AppUser user) =>
+    public static string? GetDepartment(this IUserContext user) =>
         user.GetClaimValue("department");
 }
 ```
 
-### Is `AppUser` thread-safe?
+For richer scenarios (e.g., typed value objects), define your own interface extending `IUserContext` and register your implementation alongside `AddUserContext()`.
 
-Yes. It's registered as transient and holds a reference to a `ClaimsPrincipal`, which is immutable. Each injection gets a fresh instance scoped to the current `IHttpContextAccessor`.
+### Is `IUserContext` thread-safe?
+
+Yes. It is registered as **scoped** — each request gets its own instance — and it holds a reference to a `ClaimsPrincipal`, which is immutable. Scoped instances are never shared across concurrent requests.
 
 ### Does `HasScope` support the `scp` claim?
 
@@ -152,7 +158,7 @@ bool hasScope = user.HasClaim("scp", "api.read");
 ## Known Limitations
 
 - **GUID-only user IDs**: `UserId` and `GetUserId()` parse only `Guid`. For integer or string IDs, use `Id` and convert manually.
-- **Request-bound**: `AppUser` requires an active `HttpContext`. It won't work in background jobs, hosted services, or message handlers without a request context.
+- **Request-bound**: `IUserContext` requires an active `HttpContext`. It won't work in background jobs, hosted services, or message handlers without a request context.
 - **Case-sensitive scope matching**: `HasScope` uses ordinal comparison. Most OIDC providers use lowercase scopes, but verify your provider's output.
-- **No implicit authorization**: `AppUser` reads claims; it doesn't enforce authorization. Use `[Authorize]` attributes or `RequireAuthorization()` to protect endpoints.
-- **No claim transformation**: If you use `IClaimsTransformation`, the transformed claims are available through `AppUser` since it reads `HttpContext.User` after transformation.
+- **No implicit authorization**: `IUserContext` reads claims; it doesn't enforce authorization. Use `[Authorize]` attributes or `RequireAuthorization()` to protect endpoints.
+- **No claim transformation**: If you use `IClaimsTransformation`, the transformed claims are available through `IUserContext` since it reads `HttpContext.User` after transformation.
