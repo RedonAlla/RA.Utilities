@@ -37,7 +37,7 @@ const treeData = {
           ]
         },
         {
-          name: 'Web',
+          name: 'Presentation',
           icon: 'folder',
           children: [
             { name: 'RaTemplate.Api', icon: 'csproj', children: [] },
