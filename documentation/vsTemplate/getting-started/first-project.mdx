@@ -1,0 +1,110 @@
+---
+title: Your first project
+sidebar_position: 3
+---
+
+# Your first project
+
+## Create a new solution
+
+Initialize a fresh workspace by executing `dotnet new RA.Template -n YourProjectName`. The most useful flags are `--database` (multi-select: `EfSqlServer`, `EfOracle`, `EfPostgres`, `EfSqlite`, or `None`), `--UseAuthorization` (JWT wiring on/off), and `--UseIntegrations` (HTTP client infrastructure on/off). Defaults favor JWT authorization, EF Core with SQL Server, Scalar UI, and HTTP integrations.
+
+| Parameter | Display Name | Description | Type | Default Value | Available Choices |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `Framework` | .NET Target Framework | Select the target framework for the project. | Choice | `net10.0` | `.NET 10` |
+| `UseAuthorization` | JWT Authorization | Includes JWT-based authorization services and middleware. | Boolean | `true` | `true`, `false` |
+| `UseIntegrations` | Use HTTP Client Integration? | Adds infrastructure for building and consuming external HTTP services. | Boolean | `true` | `true`, `false` |
+| `OpenApiUI` | OpenApi documentation UI. | Selects the UI for API documentation. | Choice | `scalar` | `scalar`, `swagger` |
+| `Database` | Database provider | Selects the data access technology. Multi-select: repeat the flag to select several providers (one `DbContext` per provider). CLI aliases: `--database`, `-db`. | Choice (multi-select) | `EfSqlServer` | `EfSqlServer`, `EfOracle`, `EfPostgres`, `EfSqlite`, `None` |
+
+Basic creation with defaults:
+
+```bash
+dotnet new RA.Template -n MyApi
+```
+
+**Example 1: EF Core on Oracle with no authorization**
+
+```bash
+dotnet new RA.Template -n MyOracleApi --database EfOracle --UseAuthorization false
+```
+
+**Example 2: A minimal API without persistence or integrations**
+
+```bash
+dotnet new RA.Template -n MyMinimalApi --database None --UseIntegrations false
+```
+
+**Example 3: Multiple database providers**
+
+Repeat the `--database` flag to get one `DbContext`, connection string, health check, and DI registration per provider:
+
+```bash
+dotnet new RA.Template -n MyMultiDbApi --database EfOracle --database EfPostgres
+```
+
+:::Note
+A single comma-separated token is rejected — repeat the flag instead.
+`None` must be selected on its own and excludes the Persistence project entirely.
+:::
+
+## Explore the generated structure
+
+import FileTree from '@site/src/components/FileTree/VsTemplate'
+
+<FileTree />
+
+A parallel `tests/` directory holds `YourProjectName.ArchitectureTests/`, and a solution manifest links all components.
+
+## Build
+
+Compile the complete workspace from the root directory:
+
+```bash
+cd MyApi
+dotnet build
+```
+
+Resolve any compilation failures immediately — a freshly scaffolded solution should build without intervention.
+
+## Configure settings
+
+If your project uses a persistence layer, open `src/Presentation/MyApi.Api/appsettings.json` and set the connection string for each selected provider, e.g. `ConnectionStrings:MyApiSqlServerConnectionString` (keys are renamed along with the project).
+
+## Run the application
+
+Launch the API host project:
+
+```bash
+dotnet run --project src/Presentation/MyApi.Api/MyApi.Api.csproj
+```
+
+The default profile listens on `http://localhost:5039`; use `--launch-profile https` for `https://localhost:7202`.
+
+## Explore the API
+
+Access interactive Scalar documentation by navigating to `http://localhost:5039/openapi-ui` once the server starts. When a database is configured, health checks are served at `http://localhost:5039/health`.
+
+## Database
+
+One `DbContext` is generated per selected provider, each with its own connection string, health check, and DI registration. SQLite works without containers; SQL Server, PostgreSQL, and Oracle typically run via Docker or a managed instance.
+
+## Run the tests
+
+Validate layer boundaries and naming conventions by executing `dotnet test` at the solution root:
+
+```bash
+dotnet test
+```
+
+A freshly scaffolded instance should clear every verification step — the NetArchTest-based architecture tests enforce layer dependencies, entity conventions, and feature naming rules from day one.
+
+## Next steps
+
+- Study the layer structure in the [Overview](getting-started.md)
+- Review the full [template parameters](../README.md#%EF%B8%8F-template-parameters) to expand your configuration
+- Revisit the [installation guide](installation.md) to update or uninstall the template
+
+---
+*Navigation:*
+[Previous](installation.md) Installation

@@ -13,31 +13,44 @@ const treeData = {
     { name: 'Directory.Build.targets', icon: 'xml' },
     { name: 'Directory.Packages.props', icon: 'xml' },
     {
-      name: 'Core',
+      name: 'src',
       icon: 'folder',
       children: [
-        { name: 'RaTemplate.Domain', icon: 'csproj', children: [] },
-        { name: 'RaTemplate.Application', icon: 'csproj', children: [] }
+        {
+          name: 'Core',
+          icon: 'folder',
+          children: [
+            { name: 'RaTemplate.Domain', icon: 'csproj', children: [] },
+            { name: 'RaTemplate.Application', icon: 'csproj', children: [] }
+          ],
+        },
+        {
+          name: 'Infrastructure',
+          icon: 'folder',
+          children: [
+            { name: 'RaTemplate.Infrastructure', icon: 'csproj', children: [
+              { name: '... (Application services, CQRS handlers, etc.)', icon: '', children: [] },
+              { name: 'ApplicationServiceRegistration.cs', icon: 'csharp', children: [] },
+            ] },
+            { name: 'RaTemplate.Integration', icon: 'csproj', children: [] },
+            { name: 'RaTemplate.Persistence', icon: 'csproj', children: [] }
+          ]
+        },
+        {
+          name: 'Web',
+          icon: 'folder',
+          children: [
+            { name: 'RaTemplate.Api', icon: 'csproj', children: [] },
+            { name: 'RaTemplate.Api.Contracts', icon: 'csproj', children: [] }
+          ],
+        }
       ],
     },
     {
-      name: 'Infrastructure',
+      name: 'tests',
       icon: 'folder',
       children: [
-        { name: 'RaTemplate.Infrastructure', icon: 'csproj', children: [
-          { name: '... (Application services, CQRS handlers, etc.)', icon: '', children: [] },
-          { name: 'ApplicationServiceRegistration.cs', icon: 'csharp', children: [] },
-        ] },
-        { name: 'RaTemplate.Integration', icon: 'csproj', children: [] },
-        { name: 'RaTemplate.Persistence', icon: 'csproj', children: [] }
-      ]
-    },
-    {
-      name: 'Web',
-      icon: 'folder',
-      children: [
-        { name: 'RaTemplate.Api', icon: 'csproj', children: [] },
-        { name: 'RaTemplate.Api.Contracts', icon: 'csproj', children: [] }
+        { name: 'RaTemplate.ArchitectureTests', icon: 'csproj', children: [] },
       ],
     }
   ],
