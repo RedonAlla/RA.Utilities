@@ -7,7 +7,9 @@ sidebar_position: 3
 
 ## Create a new solution
 
-Initialize a fresh workspace by executing `dotnet new RA.Template -n YourProjectName`. The most useful flags are `--database` (multi-select: `EfSqlServer`, `EfOracle`, `EfPostgres`, `EfSqlite`, or `None`), `--UseAuthorization` (JWT wiring on/off), and `--UseIntegrations` (HTTP client infrastructure on/off). Defaults favor JWT authorization, EF Core with SQL Server, Scalar UI, and HTTP integrations.
+Initialize a fresh workspace by executing `dotnet new RA.Template -n YourProjectName`.
+The most useful flags are `--database` (multi-select: `EfSqlServer`, `EfOracle`, `EfPostgres`, `EfSqlite`, or `None`), `--UseAuthorization` (JWT wiring on/off), and `--UseIntegrations` (HTTP client infrastructure on/off).
+Defaults favor JWT authorization, EF Core with SQL Server, Scalar UI, and HTTP integrations.
 
 | Parameter | Display Name | Description | Type | Default Value | Available Choices |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -98,13 +100,3 @@ dotnet test
 ```
 
 A freshly scaffolded instance should clear every verification step — the NetArchTest-based architecture tests enforce layer dependencies, entity conventions, and feature naming rules from day one.
-
-## Next steps
-
-- Study the layer structure in the [Overview](getting-started.md)
-- Review the full [template parameters](../README.md#%EF%B8%8F-template-parameters) to expand your configuration
-- Revisit the [installation guide](installation.md) to update or uninstall the template
-
----
-*Navigation:*
-[Previous](installation.md) Installation
