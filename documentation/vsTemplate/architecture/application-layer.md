@@ -9,7 +9,8 @@ The Application layer lives in `src/Core/RaTemplate.Application`.
 It orchestrates use cases: it depends on **Domain only** and defines the abstractions that Infrastructure must implement.
 It has no knowledge of HTTP, databases, or the file system — everything external is reached through an interface.
 
-:::info[Template state:] the scaffold ships the wiring (`DependencyInjection.cs`, `AssemblyReference.cs`) and the per-provider data abstractions under `Abstractions/Data/`. It contains no sample features yet — you add your own commands, queries, handlers, and validators, and the architecture tests enforce the conventions below.
+:::info[Template state:]
+the scaffold ships the wiring (`DependencyInjection.cs`, `AssemblyReference.cs`) and the per-provider data abstractions under `Abstractions/Data/`. It contains no sample features yet — you add your own commands, queries, handlers, and validators, and the architecture tests enforce the conventions below.
 :::
 
 ## Project Dependencies

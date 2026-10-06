@@ -8,7 +8,7 @@ sidebar_position: 5
 The Persistence layer lives in `src/Infrastructure/RaTemplate.Persistence` and implements the data-access side of the Application layer's `IRaTemplate{Provider}DbContext` abstractions using Entity Framework Core.
 It is one of the three Infrastructure projects (see the [Infrastructure Layer](infrastructure-layer.md)) and is generated **only when you select at least one database provider** — with `--database None` the whole project, its abstractions, and its tests are removed.
 
-:::note[Template state]
+:::info[Template state]
 the scaffold ships one sealed `DbContext` per selected provider, the DI wiring, the audit interceptor, health checks, and a development-time initializer. It contains **no entities, entity configurations, or seed data yet** — you add those, and the architecture tests enforce the conventions below.
 :::
 
@@ -67,7 +67,7 @@ public sealed class RaTemplateSqliteDbContext(DbContextOptions<RaTemplateSqliteD
 
 :::note[Provider difference:]
 only `RaTemplateSqlServerDbContext` calls `HasDefaultSchema(Schemas.Default)`. The Oracle, PostgreSQL, and SQLite contexts apply configurations but leave the schema to the provider/connection default (Oracle uses the connected user's schema; SQLite has no schema concept).
-:::note
+:::
 
 Both `OnModelCreating` overrides call `ApplyConfigurationsFromAssembly`, so every `IEntityTypeConfiguration<>` in the assembly is discovered and applied automatically — no manual wiring per entity.
 
