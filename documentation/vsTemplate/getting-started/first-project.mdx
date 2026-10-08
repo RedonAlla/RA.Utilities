@@ -19,6 +19,11 @@ Defaults favor JWT authorization, EF Core with SQL Server, Scalar UI, and HTTP i
 | `OpenApiUI` | OpenApi documentation UI. | Selects the UI for API documentation. | Choice | `scalar` | `scalar`, `swagger` |
 | `Database` | Database provider | Selects the data access technology. Multi-select: repeat the flag to select several providers (one `DbContext` per provider). CLI aliases: `--database`, `-db`. | Choice (multi-select) | `EfSqlServer` | `EfSqlServer`, `EfOracle`, `EfPostgres`, `EfSqlite`, `None` |
 
+:::info[Note for Visual Studio Code:]
+the C# Dev Kit project wizard does not support multi-select parameters, so `Database` is not offered there and wizard-created projects use the default `EfSqlServer`.
+To pick or combine providers, create the project from the CLI as shown below ([upstream issue](https://github.com/microsoft/vscode-dotnettools/issues/1659)).
+:::
+
 Basic creation with defaults:
 
 ```bash

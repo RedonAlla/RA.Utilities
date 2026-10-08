@@ -154,7 +154,8 @@ Fill in one entry per selected provider before running.
 
 ## Database Initialization
 
-`RaTemplateDbInitializer.InitializeDatabaseAsync` is invoked from `Program.cs` **only when the environment is Development**. It creates a scope, resolves the SQL Server context, runs `EnsureDeletedAsync` then `EnsureCreatedAsync`, and logs the generated create script. A private `SeedAsync` stub is included for you to extend with default data (it is not called by default).
+`RaTemplateDbInitializer.InitializeDatabaseAsync` is invoked from `Program.cs` **only when the environment is Development**. It creates a scope and, for each selected provider (SQL Server, Oracle, Postgres, SQLite), resolves that provider's context, runs `EnsureDeletedAsync` then `EnsureCreatedAsync`, and logs the generated create script.
+A private `SeedAsync` stub is included for you to extend with default data (it is not called by default).
 
 :::danger
 The delete-and-recreate strategy is for local development convenience. Replace it with EF Core **migrations** before deploying to any shared or production environment.
