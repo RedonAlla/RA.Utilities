@@ -12,7 +12,6 @@ using Microsoft.IO;
 using RA.Utilities.Api.Json;
 using RA.Utilities.Api.Options;
 using RA.Utilities.Api.Utilities;
-using RA.Utilities.Core.Constants;
 using RA.Utilities.Logging.Shared.Constants;
 using RA.Utilities.Logging.Shared.Models.HttpLog;
 
@@ -35,9 +34,14 @@ public class LoggingMiddleware(
     IOptions<HttpLoggingOptions> options
     ) : IMiddleware
 {
-    private readonly ILogger<LoggingMiddleware> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    private readonly RecyclableMemoryStreamManager _recyclableMemoryStreamManager = recyclableMemoryStreamManager ?? throw new ArgumentNullException(nameof(recyclableMemoryStreamManager));
-    private readonly HttpLoggingOptions _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
+    private readonly ILogger<LoggingMiddleware> _logger =
+        logger ?? throw new ArgumentNullException(nameof(logger));
+
+    private readonly RecyclableMemoryStreamManager _recyclableMemoryStreamManager =
+        recyclableMemoryStreamManager ?? throw new ArgumentNullException(nameof(recyclableMemoryStreamManager));
+
+    private readonly HttpLoggingOptions _options =
+        options?.Value ?? throw new ArgumentNullException(nameof(options));
 
     /// <summary>
     /// Processes a request to log HTTP request and response.
@@ -71,13 +75,22 @@ public class LoggingMiddleware(
             context.Response.Body = responseBody;
 
             await next(context);
+            await LogResponseAsync(context, responseBody, stopwatch.Elapsed);
+
             stopwatch.Stop();
 
-            await LogResponseAsync(context, responseBody, stopwatch.Elapsed);
+            if (LogWarning(stopwatch.Elapsed))
+                _logger.LogWarning("HTTP call to {Method} {Url} took too long ({ElapsedMilliseconds} ms)",
+                context.Request.Method, context.Request.Path, stopwatch.Elapsed.TotalMilliseconds
+            );
 
             await responseBody.CopyToAsync(originalBodyStream, context.RequestAborted);
         }
     }
+
+    private bool LogWarning(TimeSpan duration) =>
+        _options.WarningThresholdMilliseconds > 0 &&
+        duration.TotalMilliseconds > _options.WarningThresholdMilliseconds;
 
     private async Task LogRequestAsync(HttpContext context)
     {
@@ -88,8 +101,6 @@ public class LoggingMiddleware(
 
         var requestLog = new HttpRequestLogTemplate
         {
-            RequestId = context.Request.Headers[HeaderParameters.XRequestId].FirstOrDefault(),
-            TraceIdentifier = context.TraceIdentifier,
             Scheme = context.Request.Scheme,
             Host = context.Request.Host.ToString(),
             Method = context.Request.Method,
@@ -105,18 +116,11 @@ public class LoggingMiddleware(
 
     private async Task LogResponseAsync(HttpContext context, MemoryStream responseBody, TimeSpan duration)
     {
-        LogLevel logLevel = _options.WarningThresholdMilliseconds > 0 &&
-                       duration.TotalMilliseconds > _options.WarningThresholdMilliseconds
-            ? LogLevel.Warning
-            : LogLevel.Information;
-
-        if (!_logger.IsEnabled(logLevel))
+        if (!_logger.IsEnabled(LogLevel.Information))
             return;
 
         var responseLog = new HttpResponseLogTemplate
         {
-            RequestId = context.Request.Headers[HeaderParameters.XRequestId].FirstOrDefault(),
-            TraceIdentifier = context.TraceIdentifier,
             Path = context.Request.Path,
             RemoteAddress = context.Connection.RemoteIpAddress?.ToString(),
             StatusCode = context.Response.StatusCode,
@@ -125,7 +129,7 @@ public class LoggingMiddleware(
             ResponseBody = await ReadBodyAsync(responseBody)
         };
 
-        _logger.Log(logLevel, "HTTP Response: {@ResponseLog}", responseLog);
+        _logger.LogWarning("HTTP Response: {@ResponseLog}", responseLog);
     }
 
     private async Task<object> ReadBodyAsync(Stream stream)

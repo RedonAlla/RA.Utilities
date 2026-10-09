@@ -3,6 +3,39 @@ title: RA.Utilities.Integrations
 authors: [RedonAlla]
 ---
 
+## Version 10.1.1
+![Date Badge](https://img.shields.io/badge/Publish-09%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.1.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Integrations/10.1.1)
+
+`RequestResponseLoggingHandler` is simplified and its slow-call logging made explicit: the handler now takes only an `ILogger`, and calls that exceed the warning threshold produce a dedicated `Warning` entry in addition to the `Information` request/response logs.
+
+<!-- truncate -->
+
+### ⚠️ Breaking Changes
+
+* **`RequestResponseLoggingHandler` constructor simplified**: the `IHttpContextAccessor` parameter was removed.
+
+```csharp
+- public RequestResponseLoggingHandler(ILogger<RequestResponseLoggingHandler> logger, IHttpContextAccessor httpContextAccessor)
++ public RequestResponseLoggingHandler(ILogger<RequestResponseLoggingHandler> logger)
+```
+
+`WithHttpLoggingHandler()` handles the new signature automatically — only manual constructions/registrations need updating.
+
+* **Log templates no longer carry `RequestId` / `TraceIdentifier`** (via `RA.Utilities.Logging.Shared` 10.0.2): correlation now comes from the ambient log scope (`LoggingConstants.XRequestId`), e.g. the one created by `LoggingMiddleware` or the Serilog `RequestIdEnricher`.
+
+### ✨ Enhancements
+
+* **Dedicated slow-call warning**: when a call exceeds the handler's warning threshold (35 seconds), an additional `Warning` entry is written alongside the `Information` response log.
+
+```csharp
+  _logger.LogInformation("HttpClient Response: {@ResponseDto}", responseDto);
+
++ if (stopwatch.Elapsed.TotalMilliseconds > _warningThresholdMilliseconds)
++     _logger.LogWarning("HttpClient call to {Method} {Url} took too long ({ElapsedMilliseconds} ms)", ...);
+```
+
+
 ## Version 10.1.0
 ![Date Badge](https://img.shields.io/badge/Publish-14%20August%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-v10.1.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Integrations/10.1.0)

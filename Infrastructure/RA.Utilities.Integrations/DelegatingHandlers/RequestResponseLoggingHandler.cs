@@ -1,19 +1,14 @@
 #pragma warning disable CA1873
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using RA.Utilities.Integrations.Extensions;
-using RA.Utilities.Logging.Shared.Constants;
 using RA.Utilities.Logging.Shared.Models.HttpLog;
 
 namespace RA.Utilities.Integrations.DelegatingHandlers;
@@ -29,27 +24,16 @@ public class RequestResponseLoggingHandler : DelegatingHandler
     /// </summary>
     private readonly ILogger<RequestResponseLoggingHandler> _logger;
 
-    /// <summary>
-    /// The trace identifier from the current HttpContext.
-    /// </summary>
-    private readonly string _traceIdentifier;
-
     private const double _warningThresholdMilliseconds = 35000;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RequestResponseLoggingHandler"/> class.
     /// </summary>
     /// <param name="logger">The logger to use for logging requests and responses.</param>
-    /// <param name="httpContextAccessor">The accessor for the current <see cref="HttpContext"/>, used to retrieve the trace identifier.</param>
-    /// <exception cref="ArgumentNullException">Thrown if <paramref name="httpContextAccessor"/> or <paramref name="logger"/> is <see langword="null"/>.</exception>
-    public RequestResponseLoggingHandler(ILogger<RequestResponseLoggingHandler> logger, IHttpContextAccessor httpContextAccessor)
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="logger"/> is <see langword="null"/>.</exception>
+    public RequestResponseLoggingHandler(ILogger<RequestResponseLoggingHandler> logger)
     {
-        ArgumentNullException.ThrowIfNull(httpContextAccessor);
-
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-
-        _traceIdentifier = httpContextAccessor.HttpContext?.TraceIdentifier
-            ?? Environment.CurrentManagedThreadId.ToString(CultureInfo.InvariantCulture);
     }
 
     /// <summary>
@@ -70,8 +54,6 @@ public class RequestResponseLoggingHandler : DelegatingHandler
         #region LogRequest
         var requestDto = new HttpRequestLogTemplate
         {
-            RequestId = GetRequestId(request.Headers),
-            TraceIdentifier = _traceIdentifier,
             Scheme = request.RequestUri?.Scheme,
             Host = request?.RequestUri?.Host,
             Method = request?.Method?.Method,
@@ -88,8 +70,6 @@ public class RequestResponseLoggingHandler : DelegatingHandler
         #region LogResponse
         var responseDto = new HttpResponseLogTemplate
         {
-            RequestId = GetRequestId(request!.Headers),
-            TraceIdentifier = _traceIdentifier,
             Path = response.RequestMessage?.RequestUri?.AbsoluteUri,
             RemoteAddress = request?.Options?.GetClientIpAddress() ?? string.Empty,
             StatusCode = (int)response.StatusCode,
@@ -98,31 +78,17 @@ public class RequestResponseLoggingHandler : DelegatingHandler
             ResponseBody = await GetHttpContent(response.Content, cancellationToken)
         };
 
-        LogLevel logLevel = LoggingLevel(stopwatch.Elapsed.TotalMilliseconds);
-        _logger.Log(logLevel, "HttpClient Response: {@ResponseDto}", responseDto);
+        _logger.LogInformation("HttpClient Response: {@ResponseDto}", responseDto);
+
+        if (stopwatch.Elapsed.TotalMilliseconds > _warningThresholdMilliseconds)
+            _logger.LogWarning("HttpClient call to {Method} {Url} took too long ({ElapsedMilliseconds} ms)",
+                requestDto.Method, $"{requestDto.Path}?{request?.RequestUri?.Query}", stopwatch.Elapsed.TotalMilliseconds
+            );
 
         stopwatch.Stop();
         #endregion
 
         return response;
-    }
-
-    private LogLevel LoggingLevel(double duration)
-    {
-        return _warningThresholdMilliseconds > 0 &&
-                       duration > _warningThresholdMilliseconds
-            ? LogLevel.Warning
-            : LogLevel.Information;
-    }
-
-    private string GetRequestId(HttpRequestHeaders? headers)
-    {
-        if (headers != null && headers.TryGetValues(LoggingConstants.XRequestId, out IEnumerable<string>? requestIds))
-        {
-            return requestIds?.FirstOrDefault() ?? _traceIdentifier;
-        }
-
-        return _traceIdentifier;
     }
 
     /// <summary>
@@ -134,16 +100,12 @@ public class RequestResponseLoggingHandler : DelegatingHandler
     private async Task<object?> GetHttpContent(HttpContent? httpContent, CancellationToken cancellationToken)
     {
         if (httpContent is null)
-        {
             return null;
-        }
 
         string contentString = await httpContent.ReadAsStringAsync(cancellationToken);
 
         if (string.IsNullOrEmpty(contentString))
-        {
             return null;
-        }
 
         try
         {

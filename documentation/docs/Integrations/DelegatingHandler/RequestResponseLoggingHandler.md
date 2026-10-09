@@ -18,7 +18,6 @@ After the call completes, it constructs a detailed `HttpRequestLogTemplate` obje
   * The request method, URI, path, and query string.
   * Request headers.
   * The request body (which it intelligently tries to parse as JSON for better structured logging).
-  * The `TraceIdentifier` from the original incoming request, linking this outgoing call to the parent operation.
 4. **Logs the Response**: It then constructs a `HttpResponseLogTemplate` object with:
   * The HTTP status code.
   * Response headers.
@@ -36,3 +35,13 @@ This handler is typically added to an [`HttpClient`](https://learn.microsoft.com
 services.AddHttpClientIntegration<IMyApiClient, MyApiClient, MyApiSettings>(...)
     .WithHttpLoggingHandler(); // <-- This adds the handler to the pipeline
 ```
+
+## Log Levels & Correlation
+
+Both the request and the response logs are written at `LogLevel.Information`, and logging is skipped entirely when `Information` is not enabled. If writing the logs takes longer than the handler's warning threshold (35 seconds), an additional `Warning` entry is written: `HttpClient call to {Method} {Url} took too long ({ElapsedMilliseconds} ms)`.
+
+Request correlation (`X-Request-Id`) is carried by the ambient logging scope — for example the one created by `LoggingMiddleware` or the Serilog `RequestIdEnricher` from `RA.Utilities.Logging.Core` — not by properties on the log templates.
+
+:::info[v10.1.1 constructor change]
+`RequestResponseLoggingHandler` now accepts only `ILogger<RequestResponseLoggingHandler>` — the `IHttpContextAccessor` parameter was removed. `WithHttpLoggingHandler()` handles this automatically; only update your code if you construct or register the handler manually.
+:::

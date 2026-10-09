@@ -197,12 +197,12 @@ var app = builder.Build();
 app.UseLoggingMiddleware();
 ```
 
-Also check your configured log level — `LoggingMiddleware` logs at `Information` by default, switching to `Warning` when the request exceeds `WarningThresholdMilliseconds`:
+Also check your configured log level — the request log is written at `Information` and the response log is written at `Warning`; both are skipped entirely when `Information` is not enabled. When the request exceeds `WarningThresholdMilliseconds`, an additional `Warning` entry is written:
 
 ```csharp
 builder.Services.AddLoggingMiddleware(options =>
 {
-    options.WarningThresholdMilliseconds = 500; // Log slow requests as Warning
+    options.WarningThresholdMilliseconds = 500; // Extra Warning entry for requests slower than 500 ms
 });
 ```
 
@@ -297,7 +297,7 @@ builder.Services.AddLoggingMiddleware(options =>
     options.MaxBodyLogLength = 8192;          // Truncate bodies larger than this
     options.PathsToIgnore.Add("/health");     // Skip health check endpoints
     options.ExcludedHeaders.Add("Authorization"); // Redact sensitive headers
-    options.WarningThresholdMilliseconds = 500;   // Log slow requests at Warning
+    options.WarningThresholdMilliseconds = 500;   // Extra Warning entry for requests slower than 500 ms
 });
 ```
 

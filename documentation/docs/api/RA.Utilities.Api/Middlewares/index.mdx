@@ -51,7 +51,7 @@ Install-Package RA.Utilities.Api
 
 **PackageReference (csproj)**
 ```xml
-<PackageReference Include="RA.Utilities.Api" Version="10.0.8" />
+<PackageReference Include="RA.Utilities.Api" Version="10.2.1" />
 ```
 
 ### Hello World
@@ -207,9 +207,9 @@ app.Run();
 | Option | Type | Default | Description |
 |---|---|---|---|
 | `MaxBodyLogLength` | `int` | `32768` | Maximum request/response body size (in bytes) to log before truncating |
-| `WarningThresholdMilliseconds` | `int` | `0` | Log responses exceeding this duration at `Warning` level (`0` = disabled) |
-| `PathsToIgnore` | `HashSet<string>` | `[]` | Request paths to skip (e.g., `/swagger`, `/health`) |
-| `ExcludedHeaders` | `HashSet<string>` | `[]` | Header names to redact from logs (e.g., `Authorization`) |
+| `WarningThresholdMilliseconds` | `double` | `0` | Write an additional `Warning` log entry when response time exceeds this duration in ms (`0` = disabled) |
+| `PathsToIgnore` | `ISet<string>` | `[]` | Request paths to skip (e.g., `/swagger`, `/health`) |
+| `ExcludedHeaders` | `ISet<string>` | `[]` | Header names to redact from logs (e.g., `Authorization`) |
 
 ### DefaultHeadersMiddleware Options
 

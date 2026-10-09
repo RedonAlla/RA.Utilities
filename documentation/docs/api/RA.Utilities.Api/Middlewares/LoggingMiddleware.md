@@ -75,8 +75,6 @@ When a request is processed, the middleware generates two structured log entries
 #### Request Log:
 ```json showLineNumbers
 {
-  "RequestId": "abc-123-def",
-  "TraceIdentifier": "0HMA1B2C3D4E5:00000001",
   "Scheme": "https",
   "Host": "api.example.com",
   "Method": "POST",
@@ -91,15 +89,13 @@ When a request is processed, the middleware generates two structured log entries
 #### Response Log:
 ```json showLineNumbers
 {
-  "RequestId": "abc-123-def",
-  "TraceIdentifier": "0HMA1B2C3D4E5:00000001",
   "Path": "/api/users",
   "RemoteAddress": "192.168.1.100",
   "StatusCode": 201,
-  "Duration": 15.42,
+  "Duration": "15.42 ms",
   "ResponseHeaders": { "Content-Type": "application/json", "Location": "/api/users/123" },
   "ResponseBody": { "id": 123, "name": "John Doe" }
 }
 ```
 
-Responses that exceed `WarningThresholdMilliseconds` are logged at `LogLevel.Warning` instead of `LogLevel.Information`. Headers listed in `ExcludedHeaders` are redacted from both request and response header dictionaries. Bodies larger than `MaxBodyLogLength` are truncated with a descriptive message.
+The request log is written at `LogLevel.Information`; the response log is written at `LogLevel.Warning`. Both logs are skipped entirely when `Information` logging is not enabled. When the total elapsed time exceeds `WarningThresholdMilliseconds` (if configured), an additional `Warning` entry is written alongside the response log: `HTTP call to {Method} {Url} took too long ({ElapsedMilliseconds} ms)`. Request correlation (`X-Request-Id`) is carried by the log scope, not by properties on the log templates. Headers listed in `ExcludedHeaders` are redacted from both request and response header dictionaries. Bodies larger than `MaxBodyLogLength` are truncated with a descriptive message.

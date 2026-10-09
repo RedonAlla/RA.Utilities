@@ -15,8 +15,6 @@ By having more specific log models like `HttpRequestLogTemplate` and `HttpRespon
 ## Properties
 | Property | Type | Description |
 | -------- | ---- | ----------- |
-| **RequestId** | `string?` | The value of the `x-request-id` header from the HTTP request. Provides end-to-end correlation across services. Populated automatically by the built-in middleware and delegating handler consumers. |
-| **TraceIdentifier** | `string?` | The identifier from `HttpContext.TraceIdentifier`, used for end-to-end tracing within the ASP.NET Core pipeline. |
 | **Path** | `string?` | The URI path of the request (e.g., `/api/users/123`). |
 | **RequestedOn** | `DateTime` | The date and time the request was made, in UTC. Defaults to `DateTime.UtcNow` when the instance is created. Settable so consumers can capture the actual request time. |
 | **RemoteAddress** | `string?` | The client's IP address (for incoming requests) or the target server's host name/IP (for outgoing requests). |
@@ -27,7 +25,6 @@ By having more specific log models like `HttpRequestLogTemplate` and `HttpRespon
 ### 1. Standardizes Core Log Properties:
 It establishes a contract for essential logging information, including:
 
-  * `RequestId` and `TraceIdentifier` for correlating and tracing requests across services.
   * `Path` for identifying the resource being accessed.
   * `RequestedOn` for timestamping the event.
   * `RemoteAddress` for identifying the client IP or target host.

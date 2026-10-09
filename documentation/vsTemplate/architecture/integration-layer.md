@@ -35,10 +35,10 @@ public static IServiceCollection AddIntegrationServices(this IServiceCollection 
 
 `RequestResponseLoggingHandler` logs every outgoing call and its result as structured objects (`HttpRequestLogTemplate` / `HttpResponseLogTemplate` from `RA.Utilities.Logging.Shared`) at `Information`:
 
-- **Request**: request id (from `x-request-id`, falling back to the current `HttpContext.TraceIdentifier`), scheme, host, method, full path, query string, headers, and body — deserialized as JSON when possible, otherwise logged as a raw string.
-- **Response**: request id, trace identifier, path, status code, headers, duration, and body.
+- **Request**: scheme, host, method, full path, query string, headers, and body — deserialized as JSON when possible, otherwise logged as a raw string.
+- **Response**: path, status code, headers, duration, and body.
 
-Logging is skipped entirely when `Information` is not enabled, and responses exceeding the handler's warning threshold escalate to `Warning`. Correlating the trace identifier with the API's own request logging (see the [Presentation Layer](presentation-layer.md)) gives end-to-end visibility across an inbound request and its outbound calls.
+Logging is skipped entirely when `Information` is not enabled, and if writing the logs exceeds the handler's warning threshold (35 seconds) an additional `Warning` entry is produced. Correlation with the API's own request logging comes from the shared `x-request-id` log scope (see the [Presentation Layer](presentation-layer.md)), giving end-to-end visibility across an inbound request and its outbound calls.
 
 ## Adding a Client
 

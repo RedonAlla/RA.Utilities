@@ -9,18 +9,6 @@ namespace RA.Utilities.Logging.Shared.Models.HttpLog;
 public class BaseHttpLogTemplate
 {
     /// <summary>
-    /// The value of the <c>x-request-id</c> header from the HTTP request.
-    /// Provides end-to-end correlation across services.
-    /// </summary>
-    public string? RequestId { get; set; }
-
-    /// <summary>
-    /// Unique identifier to represent this request in trace logs.
-    /// Value from Microsoft.AspNetCore.Http.
-    /// </summary>
-    public string? TraceIdentifier { get; set; }
-
-    /// <summary>
     /// The URI used by the request message.
     /// </summary>
     public string? Path { get; set; }

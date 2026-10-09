@@ -1,7 +1,45 @@
 ---
-title: RA.Utilities.Logging.Core
+title: RA.Utilities.Logging.Shared
 authors: [RedonAlla]
 ---
+
+## Version 10.0.2
+![Date Badge](https://img.shields.io/badge/Publish-09%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.2-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Logging.Shared/10.0.2)
+
+Correlation moves from the log templates to the logging scope: `BaseHttpLogTemplate` no longer carries `RequestId` / `TraceIdentifier`, and request correlation is provided by the `X-Request-Id` log scope instead.
+
+<!-- truncate -->
+
+### ⚠️ Breaking Changes
+
+* **`RequestId` and `TraceIdentifier` removed from `BaseHttpLogTemplate`**: the properties no longer exist on `BaseHttpLogTemplate` (and therefore not on `HttpRequestLogTemplate` / `HttpResponseLogTemplate` either). Code that sets or reads these properties will not compile.
+  **Migration**: carry the correlation ID in a log scope — sinks like the Serilog `RequestIdEnricher` (`RA.Utilities.Logging.Core`) pick up `LoggingConstants.XRequestId` from the scope automatically.
+
+```csharp
+- var log = new HttpRequestLogTemplate { RequestId = requestId, TraceIdentifier = traceId, ... };
+
++ using (logger.BeginScope(new Dictionary<string, object> { [LoggingConstants.XRequestId] = requestId }))
++ {
++     logger.LogInformation("HTTP Request: {@RequestLog}", log);
++ }
+```
+
+### 📝 Improvements
+
+* `BaseHttpLogTemplate` now only contains `Path`, `RequestedOn`, and `RemoteAddress`; `ToString()` still returns the JSON-serialized representation.
+
+```csharp
+  public abstract class BaseHttpLogTemplate
+  {
+-     public string? RequestId { get; set; }
+-     public string? TraceIdentifier { get; set; }
+      public string? Path { get; set; }
+      public DateTime RequestedOn { get; set; } = DateTime.UtcNow;
+      public string? RemoteAddress { get; set; }
+  }
+```
+
 
 ## Version 10.1.0
 ![Date Badge](https://img.shields.io/badge/Publish-27%20September%202026-lightblue?logo=fastly&logoColor=white)

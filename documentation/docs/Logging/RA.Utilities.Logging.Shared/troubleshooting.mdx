@@ -26,41 +26,40 @@ var requestLog = new HttpRequestLogTemplate
 };
 ```
 
-### `Duration` is a number now — my string formatting is broken
+### `Duration` expects a formatted string, not a number
 
-**Cause**: `HttpResponseLogTemplate.Duration` changed from `string` to `double?` (milliseconds) in v10.0.1. The property now holds a raw numeric value instead of a pre-formatted string.
+**Cause**: `HttpResponseLogTemplate.Duration` is a `string?`. An earlier 10.0.1 preview exposed it as `double?`, but that change was reverted before the 10.0.1 packages were published — the shipped property has always been `string?`. Code that assigns a `double` (e.g., `duration.TotalMilliseconds`) will not compile.
 
-**Fix**: Assign the raw numeric value instead of a formatted string. Formatting moves to the display/output layer:
+**Fix**: Assign a pre-formatted string. The built-in consumers format it as `"{milliseconds} ms"`:
 
 ```csharp
-// ❌ v10.0.0
-var responseLog = new HttpResponseLogTemplate
-{
-    Duration = $"{duration.TotalMilliseconds:0.00} ms",
-};
-
-// ✅ v10.0.1
+// ❌ Does not compile — Duration is string?
 var responseLog = new HttpResponseLogTemplate
 {
     Duration = duration.TotalMilliseconds,
 };
-```
 
-### `RequestId` is always blank in my log templates
-
-**Cause**: The built-in middleware and delegating handler consumers in the RA.Utilities ecosystem populate `RequestId` from the `x-request-id` HTTP header. If your client or upstream service doesn't send this header, `RequestId` will be `null`.
-
-**Fix**: Ensure the initial caller or any intermediate proxy sends the `x-request-id` header. If you're writing a custom consumer, read the header yourself:
-
-```csharp
-var requestLog = new HttpRequestLogTemplate
+// ✅
+var responseLog = new HttpResponseLogTemplate
 {
-    RequestId = context.Request.Headers["x-request-id"].FirstOrDefault(),
-    // ... other properties
+    Duration = $"{duration.TotalMilliseconds} ms",
 };
 ```
 
-The constant `LoggingConstants.XRequestId` (value `"x-request-id"`) is available from `RA.Utilities.Logging.Shared.Constants` for consistent header name references.
+### `RequestId` / `TraceIdentifier` do not exist after upgrading to v10.0.2
+
+**Cause**: These properties were removed from `BaseHttpLogTemplate` in v10.0.2. The built-in consumers (`LoggingMiddleware` in `RA.Utilities.Api`, `RequestResponseLoggingHandler` in `RA.Utilities.Integrations`) no longer populate them — request correlation is now carried by the logging scope instead of being duplicated on every template.
+
+**Fix**: Remove references to the removed properties. For correlation, rely on scopes/enrichers: `LoggingMiddleware` enriches every entry it writes with an `x-request-id` scope value, and [`RA.Utilities.Logging.Core`](../RA.Utilities.Logging.Core/index.mdx) provides a `RequestIdEnricher` for Serilog. Custom consumers can wrap the call in their own scope:
+
+```csharp
+using (_logger.BeginScope(new Dictionary<string, object> { [LoggingConstants.XRequestId] = requestId }))
+{
+    // log templates written in this scope carry the correlation id
+}
+```
+
+The constant `LoggingConstants.XRequestId` (value `"x-request-id"`) remains available from `RA.Utilities.Logging.Shared.Constants` for consistent header name references.
 
 ### Request and response logs show different `RequestedOn` timestamps
 
@@ -91,6 +90,6 @@ using RA.Utilities.Logging.Shared.Constants;
 
 ## Performance Tips
 
-- **Use `ILogger.IsEnabled()` guards**: The built-in `HttpLoggingMiddleware` checks `_logger.IsEnabled(logLevel)` before constructing log templates. Follow this pattern in custom consumers to avoid allocating log objects when the log level is disabled.
+- **Use `ILogger.IsEnabled()` guards**: The built-in `LoggingMiddleware` checks `_logger.IsEnabled(LogLevel.Information)` before constructing log templates. Follow this pattern in custom consumers to avoid allocating log objects when the log level is disabled.
 - **Prefer `{@LogTemplate}` destructuring over `.ToString()`**: Serilog's structured logging with `{@RequestLog}` captures the object graph natively without the intermediate JSON string allocation.
 - **`LoggingConstants.XRequestId` is a `const`**: It is inlined at compile time with zero runtime cost. Use it instead of the magic string `"x-request-id"`.

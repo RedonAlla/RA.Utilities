@@ -4,6 +4,40 @@ title: Migration Guides
 
 # Migration Guides
 
+## v10.2.0 → v10.2.1
+
+### Behavior Changes:
+
+* `LoggingMiddleware` response log is written at `LogLevel.Warning` (previously undocumented)
+* `LoggingMiddleware` writes a dedicated slow-call warning entry when `WarningThresholdMilliseconds` is exceeded
+* `HttpRequestLogTemplate` / `HttpResponseLogTemplate` no longer carry `RequestId` / `TraceIdentifier` properties (via `RA.Utilities.Logging.Shared` v10.0.2)
+
+The `LoggingMiddleware` logging behavior is now explicit:
+
+* The **request** log (`HTTP Request: {@RequestLog}`) is written at `LogLevel.Information`.
+* The **response** log (`HTTP Response: {@ResponseLog}`) is written at `LogLevel.Warning` — and both logs are skipped entirely when `Information` logging is not enabled.
+* When the total elapsed time exceeds `WarningThresholdMilliseconds`, an **additional** `Warning` entry is written alongside the response log: `HTTP call to {Method} {Url} took too long ({ElapsedMilliseconds} ms)`.
+
+The `RequestId` and `TraceIdentifier` correlation properties were removed from the shared log templates. Correlation is now provided exclusively by the logging scope: every request processed by `LoggingMiddleware` runs inside a scope containing the `X-Request-Id` value (`LoggingConstants.XRequestId`), which sinks like the Serilog `RequestIdEnricher` (`RA.Utilities.Logging.Core`) pick up.
+
+### What changed
+
+| Aspect | v10.2.0 | v10.2.1 |
+|---|---|---|
+| Response log level | `Warning` (undocumented) | `Warning` (documented) |
+| Slow-call signal | none | Additional `Warning` entry when `WarningThresholdMilliseconds` exceeded |
+| Template correlation properties | `RequestId`, `TraceIdentifier` | none — via log scope |
+
+### Migration Steps
+
+No code changes are required unless you:
+
+1. **Queried `RequestId` / `TraceIdentifier` on the log templates** — the properties no longer exist. Read the correlation ID from the log scope instead (e.g. `LoggingConstants.XRequestId`, surfaced by the Serilog `RequestIdEnricher` from `RA.Utilities.Logging.Core`).
+
+2. **Filtered on `Information` level to see response logs** — response logs are written at `Warning`; adjust level filters or alert rules accordingly.
+
+---
+
 ## v10.0.6 → v10.2.0
 
 ### Breaking Changes:
