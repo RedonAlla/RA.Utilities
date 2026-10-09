@@ -24,7 +24,7 @@ This class is the single entry point for every middleware shipped with the packa
 - `AddRaExceptionHandling` / `UseRaExceptionHandling` — registers the [`GlobalExceptionHandler`](../GlobalExceptionHandler.mdx) and adds its middleware to the pipeline, ensuring every unhandled exception is logged and returned to the client as a structured error response.
 - `AddDefaultHeadersMiddleware` / `UseDefaultHeadersMiddleware` — registers and configures the `DefaultHeadersMiddleware`; configure required headers via `DefaultHeadersOptions.RequiredHeaders`.
 - `AddLoggingMiddleware` / `UseLoggingMiddleware` — registers and configures the `LoggingMiddleware` for structured HTTP request/response logging.
-- `AddRequestContextLoggingMiddleware` / `UseRequestContextLoggingMiddleware` — registers and configures the `RequestContextLoggingMiddleware`, which enriches log entries with request-scoped context such as the correlation ID.
+- `AddRequestContextLoggingMiddleware` / `UseRequestContextLoggingMiddleware` — registers and configures the `ContextLoggingMiddleware`, which enriches log entries with request-scoped context such as the correlation ID. (Renamed from `RequestContextLoggingMiddleware` in v10.2.2 — the extension method names are unchanged.)
 
 <br />
 <br />

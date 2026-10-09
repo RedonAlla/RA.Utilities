@@ -10,7 +10,7 @@ namespace RA.Utilities.Api.Middlewares;
 /// <summary>
 /// Middleware to enrich log entries with request-specific context, such as a correlation ID.
 /// </summary>
-public class RequestContextLoggingMiddleware(ILogger<RequestContextLoggingMiddleware> logger) : IMiddleware
+public class ContextLoggingMiddleware(ILogger<ContextLoggingMiddleware> logger) : IMiddleware
 {
     /// <inheritdoc/>
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)

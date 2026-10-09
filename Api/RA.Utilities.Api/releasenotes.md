@@ -1,5 +1,50 @@
 # RA.Utilities.Api Release Notes
 
+## Version 10.2.1
+[![NuGet version](https://img.shields.io/badge/NuGet-10.2.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api/10.2.1)
+
+`LoggingMiddleware` response logging behavior is now explicit, and the shared HTTP log templates drop their correlation properties in favor of the log scope.
+
+The request-context middleware is renamed `RequestContextLoggingMiddleware` → `ContextLoggingMiddleware`. The registration extension methods keep their names, so most consuming projects need no code changes.
+
+<!-- truncate -->
+
+### ⚠️ Breaking Changes
+
+* **Log templates no longer carry `RequestId` / `TraceIdentifier`** (via `RA.Utilities.Logging.Shared` 10.0.2): structured request/response logs produced by `LoggingMiddleware` no longer contain these properties. Correlation continues to work through the log scope (`LoggingConstants.XRequestId`) the middleware creates for every request — no code changes needed unless you query those properties directly.
+
+* **`RequestContextLoggingMiddleware` renamed to `ContextLoggingMiddleware`**: code that references the middleware **type** directly — custom `UseMiddleware<T>()` / `AddTransient<T>()` calls, unit tests, `typeof(...)` — must use the new name. The `AddRequestContextLoggingMiddleware()` / `UseRequestContextLoggingMiddleware()` extension methods are unchanged; ordinary call sites compile without modification.
+
+```csharp
+- app.UseMiddleware<RequestContextLoggingMiddleware>();
+- services.AddTransient<RequestContextLoggingMiddleware>();
++ app.UseRequestContextLoggingMiddleware();
++ builder.Services.AddRequestContextLoggingMiddleware();
+```
+
+### 📝 Improvements
+
+* **Response log level clarified**: the response log (`HTTP Response: {@ResponseLog}`) is written at `LogLevel.Warning`; the request log remains at `LogLevel.Information`, and both are skipped when `Information` is not enabled.
+
+```csharp
+  private async Task LogResponseAsync(HttpContext context, MemoryStream responseBody, TimeSpan duration)
+  {
+      if (!_logger.IsEnabled(LogLevel.Information))
+          return;
+      // ...
+      _logger.LogWarning("HTTP Response: {@ResponseLog}", responseLog);
+  }
+```
+
+* **Dedicated slow-call warning**: when the total elapsed time exceeds `WarningThresholdMilliseconds`, an additional `Warning` entry is written alongside the response log.
+
+```csharp
++ if (LogWarning(stopwatch.Elapsed))
++     _logger.LogWarning("HTTP call to {Method} {Url} took too long ({ElapsedMilliseconds} ms)", ...);
+```
+
+* The shorter name better reflects the middleware's single responsibility: enriching the log scope with the `X-Request-Id` correlation ID for every request.
+
 ## Version 10.1.0
 ![Date Badge](https://img.shields.io/badge/Publish-Unreleased-lightblue?logo=fastly&logoColor=white)
 

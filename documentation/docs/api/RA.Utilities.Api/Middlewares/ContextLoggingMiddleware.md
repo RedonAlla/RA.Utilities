@@ -1,5 +1,5 @@
 ---
-title: RequestContextLoggingMiddleware
+title: ContextLoggingMiddleware
 sidebar_position: 3
 ---
 
@@ -7,15 +7,19 @@ sidebar_position: 3
 Namespace: RA.Utilities.Api.Middlewares
 ```
 
-The `RequestContextLoggingMiddleware` enriches every log entry within a request's lifetime with contextual metadata, starting with the `X-Request-Id` correlation identifier. By establishing a logging scope at the very beginning of the pipeline, it ensures that all downstream log entries — from application code, other middlewares, or framework internals — automatically carry the request's identity.
+The `ContextLoggingMiddleware` enriches every log entry within a request's lifetime with the `X-Request-Id` correlation identifier. By establishing a logging scope at the very beginning of the pipeline, it ensures that all downstream log entries — from application code, other middlewares, or framework internals — automatically carry the request's identity.
 
 This makes it trivial to correlate all log entries belonging to a single request, even across multiple services, by filtering on the `X-Request-Id` value in your logging platform.
 
+:::info Renamed in v10.2.2
+This middleware was previously named `RequestContextLoggingMiddleware`. The extension methods are unchanged — `AddRequestContextLoggingMiddleware()` and `UseRequestContextLoggingMiddleware()` still register and enable it. Only code that references the middleware **type** directly needs updating. See the [migration guide](../migration-guides) for details.
+:::
+
 :::caution
-Do not use `RequestContextLoggingMiddleware` if you are already using [`LoggingMiddleware`](./LoggingMiddleware).
+Do not use `ContextLoggingMiddleware` if you are already using [`LoggingMiddleware`](./LoggingMiddleware).
 The `LoggingMiddleware` already enriches log entries with request-scoped context — it creates a logging scope containing the `x-request-id` correlation ID for every request it processes.
 
-Adding `RequestContextLoggingMiddleware` on top of it is redundant and adds unnecessary overhead.
+Adding `ContextLoggingMiddleware` on top of it is redundant and adds unnecessary overhead.
 :::
 
 ### Key Features
@@ -84,7 +88,7 @@ Any `ILogger` call made during the request — in your controllers, services, or
 
 ### Combining with Other Middlewares
 
-The recommended pipeline order places `RequestContextLoggingMiddleware` first so all subsequent middlewares inherit its scope:
+The recommended pipeline order places `ContextLoggingMiddleware` first so all subsequent middlewares inherit its scope:
 
 ```
 app.UseRequestContextLoggingMiddleware();   // ← enriches log scope
@@ -92,4 +96,4 @@ app.UseDefaultHeadersMiddleware();          // ← validates headers
 app.UseLoggingMiddleware();                 // ← logs request/response
 ```
 
-This way, the `LoggingMiddleware`'s structured log output automatically includes the `X-Request-Id` from the scope set by `RequestContextLoggingMiddleware`.
+This way, the `LoggingMiddleware`'s structured log output automatically includes the `X-Request-Id` from the scope set by `ContextLoggingMiddleware`.

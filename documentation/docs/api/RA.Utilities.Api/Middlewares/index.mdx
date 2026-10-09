@@ -20,7 +20,7 @@ This middleware suite solves three common API challenges:
 
 1. **Observability**: The [`LoggingMiddleware`](./LoggingMiddleware) captures full HTTP request/response details — method, path, headers, body, status code, and duration — using structured logging for easy querying in tools like Seq, Splunk, or Elasticsearch.
 2. **Traceability**: The [`DefaultHeadersMiddleware`](./DefaultHeadersMiddleware) enforces required headers (like `X-Request-Id`) on every request, ensuring every operation can be traced across distributed services.
-3. **Context Propagation**: The `RequestContextLoggingMiddleware` enriches log scopes with request-level metadata (correlation IDs, client IP, user agent) so downstream logs carry the context they need for debugging.
+3. **Context Propagation**: The [`ContextLoggingMiddleware`](./ContextLoggingMiddleware) enriches log scopes with the request's correlation ID so downstream logs carry the context they need for debugging.
 
 ### ✨ Key Features
 
@@ -85,7 +85,7 @@ No additional setup is required — the middleware is ready to go with sensible 
 |---|---|---|
 | [`LoggingMiddleware`](./LoggingMiddleware) | Logs HTTP requests and responses with structured data | `AddLoggingMiddleware()` / `UseLoggingMiddleware()` |
 | [`DefaultHeadersMiddleware`](./DefaultHeadersMiddleware) | Enforces required headers on incoming requests | `AddDefaultHeadersMiddleware()` / `UseDefaultHeadersMiddleware()` |
-| [`RequestContextLoggingMiddleware`](./RequestContextLoggingMiddleware) | Enriches log scopes with request-level metadata | `AddRequestContextLoggingMiddleware()` / `UseRequestContextLoggingMiddleware()` |
+| [`ContextLoggingMiddleware`](./ContextLoggingMiddleware) | Enriches log scopes with the request's correlation ID | `AddRequestContextLoggingMiddleware()` / `UseRequestContextLoggingMiddleware()` |
 
 All three middlewares implement `IMiddleware`, meaning they are activated by the DI container and support constructor injection. They are registered via extension methods in the `RA.Utilities.Api.Extensions` namespace.
 
@@ -95,24 +95,24 @@ All three middlewares implement `IMiddleware`, meaning they are activated by the
 Incoming Request
       │
       ▼
-┌──────────────────────────────┐
-│ RequestContextLoggingMiddleware │  ← Enriches log scope (correlation ID, IP, UA)
-└──────────────────────────────┘
+┌────────────────────────────┐
+│ ContextLoggingMiddleware   │  ← Enriches log scope (X-Request-Id)
+└────────────────────────────┘
       │
       ▼
-┌──────────────────────────────┐
-│ DefaultHeadersMiddleware       │  ← Validates required headers (X-Request-Id, etc.)
-└──────────────────────────────┘
+┌────────────────────────────┐
+│ DefaultHeadersMiddleware   │  ← Validates required headers (X-Request-Id, etc.)
+└────────────────────────────┘
       │
       ▼
-┌──────────────────────────────┐
-│ Your Application Logic        │
-└──────────────────────────────┘
+┌────────────────────────────┐
+│ Your Application Logic     │
+└────────────────────────────┘
       │
       ▼
-┌──────────────────────────────┐
-│ LoggingMiddleware              │  ← Logs request/response details
-└──────────────────────────────┘
+┌────────────────────────────┐
+│ LoggingMiddleware          │  ← Logs request/response details
+└────────────────────────────┘
       │
       ▼
 Outgoing Response
@@ -187,14 +187,13 @@ using RA.Utilities.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddRequestContextLoggingMiddleware(options =>
-{
-    options.IncludeClientIp = true;
-    options.IncludeUserAgent = true;
-    options.IncludeCorrelationId = true;
-});
+// highlight-start
+builder.Services.AddRequestContextLoggingMiddleware();
+// highlight-end
 
 var app = builder.Build();
+
+// highlight-next-line
 app.UseRequestContextLoggingMiddleware();
 app.MapControllers();
 app.Run();
@@ -215,8 +214,8 @@ app.Run();
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `RequiredHeaders` | `IList<RequiredHeaderDefinition>` | `[]` | Headers that must be present on incoming requests |
-| `PathsToIgnore` | `HashSet<string>` | `[]` | Request paths to skip header validation for |
+| `RequiredHeaders` | `ICollection<RequiredHeaderDefinition>` | `[x-request-id (auto-generated, echoed)]` | Headers that must be present on incoming requests |
+| `PathsToIgnore` | `ISet<string>` | `[]` | Request paths to skip header validation for |
 
 #### RequiredHeaderDefinition
 
@@ -227,9 +226,9 @@ app.Run();
 | `EchoInResponse` | `bool` | `false` | If `true`, includes the header value in the response |
 | `ErrorMessage` | `string?` | `null` | Custom error message when header is missing |
 
-### RequestContextLoggingMiddleware
+### ContextLoggingMiddleware
 
-This middleware has **no configuration options**. It reads the `X-Request-Id` header from the incoming request (generating a GUID if absent) and enriches the log scope automatically. See the [RequestContextLoggingMiddleware API reference](./RequestContextLoggingMiddleware) for details.
+This middleware has **no configuration options**. It reads the `X-Request-Id` header from the incoming request (generating a GUID if absent) and enriches the log scope automatically. See the [ContextLoggingMiddleware API reference](./ContextLoggingMiddleware) for details.
 
 ## 🔄 Migration from RA.Utilities.Api.Middlewares
 

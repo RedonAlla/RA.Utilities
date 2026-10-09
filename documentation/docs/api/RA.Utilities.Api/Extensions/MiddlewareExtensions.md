@@ -6,7 +6,7 @@ sidebar_position: 3
 Namespace: RA.Utilities.Api.Extensions
 ```
 
-The `MiddlewareExtensions` class provides the `Add`/`Use` extension method pairs for registering and configuring every middleware shipped with this package: the `DefaultHeadersMiddleware`, the `GlobalExceptionHandler`, the `LoggingMiddleware`, and the `RequestContextLoggingMiddleware`.
+The `MiddlewareExtensions` class provides the `Add`/`Use` extension method pairs for registering and configuring every middleware shipped with this package: the `DefaultHeadersMiddleware`, the `GlobalExceptionHandler`, the `LoggingMiddleware`, and the `ContextLoggingMiddleware`.
 Each pair follows the standard ASP.NET Core convention — `Add` registers services in DI, `Use` adds the middleware to the request pipeline.
 
 ## Default Headers Middleware
@@ -152,12 +152,12 @@ app.Run();
 ## Request Context Logging
 
 :::caution
-Do not use `RequestContextLoggingMiddleware` if you are already using `LoggingMiddleware`. The `LoggingMiddleware` already enriches log entries with request-scoped context — it creates a logging scope containing the `x-request-id` correlation ID for every request it processes. Adding `RequestContextLoggingMiddleware` on top of it is redundant and adds unnecessary overhead.
+Do not use `ContextLoggingMiddleware` if you are already using `LoggingMiddleware`. The `LoggingMiddleware` already enriches log entries with request-scoped context — it creates a logging scope containing the `x-request-id` correlation ID for every request it processes. Adding `ContextLoggingMiddleware` on top of it is redundant and adds unnecessary overhead.
 :::
 
 ### `AddRequestContextLoggingMiddleware()`
 
-Registers the `RequestContextLoggingMiddleware` in the dependency injection container as a transient service.
+Registers the `ContextLoggingMiddleware` in the dependency injection container as a transient service.
 
 ```csharp
 builder.Services.AddRequestContextLoggingMiddleware();
@@ -165,7 +165,7 @@ builder.Services.AddRequestContextLoggingMiddleware();
 
 ### `UseRequestContextLoggingMiddleware()`
 
-Adds the `RequestContextLoggingMiddleware` to the request pipeline. Must be called after `AddRequestContextLoggingMiddleware()`.
+Adds the `ContextLoggingMiddleware` to the request pipeline. Must be called after `AddRequestContextLoggingMiddleware()`.
 
 The middleware enriches log entries with request-scoped context by creating a logging scope that includes the correlation ID (`x-request-id`) from the incoming request. This allows all log entries within the scope of a request to be correlated.
 

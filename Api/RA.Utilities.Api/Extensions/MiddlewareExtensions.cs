@@ -13,7 +13,7 @@ namespace RA.Utilities.Api.Extensions;
 /// Provides the <c>Add</c>/<c>Use</c> extension method pairs for registering and configuring all
 /// middleware shipped with this package: the <see cref="DefaultHeadersMiddleware"/>, the
 /// <see cref="GlobalExceptionHandler"/>, the <see cref="LoggingMiddleware"/>, and the
-/// <see cref="RequestContextLoggingMiddleware"/>.
+/// <see cref="ContextLoggingMiddleware"/>.
 /// </summary>
 public static class MiddlewareExtensions
 {
@@ -85,18 +85,18 @@ public static class MiddlewareExtensions
         builder.UseMiddleware<LoggingMiddleware>();
 
     /// <summary>
-    /// Adds the <see cref="RequestContextLoggingMiddleware"/> to the specified <see cref="IServiceCollection"/>.
+    /// Adds the <see cref="ContextLoggingMiddleware"/> to the specified <see cref="IServiceCollection"/>.
     /// </summary>
     /// <param name="services">The <see cref="IServiceCollection"/> to add the services to.</param>
     /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
     public static IServiceCollection AddRequestContextLoggingMiddleware(this IServiceCollection services) =>
-        services.AddTransient<RequestContextLoggingMiddleware>();
+        services.AddTransient<ContextLoggingMiddleware>();
 
     /// <summary>
-    /// Registers the <see cref="RequestContextLoggingMiddleware"/> in the request pipeline.
+    /// Registers the <see cref="ContextLoggingMiddleware"/> in the request pipeline.
     /// </summary>
     /// <param name="builder">The <see cref="IApplicationBuilder"/> to add the middleware to.</param>
     /// <returns>The <see cref="IApplicationBuilder"/> so that additional middleware can be chained.</returns>
-    public static IApplicationBuilder UseRequestContextLoggingMiddleware(this IApplicationBuilder builder) =>
-        builder.UseMiddleware<RequestContextLoggingMiddleware>();
+    public static IApplicationBuilder UseContextLoggingMiddleware(this IApplicationBuilder builder) =>
+        builder.UseMiddleware<ContextLoggingMiddleware>();
 }
