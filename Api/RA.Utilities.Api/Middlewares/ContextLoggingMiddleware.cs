@@ -18,6 +18,7 @@ public class ContextLoggingMiddleware(ILogger<ContextLoggingMiddleware> logger) 
         var loggerScope = new Dictionary<string, object>
         {
             [LoggingConstants.XRequestId] = CommonUtilities.GetRequestId(context),
+            [LoggingConstants.TraceId] = context.TraceIdentifier
         };
 
         using (logger.BeginScope(loggerScope))
