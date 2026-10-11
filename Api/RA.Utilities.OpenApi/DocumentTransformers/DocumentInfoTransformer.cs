@@ -36,6 +36,7 @@ internal sealed class DocumentInfoTransformer : IOpenApiDocumentTransformer
         document.Info.Title = _openApiInfoSettings?.Title ?? document.Info.Title;
         document.Info.Version = _openApiInfoSettings?.Version ?? document.Info.Version;
         document.Info.Description = _openApiInfoSettings?.Description ?? document.Info.Description;
+        document.Info.Summary = _openApiInfoSettings?.Summary ?? document.Info.Summary;
         document.Info.TermsOfService = _openApiInfoSettings?.TermsOfService ?? document.Info.TermsOfService;
         if (_openApiInfoSettings?.Contact is not null)
         {
