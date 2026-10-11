@@ -42,7 +42,7 @@ The primary goals are:
 
 ### ✨ Key Features
 
-- **Document Transformers** — 6 transformers: `DocumentInfo`, `BearerSecurity`, `HeadersParameter`, `Polymorphism`, `TagOperation`, plus a combined `AddDefaultsDocumentTransformer()` convenience method
+- **Document Transformers** — 7 transformers: `DocumentInfo`, `BearerSecurity`, `HeadersParameter`, `HealthChecks`, `Polymorphism`, `TagOperation`, plus a combined `AddDefaultsDocumentTransformer()` convenience method
 - **Operation Transformers** — `DefaultResponsesOperationTransformer` adds standardized 500 error responses
 - **Schema Transformers** — `FluentValidationSchemaTransformer` enriches schemas from validators, `EnumXmlSchemaTransformer` appends XML doc descriptions
 - **Configuration-driven** — `OpenApiInfoSettings` and `HeadersParameterSettings` bind from `appsettings.json`
@@ -74,7 +74,7 @@ Install-Package RA.Utilities.OpenApi
 **PackageReference (csproj)**
 
 ```xml
-<PackageReference Include="RA.Utilities.OpenApi" Version="10.0.11" />
+<PackageReference Include="RA.Utilities.OpenApi" Version="10.1.0" />
 ```
 
 ### Hello World
@@ -145,7 +145,7 @@ All transformers are `internal sealed` — register them through the extension m
 
 | Method | Registers |
 |---|---|
-| `AddDefaultsDocumentTransformer()` | `DocumentInfo` + `BearerSecurity` + `HeadersParameter` document transformers |
+| `AddDefaultsDocumentTransformer()` | `DocumentInfo` + `BearerSecurity` + `HeadersParameter` + `HealthChecks` document transformers |
 | `AddFluentValidationRules()` | `FluentValidationSchemaTransformer` |
 | `AddEnumXmlDescriptionTransformer(path)` | `EnumXmlSchemaTransformer` |
 | `AddDefaultResponsesOperationTransformer()` | `DefaultResponsesOperationTransformer` |
@@ -154,6 +154,11 @@ All transformers are `internal sealed` — register them through the extension m
 | `AddHeadersParameterTransformer()` | `HeadersParameterTransformer` individually |
 | `AddPolymorphismDocumentTransformer<T>(types)` | `PolymorphismDocumentTransformer` |
 | `AddTagOperationTransformer(tags)` | `TagOperationTransformer` |
+| `AddHealthChecksDocumentTransformer(tags)` | `HealthChecksDocumentTransformer` — see the caution below |
+
+:::caution[v10.1.0]
+`AddHealthChecksDocumentTransformer(tags)` currently registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and the `tags` argument is ignored. Use `AddDefaultsDocumentTransformer()` to document health check endpoints until this is corrected.
+:::
 
 ---
 
@@ -281,6 +286,15 @@ builder.Services.AddOpenApi(options =>
     });
 });
 ```
+
+### Document health check endpoints
+
+```csharp
+builder.Services.AddOpenApi()
+    .AddDefaultsDocumentTransformer();
+```
+
+Health check endpoints mapped with `MapHealthChecks` carry no API metadata, so the OpenAPI generator never includes them. The default pipeline now documents `GET /health` (the aggregate JSON health report) and `GET /alive` (the plain-text liveness state) under the `Health` tag, without applying the Bearer security scheme — the endpoints stay reachable without authentication.
 
 ### Add custom request/response examples programmatically
 

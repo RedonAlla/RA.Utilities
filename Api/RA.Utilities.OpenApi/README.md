@@ -23,6 +23,7 @@ The primary goals are to:
   - [`DocumentInfoTransformer`](#documentinfotransformer)
   - [`BearerSecurityDocumentTransformer`](#bearersecuritydocumenttransformer)
   - [`HeadersParameterTransformer`](#headersparametertransformer)
+  - [`HealthChecksDocumentTransformer`](#healthchecksdocumenttransformer)
 - [Operation Transformers](#operation-transformers)
   - [`DefaultResponsesOperationTransformer`](#defaultresponsesoperationtransformer)
 - [Schema Transformers](#schema-transformers)
@@ -82,6 +83,21 @@ This document transformer automatically adds common correlation and tracing head
 2.  **Adds Response Headers**: It adds headers like `x-request-id` and `trace-id` to all possible responses for every operation. This informs clients that they can expect these headers back for logging and debugging.
 
 Both the request and response headers are configurable via `HeadersParameterSettings`.
+
+### `HealthChecksDocumentTransformer`
+
+This document transformer adds your service's health check endpoints to the OpenAPI document. Endpoints mapped with `MapHealthChecks` carry no API metadata, so the OpenAPI generator never includes them; this transformer documents them explicitly.
+
+**What it does:**
+
+1.  **Documents `GET /health`**: The readiness endpoint that returns the aggregate health status of the service together with the result of each registered health check, as `application/json` (`200`/`503` responses described with the `HealthCheckReport` schema).
+2.  **Documents `GET /alive`**: The liveness endpoint that returns the service state as plain text (`Healthy`, `Degraded`, or `Unhealthy`), based on the health checks tagged with `live` (`200`/`503` responses as `text/plain`).
+3.  **Adds component schemas**: `HealthCheckReport` (aggregate `status`, `totalDuration`, and per-check `entries`) and `HealthCheckEntry` (`data`, `description`, `duration`, `exception`, `status`, `tags`).
+4.  **Adds the `Health` tag** and keeps the operations anonymous — the transformer runs after the Bearer security transformer, so no security scheme is applied and the endpoints stay reachable without authentication.
+
+It is registered automatically by `AddDefaultsDocumentTransformer()`.
+
+> ⚠️ **Known issue (v10.1.0)**: The standalone `AddHealthChecksDocumentTransformer(IDictionary<string, string> tags)` extension method currently registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and the `tags` argument is ignored. Use `AddDefaultsDocumentTransformer()` until this is corrected.
 
 ---
 
@@ -302,7 +318,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.Configure<OpenApiInfoSettings>(builder.Configuration.GetSection(OpenApiInfoSettings.AppSettingsKey));
 builder.Services.Configure<HeadersParameterSettings>(builder.Configuration.GetSection("OpenApiHeaders"));
 
-// 2. Add OpenAPI services with default transformers (DocumentInfo, BearerSecurity, Headers).
+// 2. Add OpenAPI services with default transformers (DocumentInfo, BearerSecurity, Headers, HealthChecks).
 builder.Services.AddOpenApi()
     .AddDefaultsDocumentTransformer();
 

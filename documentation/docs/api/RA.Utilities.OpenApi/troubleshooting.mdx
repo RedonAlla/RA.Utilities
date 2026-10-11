@@ -145,7 +145,7 @@ Transformers are `internal sealed` to enforce registration through the provided 
 
 ### Does `AddDefaultsDocumentTransformer()` include everything?
 
-No. It registers only three document transformers: `DocumentInfoTransformer`, `BearerSecurityDocumentTransformer`, and `HeadersParameterTransformer`. Operation and schema transformers must be registered separately.
+No. It registers the four document transformers: `DocumentInfoTransformer`, `BearerSecurityDocumentTransformer`, `HeadersParameterTransformer`, and `HealthChecksDocumentTransformer`. Operation and schema transformers must be registered separately.
 
 ### How do I exclude specific endpoints from a transformer?
 

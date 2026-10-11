@@ -19,6 +19,7 @@ This is the recommended starting point. It registers a sensible default set of d
 *   **`DocumentInfoTransformer`**: Populates the API's title, version, and description from `appsettings.json`.
 *   **`BearerSecurityDocumentTransformer`**: Automatically adds the "Authorize" button and JWT security scheme if Bearer authentication is detected.
 *   **`HeadersParameterTransformer`**: Adds common request and response headers (like `x-request-id`) to all API operations based on configuration.
+*   **`HealthChecksDocumentTransformer`**: Documents the `GET /health` (JSON health report) and `GET /alive` (plain-text liveness) endpoints and adds the `Health` tag, without applying the Bearer security scheme to them.
 
 #### Usage
 ```csharp
@@ -118,6 +119,28 @@ builder.Services.AddOpenApi(options =>
 
 ---
 
+### `AddHealthChecksDocumentTransformer(IDictionary<string, string> tags)`
+
+This extension is intended to register the [`HealthChecksDocumentTransformer`](../DocumentTransformers/HealthChecksDocumentTransformer.md), which documents the health check endpoints in the OpenAPI document.
+
+:::caution[v10.1.0 implementation]
+As implemented in v10.1.0, this method registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and the `tags` argument is not used. Use [`AddDefaultsDocumentTransformer()`](#adddefaultsdocumenttransformer) to document health check endpoints until this is corrected.
+:::
+
+#### Usage
+```csharp
+// In Program.cs
+builder.Services.AddOpenApi(options =>
+{
+    options.AddHealthChecksDocumentTransformer(new Dictionary<string, string>
+    {
+        { "Health", "Service health check endpoints." }
+    });
+});
+```
+
+---
+
 ### Individual Transformer Extensions
 
 For more granular control, you can also register each of the default transformers individually.
@@ -125,6 +148,7 @@ For more granular control, you can also register each of the default transformer
 *   **`AddDocumentInfoTransformer()`**: Registers only the [`DocumentInfoTransformer`](../DocumentTransformers/DocumentInfoTransformer.md).
 *   **`AddBearerSecurityDocumentTransformer()`**: Registers only the [`BearerSecurityDocumentTransformer`](../DocumentTransformers/BearerSecurityDocumentTransformer.md).
 *   **`AddHeadersParameterTransformer()`**: Registers only the [`HeadersParameterTransformer`](../DocumentTransformers/HeadersParameterTransformer.md).
+*   **`AddHealthChecksDocumentTransformer(tags)`**: Intended to register only the [`HealthChecksDocumentTransformer`](../DocumentTransformers/HealthChecksDocumentTransformer.md) — see the [caution](#addhealthchecksdocumenttransformeridictionarystring-string-tags) above.
 
 #### Usage
 ```csharp

@@ -38,6 +38,7 @@ public static class DependencyInjectionExtensions
         options.AddDocumentTransformer<DocumentInfoTransformer>();
         options.AddDocumentTransformer<BearerSecurityDocumentTransformer>();
         options.AddDocumentTransformer<HeadersParameterTransformer>();
+        options.AddDocumentTransformer<HealthChecksDocumentTransformer>();
         return options;
     }
 
@@ -114,4 +115,14 @@ public static class DependencyInjectionExtensions
     /// <returns>The configured <see cref="OpenApiOptions"/> for chaining.</returns>
     public static OpenApiOptions AddTagOperationTransformer(this OpenApiOptions options, IDictionary<string, string> tags) =>
         options.AddDocumentTransformer(new TagOperationTransformer(tags));
+
+    /// <summary>
+    /// Adds the <see cref="HealthChecksDocumentTransformer"/> to the OpenAPI options.
+    /// This transformer configures health check endpoints and their associated tags.
+    /// </summary>
+    /// <param name="options">The <see cref="OpenApiOptions"/> to configure.</param>
+    /// <param name="tags">The tags to associate with health check endpoints.</param>
+    /// <returns>The configured <see cref="OpenApiOptions"/> for chaining.</returns>
+    public static OpenApiOptions AddHealthChecksDocumentTransformer(this OpenApiOptions options, IDictionary<string, string> tags) =>
+        options.AddDocumentTransformer<HeadersParameterTransformer>();
 }

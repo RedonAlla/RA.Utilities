@@ -22,8 +22,12 @@ It automatically adds a "Bearer" security scheme to your OpenAPI document if it 
 This enables the "Authorize" button in the Swagger UI, simplifying the testing of protected endpoints.
 
 ### [`HeadersParameterTransformer`](./HeadersParameterTransformer.md)
-his transformer adds common headers, like `x-request-id` for correlation and tracing, to every API operation.
+This transformer adds common headers, like `x-request-id` for correlation and tracing, to every API operation.
 This is particularly useful for microservices where tracking requests across different services is essential.
+
+### [`HealthChecksDocumentTransformer`](./HealthChecksDocumentTransformer.md)
+This transformer documents the health check endpoints (`/health` and `/alive`) that `MapHealthChecks` maps without any API metadata, including their response schemas and a dedicated `Health` tag.
+The operations stay free of security schemes so the endpoints remain reachable without authentication.
 
 ### [`PolymorphismDocumentTransformer`](./PolymorphismDocumentTransformer.md)
 This transformer correctly represents inheritance in polymorphic types (a base class with several derived classes) within the OpenAPI schema.
