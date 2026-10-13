@@ -1,5 +1,34 @@
 # Release Notes
 
+## Version 10.1.0
+
+![Date Badge](https://img.shields.io/badge/Publish-11%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.1.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Application.Validation/10.1.0)
+
+Feature release: adds FluentValidation rules that validate through the value objects of `RA.Utilities.Core.ValueObjects`, so request validation and the domain share one set of rules.
+
+### ✨ New Features
+
+* **`MustBeValidCurrency()`**, **`MustBeValidEmail()`** and **`MustBeValidSsn()`** (in `RA.Utilities.Application.Validation.Extensions`): `Custom` rules for `string?` properties that construct the matching value object behind the scenes. Any input the value object rejects fails the rule for the property path.
+* Because the value object constructors reject `null`, empty and whitespace input, these rules also fail on missing values — unlike `MustMatchesCurrencyFormat()`, where `null` passes and requiredness is left to `NotNull()` / `NotEmpty()`.
+* The failure message is the generic `BadRequestException` message ("The request is invalid."), not the value object's specific message; chain `WithMessage(...)` for a property-specific message.
+
+```csharp
+public class RegisterUserValidator : AbstractValidator<RegisterUserRequest>
+{
+    public RegisterUserValidator()
+    {
+        RuleFor(x => x.Email).MustBeValidEmail();
+        RuleFor(x => x.Currency).MustBeValidCurrency();
+        RuleFor(x => x.Ssn).MustBeValidSsn();
+    }
+}
+```
+
+### 📦 Dependencies
+
+* New dependency on `RA.Utilities.Core.ValueObjects` (10.1.0) — the new rules construct `Currency`, `Email` and `SSN` instances to validate input. `RA.Utilities.Core.Exceptions` remains a direct dependency for `ValidationUtilities.CreateValidationErrorResult`.
+
 ## Version 10.0.1
 
 ![Date Badge](https://img.shields.io/badge/Publish-12%20August%202026-lightblue?logo=fastly&logoColor=white)

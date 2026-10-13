@@ -24,14 +24,15 @@ Use it to run multiple validators against a request in parallel, aggregate the f
 
 - **Centralize validation orchestration** — run every registered validator for a request in one call
 - **Standardize error payloads** — failures become a consistent [`BadRequestException`](../../core/RA.Utilities.Core.Exceptions/BadRequestException.md) with machine-readable details
-- **Avoid duplication** — share the same currency (and future format) rules across validators and services
-- **Stay fast** — validators run in parallel, and the currency rule uses a source-generated regex
+- **Avoid duplication** — share the same currency, email, and SSN rules across validators and services
+- **Stay fast** — validators run in parallel, and the currency format rule uses a source-generated regex
 
 ### ✨ Key Features
 
 - **`ValidationUtilities.ValidateAsync`** — executes all validators for a request concurrently and flattens the failures
 - **`ValidationUtilities.CreateValidationErrorResult`** — maps `ValidationFailure[]` into a `BadRequestException` carrying structured `ValidationError` entries
 - **`MustMatchesCurrencyFormat()`** — declarative ISO 4217 format rule (3 uppercase letters) for any string property
+- **`MustBeValidCurrency()` / `MustBeValidEmail()` / `MustBeValidSsn()`** — rules that validate `string?` properties through the value objects of [`RA.Utilities.Core.ValueObjects`](../../core/RA.Utilities.Core.ValueObjects/index.mdx), so request validation and the domain share one set of rules
 - **Zero configuration** — static utilities; validators are supplied by your own DI container
 
 ## 🧠 Core Concepts
@@ -40,6 +41,9 @@ Use it to run multiple validators against a request in parallel, aggregate the f
 |---|---|---|
 | `ValidationUtilities` | Orchestrates validation and converts failures to an exception | [`Utilities`](./ValidationUtilities) |
 | `MustMatchesCurrencyFormat()` | FluentValidation rule for ISO 4217 currency codes | [`Extensions`](./CurrencyValidatorExtensions) |
+| `MustBeValidCurrency()` | Currency rule backed by the `Currency` value object | [`Extensions`](./CurrencyValidatorExtensions) |
+| `MustBeValidEmail()` | Email rule backed by the `Email` value object | [`Extensions`](./EmailValidatorExtensions) |
+| `MustBeValidSsn()` | SSN rule backed by the `SSN` value object | [`Extensions`](./SsnValidatorExtensions) |
 | `BadRequestException` / `ValidationError` | The standardized 400 payload produced on failure | [`RA.Utilities.Core.Exceptions`](../../core/RA.Utilities.Core.Exceptions/index.mdx) |
 
 ### How they work together
@@ -81,7 +85,7 @@ Install-Package RA.Utilities.Application.Validation
 **PackageReference (csproj)**
 
 ```xml
-<PackageReference Include="RA.Utilities.Application.Validation" Version="10.0.1" />
+<PackageReference Include="RA.Utilities.Application.Validation" Version="10.1.0" />
 ```
 
 ### Hello World
@@ -140,10 +144,32 @@ RuleFor(x => x.Currency).NotNull().MustMatchesCurrencyFormat();
 
 Null values pass the format rule — chain `NotNull()` / `NotEmpty()` when the currency is required. See [`CurrencyValidatorExtensions`](./CurrencyValidatorExtensions) for details.
 
+### Validate through value objects
+
+The `MustBeValid*` rules validate `string?` properties by constructing the matching value object from [`RA.Utilities.Core.ValueObjects`](../../core/RA.Utilities.Core.ValueObjects/index.mdx) behind the scenes — request validation and the domain share one set of rules:
+
+```csharp showLineNumbers
+public record RegisterUserRequest(string Email, string Currency, string Ssn);
+
+public class RegisterUserValidator : AbstractValidator<RegisterUserRequest>
+{
+    public RegisterUserValidator()
+    {
+        // highlight-next-line
+        RuleFor(x => x.Email).MustBeValidEmail();
+        RuleFor(x => x.Currency).MustBeValidCurrency();
+        RuleFor(x => x.Ssn).MustBeValidSsn();
+    }
+}
+```
+
+Because the value object constructors reject `null`, empty, and whitespace input, these rules also fail on missing values — unlike `MustMatchesCurrencyFormat()`, where `null` passes and requiredness is left to `NotNull()` / `NotEmpty()`. The failure message is the generic `BadRequestException` message ("The request is invalid."); chain `WithMessage(...)` if you want a property-specific message. See [`EmailValidatorExtensions`](./EmailValidatorExtensions) and [`SsnValidatorExtensions`](./SsnValidatorExtensions) for details.
+
 ## 🔗 Dependencies
 
 -  [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/) (12.1.1)
 -  [`RA.Utilities.Core.Exceptions`](../../core/RA.Utilities.Core.Exceptions/index.mdx)
+-  [`RA.Utilities.Core.ValueObjects`](../../core/RA.Utilities.Core.ValueObjects/index.mdx) (10.1.0 or later) — the `MustBeValid*` rules construct `Currency`, `Email`, and `SSN` instances to validate input
 
 ## ⚙️ Configuration
 

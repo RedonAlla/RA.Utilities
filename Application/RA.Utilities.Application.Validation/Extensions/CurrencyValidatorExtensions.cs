@@ -1,5 +1,9 @@
+using System;
 using System.Text.RegularExpressions;
 using FluentValidation;
+using FluentValidation.Results;
+using RA.Utilities.Core.Exceptions;
+using RA.Utilities.Core.ValueObjects;
 
 namespace RA.Utilities.Application.Validation.Extensions;
 
@@ -8,6 +12,9 @@ namespace RA.Utilities.Application.Validation.Extensions;
 /// </summary>
 public static partial class CurrencyValidatorExtensions
 {
+    private static bool IsValid(string value) =>
+        value is null || CurrencyRegex().IsMatch(value);
+
     /// <summary>
     /// Compiled regex for currency validation (ISO 4217: 3 uppercase letters).
     /// </summary>
@@ -26,6 +33,30 @@ public static partial class CurrencyValidatorExtensions
         return ruleBuilder.Must(IsValid)
             .WithMessage("Currency must be 3 uppercase letters (A-Z).");
     }
-    private static bool IsValid(string value) =>
-        value is null || CurrencyRegex().IsMatch(value);
+
+    /// <summary>
+    /// Validates that the property value is a valid currency value.
+    /// </summary>
+    /// <typeparam name="T">The model type containing the property.</typeparam>
+    /// <param name="ruleBuilder">The FluentValidation rule builder.</param>
+    /// <returns>The configured validation rule options.</returns>
+    public static IRuleBuilderOptionsConditions<T, string?> MustBeValidCurrency<T>(
+        this IRuleBuilder<T, string?> ruleBuilder)
+    {
+        return ruleBuilder.Custom((value, context) =>
+        {
+            try
+            {
+                _ = new Currency(value);
+            }
+            catch (Exception ex)
+            {
+                string errorMessage = ex is BadRequestException
+                    ? ex.Message
+                    : $"Failed validation {context.PropertyPath}";
+
+                context.AddFailure(new ValidationFailure(context.PropertyPath, errorMessage));
+            }
+        });
+    }
 }

@@ -1,5 +1,28 @@
 # Release Notes for RA.Utilities.Core.ValueObjects
 
+## Version 10.1.0
+
+![Date Badge](https://img.shields.io/badge/Publish-11%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.1.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.ValueObjects/10.1.0)
+
+### ✨ New Features
+
+*   **`Money.Subtract(other)`**: returns a new `Money` with the difference of the two amounts. Mirrors `Add(other)`: throws a `BadRequestException` with a `CurrencyMismatch` validation error (`AttemptedValue` = the other currency, `ExpectedValue` = the instance currency) when the currencies differ.
+
+```csharp
+var price = Money.PositiveMoney(19.99m, new Currency("EUR"));
+var discount = Money.PositiveMoney(4.00m, new Currency("EUR"));
+
+var net = price.Subtract(discount); // 15.99 EUR
+// price.Subtract(new Money(4m, new Currency("USD"))) throws BadRequestException (CurrencyMismatch)
+```
+
+### 📝 Notes
+
+*   `Money` is immutable: `Add` and `Subtract` return new instances and never mutate the operands.
+
+---
+
 ## Version 10.0.0
 
 ![Date Badge](https://img.shields.io/badge/Publish-21%20September%202026-lightblue?logo=fastly&logoColor=white)

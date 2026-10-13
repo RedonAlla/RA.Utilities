@@ -27,6 +27,7 @@ A bare `decimal` cannot express what it represents: 100 of *what*? Combining amo
 | `Money(decimal amount, Currency currency)` | Creates a `Money` instance. Validation-free; see `PositiveMoney`. |
 | `PositiveMoney(decimal, Currency)`       | Factory that throws `BadRequestException` when the amount is negative. |
 | `Add(Money other)`                       | Returns a new `Money` with the sum; throws `BadRequestException` when currencies differ. |
+| `Subtract(Money other)`                  | Returns a new `Money` with the difference; throws `BadRequestException` when currencies differ. |
 | `ToString()`                             | Returns `"<Amount> <Currency>"`, e.g. `24.98 EUR`.               |
 
 ## Validation rules
@@ -34,7 +35,7 @@ A bare `decimal` cannot express what it represents: 100 of *what*? Combining amo
 | Rule                          | ErrorCode (from `BaseErrorCode`)   | Notes                                                  |
 |-------------------------------|------------------------------------|--------------------------------------------------------|
 | Negative amount in `PositiveMoney` | `PositiveMoney` (`POSITIVE_MONEY`) | `PropertyName` is `Amount`, `AttemptedValue` is the amount |
-| Different currencies in `Add` | `CurrencyMismatch` (`CURRENCY_MISMATCH`) | `AttemptedValue` is the other currency, `ExpectedValue` is the current one |
+| Different currencies in `Add` / `Subtract` | `CurrencyMismatch` (`CURRENCY_MISMATCH`) | `AttemptedValue` is the other currency, `ExpectedValue` is the current one |
 
 All failures are reported as a `BadRequestException` whose `Errors` collection contains a single `ValidationError`.
 
@@ -65,6 +66,23 @@ total.Add(new Money(5m, new Currency("USD"))); // throws BadRequestException (Cu
 ```
 
 `Add` returns a new instance; `Money` is immutable, like all value objects in this package.
+
+### Subtract amounts safely
+
+```csharp showLineNumbers
+var price = Money.PositiveMoney(19.99m, new Currency("EUR"));
+var discount = Money.PositiveMoney(4.00m, new Currency("EUR"));
+
+// highlight-next-line
+var net = price.Subtract(discount); // Money { Amount = 15.99, Currency = EUR }
+
+net.ToString(); // "15.99 EUR"
+
+// highlight-next-line
+price.Subtract(new Money(1m, new Currency("USD"))); // throws BadRequestException (CurrencyMismatch)
+```
+
+`Subtract` mirrors `Add`: it returns a new instance and throws the same `CurrencyMismatch` error when the currencies differ.
 
 ### Equality
 

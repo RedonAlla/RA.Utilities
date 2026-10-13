@@ -133,8 +133,10 @@ A monetary amount paired with a `Currency`. Arithmetic is guarded so you can't c
 ```csharp
 var price = Money.PositiveMoney(19.99m, new Currency("EUR")); // throws BadRequestException if negative
 var shipping = Money.PositiveMoney(4.99m, new Currency("EUR"));
+var discount = Money.PositiveMoney(4.00m, new Currency("EUR"));
 
 var total = price.Add(shipping); // 24.98 EUR
+var net = price.Subtract(discount); // 15.99 EUR
 // total.Add(new Money(5m, new Currency("USD"))) would throw BadRequestException (CurrencyMismatch)
 ```
 
@@ -142,6 +144,7 @@ var total = price.Add(shipping); // 24.98 EUR
 - `Amount` (`decimal`) and `Currency`.
 - `Money.PositiveMoney(amount, currency)`: factory that rejects negative amounts.
 - `Add(other)`: adds two amounts; throws `BadRequestException` if the currencies differ.
+- `Subtract(other)`: subtracts two amounts; throws `BadRequestException` if the currencies differ.
 
 ---
 

@@ -17,6 +17,7 @@
 	</ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../Core/RA.Utilities.Core.ValueObjects/RA.Utilities.Core.ValueObjects.csproj" />
     <ProjectReference Include="../RA.Utilities.Data.Abstractions/RA.Utilities.Data.Abstractions.csproj" />
   </ItemGroup>
 

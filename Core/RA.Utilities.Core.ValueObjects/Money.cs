@@ -61,6 +61,23 @@ public sealed record Money
             });
 
     /// <summary>
+    /// Subtract another monetary amount to the current instance.
+    /// </summary>
+    /// <param name="other">The amount to subtract. It must use the same currency as the current instance.</param>
+    /// <returns>A new <see cref="Money"/> instance containing the sum.</returns>
+    /// <exception cref="BadRequestException">Thrown when <paramref name="other"/> uses a different currency.</exception>
+    public Money Subtract(Money other) =>
+        Currency == other.Currency
+            ? new(Amount - other.Amount, Currency)
+            : throw new BadRequestException(new ValidationError(BaseErrorMessage.CurrencyMismatch)
+            {
+                PropertyName = "Currency",
+                ErrorCode = BaseErrorCode.CurrencyMismatch,
+                AttemptedValue = other.Currency,
+                ExpectedValue = Currency
+            });
+
+    /// <summary>
     /// Returns a string that represents the current money value.
     /// </summary>
     /// <returns>A formatted string containing the amount and currency.</returns>

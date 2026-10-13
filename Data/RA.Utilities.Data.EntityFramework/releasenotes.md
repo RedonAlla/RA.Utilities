@@ -1,5 +1,29 @@
 # Release Notes for RA.Utilities.Data.EntityFramework
 
+## Version 10.1.0
+![Date Badge](https://img.shields.io/badge/Publish-11%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.1.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.EntityFramework/10.1.0)
+
+This release adds persistence support for the value objects of `RA.Utilities.Core.ValueObjects`: EF Core value converters plus a `HasMoney` convention that stores a `Money` in two database columns.
+
+### ✨ New Features
+
+* **Added `MoneyConventionExtensions.HasMoney`**: Maps a `Money` property to two separate database columns — `Amount` in a decimal column and `Currency` in a string column (through `CurrencyConverter`) — instead of storing the whole value in a single column.
+    * EF Core value converters map a property to a single column, so `HasMoney` maps the property as an EF Core complex property instead. Columns are named after the property, e.g. `Balance_Amount` and `Balance_Currency`; the `Amount` column uses the provider default for `decimal` (`decimal(18,2)` on SQL Server, `TEXT` on SQLite).
+    * Supports required (`Money`), optional (`Money?`, stored as `NULL` in both columns) and multiple `Money` properties on the same entity. Because `Money` is immutable, updates persist by replacing the instance on a tracked entity.
+    * For single-column storage, `MoneyConverter` (single JSON string column) is the alternative.
+* **Added value converters** (namespace `RA.Utilities.Data.EntityFramework.Conventions`): `CurrencyConverter`, `EmailConverter` and `SsnConverter` map the string-based value objects to and from their normalized `Value` string; `MoneyConverter` serializes the whole `Money` as JSON into a single string column.
+
+```csharp
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    modelBuilder.Entity<Wallet>().HasMoney(w => w.Balance);
+}
+```
+
+### 📦 Dependencies
+* New dependency on `RA.Utilities.Core.ValueObjects` **10.1.0**. `RA.Utilities.Data.Abstractions` and `Microsoft.EntityFrameworkCore` are unchanged.
+
 ## Version 10.0.2
 ![Date Badge](https://img.shields.io/badge/Publish-27%20September%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.2-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.EntityFramework/10.0.2)

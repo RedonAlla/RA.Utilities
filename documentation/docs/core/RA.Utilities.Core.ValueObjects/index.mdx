@@ -32,7 +32,7 @@ A value object is validated and normalized *once*, at the boundary of your syste
 
 ### ✨ Key Features
 
-- **4 value object types** — `Email` (normalized address with `LocalPart`/`Domain`), `Currency` (ISO 4217 code), `SSN` (letter + 8 digits + letter), `Money` (amount + currency with guarded arithmetic)
+- **4 value object types** — `Email` (normalized address with `LocalPart`/`Domain`), `Currency` (ISO 4217 code), `SSN` (letter + 8 digits + letter), `Money` (amount + currency with guarded `Add`/`Subtract` arithmetic)
 - **Structured validation errors** — `BadRequestException` with `ValidationError` entries carrying error codes from `BaseErrorCode`, property names, and attempted values
 - **Built-in JSON support** — generic `ValueObjectJsonConverter<T>` serializes value objects as plain strings and deserializes back through validation
 - **`IParsable<T>` support** — `Parse`/`TryParse` enable route, query, and header binding in ASP.NET Core minimal APIs
@@ -64,7 +64,7 @@ Install-Package RA.Utilities.Core.ValueObjects
 **PackageReference (csproj)**
 
 ```xml
-<PackageReference Include="RA.Utilities.Core.ValueObjects" Version="10.0.0" />
+<PackageReference Include="RA.Utilities.Core.ValueObjects" Version="10.1.0" />
 ```
 
 ### Hello World
@@ -102,7 +102,7 @@ No DI registration needed. The built-in JSON converter is applied automatically 
 | [`Email`](./Email.md)    | trimmed, lower-cased                | required, max 254 chars, email format                         | user identities, notifications       |
 | [`Currency`](./Currency.md) | trimmed, upper-cased             | required, exactly 3 characters (ISO 4217)                     | pricing, payments, multi-currency    |
 | [`SSN`](./SSN.md)        | trimmed, upper-cased                | required, max 10 chars, `^[A-Z][0-9]{8}[A-Z]$`                | personal identifiers                 |
-| [`Money`](./Money.md)    | —                                   | `PositiveMoney` rejects negative amounts; `Add` checks currency | amounts that must carry a currency |
+| [`Money`](./Money.md)    | —                                   | `PositiveMoney` rejects negative amounts; `Add`/`Subtract` check currency | amounts that must carry a currency |
 
 ### Shared behavior: `IValueObject<TSelf>`
 
@@ -180,11 +180,14 @@ public Money GetPrice(string currencyCode)
 // highlight-next-line
 var price = Money.PositiveMoney(19.99m, new Currency("EUR")); // throws if negative
 var shipping = Money.PositiveMoney(4.99m, new Currency("EUR"));
+var discount = Money.PositiveMoney(4.00m, new Currency("EUR"));
 
 var total = price.Add(shipping); // 24.98 EUR
+var net = price.Subtract(discount); // 15.99 EUR
 
 // highlight-next-line
 total.Add(new Money(5m, new Currency("USD"))); // throws BadRequestException (CurrencyMismatch)
+total.Subtract(new Money(1m, new Currency("USD"))); // same CurrencyMismatch guard
 ```
 
 ### Bind value objects in minimal APIs

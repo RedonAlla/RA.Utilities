@@ -36,6 +36,9 @@ This package accelerates the setup of a data access layer by providing several k
 #### 2. Dependency Injection Extensions:
 It provides extension methods like `AddRepositoryBase()` to simplify the registration of these generic repositories in your application's DI container.
 
+#### 3. Value Object Mapping:
+The [`Conventions`](./Conventions/ValueObjectConverters) namespace provides EF Core value converters that persist the value objects of [`RA.Utilities.Core.ValueObjects`](../../core/RA.Utilities.Core.ValueObjects/index.mdx) — `Email`, `Currency`, `SSN`, and `Money`. The [`HasMoney()`](./Extensions/MoneyConventionExtensions) extension maps a `Money` property to two separate columns (decimal `Amount` + string `Currency`) as an EF Core complex property, while [`MoneyConverter`](./Conventions/ValueObjectConverters) stores it as a single JSON string column.
+
 ## 🧩 How It Fits into the Ecosystem
 This package is a crucial part of the `RA.Utilities` ecosystem.
 It sits in the **Infrastructure/Data Layer** and depends on:
@@ -64,6 +67,8 @@ The package offers several key components to achieve this:
 * **[`WriteRepositoryBase<T>`](./WriteRepositoryBase.md)**: A write-only version for add, update, and delete operations.
 * **[`BaseEntitySaveChangesInterceptor`](./Interceptors/BaseEntitySaveChangesInterceptor.md)**: A `SaveChanges` interceptor that automatically maintains timestamp properties (`CreatedAt`, `LastModifiedAt`) on entities that expose them.
 * **[`DependencyInjectionExtensions`](./Extensions/DependencyInjectionExtensions.md)**: One-line registration extensions (`AddRepositoryBase()`, `AddReadRepositoryBase()`, `AddWriteRepositoryBase()`).
+* **[Value object converters](./Conventions/ValueObjectConverters.md)**: EF Core value converters that map `Email`, `Currency`, `SSN`, and `Money` to database columns.
+* **[`MoneyConventionExtensions`](./Extensions/MoneyConventionExtensions.md)**: The `HasMoney()` convention that maps a `Money` property to two columns (decimal `Amount` + string `Currency`) as an EF Core complex property.
 
 All repository implementations constrain their entity type to any reference type implementing the `IEntity` marker interface (`where T : class, IEntity`).
 
@@ -87,6 +92,7 @@ Install-Package RA.Utilities.Data.EntityFramework
 
 -   **[`RA.Utilities.Data.Abstractions`](../Abstractions/index.mdx)** (10.0.3 or later): Provides the core interfaces (`IRepositoryBase<T>`, `IReadRepositoryBase<T>`, `IWriteRepositoryBase<T>`, `IUnitOfWork`) that this package implements.
 -   **[`RA.Utilities.Data.Entities`](../Entities/index.mdx)** (10.1.1 or later, transitively via the abstractions): Provides the `IEntity` marker interface that the repository type parameters constrain to.
+-   **[`RA.Utilities.Core.ValueObjects`](../../core/RA.Utilities.Core.ValueObjects/index.mdx)** (10.1.0 or later): Provides the `Email`, `Currency`, `SSN`, and `Money` value objects that the converters and the `HasMoney()` convention persist.
 -   **[`Microsoft.EntityFrameworkCore`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.entityframeworkcore)**: The underlying ORM used for the implementations.
 
 

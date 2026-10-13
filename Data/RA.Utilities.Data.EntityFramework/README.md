@@ -6,7 +6,7 @@
 [![Documentation](https://img.shields.io/badge/Documentation-read-brightgreen.svg?logo=readthedocs&logoColor=fff)](https://redonalla.github.io/RA.Utilities/nuget-packages/Data/EntityFramework/)
 [![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
 
-This package provides concrete implementations of the repository and unit of work patterns for Entity Framework Core, based on the abstractions from `RA.Utilities.Data.Abstractions`. It's designed to accelerate the setup of a data access layer in a clean, testable, and maintainable way.
+This package provides concrete implementations of the repository and unit of work patterns for Entity Framework Core, based on the abstractions from `RA.Utilities.Data.Abstractions`. It's designed to accelerate the setup of a data access layer in a clean, testable, and maintainable way. It also maps the value objects from `RA.Utilities.Core.ValueObjects` (such as `Money`) to database columns.
 
 ## ✨ Key Features
 * **Generic Repository Implementations**: Provides ready-to-use base classes for repository patterns, saving you from writing boilerplate CRUD (Create, Read, Update, Delete) code.
@@ -14,6 +14,7 @@ This package provides concrete implementations of the repository and unit of wor
 * **Performance-Optimized Queries**: The `ReadRepositoryBase<T>` uses `AsNoTracking()` by default for more efficient data retrieval.
 * **Automatic Timestamping**: Includes a `BaseEntitySaveChangesInterceptor` that automatically sets the `CreatedAt` and `LastModifiedAt` properties on entities that expose them (the `BaseEntity<TKey>` and `WriteEntity<TKey>` base classes) when they are saved.
 * **Simplified Dependency Injection**: Provides extension methods to register your repositories with a single line of code in `Program.cs`.
+* **Value Object Mapping**: EF Core value converters and the `HasMoney` convention map the value objects from `RA.Utilities.Core.ValueObjects` (`Email`, `Currency`, `SSN`, `Money`) to database columns — a `Money` can be stored as two columns (amount + currency) or as a single JSON string column.
 
 ## Installation
 You can install the package via the .NET CLI:
@@ -37,6 +38,28 @@ This package provides concrete implementations for the interfaces defined in `RA
 
 ### Interceptors
 * **`BaseEntitySaveChangesInterceptor`**: An Entity Framework Core interceptor that automatically populates timestamp properties (`CreatedAt`, `LastModifiedAt`) on entities exposing them (the `BaseEntity<TKey>` and `WriteEntity<TKey>` base classes) before changes are saved to the database. This ensures consistent and accurate auditing without manual intervention.
+
+### Value Object Mapping
+The `Conventions` namespace contains EF Core value converters for the value objects of `RA.Utilities.Core.ValueObjects`:
+
+* **`CurrencyConverter` / `EmailConverter` / `SsnConverter`**: map the string-based value objects to and from their normalized `Value` string.
+* **`MoneyConverter`**: serializes the whole `Money` as JSON into a single string column.
+
+The `MoneyConventionExtensions.HasMoney` extension maps a `Money` property to two separate database columns instead — a decimal `Amount` column and a string `Currency` column (through `CurrencyConverter`). EF Core value converters can only map a property to a single column, so `HasMoney` maps the property as an EF Core complex property:
+
+```csharp
+using RA.Utilities.Data.EntityFramework.Extensions;
+
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    modelBuilder.Entity<Wallet>().HasMoney(w => w.Balance);
+}
+```
+
+* Columns are named after the property, e.g. `Balance_Amount` and `Balance_Currency`; the `Amount` column uses the provider default for `decimal` (`decimal(18,2)` on SQL Server, `TEXT` on SQLite).
+* Supports required (`Money`), optional (`Money?`, stored as `NULL` in both columns) and multiple `Money` properties on the same entity.
+* Because `Money` is immutable, updates persist by replacing the instance on a tracked entity.
+* Returns the `ComplexPropertyBuilder<Money>`, so column names and other facets can still be configured.
 
 ### Dependency Injection Extensions
 

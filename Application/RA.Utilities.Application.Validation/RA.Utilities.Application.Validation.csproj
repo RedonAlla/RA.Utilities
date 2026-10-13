@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-		<Version>10.0.1</Version>
+		<Version>10.1.0</Version>
 		<Title>RA Utilities Application Validation</Title>
     <Description>RA.Utilities.Application.Validation provides reusable validators and helpers built on FluentValidation for validating incoming requests. It aggregates multiple validators asynchronously and converts FluentValidation failures into structured BadRequestException/ValidationError results.</Description>
     <PackageTags>RA;Utilities;Application;Validation;FluentValidation;Validators;ErrorHandling</PackageTags>
@@ -23,10 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../Core/RA.Utilities.Core.Exceptions/RA.Utilities.Core.Exceptions.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Extensions/" />
+    <ProjectReference Include="../../Core/RA.Utilities.Core.ValueObjects/RA.Utilities.Core.ValueObjects.csproj" />
   </ItemGroup>
 
 </Project>

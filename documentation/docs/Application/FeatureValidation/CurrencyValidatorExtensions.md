@@ -7,7 +7,10 @@ sidebar_position: 1
 Namespace: RA.Utilities.Application.Validation.Extensions
 ```
 
-`CurrencyValidatorExtensions` adds a reusable [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/) rule that checks whether a string property looks like an **ISO 4217** currency code — exactly 3 uppercase letters (`USD`, `EUR`, `GBP`).
+`CurrencyValidatorExtensions` adds two reusable [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/) rules for currency codes:
+
+* **`MustMatchesCurrencyFormat()`** — checks whether a string property looks like an **ISO 4217** currency code: exactly 3 uppercase letters (`USD`, `EUR`, `GBP`).
+* **`MustBeValidCurrency()`** — validates the property through the [`Currency`](../../core/RA.Utilities.Core.ValueObjects/Currency.md) value object of `RA.Utilities.Core.ValueObjects`, so request validation and the domain share one set of rules.
 
 ## 🎯 Purpose and Design
 
@@ -47,7 +50,35 @@ RuleFor(x => x.Currency)
     .WithMessage("'{PropertyName}' must be a valid ISO 4217 currency code.");
 ```
 
+## 🏛️ Value-Object-Backed Rule: `MustBeValidCurrency()`
+
+`MustBeValidCurrency` validates the property by constructing a [`Currency`](../../core/RA.Utilities.Core.ValueObjects/Currency.md) instance behind the scenes:
+
+```csharp showLineNumbers
+public class CreateOrderValidator : AbstractValidator<CreateOrderRequest>
+{
+    public CreateOrderValidator()
+    {
+        // highlight-next-line
+        RuleFor(x => x.Currency).MustBeValidCurrency();
+    }
+}
+```
+
+Any input the `Currency` value object rejects fails the rule for that property path. Two behaviors distinguish it from the format rule:
+
+* **`null`, empty, and whitespace fail the rule** — the `Currency` constructor rejects missing values, so the rule doubles as a required check. (`MustMatchesCurrencyFormat()` lets `null` pass and leaves requiredness to `NotNull()` / `NotEmpty()`.)
+* **The failure message is the value object's generic `BadRequestException` message** — `"The request is invalid."` — not the rule-specific format message. Chain `WithMessage` for a property-specific message:
+
+```csharp showLineNumbers
+RuleFor(x => x.Currency)
+    .MustBeValidCurrency()
+    .WithMessage("'{PropertyName}' must be a valid ISO 4217 currency code.");
+```
+
 ## ✔️ Valid vs Invalid
+
+`MustMatchesCurrencyFormat()`:
 
 | Value | Result |
 |---|---|
@@ -58,6 +89,15 @@ RuleFor(x => x.Currency)
 | `"U5D"`, `"U$D"`, `"US D"` (non-letters) | ❌ Invalid |
 | `""` (empty) | ❌ Invalid |
 
+`MustBeValidCurrency()`:
+
+| Value | Result |
+|---|---|
+| `"USD"`, `"usd"`, `" eur "` | ✅ Valid (trimmed and upper-cased, e.g. `"usd"` → `USD`) |
+| `null` | ❌ Invalid (the value object requires a value) |
+| `""` / `"   "` | ❌ Invalid |
+| `"US"` / `"USDD"` | ❌ Invalid |
+
 ## 🧠 Summary
 
-`CurrencyValidatorExtensions` centralizes currency-code validation so every part of an application validates currencies in the same way. It uses modern C# features (source-generated regex), follows [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/) conventions, and leaves requiredness (`NotNull` / `NotEmpty`) to the caller.
+`CurrencyValidatorExtensions` centralizes currency-code validation so every part of an application validates currencies in the same way. `MustMatchesCurrencyFormat()` is a shape-only check with a friendly message and source-generated regex; `MustBeValidCurrency()` delegates to the `Currency` value object, fails on missing values, and reports failures with the generic `BadRequestException` message.
