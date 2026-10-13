@@ -13,17 +13,19 @@ namespace RA.Utilities.Feature.Benchmarks.Shared;
 /// </summary>
 internal static class BenchmarkLogging
 {
-    /// <summary>
-    /// Registers the null logger factory and an open-generic <c>ILogger&lt;T&gt;</c>
-    /// implementation so that every closed logger requested by the behaviors (and by the
-    /// generated mediator) resolves to a no-op logger backed by <see cref="NullLoggerFactory"/>.
-    /// </summary>
-    /// <param name="services">The service collection to configure.</param>
-    /// <returns>The service collection so that additional calls can be chained.</returns>
-    public static IServiceCollection AddNullLogging(this IServiceCollection services)
+    extension(IServiceCollection services)
     {
-        services.AddSingleton<ILoggerFactory>(NullLoggerFactory.Instance);
-        services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
-        return services;
+        /// <summary>
+        /// Registers the null logger factory and an open-generic <c>ILogger&lt;T&gt;</c>
+        /// implementation so that every closed logger requested by the behaviors (and by the
+        /// generated mediator) resolves to a no-op logger backed by <see cref="NullLoggerFactory"/>.
+        /// </summary>
+        /// <returns>The service collection so that additional calls can be chained.</returns>
+        public IServiceCollection AddNullLogging()
+        {
+            services.AddSingleton<ILoggerFactory>(NullLoggerFactory.Instance);
+            services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
+            return services;
+        }
     }
 }

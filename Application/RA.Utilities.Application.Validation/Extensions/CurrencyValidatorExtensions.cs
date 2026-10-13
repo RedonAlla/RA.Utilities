@@ -20,43 +20,41 @@ public static partial class CurrencyValidatorExtensions
     /// </summary>
     [GeneratedRegex("^[A-Z]{3}$", RegexOptions.Compiled)]
     private static partial Regex CurrencyRegex();
-    /// <summary>
-    /// Adds a validator to ensure the string matches the ISO 4217 currency code format (3 uppercase letters).
-    /// Null values pass this rule; use <c>NotNull</c> or <c>NotEmpty</c> when the currency is required.
-    /// </summary>
-    /// <typeparam name="T">The type of the object being validated.</typeparam>
-    /// <param name="ruleBuilder">The rule builder for the string property.</param>
-    /// <returns>The rule builder options for further configuration.</returns>
-    public static IRuleBuilderOptions<T, string> MustMatchesCurrencyFormat<T>(this IRuleBuilder<T, string> ruleBuilder)
-        where T : class
-    {
-        return ruleBuilder.Must(IsValid)
-            .WithMessage("Currency must be 3 uppercase letters (A-Z).");
-    }
 
-    /// <summary>
-    /// Validates that the property value is a valid currency value.
-    /// </summary>
-    /// <typeparam name="T">The model type containing the property.</typeparam>
-    /// <param name="ruleBuilder">The FluentValidation rule builder.</param>
-    /// <returns>The configured validation rule options.</returns>
-    public static IRuleBuilderOptionsConditions<T, string?> MustBeValidCurrency<T>(
-        this IRuleBuilder<T, string?> ruleBuilder)
+    extension<T>(IRuleBuilder<T, string> ruleBuilder) where T : class
     {
-        return ruleBuilder.Custom((value, context) =>
+        /// <summary>
+        /// Adds a validator to ensure the string matches the ISO 4217 currency code format (3 uppercase letters).
+        /// Null values pass this rule; use <c>NotNull</c> or <c>NotEmpty</c> when the currency is required.
+        /// </summary>
+        /// <returns>The rule builder options for further configuration.</returns>
+        public IRuleBuilderOptions<T, string> MustMatchesCurrencyFormat()
         {
-            try
-            {
-                _ = new Currency(value);
-            }
-            catch (Exception ex)
-            {
-                string errorMessage = ex is BadRequestException
-                    ? ex.Message
-                    : $"Failed validation {context.PropertyPath}";
+            return ruleBuilder.Must(IsValid)
+                .WithMessage("Currency must be 3 uppercase letters (A-Z).");
+        }
 
-                context.AddFailure(new ValidationFailure(context.PropertyPath, errorMessage));
-            }
-        });
+        /// <summary>
+        /// Validates that the property value is a valid currency value.
+        /// </summary>
+        /// <returns>The configured validation rule options.</returns>
+        public IRuleBuilderOptionsConditions<T, string?> MustBeValidCurrency()
+        {
+            return ruleBuilder.Custom((value, context) =>
+            {
+                try
+                {
+                    _ = new Currency(value);
+                }
+                catch (Exception ex)
+                {
+                    string errorMessage = ex is BadRequestException
+                        ? ex.Message
+                        : $"Failed validation {context.PropertyPath}";
+
+                    context.AddFailure(new ValidationFailure(context.PropertyPath, errorMessage));
+                }
+            });
+        }
     }
 }
