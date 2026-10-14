@@ -72,7 +72,7 @@ Install-Package RA.Utilities.Authentication.JwtBearer
 **PackageReference (csproj)**
 
 ```xml
-<PackageReference Include="RA.Utilities.Authentication.JwtBearer" Version="10.0.1" />
+<PackageReference Include="RA.Utilities.Authentication.JwtBearer" Version="10.0.2" />
 ```
 
 ### Hello World
@@ -363,10 +363,14 @@ builder.Services.AddJwtBearerAuthentication(builder.Configuration, options =>
 
 ### Extension Methods
 
-| Method | Type | Purpose |
-|---|---|---|
-| `AddJwtBearerAuthentication()` | `IServiceCollection` extension | Registers JWT Bearer authentication, authorization, and configuration |
-| `UseAuth()` | `IApplicationBuilder` extension | Chains `UseAuthentication()` + `UseAuthorization()` |
+| Method | Declared in | Type | Purpose |
+|---|---|---|---|
+| `AddJwtBearerAuthentication()` | `ServiceCollectionExtensions` | `IServiceCollection` extension | Registers JWT Bearer authentication, authorization, and configuration |
+| `UseAuth()` | `ApplicationBuilderExtensions` | `IApplicationBuilder` extension | Chains `UseAuthentication()` + `UseAuthorization()` |
+
+:::info v10.0.2
+Both methods were previously declared in a single `DependencyInjectionExtensions` class. In v10.0.2 the class was split into `ServiceCollectionExtensions` (the `Add` method) and `ApplicationBuilderExtensions` (the `Use` method), and the methods were refactored to C# 14 extension members. Method names, signatures, and the `RA.Utilities.Authentication.JwtBearer.Extensions` namespace are unchanged — see the [migration guide](./migration-guides) for details.
+:::
 
 ### Configuration Classes
 

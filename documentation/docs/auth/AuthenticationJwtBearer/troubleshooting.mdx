@@ -7,6 +7,21 @@ sidebar_position: 99
 
 ## Common Issues
 
+### After upgrading, `DependencyInjectionExtensions` no longer compiles
+
+**Cause**: In v10.0.2 the class was split into `ServiceCollectionExtensions` (`AddJwtBearerAuthentication()`) and `ApplicationBuilderExtensions` (`UseAuth()`), both in the same namespace.
+
+**Fix**: Call sites need no changes — extension methods resolve by target type. Only code that references the class *name* directly must be updated:
+
+```csharp
+// ❌ v10.0.1 and earlier
+typeof(DependencyInjectionExtensions)
+
+// ✅ v10.0.2
+typeof(ServiceCollectionExtensions)   // AddJwtBearerAuthentication()
+typeof(ApplicationBuilderExtensions)  // UseAuth()
+```
+
 ### `InvalidOperationException: The configured issuer signing key must be at least 32 bytes long`
 
 **Cause**: The `IssuerSigningKeyString` value in your `appsettings.json` is shorter than 32 bytes (256 bits), the minimum required for HMAC-SHA256.

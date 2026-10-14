@@ -4,6 +4,55 @@ title: Migration Guides
 
 # Migration Guides
 
+## v10.0.1 → v10.0.2
+
+### Breaking Change: None for call sites
+
+The single `DependencyInjectionExtensions` class is split into one class per target type: `ServiceCollectionExtensions` (the `Add` method) and `ApplicationBuilderExtensions` (the `Use` method). Both methods are now declared as **C# 14 extension members** (extension blocks). Method names, signatures, and the `RA.Utilities.Authentication.JwtBearer.Extensions` namespace are unchanged.
+
+### Why this change?
+
+The split mirrors the classic ASP.NET Core naming convention used across the RA.Utilities packages — `ServiceCollectionExtensions` for service registration, `ApplicationBuilderExtensions` for pipeline setup — so each class has a single, obvious responsibility.
+
+### What changed
+
+| Aspect | v10.0.1 | v10.0.2 |
+|---|---|---|
+| `AddJwtBearerAuthentication()` declared in | `DependencyInjectionExtensions` | `ServiceCollectionExtensions` |
+| `UseAuth()` declared in | `DependencyInjectionExtensions` | `ApplicationBuilderExtensions` |
+| Method names / signatures | — | unchanged |
+| Implementation style | classic extension methods | C# 14 extension blocks |
+
+### Migration Steps
+
+#### 1. No code changes required for consuming projects
+
+These are **extension methods** — they are resolved by the compiler based on the target type (`IServiceCollection`, `IApplicationBuilder`), not the static class name. The using directive is unchanged:
+
+```csharp
+// ✅ This code is unchanged in v10.0.2
+using RA.Utilities.Authentication.JwtBearer.Extensions;
+
+builder.Services.AddJwtBearerAuthentication(builder.Configuration); // Resolved on IServiceCollection
+
+var app = builder.Build();
+
+app.UseAuth(); // Resolved on IApplicationBuilder
+```
+
+#### 2. Update direct class name references (if any)
+
+```csharp
+// ❌ v10.0.1
+typeof(DependencyInjectionExtensions)
+
+// ✅ v10.0.2
+typeof(ServiceCollectionExtensions)   // AddJwtBearerAuthentication()
+typeof(ApplicationBuilderExtensions)  // UseAuth()
+```
+
+---
+
 ## v10.0.0 → v10.0.1
 
 ### Breaking Change: None

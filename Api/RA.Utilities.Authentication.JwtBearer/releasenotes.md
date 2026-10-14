@@ -1,5 +1,28 @@
 # RA.Utilities.Authentication.JwtBearer Release Notes
 
+## Version 10.0.2
+![Date Badge](https://img.shields.io/badge/Publish-14%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.2-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Authentication.JwtBearer/10.0.2)
+
+`DependencyInjectionExtensions` is split into `ServiceCollectionExtensions` and `ApplicationBuilderExtensions`, and the extension methods are refactored to C# 14 extension members. Method names, signatures, and the namespace are unchanged.
+
+<!-- truncate -->
+
+### ⚠️ Breaking Changes
+
+* **`DependencyInjectionExtensions` split into `ServiceCollectionExtensions` and `ApplicationBuilderExtensions`**: `AddJwtBearerAuthentication()` (extension on `IServiceCollection`) now lives in `ServiceCollectionExtensions`; `UseAuth()` (extension on `IApplicationBuilder`) lives in `ApplicationBuilderExtensions`. Both remain in the `RA.Utilities.Authentication.JwtBearer.Extensions` namespace. Call sites need no changes — extension methods resolve by target type — but code that references the `DependencyInjectionExtensions` class name directly (`typeof(...)`, unit-test assertions, reflection) must be updated.
+
+```csharp
+- var t = typeof(DependencyInjectionExtensions);
++ var s = typeof(ServiceCollectionExtensions);      // AddJwtBearerAuthentication()
++ var a = typeof(ApplicationBuilderExtensions);     // UseAuth()
+```
+
+### 📝 Improvements
+
+* **C# 14 extension members**: both classes now declare their methods inside `extension(...)` blocks on `IServiceCollection` and `IApplicationBuilder`. The generated extension methods have identical names and signatures, so the refactor is source-compatible for all callers.
+* The split mirrors the classic ASP.NET Core `Add`/`Use` naming convention used across the RA.Utilities packages — `ServiceCollectionExtensions` for service registration, `ApplicationBuilderExtensions` for pipeline setup.
+
 ## Version 10.0.1
 ![Date Badge](https://img.shields.io/badge/Publish-07%20August%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Authentication.JwtBearer/10.0.1)
