@@ -80,6 +80,12 @@ It can be either a success or a failure.
 - [`Result<T>`](./Results.md#resulttresult-class): Represents the outcome of an operation that returns a value of type `T`.
 It can be a success holding a `T` value, or a failure holding an `Exception`.
 
+Chaining methods (`Map`, `Bind`, `OnSuccess`, `OnFailure`, `Match` and their async counterparts) are extension methods declared in the [`RA.Utilities.Core.Results.Extensions`](./ResultExtensions.md) namespace.
+
+:::info[Namespace change in 10.0.1]
+The extension methods lived in `RA.Utilities.Core.Results` up to and including 10.0.0 and moved to `RA.Utilities.Core.Results.Extensions` in 10.0.1 — add `using RA.Utilities.Core.Results.Extensions;` when upgrading. See the [migration guide](./migration-guides.mdx).
+:::
+
 #### Factory Methods
 
 - [`Result.Success()`](./Results.md): Creates a success result.

@@ -1,0 +1,54 @@
+---
+title: Migration Guides
+---
+
+# Migration Guides
+
+Use this page when upgrading `RA.Utilities.Core.Results` between versions that introduce breaking changes.
+
+## v10.0.0 → v10.0.1
+
+### Breaking Change: Extension methods moved to `RA.Utilities.Core.Results.Extensions`
+
+The `Result` and `Result<T>` types remain in `RA.Utilities.Core.Results`, but their extension methods moved from that namespace into the new `RA.Utilities.Core.Results.Extensions` namespace.
+
+```csharp
+// ❌ v10.0.0
+using RA.Utilities.Core.Results;
+
+// ✅ v10.0.1
+using RA.Utilities.Core.Results;
+using RA.Utilities.Core.Results.Extensions;
+```
+
+Without the new `using`, calls such as `.Map(...)`, `.Bind(...)`, `.OnSuccess(...)`, `.OnFailure(...)` or `result.Match(...)` on the untyped `Result` no longer compile — the compiler reports `CS1061` ("no accessible extension method"), even though the package is referenced.
+
+### Breaking Change: `ResultExtensions` split into four classes
+
+The single `ResultExtensions` class was reorganized into one class per receiver type:
+
+| Class | Extends | Members |
+| --- | --- | --- |
+| `ResultExtensions` | `Result` | `OnSuccess`, `OnFailure`, `Bind`, `BindAsync`, `Match` |
+| `TypedResultExtensions` | `Result<T>` | `OnSuccess`, `OnFailure`, `Map`, `Bind`, `Bind<TOut>`, `MapAsync`, `BindAsync`, `BindAsync<TOut>` |
+| `ResultAsyncExtensions` | `Task<Result>` | `OnSuccessAsync`, `OnFailureAsync`, `BindAsync` |
+| `TypedResultAsyncExtensions` | `Task<Result<T>>` | `OnSuccessAsync`, `OnFailureAsync`, `MapAsync`, `BindAsync`, `BindAsync<TOut>` |
+
+Extension-method call sites are unaffected — every method keeps its name and signature, and explicit generic type arguments still bind as before (e.g. `result.MapAsync<int, string>(...)`). Only code that references the `ResultExtensions` class by name (`typeof(ResultExtensions)`, static invocation, reflection) must be updated to the matching class from the table.
+
+All methods are now declared as C# 14 extension members inside `extension(...)` blocks on their target type; the generated methods are identical.
+
+### Verify the upgrade
+
+```csharp
+using RA.Utilities.Core.Results;            // Result, Result<T>
+using RA.Utilities.Core.Results.Extensions; // Map, Bind, OnSuccess, ...
+
+Result<string> name = GetUser(42).Map(user => user.Name);
+```
+
+---
+
+## Full Changelog
+
+See the [package release notes](https://github.com/RedonAlla/RA.Utilities/blob/main/Core/RA.Utilities.Core.Results/releasenotes.md) for a complete version history.

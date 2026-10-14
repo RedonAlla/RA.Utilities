@@ -34,8 +34,8 @@ Used for `void`-like methods where you only need to know if the operation succee
 
 | Property | Type | Description |
 |---|---|---|
-| `IsSuccess` | `bool` | Gets a value indicating if the operation failed. It's `true` when `Exception`is not null. |
-| `IsFailure` | `bool` | Gets a value indicating if the operation succeeded. It's `true` when `Exception` is null. |
+| `IsSuccess` | `bool` | Gets a value indicating whether the result is a success. It's `true` when `Exception` is null. |
+| `IsFailure` | `bool` | Gets a value indicating whether the result is a failure. It's `true` when `Exception` is not null. |
 | `Exception` | [`Exception?`](https://learn.microsoft.com/en-us/dotnet/api/system.exception) | Gets the exception associated with a failed operation. It is `null` for a successful result. |
 
 ### Example: Deleting a Resource
@@ -153,7 +153,7 @@ public Result<string> GetGreeting(string name)
 
 ## Chaining Operations (Railway-Oriented Programming)
 
-The `ResultExtensions` class provides a fluent API for chaining multiple operations that can fail. This pattern is often called "Railway-Oriented Programming," where the "happy path" (success track) continues, but any failure diverts the flow to the "failure track."
+The extension methods in [`RA.Utilities.Core.Results.Extensions`](./ResultExtensions.md) provide a fluent API for chaining multiple operations that can fail. This pattern is often called "Railway-Oriented Programming," where the "happy path" (success track) continues, but any failure diverts the flow to the "failure track."
 
 ### `Map` - Transforming a Success Value
 
@@ -175,8 +175,12 @@ Use `Bind` to chain together multiple functions that each return a `Result`. The
 ```csharp
 public Result<User> ValidateAndGetUser(int userId)
 {
+    // highlight-start
     return ValidateId(userId) // Returns Result
-        .Bind(() => _userRepository.FindUserById(userId)); // Returns Result<User>
+        .Match(
+            success: () => _userRepository.FindUserById(userId), // Returns Result<User>
+            failure: exception => Result.Failure<User>(exception)); // Returns Result<User>
+    // highlight-end
 }
 ```
 
@@ -203,7 +207,7 @@ public async Task<Result<string>> GetUserNameAsync(int userId)
     // Assume FindByIdAsync returns Task<Result<User>>
     Task<Result<User>> userResultTask = _userRepository.FindByIdAsync(userId);
     // highlight-next-line
-    return await userResultTask.MapAsync(user => user.Name);
+    return await userResultTask.MapAsync(async user => user.Name);
 }
 ```
 

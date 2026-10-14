@@ -1,15 +1,34 @@
 ```bash
-Namespace: RA.Utilities.Core.Results
+Namespace: RA.Utilities.Core.Results.Extensions
 ```
 
-The `ResultExtensions` class provides a set of powerful extension methods for the
-[`Result`](./Results.md#result-class) and [`Result<T>`](./Results.md#resulttresult-class) types.
+The [`Result`](./Results.md#result-class) and [`Result<T>`](./Results.md#resulttresult-class) types get their extension methods from the `RA.Utilities.Core.Results.Extensions` namespace.
 These methods enable a fluent, functional style for chaining operations, often called **Railway-Oriented Programming**.
+
+The methods are organized into four static classes, one per receiver type:
+
+| Class | Extends | Members |
+| --- | --- | --- |
+| `ResultExtensions` | `Result` | `OnSuccess`, `OnFailure`, `Bind`, `BindAsync`, `Match` |
+| `TypedResultExtensions` | `Result<T>` | `OnSuccess`, `OnFailure`, `Map`, `Bind`, `Bind<TOut>`, `MapAsync`, `BindAsync`, `BindAsync<TOut>` |
+| `ResultAsyncExtensions` | `Task<Result>` | `OnSuccessAsync`, `OnFailureAsync`, `BindAsync` |
+| `TypedResultAsyncExtensions` | `Task<Result<T>>` | `OnSuccessAsync`, `OnFailureAsync`, `MapAsync`, `BindAsync`, `BindAsync<TOut>` |
+
+Every member is declared as a C# 14 extension member inside an `extension(...)` block on its target type, so the calling syntax is identical to classic extension methods.
+
+```csharp
+using RA.Utilities.Core.Results;            // Result, Result<T>
+using RA.Utilities.Core.Results.Extensions; // OnSuccess, Map, Bind, Match, ...
+```
+
+:::info[Namespace change in 10.0.1]
+These extension methods lived in the `RA.Utilities.Core.Results` namespace up to and including 10.0.0 and moved to `RA.Utilities.Core.Results.Extensions` in 10.0.1 — add the new `using` when upgrading. See the [migration guide](./migration-guides.mdx).
+:::
 
 ## 🎯 Purpose
 
-The `ResultExtensions` class is a static class that adds a powerful set of extension methods to the [`Result`](./Results.md#result-class) and [`Result<T>`](./Results.md#resulttresult-class) types.
-Its primary purpose is to enable a fluent, functional programming style often referred to as **Railway-Oriented Programming**.
+The four classes add a powerful set of extension methods to the [`Result`](./Results.md#result-class) and [`Result<T>`](./Results.md#resulttresult-class) types.
+Their primary purpose is to enable a fluent, functional programming style often referred to as **Railway-Oriented Programming**.
 
 Imagine your code has two parallel tracks: a "success track" and a "failure track."
 
@@ -26,7 +45,7 @@ The key methods that enable this are:
 * **`OnSuccess`/ `OnFailure`** : Executes side-effects (like logging) without changing the [`Result`](./Results.md).
 * **`Match`**: Provides a final, explicit way to handle both the success and failure outcomes.
 
-The class also provides `async` versions of these methods (`MapAsync`, `BindAsync`, etc.) to work seamlessly with asynchronous code.
+The classes also provide `async` versions of these methods (`MapAsync`, `BindAsync`, etc.) to work seamlessly with asynchronous code — see [Asynchronous Operations](#asynchronous-operations).
 
 ---
 
@@ -71,9 +90,13 @@ Imagine a workflow:
 ```csharp showLineNumbers
 public Result<User> GetSubscribedUser(int userId)
 {
+    // highlight-start
     return ValidateId(userId) // Returns Result
-        .Bind(() => _userRepository.FindById(userId)) // Returns Result<User>
-        .Bind(user => CheckSubscription(user)); // Returns Result<User>
+        .Match(
+            success: () => _userRepository.FindById(userId) // Returns Result<User>
+                .Bind(user => CheckSubscription(user)), // Returns Result<User>
+            failure: exception => Result.Failure<User>(exception)); // Returns Result<User>
+    // highlight-end
 }
 
 // Helper methods for the example
@@ -88,8 +111,16 @@ private Result<User> CheckSubscription(User user)
 }
 ```
 
-In the example above, if `ValidateId` fails, neither `FindById` nor `CheckSubscription` will be executed.
-The `BadRequestException` from `ValidateId` will be returned immediately.
+In the example above, if `ValidateId` fails, neither `FindById` nor `CheckSubscription` is executed — `Match` forwards the failure on the typed track.
+When every step carries the same value type, the typed `Result<T>.Bind` / `Bind<TOut>` overloads can be chained directly instead:
+
+```csharp showLineNumbers
+return _userRepository.FindById(userId)     // Returns Result<User>
+    .Bind(user => CheckSubscription(user)); // Returns Result<User>
+```
+
+The untyped `Result.Bind` returns a plain `Result`: a value carried by a previous `Result<T>` step is not visible to later steps of an untyped chain.
+Use it for steps that don't produce a value, or bridge back into the typed track with `Match` as in the first example.
 
 ### `OnSuccess` & `OnFailure` - Performing Side-Effects
 
@@ -112,7 +143,7 @@ public Result<User> FindAndLogUser(int userId)
 
 ### `Match` - Handling Both Outcomes
 
-The `Match` extension method is a terminal operation that forces you to explicitly handle both the success and failure cases. It's the primary way to "exit" the `Result` chain and produce a final value (like an `IResult` in an API).
+The `Match` method is a terminal operation that forces you to explicitly handle both the success and failure cases. It's the primary way to "exit" the `Result` chain and produce a final value (like an `IResult` in an API). On `Result<T>` it is an instance method declared on the type itself, while the untyped `Result` gets its `Match` overloads (value-returning and action-only) from `ResultExtensions`.
 
 #### Example
 
@@ -134,7 +165,7 @@ app.MapGet("/users/{id}", (int id) =>
 
 ## Asynchronous Operations
 
-The `ResultExtensions` class provides `async` versions for all the key chaining methods to support asynchronous workflows. These methods work on `Task<Result>` and `Task<Result<T>>`.
+The `async` members live in `ResultAsyncExtensions` (for `Task<Result>`) and `TypedResultAsyncExtensions` (for `Task<Result<T>>`), so they can be chained directly on results that are still being produced — without awaiting first. `MapAsync` and `BindAsync` are also available on a ready `Result<T>` (and `BindAsync` on `Result`) when only the next step is asynchronous.
 
 - `MapAsync`
 - `BindAsync`
@@ -150,15 +181,22 @@ public async Task<Result<string>> GetUserEmailAsync(int userId)
     Task<Result<User>> userResultTask = _userRepository.FindByIdAsync(userId);
 
     // Use await and MapAsync to transform the result when it's ready.
-    return await userResultTask.MapAsync(user => user.Email);
+    // highlight-next-line
+    return await userResultTask.MapAsync(async user => user.Email);
 }
 
 public async Task<Result> ProcessUserAsync(int userId)
 {
-    // Chain multiple async operations together
-    return await ValidateIdAsync(userId) // Returns Task<Result>
-        .BindAsync(() => FindUserAsync(userId)) // Returns Task<Result<User>>
+    Result validation = await ValidateIdAsync(userId); // Returns Task<Result>
+    if (validation.IsFailure)
+    {
+        return validation;
+    }
+
+    // highlight-start
+    return await FindUserAsync(userId) // Returns Task<Result<User>>
         .BindAsync(user => SendWelcomeEmailAsync(user)); // Returns Task<Result>
+    // highlight-end
 }
 ```
 

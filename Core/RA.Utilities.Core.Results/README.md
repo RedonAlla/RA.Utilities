@@ -46,14 +46,16 @@ The `Match` method ensures that both success and failure cases are handled:
 var result = FindUser(123);
 
 return result.Match(
-    onSuccess: user => Ok(user),
-    onFailure: exception => NotFound(exception.Message)
+    success: user => Ok(user),
+    failure: exception => NotFound(exception.Message)
 );
 ```
 
 ### Railway-Oriented Programming Extensions
 
 Chain multiple fallible operations together using a fluent, readable API. The chain short-circuits on the first failure, passing the error down the line.
+
+The extension methods live in the `RA.Utilities.Core.Results.Extensions` namespace — add `using RA.Utilities.Core.Results.Extensions;` (alongside `using RA.Utilities.Core.Results;`) to use them.
 
 *   **`Map()`**: Transforms the value inside a successful `Result<T>`.
 *   **`Bind()`**: Chains another function that returns a `Result`.
