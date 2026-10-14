@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Xunit;
 using RA.Utilities.Core.Results;
 using RA.Utilities.Tests.Utilities;
+using RA.Utilities.Core.Results.Extensions;
 
 namespace RA.Utilities.Core.Tests.Results;
 

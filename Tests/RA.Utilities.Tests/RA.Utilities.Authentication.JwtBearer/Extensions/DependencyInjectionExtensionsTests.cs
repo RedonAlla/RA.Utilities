@@ -14,7 +14,7 @@ using RA.Utilities.Authentication.JwtBearer.Extensions;
 namespace RA.Utilities.Tests.RA.Utilities.Authentication.JwtBearer.Extensions;
 
 /// <summary>
-/// Contains unit tests for the <see cref="DependencyInjectionExtensions"/> class.
+/// Contains unit tests for the <see cref="AuthenticationServiceExtensions"/> class.
 /// </summary>
 public class DependencyInjectionExtensionsTests
 {

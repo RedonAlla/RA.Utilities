@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
 using RA.Utilities.Core.Results;
+using RA.Utilities.Core.Results.Extensions;
 
 namespace RA.Utilities.Tests.RA.Utilities.Core.Results;
 
