@@ -58,3 +58,5 @@ if (User.HasScope("api.read"))
 
 These extensions are used by the `UserContext` service (the internal implementation of `IUserContext`) to build its higher-level API,
 but are also available for use directly on any `ClaimsPrincipal`.
+
+> **v10.0.3 change**: the extensions are now declared as C# 14 extension members on `ClaimsPrincipal`. Names, signatures, and call-site syntax are unchanged.

@@ -6,7 +6,7 @@
 [![Documentation](https://img.shields.io/badge/Documentation-read-brightgreen.svg?logo=readthedocs&logoColor=fff)](https://redonalla.github.io/RA.Utilities/nuget-packages/auth/Authorization/)
 [![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
 
-`RA.Utilities.Authorization` provides a strongly-typed, injectable `IUserContext` service that wraps `HttpContext.User` so you never hand-parse claims, role-check with magic strings, or inject `IHttpContextAccessor` into your business logic. One line in `Program.cs` and you have typed access to user identity everywhere.
+`RA.Utilities.Authorization` provides a strongly-typed, injectable `IUserContext` service that wraps `HttpContext.User` so you never hand-parse claims, role-check with magic strings, or inject `IHttpContextAccessor` into your business logic. Register it in `Program.cs` and you have typed access to user identity everywhere.
 
 ## Getting started
 
@@ -30,7 +30,7 @@ This package works on top of an existing authentication setup. It expects that t
 
 ### 1. Register the Service
 
-In your `Program.cs`, call `AddUserContext()` to register `IUserContext` and its required `IHttpContextAccessor`:
+In your `Program.cs`, register `IHttpContextAccessor` (required by the `IUserContext` implementation) and call `AddUserContext()` to register `IUserContext` as scoped:
 
 ```csharp
 using RA.Utilities.Authorization.Extensions;
@@ -40,6 +40,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Assumes you have authentication configured, e.g., using RA.Utilities.Authentication.JwtBearer
 // builder.Services.AddJwtBearerAuthentication(builder.Configuration);
 
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddUserContext();
 ```
 

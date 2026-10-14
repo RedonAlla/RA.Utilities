@@ -20,7 +20,7 @@ import LogoSvg from '../../../../Assets/Images/authorization.svg';
 
 `RA.Utilities.Authorization` provides a strongly-typed, injectable `IUserContext` service that wraps `HttpContext.User` so you never hand-parse claims,
 role-check with magic strings, or inject `IHttpContextAccessor` into your business logic.
-One line in `Program.cs` and you have typed access to user identity everywhere.
+A couple of registrations in `Program.cs` and you have typed access to user identity everywhere.
 
 ## 🎯 Purpose
 
@@ -30,6 +30,7 @@ The built-in approach — injecting `IHttpContextAccessor` and manually navigati
 This package replaces all of that with a single injectable service:
 
 ```csharp
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddUserContext();
 ```
 
@@ -50,7 +51,7 @@ Just inject `IUserContext`.
 
 ### ✨ Key Features
 
-- **One-call registration** — `AddUserContext()` registers `IUserContext` as scoped and adds `IHttpContextAccessor`
+- **One-call registration** — `AddUserContext()` registers `IUserContext` as scoped (pair it with `AddHttpContextAccessor()` — see below)
 - **Typed user ID** — `Guid UserId` (parsed from NameIdentifier) and `string? Id` (raw)
 - **Common claim properties** — `Name`, `Email`, `IsAuthenticated`, `IsInRole(string)`
 - **Claim helpers** — `GetClaimValue(string)` and `GetClaimValues(string)` for custom claims
@@ -83,7 +84,7 @@ Install-Package RA.Utilities.Authorization
 **PackageReference (csproj)**
 
 ```xml
-<PackageReference Include="RA.Utilities.Authorization" Version="10.0.2" />
+<PackageReference Include="RA.Utilities.Authorization" Version="10.0.3" />
 ```
 
 ### Hello World
@@ -94,8 +95,11 @@ using RA.Utilities.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// highlight-next-line
+// highlight-start
+// IHttpContextAccessor is not registered by default in ASP.NET Core
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddUserContext();
+// highlight-end
 
 var app = builder.Build();
 
@@ -111,6 +115,10 @@ app.MapGet("/me", (IUserContext user) => new
 
 app.Run();
 ```
+
+:::info v10.0.3
+`AddUserContext()` registers only `IUserContext`. As of v10.0.3 it no longer registers `IHttpContextAccessor` as a side effect — both calls above are required.
+:::
 
 ---
 
@@ -140,7 +148,7 @@ _user.IsInRole(...)   → bool
 _user.HasClaim(...)   → bool           (HasClaim, HasScope)
 ```
 
-`UserContext` is registered as **scoped** — its lifetime aligns with the HTTP request, and `IHttpContextAccessor` (registered as a singleton behind `AsyncLocal`) provides the per-request `HttpContext`.
+`UserContext` is registered as **scoped** — its lifetime aligns with the HTTP request. Its `IHttpContextAccessor` dependency is a singleton backed by `AsyncLocal`, which resolves to the current request's `HttpContext` — register it yourself with `builder.Services.AddHttpContextAccessor()`, since `AddUserContext()` does not do this for you.
 
 ### Extension methods vs IUserContext
 
@@ -245,7 +253,7 @@ public static class AuthorizationMiddleware
         var user = context.User;
 
         // highlight-start
-        if (!user.IsAuthenticated())
+        if (user.Identity?.IsAuthenticated != true)
             return next(context);
 
         Guid userId = user.GetUserId();
@@ -286,7 +294,7 @@ Assert.True(user.IsInRole("Admin"));
 
 ## ⚙️ Configuration
 
-This package has **no configuration options**. There is no `appsettings.json` section, no options class, and no additional setup beyond calling `AddUserContext()`.
+This package has **no configuration options**. There is no `appsettings.json` section, no options class, and no additional setup beyond `AddHttpContextAccessor()` and `AddUserContext()`.
 The service reads directly from `IHttpContextAccessor.HttpContext.User` at injection time.
 
 ---
@@ -303,7 +311,7 @@ The service reads directly from `IHttpContextAccessor.HttpContext.User` at injec
 
 | Method | Type | Purpose |
 |---|---|---|
-| `AddUserContext()` | `IServiceCollection` | Registers `IUserContext` and `IHttpContextAccessor` |
+| `AddUserContext()` | `IServiceCollection` | Registers `IUserContext` as scoped (implemented by `UserContext`) — does not register `IHttpContextAccessor` |
 | `GetUserId()` | `ClaimsPrincipal?` | Parses NameIdentifier claim into `Guid` |
 | `HasClaim(type, value)` | `ClaimsPrincipal?` | Checks for a claim with the given type and value |
 | `HasScope(value)` | `ClaimsPrincipal?` | Checks for an OIDC scope (space-separated or individual) |

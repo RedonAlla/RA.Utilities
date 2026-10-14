@@ -7,6 +7,23 @@ sidebar_position: 99
 
 ## Common Issues
 
+### After upgrading to v10.0.3, resolving `IUserContext` throws `Unable to resolve service for type 'Microsoft.AspNetCore.Http.IHttpContextAccessor'`
+
+**Cause**: `AddUserContext()` no longer registers `IHttpContextAccessor` as a side effect (it did up to v10.0.2), but the `UserContext` implementation requires it to reach the current request's `ClaimsPrincipal`.
+
+**Fix**: Register it explicitly in `Program.cs`:
+
+```csharp
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddUserContext();
+```
+
+### `No service for type 'RA.Utilities.Authorization.IUserContext' has been registered`
+
+**Cause**: This error comes from v10.0.2, where `AddUserContext()` registered only the internal `UserContext` class without mapping `IUserContext` to it.
+
+**Fix**: Upgrade to v10.0.3, where `AddUserContext()` registers the interface directly.
+
 ### `InvalidOperationException: User id is unavailable`
 
 **Cause**: `IUserContext.UserId` or `ClaimsPrincipal.GetUserId()` is called but the user is not authenticated,

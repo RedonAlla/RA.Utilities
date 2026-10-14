@@ -7,24 +7,26 @@ sidebar_position: 3
 Namespace: RA.Utilities.Authorization.Extensions
 ```
 
-The `DependencyInjectionExtensions` class provides a convenient extension method to register `IUserContext` and its dependencies.
+The `DependencyInjectionExtensions` class provides a convenient extension method to register the `IUserContext` service.
 
 ### 🎯 Purpose
 
-Instead of manually registering `IUserContext` and `IHttpContextAccessor`, a single call to `AddUserContext()` handles all necessary registrations.
-This reduces boilerplate, encapsulates implementation details, and promotes best practices.
+A single call to `AddUserContext()` registers `IUserContext` as scoped, backed by the internal `UserContext` implementation.
+The implementation reads the current request's `ClaimsPrincipal` through `IHttpContextAccessor`, which this method does **not** register — call `builder.Services.AddHttpContextAccessor()` yourself.
 
 ## 🧩 Available Extensions
 
 ### AddUserContext()
 
-Registers `IUserContext` as scoped and adds `IHttpContextAccessor` (required to access the current request's user claims).
+Registers `IUserContext` as scoped (implemented by the internal `UserContext` class).
 
 > **v10.0.2 change**: this method replaces `AddAppUser()` from earlier versions.
+>
+> **v10.0.3 change**: registers the `IUserContext` interface (`IUserContext` → `UserContext`). In v10.0.2 only the internal concrete `UserContext` class was registered, so injecting `IUserContext` failed. It also no longer calls `AddHttpContextAccessor()` — register `IHttpContextAccessor` explicitly. See the [migration guide](../migration-guides.mdx).
 
 #### Usage
 
-Call `AddUserContext()` in your `Program.cs`:
+Register `IHttpContextAccessor` and `AddUserContext()` in your `Program.cs`:
 
 ```csharp showLineNumbers
 // Program.cs
@@ -32,8 +34,10 @@ using RA.Utilities.Authorization.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// highlight-next-line
+// highlight-start
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddUserContext();
+// highlight-end
 
 // ... other service registrations
 ```

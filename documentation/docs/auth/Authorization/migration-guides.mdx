@@ -4,6 +4,55 @@ title: Migration Guides
 
 # Migration Guides
 
+## v10.0.2 → v10.0.3
+
+### Breaking Change: `AddUserContext()` no longer registers `IHttpContextAccessor`
+
+`AddUserContext()` now registers the `IUserContext` interface (backed by the internal `UserContext` class) and no longer registers `IHttpContextAccessor` as a side effect.
+Register `IHttpContextAccessor` explicitly with `builder.Services.AddHttpContextAccessor()`.
+
+### What changed
+
+| v10.0.2 | v10.0.3 |
+|---|---|
+| `AddScoped<UserContext>()` — only the internal concrete class was registered, so injecting `IUserContext` failed with `InvalidOperationException: No service for type 'RA.Utilities.Authorization.IUserContext' has been registered.` | `AddScoped<IUserContext, UserContext>()` — `IUserContext` resolves |
+| Also called `AddHttpContextAccessor()` | Does not register `IHttpContextAccessor` — register it yourself |
+
+### Why this change?
+
+The `UserContext` implementation reads the current request's `ClaimsPrincipal` through `IHttpContextAccessor`. On v10.0.2 the service collection contained only the internal `UserContext` class, so the documented usage — inject `IUserContext` — failed at runtime. v10.0.3 provides the interface mapping and keeps the package's registrations limited to the service it owns, leaving `IHttpContextAccessor` registration to the application.
+
+### Migration Steps
+
+#### 1. Register `IHttpContextAccessor`
+
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+
+// ✅ v10.0.3 — required by the IUserContext implementation
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddUserContext();
+```
+
+If your application already registers `IHttpContextAccessor` (for example, for logging enrichment), no action is needed — the additional call is harmless.
+
+#### 2. Injecting `IUserContext` now works
+
+On v10.0.2, injecting `IUserContext` failed because only the internal `UserContext` class was registered.
+On v10.0.3, `AddUserContext()` maps `IUserContext` → `UserContext`, so injection sites keep working with no changes.
+
+#### 3. Extension classes refactored to C# 14 extension members (no action)
+
+`ClaimsPrincipalExtensions` and `DependencyInjectionExtensions` were re-implemented with C# 14 extension members.
+Class names, namespaces, method names, and signatures are unchanged — call sites need no changes.
+
+### Verify the upgrade
+
+Run an endpoint that injects `IUserContext` (e.g., the `/me` sample from the [package docs](./index.mdx)). If the app fails with `Unable to resolve service for type 'Microsoft.AspNetCore.Http.IHttpContextAccessor'`, step 1 was missed.
+
+---
+
 ## v10.0.1 → v10.0.2
 
 ### Breaking Change: `AppUser` replaced by `IUserContext`

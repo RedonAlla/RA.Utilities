@@ -3,6 +3,30 @@ title: RA.Utilities.Authorization
 authors: [RedonAlla]
 ---
 
+## Version 10.0.3
+![Date Badge](https://img.shields.io/badge/Publish-14%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.0.3-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Authorization/10.0.3)
+
+`AddUserContext()` now registers the `IUserContext` interface and no longer registers `IHttpContextAccessor` as a side effect — register `IHttpContextAccessor` explicitly. The extension classes are refactored to C# 14 extension members.
+
+<!-- truncate -->
+
+### ⚠️ Breaking Changes
+
+* **`AddUserContext()` no longer registers `IHttpContextAccessor`**: the `UserContext` implementation requires it, but the registration is now left to the application. **Migration**:
+
+```csharp
++ builder.Services.AddHttpContextAccessor();
+  builder.Services.AddUserContext();
+```
+
+### 🔧 Fixes & Improvements
+
+* **Fixed `IUserContext` resolution**: `AddUserContext()` now registers `AddScoped<IUserContext, UserContext>()`. In v10.0.2 only the internal `UserContext` class was registered, so injecting `IUserContext` failed with `InvalidOperationException: No service for type 'RA.Utilities.Authorization.IUserContext' has been registered.`
+* **C# 14 extension members**: `ClaimsPrincipalExtensions` and `DependencyInjectionExtensions` now declare their methods inside `extension(...)` blocks. Class names, namespaces, method names, and signatures are unchanged — no call-site changes.
+
+---
+
 ## Version 10.0.2
 ![Date Badge](https://img.shields.io/badge/Publish-29%20September%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.2-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Authorization/10.0.2)

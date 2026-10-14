@@ -12,6 +12,8 @@ It is implemented internally by the `UserContext` class, which wraps the user's 
 
 > **v10.0.2 change**: `IUserContext` replaces the concrete `AppUser` class from earlier versions.
 Register it with `AddUserContext()` and inject `IUserContext` instead of `AppUser`. See the [migration guide](./migration-guides.mdx).
+>
+> **v10.0.3 change**: `AddUserContext()` now registers this interface directly and no longer registers `IHttpContextAccessor` as a side effect — call `builder.Services.AddHttpContextAccessor()` yourself.
 
 ### 🎯 Purpose
 
@@ -55,7 +57,7 @@ public interface IUserContext
 
 #### Step 1: Register the Service
 
-In your `Program.cs`, call `AddUserContext()` to register `IUserContext` (as scoped) along with its required `IHttpContextAccessor`.
+In your `Program.cs`, register `IHttpContextAccessor` (required by the implementation) and call `AddUserContext()` to register `IUserContext` as scoped.
 
 ```csharp showLineNumbers
 // Program.cs
@@ -63,8 +65,10 @@ using RA.Utilities.Authorization.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// highlight-next-line
+// highlight-start
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddUserContext();
+// highlight-end
 ```
 
 #### Step 2: Inject and Use `IUserContext`
