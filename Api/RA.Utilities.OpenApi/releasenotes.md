@@ -1,5 +1,39 @@
 # Release Notes for RA.Utilities.OpenApi
 
+## Version 10.1.1
+![Date Badge](https://img.shields.io/badge/Publish-14%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.1.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.OpenApi/10.1.1)
+
+### ⚠️ Breaking Change
+
+* **`DependencyInjectionExtensions` renamed to `OpenApiOptionsExtensions`**: the static class holding all registration extension methods was renamed, and its methods are now declared as C# 14 extension members on `OpenApiOptions`. The namespace (`RA.Utilities.OpenApi.Extensions`), method names, signatures, and extension-method call sites are unchanged — only class-name references break (`typeof(DependencyInjectionExtensions)`, static calls, reflection).
+
+### ✨ New Features
+
+* **`DocumentInfoTransformer` now populates `Summary`**: `OpenApiInfoSettings.Summary` is applied to `document.Info.Summary`. Previously the setting was ignored and the document summary stayed unset.
+
+### ⚠️ Known Issue
+
+* `AddHealthChecksDocumentTransformer(IDictionary<string, string> tags)` still registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and the `tags` argument is ignored. Use `AddDefaultsDocumentTransformer()` to document the health check endpoints until this is corrected.
+
+## Version 10.1.0
+![Date Badge](https://img.shields.io/badge/Publish-11%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.1.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.OpenApi/10.1.0)
+
+### ✨ New Features
+
+* **Added `HealthChecksDocumentTransformer`**: Documents the health check endpoints in the OpenAPI document. Endpoints mapped by `MapHealthChecks` carry no API metadata, so the OpenAPI generator never includes them; this transformer adds them explicitly.
+    * Adds `GET /health` — the aggregate health status of the service together with the result of each registered health check, returned as `application/json` with `200` and `503` responses.
+    * Adds `GET /alive` — the liveness state as plain text (`Healthy`, `Degraded` or `Unhealthy`), based on the health checks tagged with `live`, returned as `text/plain` with `200` and `503` responses.
+    * Adds the `HealthCheckReport` and `HealthCheckEntry` component schemas and a `Health` tag with a description.
+    * Registration is idempotent — paths, schemas and tags already present in the document are left untouched.
+* **`AddDefaultsDocumentTransformer()` now includes the health checks transformer**, registered after `BearerSecurityDocumentTransformer` so that no security scheme is applied to the health check operations. They must stay reachable without authentication.
+* **Added the `AddHealthChecksDocumentTransformer(IDictionary<string, string> tags)` extension method** for registering the transformer standalone.
+
+### ⚠️ Known Issue
+
+`AddHealthChecksDocumentTransformer(tags)` currently registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and the `tags` argument is ignored. Use `AddDefaultsDocumentTransformer()` to document the health check endpoints until this is corrected.
+
 ## Version 10.0.11
 ![Date Badge](https://img.shields.io/badge/Publish-07%20August%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.11-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.OpenApi/10.0.11)

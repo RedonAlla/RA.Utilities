@@ -26,9 +26,13 @@ In essence, it's a simple but effective tool for making your API documentation m
 
 ### ⚙️ How It Works
 
-1.  **Reads from Configuration**: It uses the [`OpenApiInfoSettings`](../Configuration/OpenApiInfoSettings.md) class to bind to a configuration section (by default, `OpenApi:Info`).
-2.  **Populates `OpenApiInfo`**: It sets the `Title`, `Version`, `Description`, `Contact`, and `License` fields in the generated OpenAPI document.
+1.  **Reads from Configuration**: It uses the [`OpenApiInfoSettings`](../Configuration/OpenApiInfoSettings.md) class to bind to a configuration section (by default, `OpenApiInfoSettings`).
+2.  **Populates `OpenApiInfo`**: It sets the `Title`, `Version`, `Description`, `Summary`, `TermsOfService`, `Contact`, and `License` fields in the generated OpenAPI document.
 3.  **Safe Updates**: It only updates fields if a corresponding value is found in the configuration, so it won't overwrite any values you may have set programmatically elsewhere.
+
+:::info[v10.1.1]
+`DocumentInfoTransformer` started populating `document.Info.Summary` from `OpenApiInfoSettings.Summary` in v10.1.1. Earlier versions ignored the `Summary` setting.
+:::
 
 ### 🚀 Usage
 
@@ -41,15 +45,14 @@ Define the information you want to display in your `appsettings.json`.
 ```json showLineNumbers
 // appsettings.json
 {
-  "OpenApi": {
-    "Info": {
-      "Title": "My Awesome API",
-      "Version": "v1.0",
-      "Description": "An API to demonstrate OpenAPI transformers.",
-      "Contact": {
-        "Name": "Support Team",
-        "Email": "support@example.com"
-      }
+  "OpenApiInfoSettings": {
+    "Title": "My Awesome API",
+    "Version": "v1.0",
+    "Summary": "A brief summary shown next to the title.",
+    "Description": "An API to demonstrate OpenAPI transformers.",
+    "Contact": {
+      "Name": "Support Team",
+      "Email": "support@example.com"
     }
   }
 }
@@ -74,8 +77,10 @@ builder.Services.Configure<OpenApiInfoSettings>(
 );
 
 // Add the OpenApi services and register the default transformers
-builder.Services.AddOpenApi()
-    .AddDefaultsDocumentTransformer();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDefaultsDocumentTransformer();
+});
 // highlight-end
 
 var app = builder.Build();

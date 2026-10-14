@@ -18,7 +18,7 @@ When an API endpoint can return different concrete types that share a common bas
 The `PolymorphismDocumentTransformer` solves this by explicitly defining the polymorphic relationship in the OpenAPI schema.
 
 ### 📋 Parameters 
-The `PolymorphismDocumentTransformer` is configured through its constructor.
+The `PolymorphismDocumentTransformer` is configured through the `AddPolymorphismDocumentTransformer<T>()` extension method. Under the hood these map to the transformer's constructor parameters.
 
 | Parameter | Type | Required | Description |
 | --------- | ---- | -------- |------------ |
@@ -54,7 +54,7 @@ The final result in the OpenAPI JSON looks something like this:
 
 ### 🚀 Usage
 
-Because the `PolymorphismDocumentTransformer` needs to be configured with the specific base and derived types you're using, it must be instantiated manually and registered in `Program.cs`.
+Because the `PolymorphismDocumentTransformer` needs to be configured with the specific base and derived types you're using, it must be registered explicitly (it is not part of `AddDefaultsDocumentTransformer()`).
 
 #### Register the Transformer in `Program.cs`
 
@@ -63,26 +63,23 @@ In this example, let's assume you have a base `Error` class and two derived clas
 ```csharp showLineNumbers
 // Program.cs
 using RA.Utilities.Api.Results;
-using RA.Utilities.OpenApi.DocumentTransformers;
 using RA.Utilities.OpenApi.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddEndpointsApiExplorer();
-
-builder.Services.AddOpenApi();
-
 // highlight-start
-// Instantiate and register the transformer
-builder.Services.AddOpenApiDocumentTransformer<ErrorResponse>(
-    typesToInclude: new()
-    {
-        // Maps the discriminator value to the derived type
-        { "NotFound", typeof(NotFoundResponse) },
-        { "Conflict", typeof(ConflictResponse) },
-    },
-    discriminatorPropertyName: "responseType" // The property used to differentiate types
-);
+builder.Services.AddOpenApi(options =>
+{
+    options.AddPolymorphismDocumentTransformer<ErrorResponse>(
+        typesToInclude: new()
+        {
+            // Maps the discriminator value to the derived type
+            { "NotFound", typeof(NotFoundResponse) },
+            { "Conflict", typeof(ConflictResponse) },
+        },
+        discriminatorPropertyName: "responseType" // The property used to differentiate types
+    );
+});
 // highlight-end
 
 var app = builder.Build();
@@ -90,4 +87,6 @@ var app = builder.Build();
 // ...
 ```
 
-With this transformer enabled, your Swagger UI and generated clients will correctly understand that an endpoint returning an `ErrorResponse` can actually be a `NotFoundResponse` or a `ConflictResponse`, and they will know how to deserialize it correctly based on the `responseType` property.
+With this transformer enabled, your API reference UI and generated clients will correctly understand that an endpoint returning an `ErrorResponse` can actually be a `NotFoundResponse` or a `ConflictResponse`, and they will know how to deserialize it correctly based on the `responseType` property.
+
+The base schema name is derived from the generic parameter: `typeof(T).Name` (e.g. `ErrorResponse`).

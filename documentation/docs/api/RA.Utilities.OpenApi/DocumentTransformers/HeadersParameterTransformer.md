@@ -79,8 +79,10 @@ builder.Services.Configure<HeadersParameterSettings>(
 );
 
 // Add the OpenApi services and register the default transformers
-builder.Services.AddOpenApi()
-    .AddDefaultsDocumentTransformer();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDefaultsDocumentTransformer();
+});
 // highlight-end
 
 var app = builder.Build();

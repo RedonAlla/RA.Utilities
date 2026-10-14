@@ -3,7 +3,7 @@ Namespace: RA.Utilities.OpenApi.Settings
 ```
 
 Its primary purpose is to allow developers to define a list of common HTTP headers in their `appsettings.json` file.
-The [`HeadersParameterTransformer`](../DocumentTransformers//HeadersParameterTransformer.md) then reads these settings and automatically adds the specified headers to every API operation in the generated OpenAPI (Swagger) document.
+The [`HeadersParameterTransformer`](../DocumentTransformers/HeadersParameterTransformer.md) then reads these settings and automatically adds the specified headers to every API operation in the generated OpenAPI (Swagger) document.
 
 ## ✨ This approach has several key benefits:
 
@@ -34,8 +34,8 @@ Represents a single header to be added to the OpenAPI specification.
 | **Description** | `string`  | `""`         | A description of the header's purpose.                                  |
 | **Required**    | `bool`    | `true`       | Specifies if the header is required.                                    |
 | **Type**        | `JsonSchemaType`| `String`| The schema type for the header value (e.g., "String", "Integer"). |
-| **Format**      | `string`  | `"uuid"`     | The format of the header value (e.g., "uuid", "date-time").             |
-| **Value**       | `object`  | `null`       | An example value for the header.                                        |
+| **Format**      | `string?` | `null`       | The format of the header value (e.g., "uuid", "date-time"). The default header definitions use `"uuid"`. |
+| **Value**       | `object?` | `null`       | An example value for the header.                                        |
 
 
 ## Example `appsettings.json`

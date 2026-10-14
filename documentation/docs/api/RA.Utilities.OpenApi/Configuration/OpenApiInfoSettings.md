@@ -19,7 +19,9 @@ Here's a breakdown of its key benefits:
 
 | Property           | Type                               | Description                                                      |
 | ------------------ | ---------------------------------- | ---------------------------------------------------------------- |
+| **UiReferenceEndpoint** | `string`                      | The endpoint where the Scalar API reference UI is mapped. Defaults to `"/"`. |
 | **Title**          | `string`                           | The title of the API.                                            |
+| **Summary**        | `string`                           | A short summary of the API. Populated into the document since v10.1.1. |
 | **Version**        | `string`                           | The version of the API.                                          |
 | **Description**    | `string`                           | A short description of the API.                                  |
 | **TermsOfService** | `string` (URI)                     | A URL to the Terms of Service for the API.                       |
@@ -39,6 +41,7 @@ Here's a breakdown of its key benefits:
 | Property | Type           | Description                            |
 | -------- | -------------- | -------------------------------------- |
 | Name     | `string`       | The license name used for the API.     |
+| Identifier | `string`     | An SPDX license expression for the API. The identifier field is mutually exclusive of the url field. |
 | Url      | `string` (URI) | A URL to the license used for the API. |
 
 ### Example `appsettings.json`
@@ -46,21 +49,20 @@ Here's a breakdown of its key benefits:
 ```json showLineNumbers
 {
   "OpenApiInfoSettings": {
-    "Info": {
-      "Title": "My Awesome API",
-      "Version": "v1.0.0",
-      "Summary": "A brief and catchy summary of the API.",
-      "Description": "This is a more detailed description of the API. It can include **Markdown** for rich text formatting, explaining what the API does, its main features, and how to get started.",
-      "TermsOfService": "https://example.com/terms",
-      "Contact": {
-        "Name": "API Support Team",
-        "Url": "https://example.com/support",
-        "Email": "support@example.com"
-      },
-      "License": {
-        "Name": "MIT License",
-        "Url": "https://opensource.org/licenses/MIT"
-      }
+    "UiReferenceEndpoint": "/",
+    "Title": "My Awesome API",
+    "Version": "v1.0.0",
+    "Summary": "A brief and catchy summary of the API.",
+    "Description": "This is a more detailed description of the API. It can include **Markdown** for rich text formatting, explaining what the API does, its main features, and how to get started.",
+    "TermsOfService": "https://example.com/terms",
+    "Contact": {
+      "Name": "API Support Team",
+      "Url": "https://example.com/support",
+      "Email": "support@example.com"
+    },
+    "License": {
+      "Name": "MIT License",
+      "Url": "https://opensource.org/licenses/MIT"
     }
   }
 }

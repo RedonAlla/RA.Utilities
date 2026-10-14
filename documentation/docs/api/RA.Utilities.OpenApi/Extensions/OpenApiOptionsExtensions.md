@@ -1,22 +1,26 @@
 ---
-title: DependencyInjectionExtensions
+title: OpenApiOptionsExtensions
 sidebar_position: 6
 ---
 
-```bash
+```powershell
 Namespace: RA.Utilities.OpenApi.Extensions
 ```
 
-The `DependencyInjectionExtensions` class provides a set of convenient extension methods for `OpenApiOptions` to simplify the registration of the various document transformers and filters included in this package.
+The `OpenApiOptionsExtensions` class provides a set of convenient extension methods for `OpenApiOptions` to simplify the registration of the various document transformers and filters included in this package.
 
 These helpers streamline the setup process in `Program.cs`, making the code cleaner and more readable.
+
+:::info[v10.1.1 rename]
+In v10.1.1 this class was renamed from `DependencyInjectionExtensions` to `OpenApiOptionsExtensions`, and the methods are now declared as C# 14 extension members on `OpenApiOptions`. Extension-method call sites are unchanged (`options.AddDefaultsDocumentTransformer()`, `options.AddTagOperationTransformer(...)`, …) — only code that references the class by name, such as `typeof(DependencyInjectionExtensions)` or a static call, needs updating.
+:::
 
 ### `AddDefaultsDocumentTransformer()`
 
 This is the recommended starting point. It registers a sensible default set of document transformers with a single call.
 
 **What it does:**
-*   **`DocumentInfoTransformer`**: Populates the API's title, version, and description from `appsettings.json`.
+*   **`DocumentInfoTransformer`**: Populates the API's title, version, description, and summary from `appsettings.json`.
 *   **`BearerSecurityDocumentTransformer`**: Automatically adds the "Authorize" button and JWT security scheme if Bearer authentication is detected.
 *   **`HeadersParameterTransformer`**: Adds common request and response headers (like `x-request-id`) to all API operations based on configuration.
 *   **`HealthChecksDocumentTransformer`**: Documents the `GET /health` (JSON health report) and `GET /alive` (plain-text liveness) endpoints and adds the `Health` tag, without applying the Bearer security scheme to them.
@@ -24,8 +28,10 @@ This is the recommended starting point. It registers a sensible default set of d
 #### Usage
 ```csharp
 // In Program.cs
-builder.Services.AddOpenApi()
-    .AddDefaultsDocumentTransformer();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDefaultsDocumentTransformer();
+});
 ```
 
 ---
@@ -70,8 +76,10 @@ This extension registers the [`DefaultResponsesOperationTransformer`](../Operati
 #### Usage
 ```csharp
 // In Program.cs
-builder.Services.AddOpenApi()
-    .AddDefaultResponsesOperationTransformer();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDefaultResponsesOperationTransformer();
+});
 ```
 
 ---
@@ -86,12 +94,14 @@ You provide the base type `T` and a dictionary mapping discriminator values to t
 
 ```csharp
 // In Program.cs
-builder.Services.AddOpenApi()
-    .AddPolymorphismDocumentTransformer<ErrorResponse>(new()
+builder.Services.AddOpenApi(options =>
+{
+    options.AddPolymorphismDocumentTransformer<ErrorResponse>(new()
     {
         { "NotFound", typeof(NotFoundResponse) },
         { "Conflict", typeof(ConflictResponse) },
     });
+});
 ```
 
 ---
@@ -102,7 +112,7 @@ This extension registers the `TagOperationTransformer`, which enriches your Open
 
 **What it does:**
 *   **Centralizes Documentation**: Allows you to define tag descriptions in `Program.cs` or configuration instead of scattering attributes across controllers.
-*   **Enriches UI**: Populates the description field next to the tag name in Swagger UI.
+*   **Enriches UI**: Populates the description field next to the tag name in the API reference UI.
 
 #### Usage
 ```csharp
@@ -123,8 +133,8 @@ builder.Services.AddOpenApi(options =>
 
 This extension is intended to register the [`HealthChecksDocumentTransformer`](../DocumentTransformers/HealthChecksDocumentTransformer.md), which documents the health check endpoints in the OpenAPI document.
 
-:::caution[v10.1.0 implementation]
-As implemented in v10.1.0, this method registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and the `tags` argument is not used. Use [`AddDefaultsDocumentTransformer()`](#adddefaultsdocumenttransformer) to document health check endpoints until this is corrected.
+:::caution[v10.1.0, still present in v10.1.1]
+As implemented, this method registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and the `tags` argument is not used. Use [`AddDefaultsDocumentTransformer()`](#adddefaultsdocumenttransformer) to document health check endpoints until this is corrected.
 :::
 
 #### Usage
@@ -153,8 +163,10 @@ For more granular control, you can also register each of the default transformer
 #### Usage
 ```csharp
 // In Program.cs
-builder.Services.AddOpenApi()
-    .AddDocumentInfoTransformer()
-    .AddBearerSecurityDocumentTransformer();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentInfoTransformer();
+    options.AddBearerSecurityDocumentTransformer();
     // ... and so on
+});
 ```

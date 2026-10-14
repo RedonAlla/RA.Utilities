@@ -30,7 +30,7 @@ If you have a `ProductsController`, Swagger usually generates a "Products" tag.
 
 ## 🚀 Usage
 
-You can register the `TagOperationTransformer` in your `Program.cs` file using the [`AddTagOperationTransformer`](../Extensions/DependencyInjectionExtensions.md#addtagoperationtransformeridictionarystring-string-tags) extension method.
+You can register the `TagOperationTransformer` in your `Program.cs` file using the [`AddTagOperationTransformer`](../Extensions/OpenApiOptionsExtensions.md#addtagoperationtransformeridictionarystring-string-tags) extension method.
 
 ```csharp showLineNumbers
 // Program.cs

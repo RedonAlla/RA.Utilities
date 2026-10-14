@@ -44,24 +44,19 @@ var builder = WebApplication.CreateBuilder(args);
 // Assumes JWT Bearer authentication is already configured, e.g.:
 // builder.Services.AddAuthentication().AddJwtBearer();
 
-builder.Services.AddEndpointsApiExplorer();
-
 // highlight-start
-builder.Services.AddOpenApi()
-    .AddDefaultsDocumentTransformer();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDefaultsDocumentTransformer();
+});
 // highlight-end
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
 app.MapOpenApi();
+// Optional: map an interactive API reference UI (e.g. Scalar) over the document.
 
 // ... your endpoints
 ```
 
-With this setup, the Swagger UI will automatically display an "Authorize" button, allowing developers to authenticate and test protected endpoints.
+With this setup, the API reference UI will automatically display an "Authorize" button, allowing developers to authenticate and test protected endpoints.

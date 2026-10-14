@@ -25,14 +25,16 @@ To use the transformer, register it as an [`IOpenApiOperationTransformer`](https
 
 ```csharp showLineNumbers
 // Program.cs
-using RA.Utilities.OpenApi.DocumentTransformers;
+using RA.Utilities.OpenApi.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ... other services
 
 builder.Services.AddOpenApi(options =>
-  options.AddDefaultResponsesOperationTransformer());
+{
+    options.AddDefaultResponsesOperationTransformer();
+});
 
 var app = builder.Build();
 

@@ -50,7 +50,7 @@ The process is straightforward:
 2. It loads the XML documentation file that your project generates during the build process.
 For performance, it caches this file in memory after the first read.
 3. For each member of the enum, it finds the corresponding `<member>` tag in the XML file.
-4. It extracts the text from the `<summary>` tag for that member.
+4. It extracts the text from the `<summary>` tag for that member (and appends the `<remarks>` text when present).
 5. It formats all the enum values and their summaries into a clean Markdown table.
 6. Finally, it appends this table to the enum's main description in the OpenAPI schema.
 

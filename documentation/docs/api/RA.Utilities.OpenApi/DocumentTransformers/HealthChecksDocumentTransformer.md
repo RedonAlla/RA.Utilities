@@ -27,7 +27,7 @@ This transformer documents the readiness endpoint (`/health`) with the JSON repo
 
 ### 🚀 Usage
 
-The transformer is registered automatically when you use the default set of transformers via [`AddDefaultsDocumentTransformer`](../Extensions/DependencyInjectionExtensions.md#adddefaultsdocumenttransformer):
+The transformer is registered automatically when you use the default set of transformers via [`AddDefaultsDocumentTransformer`](../Extensions/OpenApiOptionsExtensions.md#adddefaultsdocumenttransformer):
 
 ```csharp showLineNumbers
 // Program.cs
@@ -37,8 +37,10 @@ using RA.Utilities.OpenApi.Extensions;
 var builder = WebApplication.CreateBuilder(args);
 
 // highlight-start
-builder.Services.AddOpenApi()
-    .AddDefaultsDocumentTransformer();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDefaultsDocumentTransformer();
+});
 // highlight-end
 
 var app = builder.Build();
@@ -56,6 +58,6 @@ app.Run();
 
 With this setup, the generated document contains both health check operations under the `Health` tag, including their response schemas.
 
-:::caution[v10.1.0 standalone extension]
+:::caution[v10.1.0 standalone extension, still present in v10.1.1]
 `AddHealthChecksDocumentTransformer(IDictionary<string, string> tags)` currently registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and the `tags` argument is ignored. Use `AddDefaultsDocumentTransformer()` until this is corrected.
 :::

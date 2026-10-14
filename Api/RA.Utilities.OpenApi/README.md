@@ -24,9 +24,13 @@ The primary goals are to:
   - [`BearerSecurityDocumentTransformer`](#bearersecuritydocumenttransformer)
   - [`HeadersParameterTransformer`](#headersparametertransformer)
   - [`HealthChecksDocumentTransformer`](#healthchecksdocumenttransformer)
+  - [`PolymorphismDocumentTransformer`](#polymorphismdocumenttransformer)
+  - [`TagOperationTransformer`](#tagoperationtransformer)
 - [Operation Transformers](#operation-transformers)
   - [`DefaultResponsesOperationTransformer`](#defaultresponsesoperationtransformer)
 - [Schema Transformers](#schema-transformers)
+  - [`FluentValidationSchemaTransformer`](#fluentvalidationschematransformer)
+  - [`EnumXmlSchemaTransformer`](#enumxmlschematransformer)
 - [Utilities](#utilities)
   - [`OpenApiOperationUtilities`](#openapioperationutilities)
 - [Configuration](#configuration)
@@ -59,8 +63,8 @@ This transformer populates the top-level information of your OpenAPI document (l
 
 **What it does:**
 
-1.  **Reads from Configuration**: It uses `OpenApiInfoSettings` to bind to a configuration section (e.g., `OpenApi:Info`).
-2.  **Populates `OpenApiInfo`**: It sets the `Title`, `Version`, `Description`, `Contact`, and `License` fields in the generated document.
+1.  **Reads from Configuration**: It uses `OpenApiInfoSettings` to bind to a configuration section (e.g., `OpenApiInfoSettings`).
+2.  **Populates `OpenApiInfo`**: It sets the `Title`, `Version`, `Description`, `Summary`, `TermsOfService`, `Contact`, and `License` fields in the generated document (the `Summary` field is populated since v10.1.1).
 3.  **Simplifies Customization**: Allows you to update your API's documentation details without changing any code.
 
 ### `BearerSecurityDocumentTransformer`
@@ -97,7 +101,7 @@ This document transformer adds your service's health check endpoints to the Open
 
 It is registered automatically by `AddDefaultsDocumentTransformer()`.
 
-> ⚠️ **Known issue (v10.1.0)**: The standalone `AddHealthChecksDocumentTransformer(IDictionary<string, string> tags)` extension method currently registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and the `tags` argument is ignored. Use `AddDefaultsDocumentTransformer()` until this is corrected.
+> ⚠️ **Known issue (v10.1.0, still present in v10.1.1)**: The standalone `AddHealthChecksDocumentTransformer(IDictionary<string, string> tags)` extension method currently registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and the `tags` argument is ignored. Use `AddDefaultsDocumentTransformer()` until this is corrected.
 
 ---
 
@@ -117,7 +121,7 @@ It is a more targeted alternative to the `ResponsesDocumentTransformer`.
 2.  **Reduces Annotations**: Eliminates the need to manually add `[ProducesResponseType]` attributes for these common errors on every single endpoint.
 3.  **Operation-Level Granularity**: As an `IOpenApiOperationTransformer`, it integrates seamlessly with ASP.NET Core's native operation-level processing pipeline.
 
-## Schema Filters (as Document Transformers)
+## Polymorphism (as a Document Transformer)
 
 ### `PolymorphismDocumentTransformer`
 
@@ -211,7 +215,9 @@ Used by `DocumentInfoTransformer` to populate the document's `info` object.
 
 | Property           | Type                               | Description                                                      |
 | ------------------ | ---------------------------------- | ---------------------------------------------------------------- |
+| **UiReferenceEndpoint** | `string`                      | The endpoint where the Scalar API reference UI is mapped. Defaults to `"/"`. |
 | **Title**          | `string`                           | The title of the API.                                            |
+| **Summary**        | `string`                           | A short summary of the API. Populated into the document since v10.1.1. |
 | **Version**        | `string`                           | The version of the API.                                          |
 | **Description**    | `string`                           | A short description of the API.                                  |
 | **TermsOfService** | `string` (URI)                     | A URL to the Terms of Service for the API.                       |
@@ -231,6 +237,7 @@ Used by `DocumentInfoTransformer` to populate the document's `info` object.
 | Property | Type           | Description                            |
 | -------- | -------------- | -------------------------------------- |
 | Name     | `string`       | The license name used for the API.     |
+| Identifier | `string`     | An SPDX license expression for the API. The identifier field is mutually exclusive of the url field. |
 | Url      | `string` (URI) | A URL to the license used for the API. |
 
 ### `HeadersParameterSettings`
@@ -254,28 +261,27 @@ Represents a single header to be added to the OpenAPI specification.
 | Description   | `string`  | `""`         | A description of the header's purpose.                                  |
 | Required      | `bool`    | `true`       | Specifies if the header is required.                                    |
 | Type          | `JsonSchemaType`  | `String`   | The schema type for the header value (e.g., "String", "Integer"). |
-| Format        | `string`  | `"uuid"`     | The format of the header value (e.g., "uuid", "date-time").             |
-| Value         | `object`  | `null`       | An example value for the header.                                        |
+| Format        | `string?` | `null`       | The format of the header value (e.g., "uuid", "date-time"). The default header definitions use `"uuid"`. |
+| Value         | `object?` | `null`       | An example value for the header.                                        |
 
 ### Example `appsettings.json`
 
 ```json
 {
   "OpenApiInfoSettings": {
-      "Title": "My Awesome API",
-      "Version": "v1.0.0",
-      "Summary": "A brief and catchy summary of the API.",
-      "Description": "This is a more detailed description of the API. It can include **Markdown** for rich text formatting, explaining what the API does, its main features, and how to get started.",
-      "TermsOfService": "https://example.com/terms",
-      "Contact": {
-        "Name": "API Support Team",
-        "Url": "https://example.com/support",
-        "Email": "support@example.com"
-      },
-      "License": {
-        "Name": "MIT License",
-        "Url": "https://opensource.org/licenses/MIT"
-      }
+    "Title": "My Awesome API",
+    "Version": "v1.0.0",
+    "Summary": "A brief and catchy summary of the API.",
+    "Description": "This is a more detailed description of the API. It can include **Markdown** for rich text formatting, explaining what the API does, its main features, and how to get started.",
+    "TermsOfService": "https://example.com/terms",
+    "Contact": {
+      "Name": "API Support Team",
+      "Url": "https://example.com/support",
+      "Email": "support@example.com"
+    },
+    "License": {
+      "Name": "MIT License",
+      "Url": "https://opensource.org/licenses/MIT"
     }
   },
   "OpenApiHeaders": {
@@ -311,55 +317,45 @@ using RA.Utilities.OpenApi.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddEndpointsApiExplorer();
-
 // 1. (Optional) Configure settings from appsettings.json for the transformers.
 builder.Services.Configure<OpenApiInfoSettings>(builder.Configuration.GetSection(OpenApiInfoSettings.AppSettingsKey));
 builder.Services.Configure<HeadersParameterSettings>(builder.Configuration.GetSection("OpenApiHeaders"));
 
-// 2. Add OpenAPI services with default transformers (DocumentInfo, BearerSecurity, Headers, HealthChecks).
-builder.Services.AddOpenApi()
-    .AddDefaultsDocumentTransformer();
-
-// 3. Register additional transformers individually.
-builder.Services.AddOpenApi(options => options.AddBearerSecurityDocumentTransformer());
-
-// 4. Register operation transformers for more granular control.
-builder.Services.AddOpenApi(options => options.AddDefaultResponsesOperationTransformer());
-
-// 5. Register FluentValidation schema enrichment.
+// 2. Add OpenAPI services and register the transformers.
 builder.Services.AddOpenApi(options =>
 {
+    // Default transformers (DocumentInfo, BearerSecurity, Headers, HealthChecks).
+    options.AddDefaultsDocumentTransformer();
+
+    // 3. Register additional transformers individually.
+    options.AddBearerSecurityDocumentTransformer();
+
+    // 4. Register operation transformers for more granular control.
+    options.AddDefaultResponsesOperationTransformer();
+
+    // 5. Register FluentValidation schema enrichment.
     options.AddFluentValidationRules();
 });
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-// 6. Map the OpenAPI document endpoints.
+// 6. Map the OpenAPI document endpoint (e.g. /openapi/v1.json).
 app.MapOpenApi();
+// Optional: map an interactive API reference UI (e.g. Scalar) over the document.
 
 app.MapGet("/weatherforecast", () => "Hello World!")
-   .WithName("GetWeatherForecast")
-   .WithOpenApi();
+   .WithName("GetWeatherForecast");
 
 app.Run();
 ```
 
-With these transformers enabled, your Swagger UI will show predefined response schemas for common status codes and standardized request headers on all endpoints.
+With these transformers enabled, your API reference UI will show predefined response schemas for common status codes and standardized request headers on all endpoints.
 
 
 ## Utilities
 ### OpenApiOperationUtilities
 The `OpenApiOperationUtilities` class is a static helper that provides methods for programmatically adding examples to requests and responses within an `OpenApiOperation`.
-This is particularly useful when creating custom `IOperationFilter` implementations where you need to add dynamic or complex examples to specific endpoints.
+This is particularly useful when creating custom `IOpenApiOperationTransformer` implementations where you need to add dynamic or complex examples to specific endpoints.
 
 #### Key Functions:
 * **`AddRequestExample(...)`**: Attaches a named example to the request body of an operation for a given media type (defaults to application/json).
@@ -368,21 +364,30 @@ This is particularly useful when creating custom `IOperationFilter` implementati
 * **`AddGeneralErrorResponse(...)`**: A specialized shortcut method that adds a pre-defined example for a 500 Internal Server Error.
 * **`AddResponseExamples(...)`**: Attaches multiple named examples to a specific HTTP status code response.
 
-#### Example Usage in an IOperationFilter
+#### Example Usage in a Custom Operation Transformer
 ```csharp
 // Add a single request example
 OpenApiOperationUtilities.AddRequestExample(operation, "CreateProduct",
-    new { Name = "Widget", Price = 9.99m });
+    new OpenApiExample
+    {
+        Summary = "A new product",
+        Value = JsonSerializer.SerializeToNode(new { Name = "Widget", Price = 9.99m })
+    });
 
 // Add a response example for a specific status code
 OpenApiOperationUtilities.AddResponseExample(operation, StatusCodes.Status200OK,
-    "ProductResponse", new { Id = 1, Name = "Widget", Price = 9.99m });
+    "ProductResponse",
+    new OpenApiExample
+    {
+        Summary = "Product created",
+        Value = JsonSerializer.SerializeToNode(new { Id = 1, Name = "Widget", Price = 9.99m })
+    });
 ```
 
 
 ## Additional Documentation
 
-For more information on how this package fits into the larger RA.Utilities ecosystem, please see the main repository [documentation](https://redonalla.github.io/RA.Utilities/nuget-packages/api/OpenApi/).
+For more information on how this package fits into the larger RA.Utilities ecosystem, please see the main repository [documentation](https://redonalla.github.io/RA.Utilities/nuget-packages/api/RA.Utilities.OpenApi/).
 
 ## Contributing
 

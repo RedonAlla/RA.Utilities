@@ -19,9 +19,17 @@ OpenApiOptions? opts = null;
 opts.AddDefaultsDocumentTransformer(); // throws
 
 // ✅
-builder.Services.AddOpenApi()
-    .AddDefaultsDocumentTransformer();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDefaultsDocumentTransformer();
+});
 ```
+
+### `DependencyInjectionExtensions` not found after upgrading to v10.1.1
+
+**Cause**: In v10.1.1 the class was renamed from `DependencyInjectionExtensions` to `OpenApiOptionsExtensions` (and its methods are now C# 14 extension members).
+
+**Fix**: Replace class-name references — `typeof(DependencyInjectionExtensions)`, static calls, reflection strings — with `OpenApiOptionsExtensions`. Regular extension-method call sites like `options.AddDefaultsDocumentTransformer()` are unaffected.
 
 ### Swagger UI doesn't show the Authorize button
 
@@ -119,13 +127,17 @@ options.AddPolymorphismDocumentTransformer<Animal>(new Dictionary<string, Type>
 
 ### Do I need `AddOpenApi()` before using these transformers?
 
-Yes. The extension methods extend `OpenApiOptions`, which is returned by `AddOpenApi()`:
+Yes — the extension methods extend `OpenApiOptions`, so they must be called from the `AddOpenApi(Action<OpenApiOptions>)` overload:
 
 ```csharp
-builder.Services.AddOpenApi()           // returns OpenApiOptions
-    .AddDefaultsDocumentTransformer()   // extends OpenApiOptions
-    .AddFluentValidationRules();        // extends OpenApiOptions
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDefaultsDocumentTransformer();
+    options.AddFluentValidationRules();
+});
 ```
+
+Note that `AddOpenApi()` itself returns `IServiceCollection`, so `AddOpenApi().AddDefaultsDocumentTransformer()` does not compile.
 
 ### Can I use multiple schema transformers together?
 

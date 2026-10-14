@@ -4,6 +4,36 @@ title: Migration Guides
 
 # Migration Guides
 
+## v10.1.0 → v10.1.1
+
+### Breaking Change: `DependencyInjectionExtensions` renamed to `OpenApiOptionsExtensions`
+
+The static class holding the registration extension methods was renamed from `DependencyInjectionExtensions` to `OpenApiOptionsExtensions`, and the methods are now declared as C# 14 extension members on `OpenApiOptions`.
+
+Extension-method call sites are unaffected — `options.AddDefaultsDocumentTransformer()`, `options.AddFluentValidationRules()`, `options.AddTagOperationTransformer(...)`, and the rest keep working with the same names and signatures. Only code that references the class by name breaks:
+
+```csharp
+// ❌ v10.1.0
+Type extensions = typeof(DependencyInjectionExtensions);
+DependencyInjectionExtensions.AddDefaultsDocumentTransformer(options);
+
+// ✅ v10.1.1
+Type extensions = typeof(OpenApiOptionsExtensions);
+OpenApiOptionsExtensions.AddDefaultsDocumentTransformer(options);
+```
+
+Add `using RA.Utilities.OpenApi.Extensions;` as before — the namespace is unchanged.
+
+### Other Changes (non-breaking)
+
+- **`DocumentInfoTransformer` now populates `Summary`**: `OpenApiInfoSettings.Summary` is applied to `document.Info.Summary`. Previously the `Summary` setting was ignored and the document summary stayed `null`.
+
+### Known issue (unchanged from v10.1.0)
+
+`AddHealthChecksDocumentTransformer(IDictionary<string, string> tags)` still registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and the `tags` argument is ignored. Use `AddDefaultsDocumentTransformer()` until this is corrected.
+
+---
+
 ## v10.0.11 → v10.1.0
 
 ### No breaking changes
