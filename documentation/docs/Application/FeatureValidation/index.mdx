@@ -31,6 +31,7 @@ Use it to run multiple validators against a request in parallel, aggregate the f
 
 - **`ValidationUtilities.ValidateAsync`** — executes all validators for a request concurrently and flattens the failures
 - **`ValidationUtilities.CreateValidationErrorResult`** — maps `ValidationFailure[]` into a `BadRequestException` carrying structured `ValidationError` entries
+- **Cooperative cancellation** — `ValidationUtilities.ValidateAsync` forwards your `CancellationToken` to every validator
 - **`MustMatchesCurrencyFormat()`** — declarative ISO 4217 format rule (3 uppercase letters) for any string property
 - **`MustBeValidCurrency()` / `MustBeValidEmail()` / `MustBeValidSsn()`** — rules that validate `string?` properties through the value objects of [`RA.Utilities.Core.ValueObjects`](../../core/RA.Utilities.Core.ValueObjects/index.mdx), so request validation and the domain share one set of rules
 - **Zero configuration** — static utilities; validators are supplied by your own DI container
@@ -49,7 +50,7 @@ Use it to run multiple validators against a request in parallel, aggregate the f
 ### How they work together
 
 ```text
-Request ──► ValidateAsync(request, validators) ──► ValidationFailure[] (empty if valid)
+Request ──► ValidateAsync(request, validators, ct) ──► ValidationFailure[] (empty if valid)
                                                       │
                                                       └─► CreateValidationErrorResult ──► BadRequestException ──► HTTP 400
 ```
@@ -111,7 +112,7 @@ public class CreateOrderValidator : AbstractValidator<CreateOrderRequest>
 var request = new CreateOrderRequest("USD", 100);
 
 ValidationFailure[] failures = await ValidationUtilities.ValidateAsync(
-    request, [new CreateOrderValidator()]);
+    request, [new CreateOrderValidator()], CancellationToken.None);
 
 if (failures.Length > 0)
 {
@@ -126,7 +127,7 @@ No DI or setup is required — the utilities are static and the validators come 
 ### Validate a request and return a 400 payload
 
 ```csharp showLineNumbers
-ValidationFailure[] failures = await ValidationUtilities.ValidateAsync(request, validators);
+ValidationFailure[] failures = await ValidationUtilities.ValidateAsync(request, validators, CancellationToken.None);
 
 if (failures.Length > 0)
     throw ValidationUtilities.CreateValidationErrorResult(failures);

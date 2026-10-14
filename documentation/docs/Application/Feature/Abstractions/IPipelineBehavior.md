@@ -85,7 +85,7 @@ public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TReques
         CancellationToken cancellationToken)
     {
         // 1. Execute validation BEFORE the next delegate.
-        var validationFailures = await ValidationUtilities.ValidateAsync(request, _validators);
+        var validationFailures = await ValidationUtilities.ValidateAsync(request, _validators, cancellationToken);
 
         if (validationFailures.Length > 0)
         {

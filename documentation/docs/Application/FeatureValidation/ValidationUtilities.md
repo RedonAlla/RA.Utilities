@@ -14,24 +14,52 @@ It exposes two methods that together cover the whole validation pipeline: runnin
 
 This method is the validation orchestrator. It takes a request object (a command, query, or API model) and runs it against every supplied [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/) validator:
 
-* It accepts a generic request (`TRequest`) and a collection of validators (`IEnumerable<IValidator<TRequest>>`).
-* It executes all validators asynchronously in parallel using `Task.WhenAll`.
+* It accepts a generic request (`TRequest`), a collection of validators (`IEnumerable<IValidator<TRequest>>`), and a required `CancellationToken` (pass `CancellationToken.None` to opt out).
+* It executes the validators asynchronously in parallel using `Task.WhenAll`, with fast paths: an empty validator list returns immediately and a single validator is awaited directly.
 * **Each validator gets its own `ValidationContext`** — validators never share mutable state, so failures cannot leak between validators and results are thread-safe.
+* It forwards the cancellation token to every validator, enabling cooperative cancellation for async rules.
 * It aggregates the failures into a single, flat array of `ValidationFailure` objects, preserving validator order.
 
 ```csharp showLineNumbers
 /// <summary>
 /// Validates a request using a collection of FluentValidation validators.
 /// </summary>
-public static async Task<ValidationFailure[]> ValidateAsync<TRequest>(TRequest request, IEnumerable<IValidator<TRequest>> validators)
+public static async Task<ValidationFailure[]> ValidateAsync<TRequest>(
+    TRequest request,
+    IEnumerable<IValidator<TRequest>> validators,
+    CancellationToken cancellationToken
+)
 {
-    if (!validators.Any())
+    // DI already materializes the validator list as an array; the fallback keeps the method
+    // working with any IEnumerable without allocating a fresh snapshot on every request.
+    IValidator<TRequest>[] validatorArray =
+        validators as IValidator<TRequest>[] ?? validators.ToArray();
+
+    if (validatorArray.Length == 0)
     {
         return [];
     }
 
-    ValidationResult[] validationResults = await Task.WhenAll(
-        validators.Select(validator => validator.ValidateAsync(new ValidationContext<TRequest>(request))));
+    // Fast path: a single validator skips the Task.WhenAll machinery entirely.
+    if (validatorArray.Length == 1)
+    {
+        ValidationResult result =
+            await validatorArray[0].ValidateAsync(new ValidationContext<TRequest>(request), cancellationToken).ConfigureAwait(false);
+
+        return result.IsValid ? [] : [.. result.Errors];
+    }
+
+    // Each validator gets its own context: FluentValidation's ValidationResult wraps the
+    // context's failure list, so sharing one context would leak every validator's failures
+    // into every result.
+    var validationTasks = new Task<ValidationResult>[validatorArray.Length];
+    for (int i = 0; i < validatorArray.Length; i++)
+    {
+        validationTasks[i] = validatorArray[i].ValidateAsync(new ValidationContext<TRequest>(request), cancellationToken);
+    }
+
+    ValidationResult[] validationResults =
+        await Task.WhenAll(validationTasks).ConfigureAwait(false);
 
     ValidationFailure[] validationFailures = [.. validationResults
         .Where(validationResult => !validationResult.IsValid)
@@ -73,7 +101,7 @@ public static BadRequestException CreateValidationErrorResult(ValidationFailure[
 ```csharp showLineNumbers
 using RA.Utilities.Application.Validation.Utilities;
 
-ValidationFailure[] failures = await ValidationUtilities.ValidateAsync(request, validators);
+ValidationFailure[] failures = await ValidationUtilities.ValidateAsync(request, validators, CancellationToken.None);
 
 if (failures.Length > 0)
     throw ValidationUtilities.CreateValidationErrorResult(failures);

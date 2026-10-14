@@ -13,6 +13,18 @@ sidebar_class_name: nav_session ra_utilities_validation
 
 **Fix**: upgrade to **10.0.1**, which creates a fresh context per validator. Remove any de-duplication workarounds.
 
+### `CS7036` on `ValidateAsync` after upgrading to 10.1.0
+
+**Cause**: 10.1.0 added a required `CancellationToken` parameter to `ValidationUtilities.ValidateAsync` — the old two-argument calls no longer compile.
+
+**Fix**: pass `CancellationToken.None`, or forward the token from your request pipeline:
+
+```csharp showLineNumbers
+ValidationFailure[] failures = await ValidationUtilities.ValidateAsync(request, validators, cancellationToken);
+```
+
+See the [migration guide](./migration-guides) for the full v10.0.1 → v10.1.0 upgrade notes.
+
 ### My optional currency field fails validation when it is null
 
 **Cause**: v10.0.0 ran the format rule on null values (FluentValidation 12 executes `Must` on null).
@@ -61,7 +73,7 @@ foreach (IValidator<MyRequest> validator in validators)
 ## Known Limitations
 
 - **`MustMatchesCurrencyFormat` checks format only** — it does not verify that a code exists in the official ISO 4217 list. Validate membership against a curated list for strict requirements.
-- **No `CancellationToken` support** — `ValidateAsync` cannot be cancelled mid-flight; each validator runs to completion.
+- **Cancellation is cooperative** — `ValidateAsync` requires a `CancellationToken` and forwards it to every validator; validators with async rules honour it, while purely synchronous rules run to completion.
 - **No DI registration helper** — the package deliberately registers nothing; supply `IEnumerable<IValidator<T>>` from your own container.
 
 ## Performance Tips

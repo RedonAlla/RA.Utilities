@@ -11,29 +11,29 @@ namespace RA.Utilities.Application.Validation.Extensions;
 /// </summary>
 public static class SsnValidatorExtensions
 {
-    /// <summary>
-    /// Validates that the property value is a valid SSN value.
-    /// </summary>
-    /// <typeparam name="T">The model type containing the property.</typeparam>
-    /// <param name="ruleBuilder">The FluentValidation rule builder.</param>
-    /// <returns>The configured validation rule options.</returns>
-    public static IRuleBuilderOptionsConditions<T, string?> MustBeValidSsn<T>(
-        this IRuleBuilder<T, string?> ruleBuilder)
+    extension<T>(IRuleBuilder<T, string> ruleBuilder) where T : class
     {
-        return ruleBuilder.Custom((value, context) =>
+        /// <summary>
+        /// Validates that the property value is a valid SSN value.
+        /// </summary>
+        /// <returns>The configured validation rule options.</returns>
+        public IRuleBuilderOptionsConditions<T, string?> MustBeValidSsn()
         {
-            try
+            return ruleBuilder.Custom((value, context) =>
             {
-                _ = new SSN(value!);
-            }
-            catch (Exception ex)
-            {
-                string errorMessage = ex is BadRequestException
-                    ? ex.Message
-                    : $"Failed validation {context.PropertyPath}";
+                try
+                {
+                    _ = new SSN(value);
+                }
+                catch (Exception ex)
+                {
+                    string errorMessage = ex is BadRequestException
+                        ? ex.Message
+                        : $"Failed validation {context.PropertyPath}";
 
-                context.AddFailure(new ValidationFailure(context.PropertyPath, errorMessage));
-            }
-        });
+                    context.AddFailure(new ValidationFailure(context.PropertyPath, errorMessage));
+                }
+            });
+        }
     }
 }

@@ -12,6 +12,8 @@ Namespace: RA.Utilities.Application.Validation.Extensions
 * **`MustMatchesCurrencyFormat()`** — checks whether a string property looks like an **ISO 4217** currency code: exactly 3 uppercase letters (`USD`, `EUR`, `GBP`).
 * **`MustBeValidCurrency()`** — validates the property through the [`Currency`](../../core/RA.Utilities.Core.ValueObjects/Currency.md) value object of `RA.Utilities.Core.ValueObjects`, so request validation and the domain share one set of rules.
 
+Both rules are declared as C# 14 extension members on `IRuleBuilder<T, string>`, so they chain naturally onto string rules.
+
 ## 🎯 Purpose and Design
 
 ### 1. FluentValidation Extension
@@ -65,7 +67,7 @@ public class CreateOrderValidator : AbstractValidator<CreateOrderRequest>
 }
 ```
 
-Any input the `Currency` value object rejects fails the rule for that property path. Two behaviors distinguish it from the format rule:
+Any input the `Currency` value object rejects fails the rule for that property path. Note that the value object checks the normalized 3-**character** length, not the letters themselves, so inputs like `"U5D"` or `"123"` pass this rule even though they fail `MustMatchesCurrencyFormat()`. Two behaviors distinguish it from the format rule:
 
 * **`null`, empty, and whitespace fail the rule** — the `Currency` constructor rejects missing values, so the rule doubles as a required check. (`MustMatchesCurrencyFormat()` lets `null` pass and leaves requiredness to `NotNull()` / `NotEmpty()`.)
 * **The failure message is the value object's generic `BadRequestException` message** — `"The request is invalid."` — not the rule-specific format message. Chain `WithMessage` for a property-specific message:
@@ -97,6 +99,7 @@ RuleFor(x => x.Currency)
 | `null` | ❌ Invalid (the value object requires a value) |
 | `""` / `"   "` | ❌ Invalid |
 | `"US"` / `"USDD"` | ❌ Invalid |
+| `"U5D"` / `"123"` | ✅ Valid (only the 3-character length is checked) |
 
 ## 🧠 Summary
 

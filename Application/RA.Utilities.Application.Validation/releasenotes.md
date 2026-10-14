@@ -5,7 +5,7 @@
 ![Date Badge](https://img.shields.io/badge/Publish-11%20October%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.1.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Application.Validation/10.1.0)
 
-Feature release: adds FluentValidation rules that validate through the value objects of `RA.Utilities.Core.ValueObjects`, so request validation and the domain share one set of rules.
+Feature release: adds FluentValidation rules that validate through the value objects of `RA.Utilities.Core.ValueObjects` — so request validation and the domain share one set of rules — and adds `CancellationToken` support to `ValidationUtilities.ValidateAsync`.
 
 ### ✨ New Features
 
@@ -24,6 +24,14 @@ public class RegisterUserValidator : AbstractValidator<RegisterUserRequest>
     }
 }
 ```
+
+### ⚠️ Breaking Changes
+
+* **`ValidationUtilities.ValidateAsync` now requires a `CancellationToken`**: the new third parameter has no default, so existing two-argument calls no longer compile — pass `CancellationToken.None` or forward the request's token. The token is passed to every validator, enabling cooperative cancellation. **Migration**: see the [migration guide](https://redonalla.github.io/RA.Utilities/nuget-packages/Application/FeatureValidation/migration-guides).
+
+### 📝 Improvements
+
+* **Faster validation orchestration**: `ValidateAsync` returns an empty array immediately when no validators are registered, awaits a single validator directly instead of going through `Task.WhenAll`, no longer re-materializes validator collections that are already arrays (the standard DI case), and uses `ConfigureAwait(false)` throughout.
 
 ### 📦 Dependencies
 

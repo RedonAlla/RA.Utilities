@@ -5,6 +5,32 @@ sidebar_class_name: nav_session ra_utilities_validation
 
 # Migration Guides
 
+## v10.0.1 → v10.1.0
+
+### Breaking Change: `ValidateAsync` now requires a `CancellationToken`
+
+`ValidationUtilities.ValidateAsync` has a new third parameter — a `CancellationToken` — and it has no default, so existing two-argument calls no longer compile (`CS7036`). Pass `CancellationToken.None` if you have no token to propagate, or forward the token from your request pipeline.
+
+**Before (10.0.1):**
+
+```csharp
+ValidationFailure[] failures = await ValidationUtilities.ValidateAsync(request, validators);
+```
+
+**After (10.1.0):**
+
+```csharp
+ValidationFailure[] failures = await ValidationUtilities.ValidateAsync(request, validators, cancellationToken);
+```
+
+The token is forwarded to every validator, so validators with async rules honour cancellation. The [`ValidationBehavior`](../Feature/Behaviors/ValidationBehavior) in `RA.Utilities.Feature` already forwards the request token.
+
+### Other Changes (non-breaking)
+
+* **New rules**: `MustBeValidCurrency()`, `MustBeValidEmail()` and `MustBeValidSsn()` validate through the `Currency`, `Email` and `SSN` value objects of `RA.Utilities.Core.ValueObjects` — any input the value object rejects fails the rule. Additive only.
+* **New dependency**: `RA.Utilities.Core.ValueObjects` (10.1.0) — pulled in transitively, no action needed.
+* **Extension classes refactored to C# 14 extension members**: `CurrencyValidatorExtensions`, `EmailValidatorExtensions` and `SsnValidatorExtensions` are now implemented as C# 14 extension members. Method names, parameters, and call-site syntax are unchanged.
+
 ## v10.0.0 → v10.0.1
 
 ### Breaking Change: `ValidationErrors` → `ValidationError`

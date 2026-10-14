@@ -13,7 +13,7 @@ Namespace: RA.Utilities.Application.Validation.Extensions
 
 ### 1. Value-Object-Backed Rule
 
-`MustBeValidSsn` chains onto any `string?` rule and validates the value by constructing an `SSN` instance behind the scenes:
+`MustBeValidSsn` chains onto any string rule and validates the value by constructing an `SSN` instance behind the scenes:
 
 ```csharp showLineNumbers
 public class RegisterUserValidator : AbstractValidator<RegisterUserRequest>
@@ -27,6 +27,8 @@ public class RegisterUserValidator : AbstractValidator<RegisterUserRequest>
 ```
 
 Any input the `SSN` value object rejects fails the rule for that property path: `null`, empty or whitespace, values over 10 characters, and values that don't match the `^[A-Z][0-9]{8}[A-Z]$` format (letter + 8 digits + letter).
+
+The rule is declared as a C# 14 extension member on `IRuleBuilder<T, string>`; the calling syntax is unchanged.
 
 ### 2. Requiredness Is Enforced
 

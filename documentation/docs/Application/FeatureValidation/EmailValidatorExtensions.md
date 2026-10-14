@@ -13,7 +13,7 @@ Namespace: RA.Utilities.Application.Validation.Extensions
 
 ### 1. Value-Object-Backed Rule
 
-`MustBeValidEmail` chains onto any `string?` rule and validates the value by constructing an `Email` instance behind the scenes:
+`MustBeValidEmail` chains onto any string rule and validates the value by constructing an `Email` instance behind the scenes:
 
 ```csharp showLineNumbers
 public class RegisterUserValidator : AbstractValidator<RegisterUserRequest>
@@ -27,6 +27,8 @@ public class RegisterUserValidator : AbstractValidator<RegisterUserRequest>
 ```
 
 Any input the `Email` value object rejects fails the rule for that property path: `null`, empty or whitespace, addresses over 254 characters, and values that don't match the email format.
+
+The rule is declared as a C# 14 extension member on `IRuleBuilder<T, string>`; the calling syntax is unchanged.
 
 ### 2. Requiredness Is Enforced
 

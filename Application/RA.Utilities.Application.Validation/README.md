@@ -11,7 +11,7 @@
 Run every registered validator for a request in parallel, aggregate the failures, and convert them into a standardized `BadRequestException` — the payload that `RA.Utilities.Api` middleware translates into a consistent **HTTP 400** response — without writing the orchestration code yourself.
 
 ## ✨ Key Features
-* **Parallel validation orchestration**: `ValidationUtilities.ValidateAsync` executes all validators for a request concurrently — each with its own `ValidationContext`, so results cannot leak between validators — and flattens the failures into a single array.
+* **Parallel validation orchestration**: `ValidationUtilities.ValidateAsync` executes all validators for a request concurrently — each with its own `ValidationContext`, so results cannot leak between validators — and flattens the failures into a single array, forwarding your `CancellationToken` to every validator.
 * **Standardized error payloads**: `ValidationUtilities.CreateValidationErrorResult` maps FluentValidation's `ValidationFailure[]` into a `BadRequestException` carrying structured `ValidationError` entries (`PropertyName`, `AttemptedValue`, `ErrorCode`).
 * **Value-object-backed rules**: `MustBeValidCurrency()`, `MustBeValidEmail()` and `MustBeValidSsn()` validate `string?` properties through the value objects of `RA.Utilities.Core.ValueObjects`, so request validation and the domain share one set of rules.
 * **ISO 4217 format rule**: `MustMatchesCurrencyFormat()` checks the currency shape (3 uppercase letters) with a source-generated compiled regex.
