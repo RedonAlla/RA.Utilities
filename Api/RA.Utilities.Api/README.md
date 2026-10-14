@@ -46,8 +46,10 @@ Or through the NuGet Package Manager in Visual Studio.
 -   [`RA.Utilities.Api.Response`](https://redonalla.github.io/RA.Utilities/nuget-packages/api/RA.Utilities.Api.Response/)
 -   [`RA.Utilities.Core.Constants`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/RA.Utilities.Core.Constants/)
 -   [`RA.Utilities.Core.Exceptions`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/RA.Utilities.Core.Exceptions/)
+-   [`RA.Utilities.Logging.Shared`](https://redonalla.github.io/RA.Utilities/nuget-packages/Logging/RA.Utilities.Logging.Shared/)
 -   [`Microsoft.AspNetCore.App`](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/metapackage-app)
 -   [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/)
+-   [`Microsoft.IO.RecyclableMemoryStream`](https://www.nuget.org/packages/Microsoft.IO.RecyclableMemoryStream/)
 
 ---
 
@@ -102,12 +104,12 @@ A request to `/products/0` would automatically return a 404 response with the fo
 {
   "responseCode": 404,
   "responseType": "NotFound",
-  "responseMessage": "Product with value '0' not found.",
+  "responseMessage": "Product with value '0' was not found.",
   "result": {
     "entity": "Product",
     "value": 0,
     "errorCode": "NotFound",
-    "errorMessage": "Product with value '0' not found."
+    "errorMessage": "Product with value '0' was not found."
   }
 }
 ```
@@ -240,13 +242,13 @@ On validation failure, the API returns:
 
 ### 4. HTTP Request/Response Logging
 
-The `HttpLoggingMiddleware` provides automatic structured logging of every HTTP request and response, including headers, body content, and duration.
+The `LoggingMiddleware` provides automatic structured logging of every HTTP request and response, including headers, body content, and duration.
 
 **How it works:**
 
 - Captures the incoming request (method, path, headers, body).
 - Buffers the response stream to capture response details (status code, headers, body).
-- Logs both using structured Serilog templates for easy querying and analysis.
+- Logs both using structured log templates for easy querying and analysis.
 - Logs at `Warning` level when the request duration exceeds a configurable threshold.
 
 #### Usage
@@ -256,7 +258,7 @@ The `HttpLoggingMiddleware` provides automatic structured logging of every HTTP 
 var builder = WebApplication.CreateBuilder(args);
 
 // Register the middleware services with optional configuration
-builder.Services.AddHttpLoggingMiddleware(options =>
+builder.Services.AddLoggingMiddleware(options =>
 {
     options.MaxBodyLogLength = 8192;          // Truncate bodies larger than 8KB
     options.WarningThresholdMilliseconds = 500; // Log slow requests at Warning
@@ -267,10 +269,24 @@ builder.Services.AddHttpLoggingMiddleware(options =>
 var app = builder.Build();
 
 // Add to the pipeline early to capture all requests
-app.UseHttpLoggingMiddleware();
+app.UseLoggingMiddleware();
 
 app.Run();
 ```
+
+#### Enriching the log context
+
+If you don't need full body logging, the lighter `ContextLoggingMiddleware` pushes a log scope onto every request containing the `x-request-id` correlation ID and the trace identifier, so application logs automatically carry correlation values:
+
+```csharp
+builder.Services.AddRequestContextLoggingMiddleware();
+
+var app = builder.Build();
+
+app.UseContextLoggingMiddleware();
+```
+
+> Do not combine `ContextLoggingMiddleware` with `LoggingMiddleware` — `LoggingMiddleware` already creates that scope for every request it processes; adding both is redundant.
 
 ### 5. Required Header Enforcement
 
@@ -287,7 +303,7 @@ The `DefaultHeadersMiddleware` enforces the presence of required HTTP headers on
 
 ```csharp
 // Program.cs
-builder.Services.Configure<DefaultHeadersOptions>(options =>
+builder.Services.AddDefaultHeadersMiddleware(options =>
 {
     // Require an API key (400 if missing, no auto-generation)
     options.RequiredHeaders.Add(new RequiredHeaderDefinition
@@ -311,7 +327,7 @@ builder.Services.Configure<DefaultHeadersOptions>(options =>
 var app = builder.Build();
 
 // Register the middleware in the pipeline
-app.UseMiddleware<DefaultHeadersMiddleware>();
+app.UseDefaultHeadersMiddleware();
 ```
 
 ### 6. Standardized Success Response Helpers
@@ -324,14 +340,16 @@ This ensures that your successful API responses follow the same structured forma
 The SuccessResult class provides helpers for the most common success status codes:
 
 * `Ok()`: Creates a `200 OK` response.
-* `Ok<T>(T result)`: Creates a `200 OK` response with a payload.
+* `Ok<TResult>(TResult result)`: Creates a `200 OK` response with a payload.
 * `Created()`: Creates a `201 Created` response.
-* `Created<T>(T result)`: Creates a `201 Created` response with a payload.
-* `Created(string uri, T result)`: Creates a `201 Created` response with a `Location` header and a payload.
-* `CreatedAtRoute<TResult>(string routeName, object routeValues)`: Creates a `201 Created` with the specified route name and route values.
-* `CreatedAtRoute<TResult>(string routeName, object routeValues, TResult results)`: Creates an HTTP `201 Created` response with the specified route name, route values, and result.
+* `Created<TResult>(TResult results)`: Creates a `201 Created` response with a payload.
+* `Created<TResult>(string route, TResult results)`: Creates a `201 Created` response with a `Location` header and a payload.
+* `CreatedAtRoute<TResult>(string routeName, object routeValues)`: Creates a `201 Created` response for the specified route name and route values.
+* `CreatedAtRoute<TResult>(string routeName, object routeValues, TResult results)`: Creates a `201 Created` response with the specified route name, route values, and payload.
 * `Accepted()`: Creates a `202 Accepted` response.
-* `Accepted(string uri, T result)`: Creates a `202 Accepted` response with a `Location` header and a payload.
+* `Accepted(string route)`: Creates a `202 Accepted` response with a `Location` header.
+* `Accepted<TResult>(TResult results)`: Creates a `202 Accepted` response with a payload.
+* `Accepted<TResult>(string route, TResult results)`: Creates a `202 Accepted` response with a `Location` header and a payload.
 * `NoContent()`: Creates a `204 No Content` response.
 
 #### Usage

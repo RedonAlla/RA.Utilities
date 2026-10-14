@@ -24,8 +24,9 @@ using RA.Utilities.Api.Extensions;
 
 builder.Services.AddDefaultHeadersMiddleware(options =>
 {
-    options.RequiredHeaders.Add(new RequiredHeaderDefinition("x-api-key")
+    options.RequiredHeaders.Add(new RequiredHeaderDefinition
     {
+        Name = "x-api-key",
         ErrorMessage = "API key is required."
     });
     options.PathsToIgnore.Add("/swagger");

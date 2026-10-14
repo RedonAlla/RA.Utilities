@@ -39,21 +39,36 @@ dotnet add package RA.Utilities.Api --version 10.1.0
 
 No code changes are needed — the `using RA.Utilities.Api.Results;` directive still works.
 
-### `ApplicationBuilderExtensions` or `ServiceCollectionExtensions` no longer compile
+### After upgrading, `MiddlewareExtensions` no longer compiles
 
-**Cause**: These generic extension classes were reorganized into feature-specific classes. `AddLoggingMiddleware` and `UseLoggingMiddleware` now live in `MiddlewareExtensions`.
+**Cause**: In v10.2.2 the monolithic `MiddlewareExtensions` class was split back into two classes, one per target type: [`ApplicationBuilderExtensions`](./Extensions/ApplicationBuilderExtensions.md) (the `Use*` methods) and [`ServiceCollectionExtensions`](./Extensions/ServiceCollectionExtensions.md) (the `Add*` methods).
 
-**Fix**: Update your using directives — no method name changes are required:
+**Fix**: The extension methods are resolved by their target type (`IServiceCollection`, `IApplicationBuilder`), so **call sites need no changes** — but any code that references the class *name* directly must be updated:
 
 ```csharp
-// ❌ Old class names (removed)
-using RA.Utilities.Api.Extensions; // ApplicationBuilderExtensions / ServiceCollectionExtensions
+// ❌ No longer exists (v10.2.1 and earlier)
+var t = typeof(MiddlewareExtensions);
 
-// ✅ Still the same namespace, just different class names
-using RA.Utilities.Api.Extensions; // MiddlewareExtensions, ValidationExtensions, etc.
+// ✅ v10.2.2
+var t = typeof(ServiceCollectionExtensions);      // Add* methods
+var u = typeof(ApplicationBuilderExtensions);     // Use* methods
 ```
 
-The method calls themselves are unchanged (`AddLoggingMiddleware`, `UseLoggingMiddleware`). They are extension methods resolved by the target type (`IServiceCollection`, `IApplicationBuilder`), so the class name change is transparent to consuming code.
+Typical places that reference the type name: `typeof(...)` assertions in unit tests, reflection-based DI checks, and `InternalsVisibleTo`-style helpers. Plain `using RA.Utilities.Api.Extensions;` directives keep working.
+
+### `UseRequestContextLoggingMiddleware()` no longer compiles
+
+**Cause**: The method was renamed to `UseContextLoggingMiddleware()` in v10.2.1. The dependency-injection method (`AddRequestContextLoggingMiddleware()`) kept its name.
+
+**Fix**: Rename the pipeline call:
+
+```csharp
+// ❌ v10.2.0 and earlier
+app.UseRequestContextLoggingMiddleware();
+
+// ✅ v10.2.1+
+app.UseContextLoggingMiddleware();
+```
 
 ### `Validate<T>()` is in `EndpointBuilderExtensions` — where did it go?
 
@@ -307,7 +322,7 @@ builder.Services.AddLoggingMiddleware(options =>
 
 - **No localization support**: Error messages are English-only. Use `ErrorCode` values for client-side lookup tables if you need multi-language support.
 - **Minimal API focused**: The `IEndpoint` registration pattern and `Validate<T>()` filter are designed for Minimal APIs. Controller-based apps can still use the exception handler and `SuccessResult` helpers.
-- **Request body can only be read once**: The `ValidationEndpointFilter` reads and buffers the request body. If another middleware also needs to read the body, ensure `EnableBuffering` is called first.
+- **Validation requires a bound argument**: `ValidationEndpointFilter<TModel>` validates the first non-null `TModel` argument of the endpoint delegate. If the model isn't a bound parameter (for example, you deserialize the body manually), the filter passes through without validating. It never reads the request body itself, so it doesn't interfere with body-reading middlewares.
 - **Discovery is per assembly**: The source generator only discovers `IEndpointGroup`/`IEndpoint` types declared in the project's own assembly. Endpoint types in referenced class libraries are not mapped by the executable's `MapEndpoints()` call; each library would need the package and its own registration entry point.
 - **`DefaultHeadersMiddleware` defaults to requiring `x-request-id` only**: Additional required headers must be configured via `DefaultHeadersOptions.RequiredHeaders`. The default auto-generates `x-request-id` if missing.
 - **`LoggingMiddleware` buffers full request/response bodies**: Large payloads will be fully read into memory. Use `MaxBodyLogLength` to truncate large bodies and `PathsToIgnore` to skip specific endpoints.

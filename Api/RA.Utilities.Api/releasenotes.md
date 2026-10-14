@@ -1,11 +1,35 @@
 # RA.Utilities.Api Release Notes
 
+## Version 10.2.2
+![Date Badge](https://img.shields.io/badge/Publish-14%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.2.2-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api/10.2.2)
+
+The monolithic `MiddlewareExtensions` class is split back into one class per target type — `ApplicationBuilderExtensions` for the `Use*` methods and `ServiceCollectionExtensions` for the `Add*` methods — and every extension method is now declared with C# 14 extension members. Method names, signatures, and the namespace are unchanged.
+
+<!-- truncate -->
+
+### ⚠️ Breaking Changes
+
+* **`MiddlewareExtensions` split into `ApplicationBuilderExtensions` and `ServiceCollectionExtensions`**: the `Add*` methods live in `ServiceCollectionExtensions` (extension members on `IServiceCollection`), the `Use*` methods in `ApplicationBuilderExtensions` (extension members on `IApplicationBuilder`). Call sites need no changes — extension methods resolve by target type — but code that references the `MiddlewareExtensions` class name directly (`typeof(...)`, unit-test assertions, reflection) must be updated.
+
+```csharp
+- var t = typeof(MiddlewareExtensions);
++ var s = typeof(ServiceCollectionExtensions);      // Add* methods
++ var a = typeof(ApplicationBuilderExtensions);     // Use* methods
+```
+
+### 📝 Improvements
+
+* **C# 14 extension members**: `ApplicationBuilderExtensions`, `ServiceCollectionExtensions`, and `ValidationExtensions` now declare their methods inside `extension(...)` blocks on `IApplicationBuilder`, `IServiceCollection`, and `RouteHandlerBuilder` respectively. The generated extension methods have identical names and signatures, so the refactor is source-compatible for all callers.
+* **`ValidationExtensions` refactored**: `Validate<TModel>()` is now a member of an `extension(RouteHandlerBuilder builder)` block. The calling syntax is unchanged.
+* The split restores the pre-10.1.0 organization (one extension class per target type) while keeping every method name, so upgrading from 10.2.1 requires no call-site changes.
+
 ## Version 10.2.1
 [![NuGet version](https://img.shields.io/badge/NuGet-10.2.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api/10.2.1)
 
 `LoggingMiddleware` response logging behavior is now explicit, and the shared HTTP log templates drop their correlation properties in favor of the log scope.
 
-The request-context middleware is renamed `RequestContextLoggingMiddleware` → `ContextLoggingMiddleware`. The registration extension methods keep their names, so most consuming projects need no code changes.
+The request-context middleware is renamed `RequestContextLoggingMiddleware` → `ContextLoggingMiddleware`, and its pipeline extension method was renamed with it: `UseRequestContextLoggingMiddleware()` → `UseContextLoggingMiddleware()`. The DI registration method `AddRequestContextLoggingMiddleware()` keeps its name.
 
 <!-- truncate -->
 
@@ -13,13 +37,20 @@ The request-context middleware is renamed `RequestContextLoggingMiddleware` → 
 
 * **Log templates no longer carry `RequestId` / `TraceIdentifier`** (via `RA.Utilities.Logging.Shared` 10.0.2): structured request/response logs produced by `LoggingMiddleware` no longer contain these properties. Correlation continues to work through the log scope (`LoggingConstants.XRequestId`) the middleware creates for every request — no code changes needed unless you query those properties directly.
 
-* **`RequestContextLoggingMiddleware` renamed to `ContextLoggingMiddleware`**: code that references the middleware **type** directly — custom `UseMiddleware<T>()` / `AddTransient<T>()` calls, unit tests, `typeof(...)` — must use the new name. The `AddRequestContextLoggingMiddleware()` / `UseRequestContextLoggingMiddleware()` extension methods are unchanged; ordinary call sites compile without modification.
+* **`RequestContextLoggingMiddleware` renamed to `ContextLoggingMiddleware`**: code that references the middleware **type** directly — custom `UseMiddleware<T>()` / `AddTransient<T>()` calls, unit tests, `typeof(...)` — must use the new name. The pipeline extension method was renamed too (`app.UseRequestContextLoggingMiddleware()` → `app.UseContextLoggingMiddleware()`); the DI registration method `AddRequestContextLoggingMiddleware()` is unchanged.
 
 ```csharp
 - app.UseMiddleware<RequestContextLoggingMiddleware>();
 - services.AddTransient<RequestContextLoggingMiddleware>();
-+ app.UseRequestContextLoggingMiddleware();
-+ builder.Services.AddRequestContextLoggingMiddleware();
++ app.UseMiddleware<ContextLoggingMiddleware>();
++ services.AddTransient<ContextLoggingMiddleware>();
+
+// The pipeline helper was renamed as well:
+- app.UseRequestContextLoggingMiddleware();
++ app.UseContextLoggingMiddleware();
+
+// The DI helper keeps its name:
+  builder.Services.AddRequestContextLoggingMiddleware();
 ```
 
 ### 📝 Improvements

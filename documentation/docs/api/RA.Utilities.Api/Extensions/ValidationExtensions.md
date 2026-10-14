@@ -6,6 +6,8 @@ The `ValidationExtensions` class is designed to improve the developer experience
 
 Instead of the more verbose `AddEndpointFilter<ValidationEndpointFilter<TModel>>`, this class provides a simple and elegant shortcut.
 
+The method is declared inside a C# 14 extension block on `RouteHandlerBuilder`; the calling syntax is unchanged.
+
 ## `Validate<TModel>()`
 
 This extension method for `RouteHandlerBuilder` adds an endpoint filter that automatically validates a model of type `TModel` using `FluentValidation`. If validation fails, the request is short-circuited, and a standardized validation error is returned before the endpoint handler is ever executed.

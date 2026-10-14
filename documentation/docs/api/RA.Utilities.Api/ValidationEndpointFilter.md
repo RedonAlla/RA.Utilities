@@ -47,7 +47,7 @@ public class CreateProductRequestValidator : AbstractValidator<CreateProductRequ
 #### Step 2: Register FluentValidation and Your Validators
 
 Next, you need to register `FluentValidation` and all your validator classes with the dependency injection (DI) container in your `Program.cs` file.
-The easiest way to do this is by using the `FluentValidation.AspNetCore` package, which provides the `AddValidatorsFromAssembly` extension method.
+The easiest way to do this is by using the `FluentValidation.DependencyInjectionExtensions` package, which provides the `AddValidatorsFromAssembly` extension method.
 
 ```csharp
 // Program.cs

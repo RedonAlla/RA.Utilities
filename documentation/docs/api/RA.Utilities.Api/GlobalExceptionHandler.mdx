@@ -30,7 +30,7 @@ By implementing the IExceptionHandler interface (a feature introduced in .NET 8)
 ## 🚀 Usage Guide
 
 The handler is registered with the dependency injection container and added to the request pipeline via the
-[`MiddlewareExtensions`](./Extensions/MiddlewareExtensions.md) class:
+[`ServiceCollectionExtensions`](./Extensions/ServiceCollectionExtensions.md) and [`ApplicationBuilderExtensions`](./Extensions/ApplicationBuilderExtensions.md) classes:
 
 ```csharp
 // highlight-next-line

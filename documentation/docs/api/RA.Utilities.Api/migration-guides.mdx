@@ -3,6 +3,62 @@ title: Migration Guides
 ---
 
 
+## v10.2.1 → v10.2.2
+
+### Breaking Changes:
+
+* `MiddlewareExtensions` split into `ApplicationBuilderExtensions` (`Use*` methods) and `ServiceCollectionExtensions` (`Add*` methods)
+
+The single `MiddlewareExtensions` class is split into two classes that mirror the classic ASP.NET Core naming conventions: `Add` methods (service registration) live in [`ServiceCollectionExtensions`](./Extensions/ServiceCollectionExtensions.md), `Use` methods (pipeline registration) live in [`ApplicationBuilderExtensions`](./Extensions/ApplicationBuilderExtensions.md). Both remain in the `RA.Utilities.Api.Extensions` namespace.
+
+The extension methods themselves are unchanged — same names, same signatures. Because extension methods resolve by their target type (`IServiceCollection` / `IApplicationBuilder`), **no call-site changes are required**. Only code that references the class **name** directly (`typeof(MiddlewareExtensions)`, static calls, unit-test naming) needs updating.
+
+Additionally, the extension methods are refactored to **C# 14 extension members** (extension blocks), grouping each receiver's members in a single place. The public API surface is unchanged.
+
+### What changed
+
+| Aspect | v10.2.1 | v10.2.2 |
+|---|---|---|
+| `Use*` methods | `MiddlewareExtensions` | `ApplicationBuilderExtensions` |
+| `Add*` methods | `MiddlewareExtensions` | `ServiceCollectionExtensions` |
+| Method names / signatures | — | unchanged |
+| Implementation style | classic extension methods | C# 14 extension blocks |
+
+### Migration Steps
+
+#### 1. No code changes required for consuming projects
+
+These are **extension methods** — they are resolved by the compiler based on the target type (`IServiceCollection`, `IApplicationBuilder`), not the static class name. The using directive (`using RA.Utilities.Api.Extensions;`) is unchanged:
+
+```csharp
+// ✅ This code is unchanged in v10.2.2
+using RA.Utilities.Api.Extensions;
+
+builder.Services.AddRaExceptionHandling();       // Resolved on IServiceCollection
+builder.Services.AddDefaultHeadersMiddleware();  // Resolved on IServiceCollection
+builder.Services.AddLoggingMiddleware();         // Resolved on IServiceCollection
+
+var app = builder.Build();
+
+app.UseRaExceptionHandling();      // Resolved on IApplicationBuilder
+app.UseDefaultHeadersMiddleware(); // Resolved on IApplicationBuilder
+app.UseLoggingMiddleware();        // Resolved on IApplicationBuilder
+app.MapEndpoints();
+```
+
+#### 2. Update direct class name references (if any)
+
+```csharp
+// ❌ v10.2.1
+typeof(MiddlewareExtensions)
+
+// ✅ v10.2.2
+typeof(ApplicationBuilderExtensions)  // Use* methods
+typeof(ServiceCollectionExtensions)   // Add* methods
+```
+
+---
+
 ## v10.2.0 → v10.2.1
 
 ### Behavior Changes:
@@ -10,7 +66,7 @@ title: Migration Guides
 * `LoggingMiddleware` response log is written at `LogLevel.Warning` (previously undocumented)
 * `LoggingMiddleware` writes a dedicated slow-call warning entry when `WarningThresholdMilliseconds` is exceeded
 * `HttpRequestLogTemplate` / `HttpResponseLogTemplate` no longer carry `RequestId` / `TraceIdentifier` properties (via `RA.Utilities.Logging.Shared` v10.0.2)
-* `RequestContextLoggingMiddleware` renamed to `ContextLoggingMiddleware`
+* `RequestContextLoggingMiddleware` renamed to `ContextLoggingMiddleware` (together with its `Use` extension method)
 
 The `LoggingMiddleware` logging behavior is now explicit:
 
@@ -19,9 +75,9 @@ The `LoggingMiddleware` logging behavior is now explicit:
 * When the total elapsed time exceeds `WarningThresholdMilliseconds`, an **additional** `Warning` entry is written alongside the response log: `HTTP call to {Method} {Url} took too long ({ElapsedMilliseconds} ms)`.
 
 The `RequestId` and `TraceIdentifier` correlation properties were removed from the shared log templates.
-Correlation is now provided exclusively by the logging scope: every request processed by `LoggingMiddleware` runs inside a scope containing the `X-Request-Id` value (`LoggingConstants.XRequestId`), which sinks like the Serilog `RequestIdEnricher` (`RA.Utilities.Logging.Core`) pick up.
+Correlation is now provided exclusively by the logging scope: every request processed by `LoggingMiddleware` runs inside a scope containing the `x-request-id` value (`LoggingConstants.XRequestId`), which sinks like the Serilog `RequestIdEnricher` (`RA.Utilities.Logging.Core`) pick up.
 
-The request-context middleware type was renamed to better reflect its single responsibility: enriching the log scope with the request's `X-Request-Id` correlation ID. The registration extension methods keep their names, so most consuming projects need no code changes.
+The request-context middleware type was renamed to better reflect its single responsibility: enriching the log scope with the request's `X-Request-Id` correlation ID. The `Add` extension method keeps its name; the `Use` method was renamed along with the type (`UseRequestContextLoggingMiddleware()` → `UseContextLoggingMiddleware()`).
 
 ### What changed
 
@@ -31,7 +87,7 @@ The request-context middleware type was renamed to better reflect its single res
 | Slow-call signal | none | Additional `Warning` entry when `WarningThresholdMilliseconds` exceeded |
 | Template correlation properties | `RequestId`, `TraceIdentifier` | none — via log scope |
 | Middleware type | `RequestContextLoggingMiddleware` | `ContextLoggingMiddleware` |
-| Registration methods | `AddRequestContextLoggingMiddleware()` / `UseRequestContextLoggingMiddleware()` | unchanged |
+| Registration methods | `AddRequestContextLoggingMiddleware()` / `UseRequestContextLoggingMiddleware()` | `AddRequestContextLoggingMiddleware()` (unchanged) / `UseContextLoggingMiddleware()` (renamed) |
 | Behavior | `X-Request-Id` log scope | unchanged |
 
 ### Migration Steps
@@ -42,24 +98,25 @@ No code changes are required unless you:
 
 2. **Filtered on `Information` level to see response logs** — response logs are written at `Warning`; adjust level filters or alert rules accordingly.
 
-3. **RequestContextLoggingMiddleware**
+3. **Referenced `RequestContextLoggingMiddleware` directly**
 
 :::tip
-No code changes are required unless you reference the middleware **type** directly:
-**Custom `UseMiddleware<T>()` / `AddTransient<T>()` calls** — switch to the extension methods (which are unchanged) or the new type name:
+No code changes are required for ordinary call sites — only direct references to the middleware **type** or the old `Use` method need updating:
 :::
 
 ```csharp
-// ❌ v10.2.1
+// ❌ v10.2.0
 app.UseMiddleware<RequestContextLoggingMiddleware>();
 services.AddTransient<RequestContextLoggingMiddleware>();
-
-// ✅ v10.2.2
 app.UseRequestContextLoggingMiddleware();
-builder.Services.AddRequestContextLoggingMiddleware();
+
+// ✅ v10.2.1
+app.UseMiddleware<ContextLoggingMiddleware>();
+services.AddTransient<ContextLoggingMiddleware>();
+app.UseContextLoggingMiddleware(); // renamed from UseRequestContextLoggingMiddleware()
 ```
 
- **3.2.** **Asd Unit tests or DI assertions naming the type** — update `typeof(RequestContextLoggingMiddleware)` to `typeof(ContextLoggingMiddleware)`.
+**3.1** **Unit tests or DI assertions naming the type** — update `typeof(RequestContextLoggingMiddleware)` to `typeof(ContextLoggingMiddleware)`.
 
 ---
 

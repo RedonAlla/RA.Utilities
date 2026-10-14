@@ -14,14 +14,14 @@ and the [`IResult`](../../../core/RA.Utilities.Core.Results/Results.md) objects 
 #### 1. [`SuccessResult`](./SuccessResult)
 * **Purpose**: This class is a factory for creating consistent, successful [`IResult`](../../../core/RA.Utilities.Core.Results/Results.md) objects.
 * **How it works**: It provides simple static methods like `Ok()`, `Ok<T>()`, `Created()`, and `Accepted()`
-that wrap your data in a standardized [`SuccessResult`](./SuccessResult) object and return the correct HTTP status code (200, 201, 202, etc.).
+that wrap your data in a standardized [`SuccessResponse<T>`](../../RA.Utilities.Api.Response/SuccessResponse.md) object and return the correct HTTP status code (200, 201, 202, etc.).
 This keeps your endpoint logic clean and ensures all success responses from your API have a uniform structure.
 
 ```csharp
 public static class SuccessResult
 {
     // Creates an HTTP 200 OK with a body
-    public static IResult Ok<TResult>(TResult results) where TResult : new()
+    public static IResult Ok<TResult>(TResult results)
     {
         return Microsoft.AspNetCore.Http.Results.Ok(new SuccessResponse<TResult>(results));
     }
@@ -38,7 +38,7 @@ public static class SuccessResult
 #### 2. [`ErrorResultMapper`](./ErrorResultMapper)
 
 * **Purpose**: This class is responsible for transforming specific exception types into structured error **response bodies** (DTOs).
-* **How it works*: It has methods that take a specific exception (e.g., [`NotFoundException`](../../../core/RA.Utilities.Core.Exceptions/NotFoundException.md), [`ConflictException`](../../../core/RA.Utilities.Core.Exceptions/ConflictException.md))
+* **How it works**: It has methods that take a specific exception (e.g., [`NotFoundException`](../../../core/RA.Utilities.Core.Exceptions/NotFoundException.md), [`ConflictException`](../../../core/RA.Utilities.Core.Exceptions/ConflictException.md))
 and map its properties to a corresponding response model (e.g., [`NotFoundResponse`](../../RA.Utilities.Api.Response/NotFoundResponse.md), [`ConflictResponse`](../../RA.Utilities.Api.Response/ConflictResponse.md)).
 It deals with the "*what*" of the error—creating the JSON payload—but does not create the final [`IResult`](../../../core/RA.Utilities.Core.Results/Results.md) itself.
 It's an internal helper used by [`ErrorResultResponse`](../../RA.Utilities.Api/mapper/ErrorResultResponse.md).
@@ -203,10 +203,12 @@ A request to `/products/99` will execute the failure path.
 {
   "responseCode": 404,
   "responseType": "NotFound",
-  "responseMessage": "Product with value '99' not found.",
+  "responseMessage": "Product with value '99' was not found.",
   "result": {
-    "entityName": "Product",
-    "entityValue": "99"
+    "entity": "Product",
+    "value": 99,
+    "errorCode": "NotFound",
+    "errorMessage": "Product with value '99' was not found."
   }
 }
 ```

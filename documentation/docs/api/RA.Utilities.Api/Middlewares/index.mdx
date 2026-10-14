@@ -51,7 +51,7 @@ Install-Package RA.Utilities.Api
 
 **PackageReference (csproj)**
 ```xml
-<PackageReference Include="RA.Utilities.Api" Version="10.2.1" />
+<PackageReference Include="RA.Utilities.Api" Version="10.2.2" />
 ```
 
 ### Hello World
@@ -85,7 +85,7 @@ No additional setup is required — the middleware is ready to go with sensible 
 |---|---|---|
 | [`LoggingMiddleware`](./LoggingMiddleware) | Logs HTTP requests and responses with structured data | `AddLoggingMiddleware()` / `UseLoggingMiddleware()` |
 | [`DefaultHeadersMiddleware`](./DefaultHeadersMiddleware) | Enforces required headers on incoming requests | `AddDefaultHeadersMiddleware()` / `UseDefaultHeadersMiddleware()` |
-| [`ContextLoggingMiddleware`](./ContextLoggingMiddleware) | Enriches log scopes with the request's correlation ID | `AddRequestContextLoggingMiddleware()` / `UseRequestContextLoggingMiddleware()` |
+| [`ContextLoggingMiddleware`](./ContextLoggingMiddleware) | Enriches log scopes with the request's correlation ID | `AddRequestContextLoggingMiddleware()` / `UseContextLoggingMiddleware()` |
 
 All three middlewares implement `IMiddleware`, meaning they are activated by the DI container and support constructor injection. They are registered via extension methods in the `RA.Utilities.Api.Extensions` namespace.
 
@@ -157,16 +157,18 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDefaultHeadersMiddleware(options =>
 {
     // Require X-Request-Id — auto-generate if missing
-    options.RequiredHeaders.Add(new RequiredHeaderDefinition("X-Request-Id")
+    options.RequiredHeaders.Add(new RequiredHeaderDefinition
     {
+        Name = "X-Request-Id",
         AutoGenerate = true,
         EchoInResponse = true,
         ErrorMessage = "X-Request-Id header is required for request tracing."
     });
 
     // Require X-Tenant-Id — must be provided by caller
-    options.RequiredHeaders.Add(new RequiredHeaderDefinition("X-Tenant-Id")
+    options.RequiredHeaders.Add(new RequiredHeaderDefinition
     {
+        Name = "X-Tenant-Id",
         AutoGenerate = false,
         ErrorMessage = "X-Tenant-Id header is required for multi-tenant routing."
     });
@@ -194,7 +196,7 @@ builder.Services.AddRequestContextLoggingMiddleware();
 var app = builder.Build();
 
 // highlight-next-line
-app.UseRequestContextLoggingMiddleware();
+app.UseContextLoggingMiddleware();
 app.MapControllers();
 app.Run();
 ```
@@ -228,7 +230,7 @@ app.Run();
 
 ### ContextLoggingMiddleware
 
-This middleware has **no configuration options**. It reads the `X-Request-Id` header from the incoming request (generating a GUID if absent) and enriches the log scope automatically. See the [ContextLoggingMiddleware API reference](./ContextLoggingMiddleware) for details.
+This middleware has **no configuration options**. It reads the `X-Request-Id` header from the incoming request (falling back to `HttpContext.TraceIdentifier` if absent) and enriches the log scope automatically: every log entry within the request carries the `x-request-id` value and the `TraceId`. See the [ContextLoggingMiddleware API reference](./ContextLoggingMiddleware) for details.
 
 ## 🔄 Migration from RA.Utilities.Api.Middlewares
 

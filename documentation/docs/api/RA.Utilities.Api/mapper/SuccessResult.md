@@ -30,6 +30,8 @@ The SuccessResult class provides helpers for the most common success status code
 * `CreatedAtRoute<TResult>(string routeName, object routeValues)`: Creates a `201 Created` with the specified route name and route values.
 * `CreatedAtRoute<TResult>(string routeName, object routeValues, TResult results)`: Creates an HTTP `201 Created` response with the specified route name, route values, and result.
 * `Accepted()`: Creates a `202 Accepted` response.
+* `Accepted(string route)`: Creates a `202 Accepted` response with a `Location` header.
+* `Accepted<TResult>(TResult results)`: Creates a `202 Accepted` response with a payload.
 * `Accepted<T>(string uri, T result)`: Creates a `202 Accepted` response with a `Location` header and a payload.
 * `NoContent()`: Creates a `204 No Content` response.
 
@@ -115,16 +117,21 @@ public class ProductService
 In your `IEndpoint` implementation, call the service and use the `Match` method to map the `Result` to an HTTP response. This pattern forces you to handle both success and failure cases explicitly.
 
 ```csharp showLineNumbers
-// Features/Products/ProductEndpoints.cs
+// Features/Products/GetProductByIdEndpoint.cs
 
-public class ProductEndpoints : IEndpoint
+using Microsoft.AspNetCore.Routing;
+using RA.Utilities.Api.Abstractions;
+
+internal sealed class GetProductByIdEndpoint : IEndpoint
 {
-    public void MapEndpoints(IEndpointRouteBuilder app)
+    public static string GroupName => "Products";
+
+    public static void MapEndpoint(RouteGroupBuilder group)
     {
-        app.MapGet("/products/{id}", (int id, ProductService service) => 
+        group.MapGet("/{id}", (int id, ProductService service) =>
         {
             Result<Product> result = service.GetProductById(id);
-            
+
             // Match the result to an appropriate HTTP response
             // highlight-start
             return result.Match<IResult>(
@@ -133,11 +140,7 @@ public class ProductEndpoints : IEndpoint
                 failure: ErrorResultResponse.Result // Use the error mapper for a consistent failure response
             );
             // highlight-end
-
-            // OR Short
-            // highlight-next-line
-            //return result.Match<IResult>(SuccessResult.Ok(product), ErrorResultResponse.Result);
-        }).WithTags("Products");
+        });
     }
 }
 ```

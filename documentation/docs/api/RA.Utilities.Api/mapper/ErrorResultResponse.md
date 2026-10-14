@@ -73,7 +73,7 @@ public class ProductService
 
 ```csharp
 // highlight-next-line
-using RA.Utilities.Api.Mapper
+using RA.Utilities.Api.Mapper;
 
 // Api/Features/Products/ProductEndpoints.cs
 app.MapGet("/products/{id}", (int id, ProductService service) => 
@@ -100,12 +100,12 @@ app.MapGet("/products/{id}", (int id, ProductService service) =>
 {
   "responseCode": 404,
   "responseType": "NotFound",
-  "responseMessage": "Product with value '99' not found.",
+  "responseMessage": "Product with value '99' was not found.",
   "result": {
     "entity": "Product",
     "value": 99,
     "errorCode": "NotFound",
-    "errorMessage": "Product with value '99' not found."
+    "errorMessage": "Product with value '99' was not found."
   }
 }
 ```

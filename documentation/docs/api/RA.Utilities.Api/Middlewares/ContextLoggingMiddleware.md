@@ -11,8 +11,8 @@ The `ContextLoggingMiddleware` enriches every log entry within a request's lifet
 
 This makes it trivial to correlate all log entries belonging to a single request, even across multiple services, by filtering on the `X-Request-Id` value in your logging platform.
 
-:::info Renamed in v10.2.2
-This middleware was previously named `RequestContextLoggingMiddleware`. The extension methods are unchanged — `AddRequestContextLoggingMiddleware()` and `UseRequestContextLoggingMiddleware()` still register and enable it. Only code that references the middleware **type** directly needs updating. See the [migration guide](../migration-guides) for details.
+:::info Renamed in v10.2.1
+This middleware was previously named `RequestContextLoggingMiddleware`. The `Use` extension method was renamed with it — `UseContextLoggingMiddleware()` — while `AddRequestContextLoggingMiddleware()` kept its name. Only code that calls the old `Use` method or references the middleware **type** directly needs updating. See the [migration guide](../migration-guides) for details.
 :::
 
 :::caution
@@ -26,7 +26,7 @@ Adding `ContextLoggingMiddleware` on top of it is redundant and adds unnecessary
 
 1. **Automatic Log Enrichment**: Wraps the entire downstream pipeline in an `ILogger.BeginScope` call, so every `ILogger` call within the request automatically includes the `X-Request-Id`.
 
-2. **Zero Configuration**: No options class, no setup callbacks — register and use. The middleware reads the `X-Request-Id` header from the incoming request, or generates one if missing, via `CommonUtilities.GetRequestId(context)`.
+2. **Zero Configuration**: No options class, no setup callbacks — register and use. The middleware reads the `X-Request-Id` header from the incoming request, or falls back to `HttpContext.TraceIdentifier` if missing, via `CommonUtilities.GetRequestId(context)`.
 
 3. **Plays Well with Others**: Designed to sit at the very start of the middleware pipeline so that `DefaultHeadersMiddleware` and `LoggingMiddleware` — and your own code — all share the same enriched log scope.
 
@@ -51,13 +51,13 @@ var app = builder.Build();
 
 ### Step 2: Add the middleware to the pipeline
 
-Place `app.UseRequestContextLoggingMiddleware()` **first** in the pipeline, before any other middleware that produces log output.
+Place `app.UseContextLoggingMiddleware()` **first** in the pipeline, before any other middleware that produces log output.
 
 ```csharp showLineNumbers
 // Program.cs (continued)
 
 // highlight-next-line
-app.UseRequestContextLoggingMiddleware();
+app.UseContextLoggingMiddleware();
 
 app.UseDefaultHeadersMiddleware();
 app.UseLoggingMiddleware();
@@ -71,18 +71,19 @@ app.Run();
 
 For every incoming request, the middleware:
 
-1. Reads the `X-Request-Id` header from the request (generating a new GUID if absent)
-2. Opens a logging scope with the key `XRequestId` set to that value
+1. Reads the `X-Request-Id` header from the request (falling back to `HttpContext.TraceIdentifier` if absent)
+2. Opens a logging scope with the key `x-request-id` set to that value, plus `TraceId` set to `HttpContext.TraceIdentifier`
 3. Invokes the rest of the pipeline inside that scope
 
-Any `ILogger` call made during the request — in your controllers, services, or other middlewares — will include the `XRequestId` property:
+Any `ILogger` call made during the request — in your controllers, services, or other middlewares — will include both properties:
 
 ```json showLineNumbers
 {
   "@timestamp": "2026-08-07T12:34:56.789Z",
   "level": "Information",
   "message": "Processing order #42",
-  "XRequestId": "abc-123-def-456"
+  "x-request-id": "abc-123-def-456",
+  "TraceId": "0HN7GVK3M9Q8U:00000001"
 }
 ```
 
@@ -91,7 +92,7 @@ Any `ILogger` call made during the request — in your controllers, services, or
 The recommended pipeline order places `ContextLoggingMiddleware` first so all subsequent middlewares inherit its scope:
 
 ```
-app.UseRequestContextLoggingMiddleware();   // ← enriches log scope
+app.UseContextLoggingMiddleware();   // ← enriches log scope
 app.UseDefaultHeadersMiddleware();          // ← validates headers
 app.UseLoggingMiddleware();                 // ← logs request/response
 ```

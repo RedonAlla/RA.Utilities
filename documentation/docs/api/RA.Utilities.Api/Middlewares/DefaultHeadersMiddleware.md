@@ -32,16 +32,18 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDefaultHeadersMiddleware(options =>
 {
     // Require X-Request-Id — auto-generate a GUID if missing
-    options.RequiredHeaders.Add(new RequiredHeaderDefinition("X-Request-Id")
+    options.RequiredHeaders.Add(new RequiredHeaderDefinition
     {
+        Name = "X-Request-Id",
         AutoGenerate = true,
         EchoInResponse = true,
         ErrorMessage = "X-Request-Id header is required for request tracing."
     });
 
     // Require X-Tenant-Id — must be provided by the caller
-    options.RequiredHeaders.Add(new RequiredHeaderDefinition("X-Tenant-Id")
+    options.RequiredHeaders.Add(new RequiredHeaderDefinition
     {
+        Name = "X-Tenant-Id",
         AutoGenerate = false,
         ErrorMessage = "X-Tenant-Id header is required for multi-tenant routing."
     });

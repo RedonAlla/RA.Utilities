@@ -19,12 +19,23 @@ This is a core pattern for implementing a clean Vertical Slice Architecture.
 This class is designed to improve the developer experience when applying validation to Minimal API endpoints.
 It provides a more fluent and readable syntax for adding the [`ValidationEndpointFilter`](../ValidationEndpointFilter.md).
 
-### 3. [MiddlewareExtensions](./MiddlewareExtensions.md)
-This class is the single entry point for every middleware shipped with the package, pairing an `Add` (service registration) with a `Use` (pipeline registration) method for each:
-- `AddRaExceptionHandling` / `UseRaExceptionHandling` — registers the [`GlobalExceptionHandler`](../GlobalExceptionHandler.mdx) and adds its middleware to the pipeline, ensuring every unhandled exception is logged and returned to the client as a structured error response.
-- `AddDefaultHeadersMiddleware` / `UseDefaultHeadersMiddleware` — registers and configures the `DefaultHeadersMiddleware`; configure required headers via `DefaultHeadersOptions.RequiredHeaders`.
-- `AddLoggingMiddleware` / `UseLoggingMiddleware` — registers and configures the `LoggingMiddleware` for structured HTTP request/response logging.
-- `AddRequestContextLoggingMiddleware` / `UseRequestContextLoggingMiddleware` — registers and configures the `ContextLoggingMiddleware`, which enriches log entries with request-scoped context such as the correlation ID. (Renamed from `RequestContextLoggingMiddleware` in v10.2.2 — the extension method names are unchanged.)
+### 3. [ApplicationBuilderExtensions](./ApplicationBuilderExtensions.md)
+This class provides the `Use` (pipeline registration) method for every middleware shipped with the package:
+- `UseRaExceptionHandling()` — adds the [`GlobalExceptionHandler`](../GlobalExceptionHandler.mdx) middleware to the pipeline, ensuring every unhandled exception is logged and returned to the client as a structured error response.
+- `UseDefaultHeadersMiddleware()` — adds the `DefaultHeadersMiddleware` to the pipeline, enforcing the required headers configured in `DefaultHeadersOptions.RequiredHeaders`.
+- `UseLoggingMiddleware()` — adds the `LoggingMiddleware` for structured HTTP request/response logging.
+- `UseContextLoggingMiddleware()` — adds the `ContextLoggingMiddleware`, which enriches log entries with request-scoped context such as the correlation ID. (The middleware type was renamed from `RequestContextLoggingMiddleware` in v10.2.1, and its `Use` method with it — `AddRequestContextLoggingMiddleware()` is unchanged.)
+
+### 4. [ServiceCollectionExtensions](./ServiceCollectionExtensions.md)
+This class provides the matching `Add` (service registration) methods — each `Use` method above must be preceded by its counterpart here:
+- `AddRaExceptionHandling()` — registers the `GlobalExceptionHandler` with the dependency injection container.
+- `AddDefaultHeadersMiddleware()` — registers the `DefaultHeadersMiddleware` and configures `DefaultHeadersOptions`.
+- `AddLoggingMiddleware()` — registers the `LoggingMiddleware` and configures `HttpLoggingOptions`.
+- `AddRequestContextLoggingMiddleware()` — registers the `ContextLoggingMiddleware` with the dependency injection container.
+
+:::info v10.2.2
+The former `MiddlewareExtensions` class was split into `ApplicationBuilderExtensions` (`Use` methods) and `ServiceCollectionExtensions` (`Add` methods). All extension methods keep their names — only code that references the class name directly needs updating. See the [migration guide](../migration-guides) for details.
+:::
 
 <br />
 <br />
