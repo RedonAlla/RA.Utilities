@@ -1,0 +1,61 @@
+---
+title: Migration Guides
+sidebar_position: 7
+sidebar_class_name: nav_session ra_utilities_data_ef
+---
+
+# Migration Guides
+
+## v10.0.2 → v10.1.0
+
+### Breaking Change: None for call sites
+
+The `DependencyInjectionExtensions` class is renamed to `ServiceCollectionExtensions` — it now holds only the repository registration extensions (`AddRepositoryBase()`, `AddReadRepositoryBase()`, `AddWriteRepositoryBase()`). Together with `MoneyConventionExtensions`, the methods are re-implemented as **C# 14 extension members** (extension blocks). Method names, signatures, and the `RA.Utilities.Data.EntityFramework.Extensions` namespace are unchanged.
+
+### Why this change?
+
+The rename follows the classic ASP.NET Core `ServiceCollectionExtensions` naming convention used across the RA.Utilities packages, so the class name states exactly what it extends: the service registration extensions for `IServiceCollection`.
+
+### What changed
+
+| Aspect | v10.0.2 | v10.1.0 |
+|---|---|---|
+| `AddRepositoryBase()` / `AddReadRepositoryBase()` / `AddWriteRepositoryBase()` declared in | `DependencyInjectionExtensions` | `ServiceCollectionExtensions` |
+| `HasMoney()` declared in | `MoneyConventionExtensions` | `MoneyConventionExtensions` (name unchanged) |
+| Method names / signatures | — | unchanged |
+| Implementation style | classic extension methods | C# 14 extension blocks |
+
+### Migration Steps
+
+#### 1. No code changes required for consuming projects
+
+These are **extension methods** — they are resolved by the compiler based on the target type (`IServiceCollection`, `EntityTypeBuilder<T>`), not the static class name. The using directive is unchanged:
+
+```csharp
+// ✅ This code is unchanged in v10.1.0
+using RA.Utilities.Data.EntityFramework.Extensions;
+
+builder.Services.AddRepositoryBase();      // Resolved on IServiceCollection
+builder.Services.AddReadRepositoryBase();
+builder.Services.AddWriteRepositoryBase();
+```
+
+#### 2. Update direct class name references (if any)
+
+Only references to the class name itself need updating. Receiver-style calls keep working, and static calls also keep working once they use the new class name:
+
+```csharp
+// ❌ v10.0.2
+typeof(DependencyInjectionExtensions)
+DependencyInjectionExtensions.AddRepositoryBase(services)
+
+// ✅ v10.1.0
+typeof(ServiceCollectionExtensions)
+ServiceCollectionExtensions.AddRepositoryBase(services)
+```
+
+---
+
+## Full Changelog
+
+See the [package release notes](https://github.com/RedonAlla/RA.Utilities/blob/main/Data/RA.Utilities.Data.EntityFramework/releasenotes.md) for a complete version history.

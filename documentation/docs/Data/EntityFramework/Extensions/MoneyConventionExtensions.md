@@ -36,11 +36,13 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 ### Signature
 
 ```csharp
-public static ComplexPropertyBuilder<Money> HasMoney<T>(
-    this EntityTypeBuilder<T> entityTypeBuilder,
-    Expression<Func<T, Money?>> money)
-    where T : class
+extension<T>(EntityTypeBuilder<T> entityTypeBuilder) where T : class
+{
+    public ComplexPropertyBuilder<Money> HasMoney(Expression<Func<T, Money?>> money)
+}
 ```
+
+The method is declared as a C# 14 extension member on `EntityTypeBuilder<T>`; the calling syntax is unchanged.
 
 The returned `ComplexPropertyBuilder<Money>` lets you keep configuring column names and other facets:
 

@@ -29,9 +29,9 @@ In short, it's the "engine" that connects your application's abstract data acces
 This package accelerates the setup of a data access layer by providing several key components:
 
 #### 1. Generic Repository Implementations:
-* **[`RepositoryBase<T>`](./RepositoryBase.md)**: A full implementation of [`IRepositoryBase<T>`](../Abstractions/IRepositoryBase.md) that provides complete CRUD (`Create`, `Read`, `Update`, `Delete`) functionality out of the box.
-* **[`ReadRepositoryBase<T>`](./ReadRepositoryBase.md)**: A read-only repository that is optimized for querying data. It uses `AsNoTracking()` by default for better performance, which is ideal for CQS (Command Query Separation) patterns.
-* **[`WriteRepositoryBase<T>`](./WriteRepositoryBase.md)**: A write-only repository for command operations (`Add`, `Update`, `Delete`).
+* **[`RepositoryBase<T, TKey>`](./RepositoryBase.md)**: A full implementation of [`IRepositoryBase<T, TKey>`](../Abstractions/IRepositoryBase.md) that provides complete CRUD (`Create`, `Read`, `Update`, `Delete`) functionality out of the box.
+* **[`ReadRepositoryBase<T, TKey>`](./ReadRepositoryBase.md)**: A read-only repository that is optimized for querying data. It uses `AsNoTracking()` by default for better performance, which is ideal for CQS (Command Query Separation) patterns.
+* **[`WriteRepositoryBase<T, TKey>`](./WriteRepositoryBase.md)**: A write-only repository for command operations (`Add`, `Update`, `Delete`).
 
 #### 2. Dependency Injection Extensions:
 It provides extension methods like `AddRepositoryBase()` to simplify the registration of these generic repositories in your application's DI container.
@@ -44,7 +44,7 @@ This package is a crucial part of the `RA.Utilities` ecosystem.
 It sits in the **Infrastructure/Data Layer** and depends on:
 
 * **[`RA.Utilities.Data.Abstractions`](../Abstractions/index.mdx)**:
-It implements the interfaces ([`IRepositoryBase<T>`](../Abstractions/IRepositoryBase.md), [`IReadRepositoryBase<T>`](../Abstractions/IReadRepositoryBase.md), [`IWriteRepositoryBase<T>`](../Abstractions/IWriteRepositoryBase.md)) from this package.
+It implements the interfaces ([`IRepositoryBase<T, TKey>`](../Abstractions/IRepositoryBase.md), [`IReadRepositoryBase<T, TKey>`](../Abstractions/IReadRepositoryBase.md), [`IWriteRepositoryBase<T, TKey>`](../Abstractions/IWriteRepositoryBase.md)) from this package.
 * **[`RA.Utilities.Data.Entities`](../Entities/index.mdx)**: It works with the entity base classes defined in this package.
 
 By using this package, you can avoid writing repetitive data access code and focus on your application's business logic,
@@ -62,15 +62,15 @@ This makes your code more decoupled, maintainable, and easier to test.
 ## ⭕️ Core Components
 The package offers several key components to achieve this:
 
-* **[`RepositoryBase<T>`](./RepositoryBase.md)**: A full generic repository with both read and write functionality.
-* **[`ReadRepositoryBase<T>`](./ReadRepositoryBase.md)**: A read-only version optimized for performance (`AsNoTracking()`), ideal for query operations in a CQRS architecture.
-* **[`WriteRepositoryBase<T>`](./WriteRepositoryBase.md)**: A write-only version for add, update, and delete operations.
+* **[`RepositoryBase<T, TKey>`](./RepositoryBase.md)**: A full generic repository with both read and write functionality.
+* **[`ReadRepositoryBase<T, TKey>`](./ReadRepositoryBase.md)**: A read-only version optimized for performance (`AsNoTracking()`), ideal for query operations in a CQRS architecture.
+* **[`WriteRepositoryBase<T, TKey>`](./WriteRepositoryBase.md)**: A write-only version for add, update, and delete operations.
 * **[`BaseEntitySaveChangesInterceptor`](./Interceptors/BaseEntitySaveChangesInterceptor.md)**: A `SaveChanges` interceptor that automatically maintains timestamp properties (`CreatedAt`, `LastModifiedAt`) on entities that expose them.
-* **[`DependencyInjectionExtensions`](./Extensions/DependencyInjectionExtensions.md)**: One-line registration extensions (`AddRepositoryBase()`, `AddReadRepositoryBase()`, `AddWriteRepositoryBase()`).
+* **[`ServiceCollectionExtensions`](./Extensions/ServiceCollectionExtensions.md)**: One-line registration extensions (`AddRepositoryBase()`, `AddReadRepositoryBase()`, `AddWriteRepositoryBase()`).
 * **[Value object converters](./Conventions/ValueObjectConverters.md)**: EF Core value converters that map `Email`, `Currency`, `SSN`, and `Money` to database columns.
 * **[`MoneyConventionExtensions`](./Extensions/MoneyConventionExtensions.md)**: The `HasMoney()` convention that maps a `Money` property to two columns (decimal `Amount` + string `Currency`) as an EF Core complex property.
 
-All repository implementations constrain their entity type to any reference type implementing the `IEntity` marker interface (`where T : class, IEntity`).
+All repository implementations constrain their entity type to [`CoreEntity<TKey>`](../Entities/CoreEntity.md) (`where T : CoreEntity<TKey> where TKey : notnull`), so the primary key can be any non-nullable type.
 
 By using this package, you can quickly set up a robust and well-architected data access layer for your .NET applications.
 
@@ -90,8 +90,8 @@ Install-Package RA.Utilities.Data.EntityFramework
 
 ## 🔗 Dependencies
 
--   **[`RA.Utilities.Data.Abstractions`](../Abstractions/index.mdx)** (10.0.3 or later): Provides the core interfaces (`IRepositoryBase<T>`, `IReadRepositoryBase<T>`, `IWriteRepositoryBase<T>`, `IUnitOfWork`) that this package implements.
--   **[`RA.Utilities.Data.Entities`](../Entities/index.mdx)** (10.1.1 or later, transitively via the abstractions): Provides the `IEntity` marker interface that the repository type parameters constrain to.
+-   **[`RA.Utilities.Data.Abstractions`](../Abstractions/index.mdx)** (10.0.3 or later): Provides the core interfaces (`IRepositoryBase<T, TKey>`, `IReadRepositoryBase<T, TKey>`, `IWriteRepositoryBase<T, TKey>`, `IUnitOfWork`) that this package implements.
+-   **[`RA.Utilities.Data.Entities`](../Entities/index.mdx)** (10.1.1 or later, transitively via the abstractions): Provides the entity base classes — [`CoreEntity<TKey>`](../Entities/CoreEntity.md) and its derivations — that the repository type parameters constrain to.
 -   **[`RA.Utilities.Core.ValueObjects`](../../core/RA.Utilities.Core.ValueObjects/index.mdx)** (10.1.0 or later): Provides the `Email`, `Currency`, `SSN`, and `Money` value objects that the converters and the `HasMoney()` convention persist.
 -   **[`Microsoft.EntityFrameworkCore`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.entityframeworkcore)**: The underlying ORM used for the implementations.
 

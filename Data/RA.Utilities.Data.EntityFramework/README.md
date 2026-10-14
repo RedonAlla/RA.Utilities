@@ -10,8 +10,8 @@ This package provides concrete implementations of the repository and unit of wor
 
 ## ✨ Key Features
 * **Generic Repository Implementations**: Provides ready-to-use base classes for repository patterns, saving you from writing boilerplate CRUD (Create, Read, Update, Delete) code.
-* **Command Query Separation (CQS)**: Offers distinct `ReadRepositoryBase<T>` and `WriteRepositoryBase<T>` classes to help you build a clean architecture where read and write operations are separated.
-* **Performance-Optimized Queries**: The `ReadRepositoryBase<T>` uses `AsNoTracking()` by default for more efficient data retrieval.
+* **Command Query Separation (CQS)**: Offers distinct `ReadRepositoryBase<T, TKey>` and `WriteRepositoryBase<T, TKey>` classes to help you build a clean architecture where read and write operations are separated.
+* **Performance-Optimized Queries**: The `ReadRepositoryBase<T, TKey>` uses `AsNoTracking()` by default for more efficient data retrieval.
 * **Automatic Timestamping**: Includes a `BaseEntitySaveChangesInterceptor` that automatically sets the `CreatedAt` and `LastModifiedAt` properties on entities that expose them (the `BaseEntity<TKey>` and `WriteEntity<TKey>` base classes) when they are saved.
 * **Simplified Dependency Injection**: Provides extension methods to register your repositories with a single line of code in `Program.cs`.
 * **Value Object Mapping**: EF Core value converters and the `HasMoney` convention map the value objects from `RA.Utilities.Core.ValueObjects` (`Email`, `Currency`, `SSN`, `Money`) to database columns — a `Money` can be stored as two columns (amount + currency) or as a single JSON string column.
@@ -32,9 +32,9 @@ Install-Package RA.Utilities.Data.EntityFramework
 ### Repository Implementations
 This package provides concrete implementations for the interfaces defined in `RA.Utilities.Data.Abstractions`.
 
-* **`RepositoryBase<T>`**: A full-featured generic repository that implements `IRepositoryBase<T>` for complete CRUD functionality. It's a convenient all-in-one solution for services that need to both query and modify data.
-* **`ReadRepositoryBase<T>`**: A read-only repository implementing `IReadRepositoryBase<T>`. It is optimized for performance by using `AsNoTracking()` on queries, making it ideal for the "Query" side of a CQRS architecture.
-* **`WriteRepositoryBase<T>`**: A write-only repository implementing `IWriteRepositoryBase<T>`. It is designed for "Command" operations like adding, updating, and deleting entities.
+* **`RepositoryBase<T, TKey>`**: A full-featured generic repository that implements `IRepositoryBase<T, TKey>` for complete CRUD functionality. It's a convenient all-in-one solution for services that need to both query and modify data.
+* **`ReadRepositoryBase<T, TKey>`**: A read-only repository implementing `IReadRepositoryBase<T, TKey>`. It is optimized for performance by using `AsNoTracking()` on queries, making it ideal for the "Query" side of a CQRS architecture.
+* **`WriteRepositoryBase<T, TKey>`**: A write-only repository implementing `IWriteRepositoryBase<T, TKey>`. It is designed for "Command" operations like adding, updating, and deleting entities.
 
 ### Interceptors
 * **`BaseEntitySaveChangesInterceptor`**: An Entity Framework Core interceptor that automatically populates timestamp properties (`CreatedAt`, `LastModifiedAt`) on entities exposing them (the `BaseEntity<TKey>` and `WriteEntity<TKey>` base classes) before changes are saved to the database. This ensures consistent and accurate auditing without manual intervention.
@@ -63,9 +63,9 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 
 ### Dependency Injection Extensions
 
-The `DependencyInjectionExtensions` class simplifies the registration of the generic repositories in your application's DI container.
+The `ServiceCollectionExtensions` class simplifies the registration of the generic repositories in your application's DI container. The methods are declared as C# 14 extension members on `IServiceCollection`, so the calling syntax is unchanged.
 
-* `AddRepositoryBase()`: Registers the full `IRepositoryBase<> `implementation.
+* `AddRepositoryBase()`: Registers the full `IRepositoryBase<>` implementation.
 * `AddReadRepositoryBase()`: Registers the read-only `IReadRepositoryBase<>` implementation.
 * `AddWriteRepositoryBase()`: Registers the write-only `IWriteRepositoryBase<>` implementation.
 
@@ -116,12 +116,12 @@ var app = builder.Build();
 You can extend the generic repositories to add custom data access methods.
 
 ```csharp
-public interface IProductRepository : IRepositoryBase<Product>
+public interface IProductRepository : IRepositoryBase<Product, Guid>
 {
     Task<Product?> GetProductByNameAsync(string name);
 }
 
-public class ProductRepository : RepositoryBase<Product>, IProductRepository
+public class ProductRepository : RepositoryBase<Product, Guid>, IProductRepository
 {
     private readonly ApplicationDbContext _dbContext;
 

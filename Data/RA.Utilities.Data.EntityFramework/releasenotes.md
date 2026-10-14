@@ -4,7 +4,7 @@
 ![Date Badge](https://img.shields.io/badge/Publish-11%20October%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.1.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.EntityFramework/10.1.0)
 
-This release adds persistence support for the value objects of `RA.Utilities.Core.ValueObjects`: EF Core value converters plus a `HasMoney` convention that stores a `Money` in two database columns.
+This release adds persistence support for the value objects of `RA.Utilities.Core.ValueObjects` — EF Core value converters and a `HasMoney` convention that stores a `Money` in two database columns — renames `DependencyInjectionExtensions` to `ServiceCollectionExtensions`, and refactors the extension classes to C# 14 extension members.
 
 ### ✨ New Features
 
@@ -21,6 +21,19 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 }
 ```
 
+### ⚠️ Breaking Changes
+
+* **`DependencyInjectionExtensions` renamed to `ServiceCollectionExtensions`**: The class providing `AddRepositoryBase()`, `AddReadRepositoryBase()` and `AddWriteRepositoryBase()` now follows the ASP.NET Core naming convention. The namespace `RA.Utilities.Data.EntityFramework.Extensions` and all method signatures are unchanged, so extension-method call sites such as `builder.Services.AddRepositoryBase()` keep compiling; only code that references the class by name — a `typeof(...)` expression, a static call or a reflection string — needs updating.
+
+```csharp
+- var registrationType = typeof(DependencyInjectionExtensions);
++ var registrationType = typeof(ServiceCollectionExtensions);
+```
+
+### 📝 Improvements
+
+* **C# 14 extension members**: `ServiceCollectionExtensions` and the `HasMoney` convention in `MoneyConventionExtensions` now declare their methods inside `extension(...)` blocks. The generated members keep the same names, signatures and namespaces, so existing call sites are unaffected.
+
 ### 📦 Dependencies
 * New dependency on `RA.Utilities.Core.ValueObjects` **10.1.0**. `RA.Utilities.Data.Abstractions` and `Microsoft.EntityFrameworkCore` are unchanged.
 
@@ -28,25 +41,22 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 ![Date Badge](https://img.shields.io/badge/Publish-27%20September%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.0.2-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.EntityFramework/10.0.2)
 
-This release aligns the repository implementations with the `IEntity` marker interface introduced in `RA.Utilities.Data.Entities` 10.1.1, reworks the delete operations, and fixes timestamp handling in the save-changes interceptor.
+This release makes all repository implementations generic over the primary key type (`TKey`), reworks the delete operations, and fixes timestamp handling in the save-changes interceptor. `RA.Utilities.Data.Entities` 10.1.1 introduces the `IEntity` marker interface, implemented by `CoreEntity<TKey>`.
 
-### ✨ Enhancements
-* ⁠Change the generic type constraint to the `IEntity` marker interface in all repository implementations. The `class` constraint is kept because EF Core's `DbSet<T>` requires reference types.
+### ⚠️ Breaking Changes
+* **Repository classes and interfaces are now generic over the primary key type (`TKey`)**: `RepositoryBase<T>`, `ReadRepositoryBase<T>`, `WriteRepositoryBase<T>` and their interfaces became `<T, TKey>`, and `GetByIdAsync` / `DeleteAsync` / `DeleteRangeAsync` now take a `TKey` instead of a `Guid`. The entity type parameter is constrained to `CoreEntity<TKey>` (`where T : CoreEntity<TKey> where TKey : notnull`), so numeric and string keys are supported alongside `Guid`; the `IEntity` marker interface added in `RA.Utilities.Data.Entities` 10.1.1 is implemented by `CoreEntity<TKey>`.
 
 ```csharp
-+ public class RepositoryBase<T> : ReadRepositoryBase<T>, IRepositoryBase<T> where T : class, IEntity
-- public class RepositoryBase<T> : ReadRepositoryBase<T>, IRepositoryBase<T> where T : CoreEntity
++ public interface IReadRepositoryBase<T, TKey> : IRepository where T : CoreEntity<TKey> where TKey : notnull
+- public interface IReadRepositoryBase<T> : IRepository where T : notnull, CoreEntity
 
-+ public class ReadRepositoryBase<T> : IReadRepositoryBase<T> where T : class, IEntity
-- public class ReadRepositoryBase<T> : IReadRepositoryBase<T> where T : CoreEntity
-
-+ public class WriteRepositoryBase<T> : IWriteRepositoryBase<T> where T : class, IEntity
-- public class WriteRepositoryBase<T> : IWriteRepositoryBase<T> where T : CoreEntity
++ Task<T?> GetByIdAsync(TKey id, CancellationToken cancellationToken = default);
+- Task<T?> GetByIdAsync<TId>(TId id, CancellationToken cancellationToken = default) where TId : notnull;
 ```
 
 ### 🔄 Behavior Changes
 * `DeleteAsync` and `DeleteRangeAsync` now mark entities for deletion in the change tracker instead of deleting them immediately. The deletion is persisted when `SaveChangesAsync` (or the unit of work) is called, so it participates in the same transaction as any other pending changes. Previously, the delete statement executed immediately.
-* `DeleteRangeAsync` accepts a `List<Guid>` of keys and returns the number of entities that were found and marked for deletion.
+* `DeleteRangeAsync` accepts an `IEnumerable<TKey>` of keys and returns the number of entities that were found and marked for deletion.
 
 ### 🐛 Bug Fixes
 * `BaseEntitySaveChangesInterceptor` now detects timestamp properties through EF Core model metadata instead of a typed `Entries<BaseEntity>()` scan. As a result, the `LastModifiedAt` property of `WriteEntity<TKey>` descendants is now updated correctly (previously it was never set).

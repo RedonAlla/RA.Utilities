@@ -20,29 +20,27 @@ namespace RA.Utilities.Data.EntityFramework.Extensions;
 /// </remarks>
 public static class MoneyConventionExtensions
 {
-    /// <summary>
-    /// Maps the <paramref name="money"/> property to two database columns:
-    /// <see cref="Money.Amount"/> (decimal) and <see cref="Money.Currency"/> (string).
-    /// </summary>
-    /// <typeparam name="T">The entity type that declares the <paramref name="money"/> property.</typeparam>
-    /// <param name="entityTypeBuilder">The builder of the entity type that declares the property.</param>
-    /// <param name="money">The <see cref="Money"/> property to map.</param>
-    /// <returns>
-    /// The complex property builder, so column names and other facets can still be configured.
-    /// </returns>
-    public static ComplexPropertyBuilder<Money> HasMoney<T>(
-        this EntityTypeBuilder<T> entityTypeBuilder,
-        Expression<Func<T, Money?>> money)
-        where T : class
+    extension<T>(EntityTypeBuilder<T> entityTypeBuilder) where T : class
     {
-        ComplexPropertyBuilder<Money> moneyBuilder = entityTypeBuilder.ComplexProperty(money);
+        /// <summary>
+        /// Maps the <paramref name="money"/> property to two database columns:
+        /// <see cref="Money.Amount"/> (decimal) and <see cref="Money.Currency"/> (string).
+        /// </summary>
+        /// <param name="money">The <see cref="Money"/> property to map.</param>
+        /// <returns>
+        /// The complex property builder, so column names and other facets can still be configured.
+        /// </returns>
+        public ComplexPropertyBuilder<Money> HasMoney(Expression<Func<T, Money?>> money)
+        {
+            ComplexPropertyBuilder<Money> moneyBuilder = entityTypeBuilder.ComplexProperty(money);
 
-        // Complex type property discovery skips get-only members, so both must be mapped explicitly
-        // for the Money(decimal, Currency) constructor to bind during materialization.
-        moneyBuilder.Property(m => m.Amount);
-        moneyBuilder.Property(m => m.Currency)
-            .HasConversion(new CurrencyConverter());
+            // Complex type property discovery skips get-only members, so both must be mapped explicitly
+            // for the Money(decimal, Currency) constructor to bind during materialization.
+            moneyBuilder.Property(m => m.Amount);
+            moneyBuilder.Property(m => m.Currency)
+                .HasConversion(new CurrencyConverter());
 
-        return moneyBuilder;
+            return moneyBuilder;
+        }
     }
 }

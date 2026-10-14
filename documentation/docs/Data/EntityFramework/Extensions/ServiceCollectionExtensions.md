@@ -1,19 +1,24 @@
 ---
+title: ServiceCollectionExtensions
 sidebar_position: 4
 ---
 
 ```bash
 Namespace: RA.Utilities.Data.EntityFramework.Extensions
 ```
-The `DependencyInjectionExtensions` class in the `RA.Utilities.Data.EntityFramework` project serves as a convenience layer to simplify the registration of the generic repository patterns in an ASP.NET Core application's dependency injection (DI) container.
+The `ServiceCollectionExtensions` class in the `RA.Utilities.Data.EntityFramework` project serves as a convenience layer to simplify the registration of the generic repository patterns in an ASP.NET Core application's dependency injection (DI) container.
 
 Its primary goal is to **reduce boilerplate** and **promote convention** by providing simple, one-line extension methods for [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection).
+
+:::info[v10.1.0 rename]
+In v10.1.0 this class was renamed from `DependencyInjectionExtensions` to `ServiceCollectionExtensions`, and the methods are now declared as C# 14 extension members on `IServiceCollection`. Extension-method call sites are unchanged (`builder.Services.AddRepositoryBase()`, …) — only code that references the class by name, such as `typeof(DependencyInjectionExtensions)` or a static call, needs updating.
+:::
 
 Instead of developers needing to remember and write the full generic type registration like this:
 
 ```csharp
 // Manual, more verbose registration
-builder.Services.AddScoped(typeof(IRepositoryBase<>), typeof(RepositoryBase<>));
+builder.Services.AddScoped(typeof(IRepositoryBase<,>), typeof(RepositoryBase<,>));
 ```
 They can use the much cleaner and more readable extension method provided by this class:
 ```csharp
@@ -30,7 +35,7 @@ This approach has several key benefits:
 ## ✨ Available Extension Methods
 The class provides three distinct methods to support different architectural needs, such as **Command Query Separation (CQS)**:
 
-The registrations are open-generic, so the repositories work for any entity type `T` that is a reference type implementing the [`IEntity`](../../Entities/IEntity.md) marker interface.
+The registrations are open-generic: any entity `T` deriving from [`CoreEntity<TKey>`](../../Entities/CoreEntity.md) — with any non-nullable key type `TKey` — resolves to the matching repository implementation.
 
 1. **`AddReadRepositoryBase()`**:
 Registers the generic, read-only repository ([`IReadRepositoryBase<>`](../../Abstractions/IReadRepositoryBase.md) and [`ReadRepositoryBase<>`](../../EntityFramework/ReadRepositoryBase.md)).
@@ -46,7 +51,7 @@ It is ideal for services that only need to query data, enforcing the ***Command 
 
 | Parameter |	Type	| Description |
 | --------- | ----- | ----------- |
-| **services** | [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection) |	The [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection) to add the service registration to. This is the `this` parameter for the extension method. |
+| **services** | [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection) |	The [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection) to add the service registration to. |
 
 #### Example
 Here is how you would register and use the read-only repository.
@@ -76,10 +81,10 @@ Once registered, you can inject [`IReadRepositoryBase<>`](../../Abstractions/IRe
 public class ProductReportService
 {
     // highlight-next-line
-    private readonly IReadRepositoryBase<Product> _productReadRepository;
+    private readonly IReadRepositoryBase<Product, Guid> _productReadRepository;
 
     // The DI container injects the correct repository instance.
-    public ProductReportService(IReadRepositoryBase<Product> productReadRepository)
+    public ProductReportService(IReadRepositoryBase<Product, Guid> productReadRepository)
     {
         _productReadRepository = productReadRepository;
     }
@@ -101,7 +106,7 @@ It should be used in services that are responsible for creating, updating, or de
 
 | Parameter |	Type	| Description |
 | --------- | ----- | ----------- |
-| **services** | [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection) |	The [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection) to add the service registration to. This is the `this` parameter for the extension method. |
+| **services** | [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection) |	The [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection) to add the service registration to. |
 
 #### Example
 Here is how you would register and use the write-only repository.
@@ -130,11 +135,11 @@ You can then inject [`IWriteRepositoryBase<>`](../../Abstractions/IWriteReposito
 // In a service that only needs to modify product data
 public class ProductCommandService
 {
-    private readonly IWriteRepositoryBase<Product> _productWriteRepository;
+    private readonly IWriteRepositoryBase<Product, Guid> _productWriteRepository;
 
     public ProductCommandService(
       // highlight-next-line
-      IWriteRepositoryBase<Product> productWriteRepository)
+      IWriteRepositoryBase<Product, Guid> productWriteRepository)
     {
         _productWriteRepository = productWriteRepository;
     }
@@ -160,7 +165,7 @@ It's a convenient, all-in-one solution for services that need to both query and 
 
 | Parameter |	Type	| Description |
 | --------- | ----- | ----------- |
-| **services** | [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection) |	The [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection) to add the service registration to. This is the `this` parameter for the extension method. |
+| **services** | [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection) |	The [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection) to add the service registration to. |
 
 #### Example
 Here is how you would register and use the full repository.
@@ -183,18 +188,18 @@ builder.Services.AddRepositoryBase();
 
 var app = builder.Build();
 ```
-This allows you to inject [`IRepositoryBase<T>`](../../Abstractions/IReadRepositoryBase.md) for full data manipulation capabilities.
+This allows you to inject [`IRepositoryBase<T, TKey>`](../../Abstractions/IRepositoryBase.md) for full data manipulation capabilities.
 
 ```csharp showLineNumbers
 // In a service that handles all operations for a product
 public class ProductManagementService
 {
     // highlight-next-line
-    private readonly IRepositoryBase<Product> _productRepository;
+    private readonly IRepositoryBase<Product, Guid> _productRepository;
 
     public ProductManagementService(
         // highlight-next-line
-        IRepositoryBase<Product> productRepository)
+        IRepositoryBase<Product, Guid> productRepository)
     {
         _productRepository = productRepository;
     }
