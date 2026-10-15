@@ -1,8 +1,8 @@
 # Release Notes for RA.Utilities.Data.Entities
 
-## Version 10.1.1
+## Version 10.1.2
 ![Date Badge](https://img.shields.io/badge/Publish-27%20September%202026-lightblue?logo=fastly&logoColor=white)
-[![NuGet version](https://img.shields.io/badge/NuGet-10.1.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.Entities/10.1.1)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.1.2-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.Entities/10.1.2)
 
 This release introduces the `IEntity` marker interface and makes `CoreEntity<TKey>` (and through it, every base class) implement it.
 
