@@ -59,20 +59,11 @@ public class RequestIdEnricher : ILogEventEnricher
     {
         HttpContext? httpContext = _contextAccessor?.HttpContext;
 
-        string? requestId = httpContext?.Request.Headers[XRequestIdHeaderName];
+        string? requestId =
+            httpContext?.Request.Headers[XRequestIdHeaderName]
+            ?? httpContext?.TraceIdentifier ?? Activity.Current?.GetActivityId();
 
-        if (!string.IsNullOrEmpty(requestId))
-        {
-            LogEventProperty property = propertyFactory.CreateProperty(XRequestIdHeaderName, requestId);
-            logEvent.AddPropertyIfAbsent(property);
-        }
-
-        string? traceId = httpContext?.TraceIdentifier ?? Activity.Current?.GetActivityId();
-
-        if (!string.IsNullOrWhiteSpace(traceId))
-        {
-            LogEventProperty property = propertyFactory.CreateProperty(TraceIdPropertyName, traceId);
-            logEvent.AddPropertyIfAbsent(property);
-        }
+        LogEventProperty property = propertyFactory.CreateProperty(TraceIdPropertyName, requestId);
+        logEvent.AddPropertyIfAbsent(property);
     }
 }

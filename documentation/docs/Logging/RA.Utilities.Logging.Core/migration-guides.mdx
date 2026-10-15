@@ -1,0 +1,216 @@
+---
+title: Migration Guides
+---
+
+# Migration Guides
+
+## v10.1.0 → v10.1.1
+
+### Breaking Change: `RequestIdEnricher` now emits a single `TraceId` property
+
+`RequestIdEnricher` was consolidated. It contributes **one** property — `TraceId` — whose value is resolved from the first source that yields one:
+
+1. the `x-request-id` HTTP request header,
+2. `HttpContext.TraceIdentifier`,
+3. `Activity.Current` (through `ActivityExtensions.GetActivityId()`).
+
+In v10.1.0 the enricher emitted a separate request-id property (stored under the dashed name `x-request-id`) **in addition** to `TraceId`, and it skipped `TraceId` entirely when neither an HTTP context nor an activity was available.
+
+Two consequences to plan for:
+
+* Queries, dashboards, alerts, or log-based metrics that read the old request-id property must switch to `TraceId`.
+* For requests that carry the `x-request-id` header, `TraceId` now holds the **header value** instead of `HttpContext.TraceIdentifier`. Events outside an HTTP request now always have `TraceId`, but with a `null` value when there is no activity.
+
+### Breaking Change: None for call sites
+
+The single `LoggingExtensions` class is split into one class per extended type: `WebApplicationBuilderExtensions` (the `Add`-style method on `WebApplicationBuilder`) and `LoggerEnrichmentConfigurationExtensions` (the fluent enricher method on `LoggerEnrichmentConfiguration`). All three extension classes — including `ActivityExtensions` — are now declared as **C# 14 extension members** (extension blocks).
+
+Method names, signatures, and the `RA.Utilities.Logging.Core.Extensions` namespace are unchanged.
+
+### Why this change?
+
+Correlation was previously split across two properties with different value sources, which made a single request look like two different operations in the log store. Folding everything into one `TraceId` gives every event exactly one correlation value, and preferring the `x-request-id` header means the value assigned at the edge survives across every service in the call chain.
+
+The class split mirrors the convention used across the RA.Utilities packages — one class per extended type — so each class has a single, obvious responsibility.
+
+### What changed
+
+| Aspect | v10.1.0 | v10.1.1 |
+|---|---|---|
+| Properties added by `RequestIdEnricher` | request-id property (stored as `x-request-id`) **and** `TraceId` | `TraceId` only |
+| `TraceId` value source | `HttpContext.TraceIdentifier`, else `Activity` | `x-request-id` header, else `TraceIdentifier`, else `Activity` |
+| `TraceId` when no source exists | property omitted | property added with a `null` value |
+| `AddLoggingWithConfiguration()` declared in | `LoggingExtensions` | `WebApplicationBuilderExtensions` |
+| `WithRequestIdEnricher()` declared in | `LoggingExtensions` | `LoggerEnrichmentConfigurationExtensions` |
+| `GetActivityId()` declared in | `ActivityExtensions` (classic extension method) | `ActivityExtensions` (C# 14 extension member) |
+| Method names / signatures | — | unchanged |
+| Namespace | `RA.Utilities.Logging.Core.Extensions` | unchanged |
+
+### Migration Steps
+
+#### 1. No code changes required for consuming projects
+
+These are **extension members** — the compiler resolves them from the receiver type (`WebApplicationBuilder`, `LoggerEnrichmentConfiguration`, `Activity`), not from the static class name. The using directive and the call sites are unchanged:
+
+```csharp showLineNumbers
+// ✅ This code is unchanged in v10.1.1
+using RA.Utilities.Logging.Core.Extensions;
+
+builder.Services.AddHttpContextAccessor();
+builder.AddLoggingWithConfiguration();          // Resolved on WebApplicationBuilder
+
+Log.Logger = new LoggerConfiguration()
+    .Enrich.WithRequestIdEnricher()             // Resolved on LoggerEnrichmentConfiguration
+    .WriteTo.Console()
+    .CreateLogger();
+
+string? traceId = Activity.Current?.GetActivityId(); // Resolved on Activity
+```
+
+#### 2. Read `TraceId` instead of the request-id property
+
+**Before (v10.1.0)** — two properties; the server-side identifier sat in `TraceId`:
+
+```json showLineNumbers
+{
+  "Timestamp": "2026-10-15T19:40:21.1330580Z",
+  "Level": "Information",
+  "x-request-id": "abc-123",
+  "TraceId": "0HN7G3F2QK1L0:00000001"
+}
+```
+
+**After (v10.1.1)** — one property, carrying the header value when present:
+
+```json showLineNumbers
+{
+  "Timestamp": "2026-10-15T19:40:21.1330580Z",
+  "Level": "Information",
+  "TraceId": "abc-123"
+}
+```
+
+Update any query or filter that referenced the old property — for example a Serilog `Filter`, a sink query, or a dashboard panel:
+
+```csharp
+// ❌ v10.1.0 — property no longer produced
+.Filter.ByIncludingOnly("@Properties['x-request-id'] is not null")
+
+// ✅ v10.1.1
+.Filter.ByIncludingOnly("@Properties['TraceId'] is not null")
+```
+
+#### 3. Account for `TraceId: null` on non-request events
+
+Since the property is now always added, exclude null values when you group by trace id:
+
+```csharp
+// Keeps startup and background events out of per-trace groupings
+.Filter.ByIncludingOnly("@Properties['TraceId'] is not null")
+```
+
+If you need a real trace id in background jobs, start an activity — see [Correlate background jobs with `Activity`](./index.mdx#correlate-background-jobs-with-activity).
+
+#### 4. Update direct class name references (if any)
+
+Only code that references the class *name* directly — `typeof(...)`, reflection, or unit-test assertions against the declaring type — needs updating:
+
+```csharp
+// ❌ v10.1.0
+typeof(LoggingExtensions)
+
+// ✅ v10.1.1
+typeof(WebApplicationBuilderExtensions)            // AddLoggingWithConfiguration()
+typeof(LoggerEnrichmentConfigurationExtensions)    // WithRequestIdEnricher()
+typeof(ActivityExtensions)                         // GetActivityId()
+```
+
+#### 5. Call `GetActivityId()` with a null-conditional receiver
+
+The extension member declares its receiver as non-nullable `Activity`, so call it with `?.` (as the package itself does) to avoid a nullable-reference warning:
+
+```csharp
+// ✅ Preferred
+string? traceId = Activity.Current?.GetActivityId();
+
+// ⚠️ Receiver is declared non-nullable
+Activity? maybeNull = GetActivity();
+string? traceId2 = maybeNull?.GetActivityId();
+```
+
+---
+
+## v10.0.1 → v10.1.0
+
+### Breaking Change: `IHttpContextAccessor` is no longer registered automatically
+
+`AddLoggingWithConfiguration()` no longer calls `builder.Services.AddHttpContextAccessor()`. Applications that do not use request ID enrichment no longer get an implicit ASP.NET Core service registration.
+
+### Why this change?
+
+Request ID enrichment is opt-in, so the service it depends on should be opt-in too. Registering the accessor unconditionally added a service (and its per-request allocation) to applications that never activate `RequestIdEnricher`.
+
+### Migration Steps
+
+If you activate `RequestIdEnricher` — either with `{ "Name": "WithRequestIdEnricher" }` in `appsettings.json` or by calling the fluent extension — register the accessor yourself:
+
+**Before:**
+
+```csharp
+builder.AddLoggingWithConfiguration();
+```
+
+**After:**
+
+```csharp
+builder.Services.AddHttpContextAccessor();
+builder.AddLoggingWithConfiguration();
+```
+
+For manual Serilog configuration, keep the same registration before building the application. The enricher is null-safe, so nothing throws if you forget — you simply lose the header and `TraceIdentifier` sources for `TraceId`.
+
+---
+
+## v10.0.0 → v10.0.1
+
+### Breaking Change: `GetActivityId()` returns `string?`
+
+The return type changed from `string` to `string?`. When no `Activity` context is available, the method now returns `null` instead of a random `Guid`, and `RequestIdEnricher` skips adding the `TraceId` property when the value is null.
+
+### Why this change?
+
+Generating a random GUID per event for logs that had no trace context actively defeated correlation: every background and startup log received a unique `TraceId` that could never be matched to anything.
+
+### Migration Steps
+
+Update code that assigns the result to a non-nullable `string`:
+
+**Before:**
+
+```csharp
+string traceId = Activity.Current?.GetActivityId(); // may be a random GUID
+```
+
+**After:**
+
+```csharp
+string? traceId = Activity.Current?.GetActivityId(); // null when no trace context
+```
+
+If you need a `TraceId` in non-HTTP code, start an `Activity` yourself (see [Correlate background jobs with `Activity`](./index.mdx#correlate-background-jobs-with-activity)).
+
+### Other changes in v10.0.1
+
+| Change | Detail |
+|---|---|
+| Lazy `HttpContext` resolution | `RequestIdEnricher` resolves the current context inside `Enrich()`; in v10.0.0 it captured `HttpContext` in the constructor and the `x-request-id` branch was dead code. |
+| `Serilog.Settings.AppSettings` removed | Configuration is read through `Serilog.Settings.Configuration`, included transitively by `Serilog.AspNetCore`. |
+| XML documentation fixed | Unresolvable `cref` references in `AddLoggingWithConfiguration` remarks were replaced with plain text. |
+| Sample configuration cleaned | `appsettings.serilog.json` no longer contains developer-specific absolute paths. |
+| README corrected | References to the non-existent `AddRaSerilog` method now use `AddLoggingWithConfiguration`. |
+
+---
+
+## Full Changelog
+
+See the [package release notes](https://github.com/RedonAlla/RA.Utilities/blob/main/Logging/RA.Utilities.Logging.Core/releasenotes.md) for a complete version history.

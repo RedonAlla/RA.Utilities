@@ -6,37 +6,47 @@ title: RA.Utilities.Logging.Core.Extensions
 Namespace: RA.Utilities.Logging.Core.Extensions
 ```
 
-The classes in this namespace serve as the primary configuration and setup entry points for your logging framework.
-They provide convenient, fluent extension methods that simplify the process of integrating and enriching your Serilog-based logger.
+The classes in this namespace are the configuration and setup entry points of the logging framework.
+Each class extends exactly one type, and every member is declared as a **C# 14 extension member** (`extension(Target) { ... }`).
 
 ## Classes
 
-### 1. [`LoggingExtensions`](./LoggingExtensions.md)
+### 1. [`WebApplicationBuilderExtensions`](./WebApplicationBuilderExtensions.md)
+
 This is the most important class in the namespace.
 Its purpose is to provide a "one-liner" setup for a production-ready Serilog configuration in a .NET application.
 
-* **[`AddLoggingWithConfiguration(this WebApplicationBuilder builder)`](./LoggingExtensions.md#1-addloggingwithconfiguration)**:
-This is the main entry point. It abstracts away all the complex boilerplate needed to configure Serilog correctly. In a single call, it:
-  * Hooks Serilog into the host.
-  * Reads configuration from `appsettings.json`.
-  * Adds the `WithExceptionDetails` enricher to log detailed exception information.
+* **[`AddLoggingWithConfiguration()`](./WebApplicationBuilderExtensions.md)**:
+The main entry point. It abstracts away the boilerplate needed to configure Serilog correctly. In a single call it:
+  * Hooks Serilog into the host (`builder.Host.UseSerilog(...)`).
+  * Reads configuration from `appsettings.json` (`ReadFrom.Configuration`).
+  * Adds `WithExceptionDetails` to log detailed exception information.
   * Enables destructuring of [`System.Text.Json`](https://learn.microsoft.com/en-us/dotnet/api/system.text.json) objects for better structured logs.
 
   Request ID enrichment remains opt-in. Activate `WithRequestIdEnricher` through the `Serilog` → `Enrich` configuration or by calling the fluent extension manually, then register [`IHttpContextAccessor`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.ihttpcontextaccessor) with `builder.Services.AddHttpContextAccessor()`.
 
-* **[`WithRequestIdEnricher(this LoggerEnrichmentConfiguration enrich)`](./LoggingExtensions.md#2-withrequestidenricher)**:
-A fluent helper that adds the custom `RequestIdEnricher` to the Serilog pipeline, improving readability in the main setup method.
+### 2. [`LoggerEnrichmentConfigurationExtensions`](./LoggerEnrichmentConfigurationExtensions.md)
 
-### 2. `ActivityExtensions`
-Provides extension methods for `System.Diagnostics.Activity`:
-* **`GetActivityId(this Activity?)`**: Returns the activity's ID as a string based on its format (Hierarchical or W3C). Returns `null` when no activity or format is available, so downstream code can decide whether to add a trace property.
+Extends `Serilog.Configuration.LoggerEnrichmentConfiguration`.
 
+* **[`WithRequestIdEnricher()`](./LoggerEnrichmentConfigurationExtensions.md)**:
+A fluent helper that adds the custom [`RequestIdEnricher`](../Enrichers/index.md) to the Serilog pipeline, contributing the `TraceId` correlation property. It returns the `LoggerConfiguration` so it can be chained, and throws `ArgumentNullException` when the receiver is `null`.
+
+### 3. [`ActivityExtensions`](./ActivityExtensions.md)
+
+Extends `System.Diagnostics.Activity`.
+
+* **[`GetActivityId()`](./ActivityExtensions.md)**:
+Returns the activity's id as a string based on its `IdFormat` (`Hierarchical` → `Activity.Id`, `W3C` → `SpanId.ToHexString()`). Returns `null` when there is no trace context, so downstream code can decide whether to add a trace property. This is the fallback [`RequestIdEnricher`](../Enrichers/index.md) uses when no `HttpContext` is available.
+
+:::info v10.1.1
+`AddLoggingWithConfiguration()` and `WithRequestIdEnricher()` were previously declared together in a single `LoggingExtensions` class. Since v10.1.1 the methods live in one class per extended type (`WebApplicationBuilderExtensions` and `LoggerEnrichmentConfigurationExtensions`), and `ActivityExtensions` was converted to a C# 14 extension member. Method names, signatures, and the namespace are unchanged for call sites — see the [migration guide](../migration-guides.mdx) for the rare cases that need updating.
+:::
 
 ## 🧠 Summary
-In summary, the `RA.Utilities.Logging.Core.Extensions` namespace is the "developer-friendly API" for your logging library.
-It makes it incredibly simple for a developer to get a powerful, pre-configured,
-and consistent logging implementation up and running with minimal effort.
 
+In summary, the `RA.Utilities.Logging.Core.Extensions` namespace is the "developer-friendly API" for the logging library.
+It makes it simple to get a powerful, pre-configured, and consistent logging implementation up and running with minimal effort, while keeping each extension class focused on the type it extends.
 
 <br />
 <br />
