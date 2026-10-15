@@ -1,0 +1,10 @@
+{
+  "sdk": {
+    // The solution uses C# 14 extension members and source generators built against
+    // Microsoft.CodeAnalysis.CSharp 5.6, so it needs a Roslyn/compiler from the 10.0.4xx
+    // feature band or later. Earlier 10.0 SDKs fail with CS9057 (analyzer references a
+    // newer compiler) and CS1734 (doc comments on extension members).
+    "version": "10.0.400",
+    "rollForward": "latestFeature"
+  }
+}

@@ -56,7 +56,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.OnSuccess{T}(Result{T}, Action{T})"/> executes the provided action
+    /// Verifies that <see cref="TypedResultExtensions.OnSuccess{T}(Result{T}, Action{T})"/> executes the provided action
     /// with the result value when the result is successful.
     /// </summary>
     [Fact]
@@ -76,7 +76,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.OnSuccess{T}(Result{T}, Action{T})"/> does not execute the provided action
+    /// Verifies that <see cref="TypedResultExtensions.OnSuccess{T}(Result{T}, Action{T})"/> does not execute the provided action
     /// when the result is a failure.
     /// </summary>
     [Fact]
@@ -110,7 +110,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.OnSuccess{T}(Result{T}, Action{T})"/> throws an <see cref="NullReferenceException"/>
+    /// Verifies that <see cref="TypedResultExtensions.OnSuccess{T}(Result{T}, Action{T})"/> throws an <see cref="NullReferenceException"/>
     /// when the action is null.
     /// </summary>
     [Fact]
@@ -167,7 +167,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.OnFailure{T}(Result{T}, Action{Exception})"/> executes the provided action
+    /// Verifies that <see cref="TypedResultExtensions.OnFailure{T}(Result{T}, Action{Exception})"/> executes the provided action
     /// with the exception when the result is a failure.
     /// </summary>
     [Fact]
@@ -187,7 +187,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.OnFailure{T}(Result{T}, Action{Exception})"/> does not execute the provided action
+    /// Verifies that <see cref="TypedResultExtensions.OnFailure{T}(Result{T}, Action{Exception})"/> does not execute the provided action
     /// when the result is successful.
     /// </summary>
     [Fact]
@@ -220,7 +220,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.OnFailure{T}(Result{T}, Action{Exception})"/> throws an <see cref="NullReferenceException"/>
+    /// Verifies that <see cref="TypedResultExtensions.OnFailure{T}(Result{T}, Action{Exception})"/> throws an <see cref="NullReferenceException"/>
     /// when the action is null.
     /// </summary>
     [Fact]
@@ -238,7 +238,7 @@ public class ResultExtensionsTests
     #region Map Tests
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.Map{TIn, TOut}(Result{TIn}, Func{TIn, TOut})"/> transforms the value
+    /// Verifies that <see cref="TypedResultExtensions.Map{TIn, TOut}(Result{TIn}, Func{TIn, TOut})"/> transforms the value
     /// when the result is successful.
     /// </summary>
     [Theory]
@@ -259,7 +259,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.Map{TIn, TOut}(Result{TIn}, Func{TIn, TOut})"/> transforms between different types
+    /// Verifies that <see cref="TypedResultExtensions.Map{TIn, TOut}(Result{TIn}, Func{TIn, TOut})"/> transforms between different types
     /// when the result is successful.
     /// </summary>
     [Fact]
@@ -278,7 +278,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.Map{TIn, TOut}(Result{TIn}, Func{TIn, TOut})"/> propagates the exception
+    /// Verifies that <see cref="TypedResultExtensions.Map{TIn, TOut}(Result{TIn}, Func{TIn, TOut})"/> propagates the exception
     /// when the result is a failure.
     /// </summary>
     [Fact]
@@ -297,7 +297,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.Map{TIn, TOut}(Result{TIn}, Func{TIn, TOut})"/> throws an <see cref="NullReferenceException"/>
+    /// Verifies that <see cref="TypedResultExtensions.Map{TIn, TOut}(Result{TIn}, Func{TIn, TOut})"/> throws an <see cref="NullReferenceException"/>
     /// when the map function is null.
     /// </summary>
     [Fact]
@@ -363,7 +363,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.Bind{TIn}(Result{TIn}, Func{TIn, Result})"/> executes the bind function
+    /// Verifies that <see cref="TypedResultExtensions.Bind{TIn}(Result{TIn}, Func{TIn, Result})"/> executes the bind function
     /// with the result value and returns its result when the initial result is successful.
     /// </summary>
     [Fact]
@@ -388,7 +388,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.Bind{TIn}(Result{TIn}, Func{TIn, Result})"/> propagates the exception
+    /// Verifies that <see cref="TypedResultExtensions.Bind{TIn}(Result{TIn}, Func{TIn, Result})"/> propagates the exception
     /// when the initial result is a failure.
     /// </summary>
     [Fact]
@@ -407,7 +407,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.Bind{TIn}(Result{TIn}, Func{TIn, Result})"/> returns a failure result
+    /// Verifies that <see cref="TypedResultExtensions.Bind{TIn}(Result{TIn}, Func{TIn, Result})"/> returns a failure result
     /// from the bind function when the initial result is successful but the bind function returns failure.
     /// </summary>
     [Fact]
@@ -428,7 +428,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.Bind{TIn, TOut}(Result{TIn}, Func{TIn, Result{TOut}})"/> executes the bind function
+    /// Verifies that <see cref="TypedResultExtensions.Bind{TIn, TOut}(Result{TIn}, Func{TIn, Result{TOut}})"/> executes the bind function
     /// with the result value and returns its result when the initial result is successful.
     /// </summary>
     [Fact]
@@ -448,7 +448,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.Bind{TIn, TOut}(Result{TIn}, Func{TIn, Result{TOut}})"/> executes the bind function
+    /// Verifies that <see cref="TypedResultExtensions.Bind{TIn, TOut}(Result{TIn}, Func{TIn, Result{TOut}})"/> executes the bind function
     /// with the result value and returns its result when the initial result is successful, and the bind function returns a different type.
     /// </summary>
     [Fact]
@@ -474,7 +474,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.Bind{TIn, TOut}(Result{TIn}, Func{TIn, Result{TOut}})"/> propagates the exception
+    /// Verifies that <see cref="TypedResultExtensions.Bind{TIn, TOut}(Result{TIn}, Func{TIn, Result{TOut}})"/> propagates the exception
     /// when the initial result is a failure.
     /// </summary>
     [Fact]
@@ -494,7 +494,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.Bind{TIn}(Result{TIn}, Func{TIn, Result})"/> properly handles
+    /// Verifies that <see cref="TypedResultExtensions.Bind{TIn}(Result{TIn}, Func{TIn, Result})"/> properly handles
     /// different generic types for the input result.
     /// </summary>
     [Fact]
@@ -518,7 +518,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.Bind{TIn}(Result{TIn}, Func{TIn, Result})"/> throws an <see cref="NullReferenceException"/>
+    /// Verifies that <see cref="TypedResultExtensions.Bind{TIn}(Result{TIn}, Func{TIn, Result})"/> throws an <see cref="NullReferenceException"/>
     /// when the bind function is null.
     /// </summary>
     [Fact]
@@ -532,7 +532,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.Bind{TIn, TOut}(Result{TIn}, Func{TIn, Result{TOut}})"/> throws an <see cref="NullReferenceException"/>
+    /// Verifies that <see cref="TypedResultExtensions.Bind{TIn, TOut}(Result{TIn}, Func{TIn, Result{TOut}})"/> throws an <see cref="NullReferenceException"/>
     /// when the bind function is null.
     /// </summary>
     [Fact]
@@ -789,7 +789,7 @@ public class ResultExtensionsTests
     #region Async OnSuccess Tests
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.OnSuccessAsync(Task{Result}, Func{Task})"/> executes the asynchronous action
+    /// Verifies that <see cref="ResultAsyncExtensions.OnSuccessAsync(Task{Result}, Func{Task})"/> executes the asynchronous action
     /// when the result is successful.
     /// </summary>
     [Fact]
@@ -813,7 +813,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.OnSuccessAsync(Task{Result}, Func{Task})"/> does not execute the asynchronous action
+    /// Verifies that <see cref="ResultAsyncExtensions.OnSuccessAsync(Task{Result}, Func{Task})"/> does not execute the asynchronous action
     /// when the result is a failure.
     /// </summary>
     [Fact]
@@ -838,7 +838,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.OnSuccessAsync{T}(Task{Result{T}}, Func{T, Task})"/> executes the asynchronous action
+    /// Verifies that <see cref="TypedResultAsyncExtensions.OnSuccessAsync{T}(Task{Result{T}}, Func{T, Task})"/> executes the asynchronous action
     /// with the result value when the result is successful.
     /// </summary>
     [Fact]
@@ -863,7 +863,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.OnSuccessAsync{T}(Task{Result{T}}, Func{T, Task})"/> does not execute the asynchronous action
+    /// Verifies that <see cref="TypedResultAsyncExtensions.OnSuccessAsync{T}(Task{Result{T}}, Func{T, Task})"/> does not execute the asynchronous action
     /// when the result is a failure.
     /// </summary>
     [Fact]
@@ -888,7 +888,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.OnSuccessAsync(Task{Result}, Func{Task})"/> throws an <see cref="NullReferenceException"/>
+    /// Verifies that <see cref="ResultAsyncExtensions.OnSuccessAsync(Task{Result}, Func{Task})"/> throws an <see cref="NullReferenceException"/>
     /// when the asynchronous action is null.
     /// </summary>
     [Fact]
@@ -902,7 +902,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.OnSuccessAsync{T}(Task{Result{T}}, Func{T, Task})"/> throws an <see cref="NullReferenceException"/>
+    /// Verifies that <see cref="TypedResultAsyncExtensions.OnSuccessAsync{T}(Task{Result{T}}, Func{T, Task})"/> throws an <see cref="NullReferenceException"/>
     /// when the asynchronous action is null.
     /// </summary>
     [Fact]
@@ -916,7 +916,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.OnSuccessAsync(Task{Result}, Func{Task})"/> propagates exceptions thrown by the action.
+    /// Verifies that <see cref="ResultAsyncExtensions.OnSuccessAsync(Task{Result}, Func{Task})"/> propagates exceptions thrown by the action.
     /// </summary>
     [Fact]
     public async Task OnSuccessAsync_WithThrowingAction_PropagatesException_Async()
@@ -939,7 +939,7 @@ public class ResultExtensionsTests
     #region Async OnFailure Tests
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.OnFailureAsync(Task{Result}, Func{Exception, Task})"/> executes the asynchronous action
+    /// Verifies that <see cref="ResultAsyncExtensions.OnFailureAsync(Task{Result}, Func{Exception, Task})"/> executes the asynchronous action
     /// with the exception when the result is a failure.
     /// </summary>
     [Fact]
@@ -964,7 +964,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.OnFailureAsync(Task{Result}, Func{Exception, Task})"/> does not execute the asynchronous action
+    /// Verifies that <see cref="ResultAsyncExtensions.OnFailureAsync(Task{Result}, Func{Exception, Task})"/> does not execute the asynchronous action
     /// when the result is successful.
     /// </summary>
     [Fact]
@@ -988,7 +988,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.OnFailureAsync{T}(Task{Result{T}}, Func{Exception, Task})"/> executes the asynchronous action
+    /// Verifies that <see cref="TypedResultAsyncExtensions.OnFailureAsync{T}(Task{Result{T}}, Func{Exception, Task})"/> executes the asynchronous action
     /// with the exception when the result is a failure.
     /// </summary>
     [Fact]
@@ -1013,7 +1013,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.OnFailureAsync{T}(Task{Result{T}}, Func{Exception, Task})"/> does not execute the asynchronous action
+    /// Verifies that <see cref="TypedResultAsyncExtensions.OnFailureAsync{T}(Task{Result{T}}, Func{Exception, Task})"/> does not execute the asynchronous action
     /// when the result is successful.
     /// </summary>
     [Fact]
@@ -1037,7 +1037,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.OnFailureAsync(Task{Result}, Func{Exception, Task})"/> throws an <see cref="NullReferenceException"/>
+    /// Verifies that <see cref="ResultAsyncExtensions.OnFailureAsync(Task{Result}, Func{Exception, Task})"/> throws an <see cref="NullReferenceException"/>
     /// when the asynchronous action is null.
     /// </summary>
     [Fact]
@@ -1055,7 +1055,7 @@ public class ResultExtensionsTests
     #region Async Map Tests
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.MapAsync{TIn, TOut}(Task{Result{TIn}}, Func{TIn, Task{TOut}})"/> transforms the value asynchronously
+    /// Verifies that <see cref="TypedResultAsyncExtensions.MapAsync{TIn, TOut}(Task{Result{TIn}}, Func{TIn, Task{TOut}})"/> transforms the value asynchronously
     /// when the result is successful.
     /// </summary>
     [Fact]
@@ -1080,7 +1080,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.MapAsync{TIn, TOut}(Task{Result{TIn}}, Func{TIn, Task{TOut}})"/> propagates the exception
+    /// Verifies that <see cref="TypedResultAsyncExtensions.MapAsync{TIn, TOut}(Task{Result{TIn}}, Func{TIn, Task{TOut}})"/> propagates the exception
     /// when the result is a failure.
     /// </summary>
     [Fact]
@@ -1105,7 +1105,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.MapAsync{TIn, TOut}(Result{TIn}, Func{TIn, Task{TOut}})"/> transforms the value asynchronously
+    /// Verifies that <see cref="TypedResultExtensions.MapAsync{TIn, TOut}(Result{TIn}, Func{TIn, Task{TOut}})"/> transforms the value asynchronously
     /// when called directly on a synchronous result.
     /// </summary>
     [Fact]
@@ -1128,7 +1128,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.MapAsync{TIn, TOut}(Task{Result{TIn}}, Func{TIn, Task{TOut}})"/> throws an <see cref="NullReferenceException"/>
+    /// Verifies that <see cref="TypedResultAsyncExtensions.MapAsync{TIn, TOut}(Task{Result{TIn}}, Func{TIn, Task{TOut}})"/> throws an <see cref="NullReferenceException"/>
     /// when the map function is null.
     /// </summary>
     [Fact]
@@ -1142,7 +1142,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.MapAsync{TIn, TOut}(Task{Result{TIn}}, Func{TIn, Task{TOut}})"/> handles exceptions thrown by the map function.
+    /// Verifies that <see cref="TypedResultAsyncExtensions.MapAsync{TIn, TOut}(Task{Result{TIn}}, Func{TIn, Task{TOut}})"/> handles exceptions thrown by the map function.
     /// </summary>
     [Fact]
     public async Task MapAsync_WithThrowingMapFunc_ReturnsFailureResult_Async()
@@ -1168,7 +1168,7 @@ public class ResultExtensionsTests
     #region Async Bind Tests
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.BindAsync(Task{Result}, Func{Task{Result}})"/> executes the asynchronous bind function
+    /// Verifies that <see cref="ResultAsyncExtensions.BindAsync(Task{Result}, Func{Task{Result}})"/> executes the asynchronous bind function
     /// and returns its result when the initial result is successful.
     /// </summary>
     [Fact]
@@ -1219,7 +1219,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.BindAsync{TIn, TOut}(Task{Result{TIn}}, Func{TIn, Task{Result{TOut}}})"/> executes the asynchronous bind function
+    /// Verifies that <see cref="TypedResultAsyncExtensions.BindAsync{TIn, TOut}(Task{Result{TIn}}, Func{TIn, Task{Result{TOut}}})"/> executes the asynchronous bind function
     /// with the result value and returns its result when the initial result is successful.
     /// </summary>
     [Fact]
@@ -1246,7 +1246,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.BindAsync{TIn, TOut}(Task{Result{TIn}}, Func{TIn, Task{Result{TOut}}})"/> propagates the exception
+    /// Verifies that <see cref="TypedResultAsyncExtensions.BindAsync{TIn, TOut}(Task{Result{TIn}}, Func{TIn, Task{Result{TOut}}})"/> propagates the exception
     /// when the initial result is a failure.
     /// </summary>
     [Fact]
@@ -1270,7 +1270,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.BindAsync{TIn, TOut}(Result{TIn}, Func{TIn, Task{Result{TOut}}})"/> executes the asynchronous bind function
+    /// Verifies that <see cref="TypedResultExtensions.BindAsync{TIn, TOut}(Result{TIn}, Func{TIn, Task{Result{TOut}}})"/> executes the asynchronous bind function
     /// when called directly on a synchronous result.
     /// </summary>
     [Fact]
@@ -1293,7 +1293,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.BindAsync(Task{Result}, Func{Task{Result}})"/> does not execute the bind function
+    /// Verifies that <see cref="ResultAsyncExtensions.BindAsync(Task{Result}, Func{Task{Result}})"/> does not execute the bind function
     /// when the initial result is a failure.
     /// </summary>
     [Fact]
@@ -1319,7 +1319,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.BindAsync(Task{Result}, Func{Task{Result}})"/> throws an <see cref="NullReferenceException"/>
+    /// Verifies that <see cref="ResultAsyncExtensions.BindAsync(Task{Result}, Func{Task{Result}})"/> throws an <see cref="NullReferenceException"/>
     /// when the bind function is null.
     /// </summary>
     [Fact]
@@ -1412,7 +1412,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.OnFailure{T}(Result{T}, Action{Exception})"/> handles custom exception types correctly.
+    /// Verifies that <see cref="TypedResultExtensions.OnFailure{T}(Result{T}, Action{Exception})"/> handles custom exception types correctly.
     /// </summary>
     [Fact]
     public void OnFailure_WithCustomExceptionT_HandlesCorrectly()
@@ -1436,7 +1436,7 @@ public class ResultExtensionsTests
     #region Null Task Validation Tests
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.OnSuccessAsync(Task{Result}, Func{Task})"/> throws an <see cref="NullReferenceException"/>
+    /// Verifies that <see cref="ResultAsyncExtensions.OnSuccessAsync(Task{Result}, Func{Task})"/> throws an <see cref="NullReferenceException"/>
     /// when the task is null.
     /// </summary>
     [Fact]
@@ -1451,7 +1451,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.OnFailureAsync(Task{Result}, Func{Exception, Task})"/> throws an <see cref="NullReferenceException"/>
+    /// Verifies that <see cref="ResultAsyncExtensions.OnFailureAsync(Task{Result}, Func{Exception, Task})"/> throws an <see cref="NullReferenceException"/>
     /// when the task is null.
     /// </summary>
     [Fact]
@@ -1466,7 +1466,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.MapAsync{TIn, TOut}(Task{Result{TIn}}, Func{TIn, Task{TOut}})"/> throws an <see cref="NullReferenceException"/>
+    /// Verifies that <see cref="TypedResultAsyncExtensions.MapAsync{TIn, TOut}(Task{Result{TIn}}, Func{TIn, Task{TOut}})"/> throws an <see cref="NullReferenceException"/>
     /// when the task is null.
     /// </summary>
     [Fact]
@@ -1481,7 +1481,7 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="ResultExtensions.BindAsync(Task{Result}, Func{Task{Result}})"/> throws an <see cref="NullReferenceException"/>
+    /// Verifies that <see cref="ResultAsyncExtensions.BindAsync(Task{Result}, Func{Task{Result}})"/> throws an <see cref="NullReferenceException"/>
     /// when the task is null.
     /// </summary>
     [Fact]
