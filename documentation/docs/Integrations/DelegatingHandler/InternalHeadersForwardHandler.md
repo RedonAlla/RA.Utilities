@@ -17,20 +17,25 @@ It effectively preserves the user's identity across service boundaries.
 2. **Traceability Context (`x-request-id` header)**:
 It forwards a request identifier, which is crucial for distributed tracing.
 By ensuring every service call in a chain shares the same ID, you can easily correlate logs and traces across multiple systems to debug issues or monitor the flow of a single user operation.
-The handler is smart enough to use the incoming `x-request-id` if it exists, and falls back to the `HttpContext.TraceIdentifier` if it doesn't.
+The handler uses the incoming `x-request-id` value and falls back to the `HttpContext.TraceIdentifier` when the `x-request-id` value is not available.
 
 ## ⚙️ How It Works
-### 1. Capturing Context:
-When the handler is created (once per request scope), its constructor uses
-[`IHttpContextAccessor`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.ihttpcontextaccessor?view=aspnetcore-9.0)
-to access the current incoming HTTP request.
-It reads the Authorization and x-request-id headers and stores them in private fields.
+### 1. Resolving the Current Context:
+The handler is constructed with an
+[`IHttpContextAccessor`](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/http-context?view=aspnetcore-9.0),
+which it stores for later use.
 
-### 2. Injecting Headers:
+### 2. Reading Headers Per Request:
 When the [`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient) sends a request, the handler's `SendAsync` method is invoked.
-It adds the captured `Authorization` token and the `RequestId` to the headers of the outgoing [`HttpRequestMessage`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httprequestmessage).
+It reads the current `Authorization` header, `x-request-id` header, and trace identifier **at that moment** from `IHttpContextAccessor.HttpContext` —
+so every outgoing request gets the headers of the HTTP request that triggered it, even when the underlying handler instance is reused across requests.
 
-### 3. Passing the Request:
-After modifying the headers, it passes the request to the next handler in the pipeline.
+### 3. Injecting Headers:
+It adds the read token and request ID to the headers of the outgoing [`HttpRequestMessage`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httprequestmessage) and passes the request to the next handler in the pipeline.
+If the context or a header is not available, the corresponding value is an empty string, so no exception is thrown.
 
 This design elegantly solves the problem of maintaining security and traceability in a distributed system, abstracting the logic away from the application code. A developer simply needs to add this handler to their [`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient) configuration for an internal service, and the header propagation happens automatically.
+
+:::info[v10.2.0 behavior change]
+Before v10.2.0 the handler captured the `Authorization` and `x-request-id` headers **once, in the constructor**, and reused those captured values for every request the handler instance served. Since `HttpMessageHandler` instances are pooled by `IHttpClientFactory`, the captured values could go stale. Since v10.2.0 the values are read on every `SendAsync` — no code changes are required, but manually constructed handlers now need the same `IHttpContextAccessor` semantics.
+:::

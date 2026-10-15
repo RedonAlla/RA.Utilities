@@ -7,7 +7,7 @@
 [![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
 
 
-`RA.Utilities.Integrations` is a utility library that simplifies and standardizes HTTP client calls in .NET applications. It solves the problem of managing external API integrations by providing a robust and repeatable pattern that centralizes configuration, simplifies registration, and improves resilience with built-in retry policies.
+`RA.Utilities.Integrations` is a utility library that simplifies and standardizes HTTP client calls in .NET applications. It solves the problem of managing external API integrations by providing a robust and repeatable pattern that centralizes configuration, simplifies registration, and improves observability with built-in logging and header-forwarding handlers.
 
 By building on `IHttpClientFactory`, it promotes best practices like using typed `HttpClient`s, which provides better compile-time safety and intellisense.
 

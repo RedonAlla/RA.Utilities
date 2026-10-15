@@ -27,10 +27,10 @@ It builds on Microsoft's recommended [`IHttpClientFactory`](https://learn.micros
 The package solves the problems that come up in every external API integration:
 
 - **Standardizes Configuration** — centralize base URL, timeouts, and API keys in `appsettings.json` via [`BaseApiSettings<T>`](./Options/BaseApiSettings), keeping configuration out of your code.
-- **Simplifies Registration** — one extension method, [`AddHttpClientIntegration`](./Extensions/DependencyInjectionExtensions#addhttpclientintegration), binds and validates configuration and registers a typed [`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient).
+- **Simplifies Registration** — one extension method, [`AddHttpClientIntegration`](./Extensions/ServiceCollectionExtensions#addhttpclientintegration), binds and validates configuration and registers a typed [`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient).
 - **Provides Compile-Time Safety** — `[QueryParameters]` and `[HeaderParameters]` classes are mapped to request parameters by a source generator, so typos in keys, wrong types, and missing mappings fail at build time instead of runtime.
 - **Covers the Full CRUD Surface** — `GetAsync`, `PostAsync`, `PutAsync`, and `DeleteAsync` share one consistent request pipeline with JSON serialization built in.
-- **Improves Resilience** — typed clients via `IHttpClientFactory` plus optional logging, header forwarding, API key, and proxy handlers for robust, observable integrations.
+- **Improves Resilience** — typed clients via `IHttpClientFactory` plus optional logging and header-forwarding handlers for robust, observable integrations.
 
 ### ✨ Key Features
 
@@ -66,7 +66,7 @@ Install-Package RA.Utilities.Integrations
 **PackageReference (csproj)**
 
 ```xml
-<PackageReference Include="RA.Utilities.Integrations" Version="10.1.1" />
+<PackageReference Include="RA.Utilities.Integrations" Version="10.2.0" />
 ```
 
 ### Hello World
@@ -125,7 +125,7 @@ The package is built from a few cooperating pieces:
 | [`[QueryParameters]`](./Attributes/QueryParametersAttribute) | Marker for strongly-typed query string classes (generator implements `IQueryStringRequest`) | `?CategoryId=5&Search=widgets` |
 | [`[HeaderParameters]`](./Attributes/HeaderParametersAttribute) | Marker for strongly-typed header classes (generator implements `IHeaderRequest`) | `x-request-id: trace-1` |
 | [`QueryUtilities`](./Utilities/QueryUtilities) | URL-encodes a `QueryParams` collection (skips empty values, `?` prefix) | `"?page=2"` |
-| [`AddHttpClientIntegration`](./Extensions/DependencyInjectionExtensions#addhttpclientintegration) | Registers a typed client, binds + validates settings | `services.AddHttpClientIntegration<...>(section)` |
+| [`AddHttpClientIntegration`](./Extensions/ServiceCollectionExtensions#addhttpclientintegration) | Registers a typed client, binds + validates settings | `services.AddHttpClientIntegration<...>(section)` |
 | [`BaseApiSettings<T>`](./Options/BaseApiSettings) | Validated settings base class with strongly-typed endpoint names | `BaseUrl`, `Timeout`, `Actions` |
 
 ### How they work together
@@ -205,15 +205,14 @@ public partial class RequestHeaders
 
 ### Register a typed client with validation
 
-See the full walkthrough in [`AddHttpClientIntegration`](./Extensions/DependencyInjectionExtensions#addhttpclientintegration).
+See the full walkthrough in [`AddHttpClientIntegration`](./Extensions/ServiceCollectionExtensions#addhttpclientintegration).
 
-### Add logging, API key, and proxy support
+### Add logging and header forwarding
 
 ```csharp showLineNumbers
 services.AddHttpClientIntegration<IMyApiClient, MyApiClient, MyApiSettings>(configSection)
-    .WithHttpLoggingHandler()
-    .WithApiKey("your-secret-api-key")
-    .WithProxyFromSettings<MyApiSettings>(settings => settings.Proxy!);
+    .AddLoggingHandler()                    // structured request/response logging
+    .AddInternalHeadersForwardingHandler(); // forwards Authorization + x-request-id per call
 ```
 
 ---

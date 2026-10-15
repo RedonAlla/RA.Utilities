@@ -1,9 +1,9 @@
-#pragma warning disable CA1873
-
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,21 +17,21 @@ namespace RA.Utilities.Integrations.DelegatingHandlers;
 /// A <see cref="DelegatingHandler"/> that logs outgoing HTTP requests and incoming HTTP responses.
 /// </summary>
 /// <seealso cref="System.Net.Http.DelegatingHandler" />
-public class RequestResponseLoggingHandler : DelegatingHandler
+public class LoggingHandler : DelegatingHandler
 {
     /// <summary>
     /// The logger instance for this handler.
     /// </summary>
-    private readonly ILogger<RequestResponseLoggingHandler> _logger;
+    private readonly ILogger<LoggingHandler> _logger;
 
     private const double _warningThresholdMilliseconds = 35000;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="RequestResponseLoggingHandler"/> class.
+    /// Initializes a new instance of the <see cref="LoggingHandler"/> class.
     /// </summary>
     /// <param name="logger">The logger to use for logging requests and responses.</param>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="logger"/> is <see langword="null"/>.</exception>
-    public RequestResponseLoggingHandler(ILogger<RequestResponseLoggingHandler> logger)
+    public LoggingHandler(ILogger<LoggingHandler> logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -60,7 +60,7 @@ public class RequestResponseLoggingHandler : DelegatingHandler
             Path = request?.RequestUri?.AbsoluteUri,
             QueryString = request?.RequestUri?.Query,
             RemoteAddress = request?.Options?.GetClientIpAddress() ?? string.Empty,
-            RequestHeaders = request?.Headers.ToDictionary(),
+            RequestHeaders = ToDictionary(request?.Headers),
             RequestBody = await GetHttpContent(request?.Content, cancellationToken)
         };
 
@@ -73,7 +73,7 @@ public class RequestResponseLoggingHandler : DelegatingHandler
             Path = response.RequestMessage?.RequestUri?.AbsoluteUri,
             RemoteAddress = request?.Options?.GetClientIpAddress() ?? string.Empty,
             StatusCode = (int)response.StatusCode,
-            ResponseHeaders = response.Headers.ToDictionary(),
+            ResponseHeaders = ToDictionary(response.Headers),
             Duration = $"{stopwatch.Elapsed.TotalMilliseconds} ms",
             ResponseBody = await GetHttpContent(response.Content, cancellationToken)
         };
@@ -91,12 +91,9 @@ public class RequestResponseLoggingHandler : DelegatingHandler
         return response;
     }
 
-    /// <summary>
-    /// Reads the <see cref="HttpContent"/> and returns it as a deserialized object or a string.
-    /// </summary>
-    /// <param name="httpContent">The HTTP content to read.</param>
-    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-    /// <returns>A task that represents the asynchronous read operation. The task result contains the deserialized content as an <see cref="object"/> if it's valid JSON, the raw string content if it's not, or <see langword="null"/> if the content is empty.</returns>
+    private static Dictionary<string, string>? ToDictionary(HttpHeaders? headers) =>
+        headers?.ToDictionary(header => header.Key, header => string.Join(",", header.Value));
+
     private async Task<object?> GetHttpContent(HttpContent? httpContent, CancellationToken cancellationToken)
     {
         if (httpContent is null)

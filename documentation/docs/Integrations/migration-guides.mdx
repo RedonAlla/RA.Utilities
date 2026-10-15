@@ -5,6 +5,105 @@ sidebar_position: 8
 
 # Migration Guides
 
+## v10.1.1 → v10.2.0
+
+v10.2.0 consolidates the registration API around C# 14 extension members — one extension class per receiver type — and removes the built-in API key and proxy machinery. Extension-method call sites (`services.AddHttpClientIntegration(...)`, `builder.AddLoggingHandler()`, ...) are unchanged; only class-name references and the removed members need attention.
+
+### Why this change?
+
+- `DependencyInjectionExtensions` mixed `IServiceCollection` methods and `IHttpClientBuilder` methods in one class; the split (`ServiceCollectionExtensions` + `HttpClientBuilderExtensions`) follows the ASP.NET Core naming convention and matches how C# 14 extension blocks group members by receiver type.
+- The API key and proxy handlers (`ApiKeyAuthenticationHandler<TSettings>`, `ProxyMessageHandler`, and their `With*` registration methods) saw little use and are straightforward to replace with a custom [`DelegatingHandler`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.delegatinghandler) when needed.
+
+### What changed
+
+| Aspect | v10.1.1 | v10.2.0 |
+|---|---|---|
+| Registration class | `DependencyInjectionExtensions` (all methods) | [`ServiceCollectionExtensions`](./Extensions/ServiceCollectionExtensions.md) (`Add*` methods) + [`HttpClientBuilderExtensions`](./Extensions/HttpClientBuilderExtensions.md) (pipeline methods) |
+| Method style | classic static extension methods | C# 14 extension members — call sites unchanged |
+| Attach logging handler | `WithHttpLoggingHandler()` | [`AddLoggingHandler()`](./Extensions/HttpClientBuilderExtensions.md#addlogginghandler) |
+| Attach header forwarding | `WithInternalHeadersForwardingHandler()` | [`AddInternalHeadersForwardingHandler()`](./Extensions/HttpClientBuilderExtensions.md#addinternalheadersforwardinghandler) |
+| Logging handler type | `RequestResponseLoggingHandler` | [`LoggingHandler`](./DelegatingHandler/LoggingHandler.md) (same behavior) |
+| Request options utilities | `HttpRequestMessageExtensions` | [`HttpRequestOptionsExtensions`](./Extensions/HttpRequestOptionsExtensions.md) (`GetClientIpAddress()` only) |
+| API key support | `IApiKeySettings`, `ApiKeyAuthenticationHandler<TSettings>`, `WithApiKey(...)`, `WithApiKeyFromSettingsHandler<TSettings>()` | removed — use a custom `DelegatingHandler` or `ConfigureHttpClient` |
+| Proxy support | `IProxySettings`, `ProxyMessageHandler`, `WithProxyFromSettings<TSettings>(...)`, `ProxySettings : IProxySettings` | removed — `ProxySettings` remains a configuration-only POCO; use `ConfigurePrimaryHttpMessageHandler` for a proxy |
+| `InternalHeadersForwardHandler` | captured headers once in the constructor | reads `Authorization` / `x-request-id` per request (no code change needed) |
+
+### Migration Steps
+
+#### 1. Update class-name references
+
+Only code that references a class **by name** — a `typeof(...)` expression, a static call, or a reflection string — needs updating. Receiver-style calls such as `services.AddHttpClientIntegration(...)` keep working unchanged.
+
+```csharp
+// ❌ v10.1.1
+var t = typeof(DependencyInjectionExtensions);
+
+// ✅ v10.2.0 — pick the class that holds the members you reference
+var t = typeof(ServiceCollectionExtensions);   // AddHttpClientIntegration, Add*HttpMessageHandler
+var b = typeof(RA.Utilities.Integrations.Extensions.HttpClientBuilderExtensions); // AddLoggingHandler, AddInternalHeadersForwardingHandler
+```
+
+:::note
+`HttpClientBuilderExtensions` shares its name with [`Microsoft.Extensions.DependencyInjection.HttpClientBuilderExtensions`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.httpclientbuilderextensions) (the built-in `AddHttpMessageHandler<T>`/`ConfigureHttpClient` class). When both namespaces are imported, reference it fully qualified in `typeof(...)` or static calls. Receiver-style calls such as `builder.AddLoggingHandler()` are unaffected.
+:::
+
+#### 2. Rename the pipeline attachment methods
+
+```csharp
+// ❌ v10.1.1
+services.AddHttpClientIntegration<IMyApiClient, MyApiClient, MyApiSettings>(section)
+    .WithHttpLoggingHandler()
+    .WithInternalHeadersForwardingHandler();
+
+// ✅ v10.2.0
+services.AddHttpClientIntegration<IMyApiClient, MyApiClient, MyApiSettings>(section)
+    .AddLoggingHandler()
+    .AddInternalHeadersForwardingHandler();
+```
+
+#### 3. Rename the logging handler type
+
+```csharp
+// ❌ v10.1.1
+services.AddScopedHttpMessageHandler<RequestResponseLoggingHandler>();
+
+// ✅ v10.2.0
+services.AddScopedHttpMessageHandler<LoggingHandler>();
+```
+
+Manual constructions update the generic type argument: `new LoggingHandler(logger)` where `logger` is an `ILogger<LoggingHandler>`.
+
+#### 4. Replace API key and proxy usage
+
+The API key and proxy members were removed without built-in replacements:
+
+```csharp
+// ❌ v10.1.1 — removed
+builder.WithApiKey("my-secret-api-key");
+builder.WithApiKeyFromSettingsHandler<MyApiSettings>();
+builder.WithProxyFromSettings(settings => settings.Proxy);
+
+// ✅ v10.2.0 — static API key via default request headers
+builder.ConfigureHttpClient(client => client.DefaultRequestHeaders.Add("X-Api-Key", "my-secret-api-key"));
+
+// ✅ v10.2.0 — proxy via the primary handler
+builder.ConfigurePrimaryHttpMessageHandler(_ => new HttpClientHandler
+{
+    Proxy = new WebProxy("http://proxy.server:8080", BypassOnLocal: true)
+    {
+        Credentials = new NetworkCredential("proxy-user", "proxy-password")
+    }
+});
+```
+
+For dynamic, per-request API keys, write a small `DelegatingHandler` that adds the header in `SendAsync` and attach it with `AddHttpMessageHandler<T>()` / `AddTransientHttpMessageHandler<T>()`. Settings classes no longer implement `IApiKeySettings`/`IProxySettings` — the `ApiKey`/`Proxy` properties themselves remain plain, bindable options properties.
+
+#### 5. Optional: adopt the request options utility rename
+
+`request.Options.GetClientIpAddress()` works identically in both versions — only class-name references change (`HttpRequestMessageExtensions` → `HttpRequestOptionsExtensions`). The `ToDictionary(...)` helper was removed; inline `headers?.ToDictionary(h => h.Key, h => string.Join(",", h.Value))` where needed.
+
+---
+
 ## v10.0.1 → v10.1.0
 
 v10.1.0 reworks the `BaseHttpClient` request surface: headers are now strongly typed, all four HTTP verbs are supported, JSON is the fixed content type, and query/header parameter mappings can be generated at compile time. Most call sites need small mechanical updates; none of the changes affect how the HTTP requests themselves are sent.
@@ -139,7 +238,7 @@ services.AddOptionWithValidations<MyFeatureSettings>();
 
 **After (v10.1.0):**
 
-Register validated integration settings through [`AddHttpClientIntegration`](./Extensions/DependencyInjectionExtensions#addhttpclientintegration), or use the built-in options API directly:
+Register validated integration settings through [`AddHttpClientIntegration`](./Extensions/ServiceCollectionExtensions#addhttpclientintegration), or use the built-in options API directly:
 
 ```csharp
 services.AddOptions<MyFeatureSettings>()

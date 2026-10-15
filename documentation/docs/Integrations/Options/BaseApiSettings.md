@@ -45,7 +45,7 @@ instances for various API integrations.
 | -------- | ------ | ----------- | ------------- |
 | **BaseUrl** | `Uri` |	The base address for the API. This is a required property and must be a valid URL. | `null` |
 | **Actions** | `T` |	A container object holding the strongly-typed endpoint paths for the specific API. This is a required property.	| `null` |
-| **UseProxy** | `bool` |	A flag indicating whether requests should be sent through a configured proxy.	| `false` |
+| **UseProxy** | `bool` |	A flag indicating whether requests should be sent through a configured proxy. Since v10.2.0 no built-in component consumes this flag (the proxy pipeline was removed) — see the [migration guide](../migration-guides).	| `false` |
 | **Timeout** | `double` |	The request timeout in seconds. The value must be between 1 and 600.	| `200` |
 
 Since v10.1.0, request bodies are always serialized as JSON — the class no longer exposes `MediaType` or `Encoding` properties.

@@ -6,12 +6,12 @@ sidebar_position: 1
 Namespace: RA.Utilities.Integrations.Extensions
 ```
 
-The `DependencyInjectionExtensions` class is the primary entry point for setting up [`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient) integrations within the .NET dependency injection container.
-It provides a fluent API to simplify and standardize the registration and configuration of typed [`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient)s, encapsulating best practices and reducing boilerplate code in your `Program.cs` file.
+The `ServiceCollectionExtensions` class is the primary entry point for setting up [`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient) integrations within the .NET dependency injection container.
+Its methods are declared as **C# 14 extension members** on [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection) (inside an `extension(IServiceCollection)` block), so they are called with the familiar `services.Method(...)` syntax.
 
 ## `AddHttpClientIntegration<...>()`
 
-This is the main extension method for registering a typed [`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient).
+This is the main method for registering a typed [`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient).
 It binds configuration from `appsettings.json`, validates it on startup, and configures the client's `BaseAddress` and `Timeout`.
 
 #### Parameters
@@ -23,7 +23,7 @@ It binds configuration from `appsettings.json`, validates it on startup, and con
 | `TInterface` | `class` | The interface of the typed [`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient) to register. |
 | `TClient` | `class, TInterface` | The concrete implementation of the typed [`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient). |
 | `TSettings` | `class, [IIntegrationSettings](../Abstractions/IIntegrationSettings.md)` | The settings class that holds the configuration for this integration. |
-| **Returns** | [`IHttpClientBuilder`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.ihttpclientbuilder) | An [`IHttpClientBuilder`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.ihttpclientbuilder) that can be used to further configure the client pipeline. |
+| **Returns** | [`IHttpClientBuilder`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.ihttpclientbuilder) | An [`IHttpClientBuilder`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.ihttpclientbuilder) that can be used to further configure the client pipeline — see [`HttpClientBuilderExtensions`](./HttpClientBuilderExtensions.md). |
 
 #### Example
 
@@ -133,106 +133,6 @@ Registers a [`DelegatingHandler`](https://learn.microsoft.com/en-us/dotnet/api/s
 builder.Services.AddTransientHttpMessageHandler<MyCustomHandler>();
 ```
 
----
-
-## `With...()` Fluent Extensions
-
-These methods chain off `AddHttpClientIntegration` to add [`DelegatingHandler`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.delegatinghandler)s or other configurations to the [`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient) pipeline.
-
-### `WithHttpLoggingHandler()`
-
-Adds the `RequestResponseLoggingHandler` to log request and response details.
-
-#### Parameters
-
-| Parameter | Type | Description |
-| :--- | :--- | :--- |
-| `httpClientBuilder` | [`IHttpClientBuilder`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.ihttpclientbuilder) | The builder to configure. |
-| **Returns** | [`IHttpClientBuilder`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.ihttpclientbuilder) | The original builder for chaining. |
-
-#### Example
-
-```csharp
-// In Program.cs
-builder.Services.AddHttpClientIntegration<...>(...)
-    .WithHttpLoggingHandler();
-```
-
-### `WithInternalHeadersForwardingHandler()`
-
-Adds the `InternalHeadersForwardHandler` to forward headers like `X-Request-Id` and the user's `Authorization` token.
-
-#### Example
-
-```csharp
-// In Program.cs
-builder.Services.AddHttpClientIntegration<...>(...)
-    .WithInternalHeadersForwardingHandler();
-```
-
-### `WithApiKey(...)`
-
-Adds a static API key directly to the client's default request headers.
-
-#### Parameters
-
-| Parameter | Type | Description |
-| :--- | :--- | :--- |
-| `httpClientBuilder` | [`IHttpClientBuilder`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.ihttpclientbuilder) | The builder to configure. |
-| `apiKey` | `string` | The API key value. |
-| `headerName` | `string` | The name of the header (defaults to "X-Api-Key"). |
-| **Returns** | [`IHttpClientBuilder`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.ihttpclientbuilder) | The original builder for chaining. |
-
-#### Example
-
-```csharp
-// In Program.cs
-builder.Services.AddHttpClientIntegration<...>(...)
-    .WithApiKey("my-secret-api-key", "Authorization");
-```
-
-### `WithApiKeyFromSettingsHandler<TSettings>()`
-
-Adds a handler that dynamically injects an API key from a settings class that implements `IApiKeySettings`.
-
-#### Example
-
-```csharp
-// Define a settings class with the API key
-public class MyApiSettings : BaseApiSettings<MyApiActions>, IApiKeySettings
-{
-    public required string ApiKey { get; set; }
-}
-
-// In Program.cs
-builder.Services.AddHttpClientIntegration<IMyApiClient, MyApiClient, MyApiSettings>(...)
-    .WithApiKeyFromSettingsHandler<MyApiSettings>();
-```
-
-### `WithProxyFromSettings<TSettings>()`
-
-Configures the [`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient) to use a proxy, with settings extracted from a configuration object.
-
-#### Parameters
-
-| Parameter | Type | Description |
-| :--- | :--- | :--- |
-| `httpClientBuilder` | [`IHttpClientBuilder`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.ihttpclientbuilder) | The builder to configure. |
-| `proxySettingsSelector` | `Func<TSettings, IProxySettings>` | A function to select the proxy settings from the root settings object. |
-| `TSettings` | `class` | The root settings class. |
-| **Returns** | [`IHttpClientBuilder`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.ihttpclientbuilder) | The original builder for chaining. |
-
-#### Example
-
-```csharp
-// Define a settings class with nested proxy settings
-public class MyApiSettings : BaseApiSettings<MyApiActions>
-{
-    // This property will be populated from the "Proxy" section in appsettings.json
-    public required ProxySettings Proxy { get; set; }
-}
-
-// In Program.cs
-builder.Services.AddHttpClientIntegration<IMyApiClient, MyApiClient, MyApiSettings>(...)
-    .WithProxyFromSettings(settings => settings.Proxy);
-```
+:::info[v10.2.0 class rename]
+These members were previously declared in a single `DependencyInjectionExtensions` class. In v10.2.0 that class was split into `ServiceCollectionExtensions` (the methods above) and [`HttpClientBuilderExtensions`](./HttpClientBuilderExtensions.md) (the pipeline methods), and the members were refactored to C# 14 extension members. Method names, signatures, and the `RA.Utilities.Integrations.Extensions` namespace are unchanged — see the [migration guide](../migration-guides) for details.
+:::

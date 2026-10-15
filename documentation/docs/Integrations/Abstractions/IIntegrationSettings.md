@@ -14,7 +14,7 @@ This standardization is crucial for:
 It guarantees that every integration, regardless of its specific API, will expose common configuration elements like a base URL, timeout, and proxy behavior.
 
 #### 2. Reusability:
-Components and extension methods (like [`AddHttpClientIntegration`](../Extensions/DependencyInjectionExtensions.md#addhttpclientintegration)) can operate on any object implementing `IIntegrationSettings`,
+Components and extension methods (like [`AddHttpClientIntegration`](../Extensions/ServiceCollectionExtensions.md#addhttpclientintegration)) can operate on any object implementing `IIntegrationSettings`,
 making them generic and reusable across different integrations.
 
 #### 3. Decoupling:
@@ -31,8 +31,8 @@ This interface defines a standardized contract for configuration classes used to
 | Property |	Type |	Description |
 | -------- | ----- | ------------ |
 | **BaseUrl** |	`Uri` |	The base address for all requests made by the [`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient). This is a required property. |
-| **UseProxy** |	`bool` |	A flag to determine if the [`HttpClient`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient) should route requests through a configured proxy. Defaults to `false`. |
-| **Timeout** |	`double` |	The number of seconds to wait for a response before the request times out. The default is 100 seconds. |
+| **UseProxy** |	`bool` |	A flag indicating whether requests should be routed through a proxy. Defaults to `false`. Since v10.2.0 no built-in component consumes this flag (the proxy pipeline was removed) — it remains on the contract for compatibility; see the [migration guide](../migration-guides). |
+| **Timeout** |	`double` |	The number of seconds to wait for a response before the request times out. Implementations choose their own default — [`BaseApiSettings<T>`](../Options/BaseApiSettings.md) uses `200`. |
 
 Since v10.1.0 request bodies are always serialized as JSON (`application/json; charset=utf-8`); the interface no longer carries `MediaType` or `Encoding` properties.
 

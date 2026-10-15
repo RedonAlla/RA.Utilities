@@ -14,26 +14,7 @@ namespace RA.Utilities.Integrations.DelegatingHandlers;
 /// <seealso cref="System.Net.Http.DelegatingHandler" />
 public class InternalHeadersForwardHandler : DelegatingHandler
 {
-    /// <summary>
-    /// The authorization token from the incoming request. An empty string if not found.
-    /// </summary>
-    private string Token { get; }
-
-    /// <summary>
-    /// The x-request-id from the incoming request. An empty string if not found.
-    /// </summary>
-    private string RequestIdHeader { get; }
-
-    /// <summary>
-    /// The trace identifier from the current HttpContext. An empty string if not available.
-    /// </summary>
-    private string TraceIdentifier { get; }
-
-    /// <summary>
-    /// Gets the request identifier.
-    /// </summary>
-    /// <value>The request identifier, which is the value of <see cref="RequestIdHeader"/> if it's not null or whitespace; otherwise, it's the value of <see cref="TraceIdentifier"/>.</value>
-    private string RequestId => !string.IsNullOrWhiteSpace(RequestIdHeader) ? RequestIdHeader : TraceIdentifier;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="InternalHeadersForwardHandler"/> class.
@@ -46,11 +27,7 @@ public class InternalHeadersForwardHandler : DelegatingHandler
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="httpContextAccessor"/> is <see langword="null"/>.</exception>
     public InternalHeadersForwardHandler(IHttpContextAccessor httpContextAccessor)
     {
-        ArgumentNullException.ThrowIfNull(httpContextAccessor);
-
-        Token = httpContextAccessor.HttpContext?.Request.Headers[HeaderParameters.Authorization].ToString() ?? string.Empty;
-        RequestIdHeader = httpContextAccessor.HttpContext?.Request.Headers[HeaderParameters.XRequestId].ToString() ?? string.Empty;
-        TraceIdentifier = httpContextAccessor.HttpContext?.TraceIdentifier ?? string.Empty;
+        _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
     }
 
     /// <summary>
@@ -65,8 +42,12 @@ public class InternalHeadersForwardHandler : DelegatingHandler
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        request.Headers.TryAddWithoutValidation(HeaderParameters.Authorization, Token);
-        request.Headers.TryAddWithoutValidation(HeaderParameters.XRequestId, RequestId);
+        string token = _httpContextAccessor.HttpContext?.Request.Headers[HeaderParameters.Authorization].ToString();
+        string requestId = _httpContextAccessor.HttpContext?.Request.Headers[HeaderParameters.XRequestId].ToString();
+        string traceIdentifier = _httpContextAccessor.HttpContext?.TraceIdentifier;
+
+        request.Headers.TryAddWithoutValidation(HeaderParameters.Authorization, token);
+        request.Headers.TryAddWithoutValidation(HeaderParameters.XRequestId, requestId ?? traceIdentifier);
 
         return await base.SendAsync(request, cancellationToken);
     }
