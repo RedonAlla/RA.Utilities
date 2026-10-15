@@ -1,7 +1,7 @@
 ---
-title: RA.Utilities.Logging.Shared
+title: RA.Utilities.Logging.Core
 authors: [RedonAlla]
-date: 2026-10-14
+date: 2026-10-15
 ---
 
 ## Version 10.1.1

@@ -1,6 +1,7 @@
 ---
 title: RA.Utilities.Core.Exceptions
 authors: [RedonAlla]
+date: 2026-07-27
 ---
 
 ## Version 10.0.4

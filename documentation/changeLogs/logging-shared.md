@@ -1,6 +1,7 @@
 ---
 title: RA.Utilities.Logging.Shared
 authors: [RedonAlla]
+date: 2026-10-15
 ---
 
 ## Version 10.0.1
