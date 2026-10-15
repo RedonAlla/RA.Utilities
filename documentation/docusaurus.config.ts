@@ -113,6 +113,14 @@ const config: Config = {
 
   markdown: {
     mermaid: true,
+    // Docusaurus 3.10 makes `future.v4: true` disable MDX1 compatibility, which
+    // breaks the `<!-- truncate -->` markers and `{#custom-id}` heading anchors
+    // used across the docs/blog content. Re-enable it to keep that syntax valid.
+    mdx1Compat: {
+      comments: true,
+      admonitions: true,
+      headingIds: true,
+    },
   },
 
   plugins: [
