@@ -279,8 +279,7 @@ article .card:hover {
   right: 0;
   top: 0;
   bottom: 0;
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(10px);
   background: var(--navbar-background-color);
 }
 
