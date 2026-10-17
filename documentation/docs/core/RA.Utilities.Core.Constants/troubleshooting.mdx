@@ -6,74 +6,57 @@ title: Troubleshooting & FAQ
 
 ## Common Issues
 
-### My `ResponseType` is serializing as an object instead of a string
+### My `ResponseType` is serializing as a number instead of a string
 
-**Cause**: The `[JsonConverter(typeof(ResponseTypeJsonConverter))]` attribute is missing or your custom JSON serializer options aren't picking it up.
+**Cause**: Without a converter, `System.Text.Json` serializes enums as numbers (`11` instead of `"Error"`).
 
-**Fix**: Ensure the attribute is present on the `ResponseType` record (it's built into the package). If using custom `JsonSerializerOptions`, make sure you're not overriding the converter list in a way that removes it. The converter is applied via the attribute, so it should work with default `System.Text.Json` serialization.
+**Fix**: The `[JsonConverter(typeof(ResponseTypeJsonConverter))]` attribute is built into the package and applied automatically. If you see numeric output, ensure you're using `System.Text.Json` with default options, and that your custom `JsonSerializerOptions` don't override the attribute-level converter. The converter serializes to plain strings (e.g., `"NotFound"`).
 
 ### Can I use `ResponseType` in a `switch` expression?
 
-**Yes, with limitations.** Since `ResponseType` is a `record`, not an `enum`, you can't use compile-time constant patterns (e.g., `ResponseType.NotFound =>` directly as a case). However, C# **property pattern matching** works because `Value` is a property of the record:
+**Yes — fully.** `ResponseType` is a standard `enum`, so constant patterns work and the compiler can verify exhaustiveness:
 
 ```csharp
-// ✅ Property pattern matching (preferred)
+// ✅ Constant patterns (preferred)
 var label = responseType switch
 {
-    { Value: "Success" } => "OK",
-    { Value: "NotFound" } => "Not Found",
-    { Value: "Conflict" } => "Conflict",
-    { Value: "BadRequest" } => "Bad Request",
-    { Value: "Unauthorized" } => "Unauthorized",
-    _ => "Unknown"
-};
-
-// ✅ Switch on the Value string directly (simpler, less type-safe)
-var label = responseType.Value switch
-{
-    "NotFound" => "Not Found",
-    "Conflict" => "Conflict",
-    _ => "Unknown"
-};
-
-// ❌ Does not compile — static readonly fields are not compile-time constants
-var label = responseType switch
-{
+    ResponseType.Success => "OK",
     ResponseType.NotFound => "Not Found",
-    _ => "Unknown"
+    ResponseType.Conflict => "Conflict",
+    ResponseType.BadRequest => "Bad Request",
+    ResponseType.Unauthorized => "Unauthorized",
+    _ => "Other"
 };
 ```
 
-**Trade-off**: Unlike an `enum`, the compiler cannot verify exhaustiveness — the `_` discard is always required. For exhaustive matching, use `if`/`else` chains or consider adding a custom `Match<T>(...)` method to your derived response types.
-
 ### How do I compare two `ResponseType` values?
 
-The `record` type provides value-based equality out of the box — `==` and `.Equals()` compare the `Value` string:
+Use `==` or `.Equals()` — enum members are singletons, so comparison is simple and allocation-free:
 
 ```csharp
 ResponseType a = ResponseType.NotFound;
 ResponseType b = ResponseType.NotFound;
-ResponseType c = new("NotFound");
 
-bool sameByField = a == b;     // true — same static field
-bool sameByValue = a == c;     // true — same Value string (records use value equality)
-bool sameByEquals = a.Equals(c); // true
+bool same = a == b;       // true
+bool sameEq = a.Equals(b); // true
 ```
 
 ### Can I create a `ResponseType` from a string at runtime?
 
-Yes, but only within the `RA.Utilities.Core.Constants` assembly or derived types, because the constructor is `protected internal`:
+Yes, with the standard `System.Enum` APIs:
 
 ```csharp
-// ✅ Works in consuming code (via derived record or JSON deserialization)
-ResponseType type = new("CustomType");  // Only if you define a derived record
+// ✅ Parse a member name
+ResponseType type = Enum.Parse<ResponseType>("NotFound", ignoreCase: true);
 
-// ❌ Does not compile directly
-ResponseType type = new("NotFound");    // Constructor is protected internal
-
-// ✅ Use the built-in static fields instead
-ResponseType type = ResponseType.NotFound;
+// ✅ Safer for untrusted input — numeric strings parse to undefined values
+if (Enum.TryParse(value, ignoreCase: true, out ResponseType parsed) && Enum.IsDefined(parsed))
+{
+    // safe to use parsed
+}
 ```
+
+Note: the JSON converter (`ResponseTypeJsonConverter`) is more lenient than `Enum.Parse` — it matches case-insensitively and falls back to `ResponseType.Error` for `null`, empty, whitespace, or unknown strings instead of throwing.
 
 ### `BaseResponseCode.Created` doesn't exist — what should I use?
 
@@ -89,15 +72,16 @@ If you need the integer constant, define it in your own project or use `201` dir
 
 ## Known Limitations
 
-- **No implicit conversion from `string`**: Unlike some type-safe enum implementations, `ResponseType` does not provide an implicit conversion from `string`. Use the static fields (`ResponseType.NotFound`) or define a derived record.
-- **Switch expression exhaustiveness**: Property pattern matching works (e.g., `{ Value: "NotFound" } =>`), but the compiler cannot verify exhaustiveness — a `_` discard is always required.
-- **Custom response types require inheritance**: To add a new response type (e.g., `PaymentRequired`), you must create a derived `record` class. See [Extending ResponseType](./ResponseType#extending-responsetype).
+- **Closed set of values**: Consuming projects cannot add new `ResponseType` members. For an outcome without a dedicated member (e.g., `PaymentRequired`), use the closest built-in member (typically `Error` or `Problem`) and communicate the specifics through the error code and message.
+- **Lenient deserialization**: Unknown JSON strings silently fall back to `ResponseType.Error` rather than throwing. Validate early if you need to distinguish "unknown type" from a genuine error.
+- **`default` is `Success`**: `default(ResponseType)` and uninitialized fields are `ResponseType.Success` (value `0`). Use explicit members in models where `Success` is not the right default.
+- **No implicit conversion from `string`**: Use `Enum.TryParse`/`Enum.Parse` or the built-in members directly.
 - **No localization support**: `BaseResponseMessages` provides English-only strings. For multi-language support, use these as fallback defaults and implement your own localization layer.
 
 ---
 
 ## Performance Tips
 
-- **Use static fields directly**: `ResponseType.NotFound` is a `static readonly` field — accessing it has zero allocation overhead.
-- **Avoid repeated `new ResponseType("...")` calls**: If you need a custom response type, create it once as a `static readonly` field rather than constructing it per request.
+- **Enum members are singletons**: `ResponseType.NotFound` involves no allocation — member access is as cheap as an enum gets.
+- **Prefer `TryParse` over `Parse`**: When the input may be invalid, `Enum.TryParse` avoids exception overhead on the failure path.
 - **Constants are inlined**: `BaseResponseCode` and `BaseResponseMessages` use `const`, so the values are inlined at compile time with zero runtime cost.

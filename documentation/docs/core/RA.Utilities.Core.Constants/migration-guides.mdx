@@ -4,6 +4,124 @@ title: Migration Guides
 
 # Migration Guides
 
+## v10.0.3 → v10.0.4
+
+### Breaking Change: `ResponseType` converted from `record` back to `enum`
+
+In v10.0.4, `ResponseType` was changed from the **type-safe enum pattern** `record` (introduced in v10.0.2) back to a standard C# `enum`. The set of values is now closed, but everyday usage is simpler.
+
+### Why this change?
+
+- A plain `enum` supports constant patterns in switch expressions, `Enum.TryParse`, and all other standard enum APIs
+- The JSON wire format is unchanged — values still serialize as plain strings (e.g., `"NotFound"`) via `ResponseTypeJsonConverter`
+- The built-in catalog already covers the standard HTTP outcome categories
+
+### What changed
+
+| Aspect | v10.0.3 (record) | v10.0.4 (enum) |
+|---|---|---|
+| Type | `record ResponseType` | `enum ResponseType` |
+| Values | `public static readonly` fields | Enum members (`Success = 0` … `GatewayTimeout = 17`) |
+| String value | `responseType.Value` | `responseType.ToString()` |
+| Implicit conversion to `string` | ✅ Yes | ❌ No — use `ToString()` |
+| Custom values | ✅ Via inheritance | ❌ Not supported — use the closest member |
+| Switch expressions | ⚠️ Property patterns only (`{ Value: "NotFound" } =>`) | ✅ Constant patterns (`ResponseType.NotFound =>`) |
+| JSON | Plain strings via `ResponseTypeJsonConverter` | Plain strings via `ResponseTypeJsonConverter` (unchanged) |
+| JSON read | Exact (ordinal) match; empty/whitespace → `Error` | Case-insensitive; `null`/empty/whitespace/unknown → `Error` |
+| `default` | `null` (reference type) | `ResponseType.Success` (value `0`) |
+
+### Migration Steps
+
+#### 1. Replace `.Value` with `ToString()`
+
+**Before (v10.0.3):**
+
+```csharp
+string type = responseType.Value;
+```
+
+**After (v10.0.4):**
+
+```csharp
+string type = responseType.ToString();
+```
+
+#### 2. Replace construction and parsing
+
+**Before (v10.0.3):**
+
+```csharp
+ResponseType type = new("NotFound");
+```
+
+**After (v10.0.4):**
+
+```csharp
+ResponseType type = Enum.Parse<ResponseType>("NotFound", ignoreCase: true);
+// or, for untrusted input:
+if (Enum.TryParse(value, ignoreCase: true, out ResponseType type) && Enum.IsDefined(type)) { }
+```
+
+#### 3. Simplify switch expressions
+
+**Before (v10.0.3):**
+
+```csharp
+var label = responseType switch
+{
+    { Value: "NotFound" } => "Not Found",
+    { Value: "Conflict" } => "Conflict",
+    _ => "Unknown"
+};
+```
+
+**After (v10.0.4):**
+
+```csharp
+var label = responseType switch
+{
+    ResponseType.NotFound => "Not Found",
+    ResponseType.Conflict => "Conflict",
+    _ => "Unknown"
+};
+```
+
+#### 4. Remove custom derived response types
+
+Custom types inheriting from `ResponseType` no longer compile. Replace them with the closest built-in member and carry domain specifics in the error code and message:
+
+**Before (v10.0.3):**
+
+```csharp
+public record PaymentRequiredResponseType : ResponseType
+{
+    private PaymentRequiredResponseType(string value) : base(value) { }
+    public static readonly PaymentRequiredResponseType Instance = new("PaymentRequired");
+}
+
+throw new RaBaseException(402, PaymentRequiredResponseType.Instance, "Premium subscription required.");
+```
+
+**After (v10.0.4):**
+
+```csharp
+throw new RaBaseException(402, ResponseType.Error, "Premium subscription required.");
+```
+
+#### 5. Serialization is unchanged
+
+JSON output is identical. No changes needed to API clients:
+
+```json
+{
+  "responseCode": 404,
+  "responseType": "NotFound",
+  "responseMessage": "Product with value '99' not found."
+}
+```
+
+---
+
 ## v10.0.1 → v10.0.2
 
 ### Breaking Change: `ResponseType` converted from `enum` to `record`

@@ -21,7 +21,7 @@ const packages: Package[] = [
   {
     name: 'RA.Utilities.Core.Constants',
     shortName: 'Constants',
-    description: 'Centralized HTTP status codes, response messages, header names, and the extensible ResponseType record.',
+    description: 'Centralized HTTP status codes, response messages, header names, and the ResponseType enum.',
     link: '/nuget-packages/core/RA.Utilities.Core.Constants/',
     layer: 'core',
   },

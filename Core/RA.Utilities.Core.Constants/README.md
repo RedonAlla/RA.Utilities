@@ -116,11 +116,11 @@ Contains constant strings for common HTTP header names, ensuring consistency whe
 | `Location`      | `"location"`     | Used in responses to redirect or indicate the location of a new resource.|
 | `Authorization` | `"Authorization"`| Used for sending authentication credentials.                             |
 
-### `ResponseType` (record)
+### `ResponseType` (enum)
 
-The `ResponseType` is an implementation of the **type-safe enum pattern** using a `record` instead of a traditional C# `enum`. Its primary purpose is to create a strongly-typed, extensible, and descriptive vocabulary for the outcomes of your API operations. Unlike a traditional enum, `ResponseType` can be extended by consuming projects via inheritance.
+The `ResponseType` is a C# `enum` that provides a strongly-typed, descriptive vocabulary for the outcomes of your API operations. The `[JsonConverter(typeof(ResponseTypeJsonConverter))]` attribute ensures it is serialized to JSON as a plain string (e.g., `"NotFound"`), so API responses stay self-documenting. Deserialization is case-insensitive, and `null`, empty, or unknown values fall back to `ResponseType.Error`.
 
-| Field              | Description                                                                     | Typical HTTP Status |
+| Member             | Description                                                                     | Typical HTTP Status |
 |--------------------|---------------------------------------------------------------------------------|---------------------|
 | `Success`          | The operation was successful.                                                   | 200 OK              |
 | `Created`          | A resource was successfully created.                                            | 201 Created         |
@@ -146,7 +146,7 @@ The `ResponseType` is an implementation of the **type-safe enum pattern** using 
 ```json
 {
   "responseCode": 404,
-  "responseType": "NotFound", // From the ResponseType record
+  "responseType": "NotFound", // From the ResponseType enum
   "responseMessage": "Product with value '99' not found."
 }
 ```

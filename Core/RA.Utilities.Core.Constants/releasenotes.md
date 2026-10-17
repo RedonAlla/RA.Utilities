@@ -1,5 +1,22 @@
 # Release Notes 
 
+## Version 10.0.4
+![Date Badge](https://img.shields.io/badge/Publish-17%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-v10.0.4-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Constants/10.0.4)
+
+`ResponseType` has been converted from an extensible `record` back to a plain C# `enum`, simplifying usage while keeping the JSON wire format unchanged.
+
+### ⚠️ Breaking Changes
+
+*   **`ResponseType` is now an `enum`, not a `record`**: The type-safe enum `record` introduced in v10.0.2 is replaced by a standard C# `enum` with the same built-in values (`Success`, `Created`, `Updated`, `Deleted`, `NoContent`, `Accepted`, `Validation`, `Problem`, `NotFound`, `Conflict`, `Unauthorized`, `Error`, `BadRequest`, `Unprocessable`, `Forbidden`, `TooManyRequests`, `ServiceUnavailable`, `GatewayTimeout`). The `Value` property, the implicit `string` conversion, and inheritance-based extensibility are removed. `ResponseTypeJsonConverter` still serializes values as plain strings. **Migration**: Replace `responseType.Value` with `responseType.ToString()`; replace custom types derived from `ResponseType` with the closest built-in member; switch expressions now support constant patterns (`ResponseType.NotFound =>`). See the [Migration Guide](https://redonalla.github.io/RA.Utilities/nuget-packages/core/RA.Utilities.Core.Constants/migration-guides) for detailed before/after examples.
+
+### 📝 Notes
+
+*   JSON deserialization is case-insensitive; `null`, empty, whitespace, or unknown strings fall back to `ResponseType.Error`.
+*   `default(ResponseType)` is `ResponseType.Success` (value `0`).
+
+---
+
 ## Version 10.0.3
 ![Date Badge](https://img.shields.io/badge/Publish-22%20September%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-v10.0.3-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Constants/10.0.3)

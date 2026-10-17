@@ -87,7 +87,7 @@ String, Int32, Boolean, Int64, Double, Object
 ### Expression-bodied members
 ```csharp
 // ✅ — operators, properties, indexers, accessors, lambdas, local functions
-public static implicit operator string(ResponseType type) => type.Value;
+public static implicit operator Result(Exception exception) => new(exception);
 public string Value { get; init; }
 public override string ToString() => Value;
 int Sum(int a, int b) => a + b;
@@ -168,7 +168,7 @@ x+y                     // no space around operator
 // ✅ — access modifiers first, then static, then readonly/const
 private static readonly JsonSerializerOptions JsonOptions = new();
 public const int Success = 200;
-protected internal ResponseType(string value) { }
+private static readonly ResponseType DefaultType = ResponseType.Error;
 
 // ❌
 static private readonly JsonSerializerOptions JsonOptions;

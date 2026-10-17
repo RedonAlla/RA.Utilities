@@ -6,9 +6,9 @@ title: ResponseType
 Namespace: RA.Utilities.Core.Constants
 ```
 
-The `ResponseType` is an implementation of the **type-safe enum pattern** using a `record` instead of a traditional C# `enum`. Its primary purpose is to create a strongly-typed, extensible, and descriptive vocabulary for the outcomes of your API operations, going beyond what standard HTTP status codes can offer.
+The `ResponseType` is a C# `enum` that provides a strongly-typed, descriptive vocabulary for the outcomes of your API operations, going beyond what standard HTTP status codes can offer.
 
-While HTTP status codes (like `200`, `404`, `500`) tell a client what happened at the transport level, the `ResponseType` record provides more specific, semantic context about the business-level outcome within the JSON response body.
+While HTTP status codes (like `200`, `404`, `500`) tell a client what happened at the transport level, the `ResponseType` enum provides more specific, semantic context about the business-level outcome within the JSON response body.
 
 For example, an HTTP `400 Bad Request` is a generic client error. The `ResponseType` can clarify the cause:
 
@@ -17,11 +17,14 @@ For example, an HTTP `400 Bad Request` is a generic client error. The `ResponseT
 
 The primary purpose is to create a consistent contract for your APIs. A client application can parse the `responseType` field in the JSON payload to trigger specific logic (e.g., display validation errors on the correct form fields) without having to guess the meaning of a generic HTTP status code.
 
-### Why a record instead of an enum?
+### JSON serialization
 
-Traditional C# enums cannot be extended from consuming projects. By using a `record`, `ResponseType` provides the same strong-typing benefits of an enum while allowing consuming projects to define their own response types via inheritance.
+The `[JsonConverter(typeof(ResponseTypeJsonConverter))]` attribute ensures that the enum is serialized to JSON as a plain string (e.g., `"NotFound"`) rather than as a number, making the API response self-documenting and easy for developers to read.
 
-The `[JsonConverter(typeof(ResponseTypeJsonConverter))]` attribute ensures that the record is serialized to JSON as a plain string (e.g., `"NotFound"`) rather than as a complex object, making the API response self-documenting and easy for developers to read.
+Deserialization behavior:
+
+* Member names are matched **case-insensitively** (`"notfound"` → `ResponseType.NotFound`).
+* `null`, empty, whitespace, or **unknown** strings fall back to `ResponseType.Error` instead of throwing.
 
 ## Built-in Values
 
@@ -46,106 +49,64 @@ The `[JsonConverter(typeof(ResponseTypeJsonConverter))]` attribute ensures that 
 | **ServiceUnavailable**| The service is temporarily unavailable.                                         | 503 Service Unavailable |
 | **GatewayTimeout**    | The server, acting as a gateway, did not receive a timely response.             | 504 Gateway Timeout |
 
-## Extending ResponseType
+## Working with the enum
 
-Since enums can't be extended, `ResponseType` is a `record` designed for inheritance. Consuming projects can define their own response types while maintaining the same strongly-typed API.
+### Switch expressions
 
-### Step 1: Define a custom response type
-
-Create a `record` that inherits from `ResponseType`. Use a private constructor and expose a static `Instance` field:
+Because `ResponseType` is a standard `enum`, it works with constant patterns and the compiler can verify exhaustiveness:
 
 ```csharp showLineNumbers
-using RA.Utilities.Core.Constants;
-
-namespace MyApp.ResponseTypes;
-
-/// <summary>
-/// Represents an HTTP 402 Payment Required response type.
-/// </summary>
-public record PaymentRequiredResponseType : ResponseType
+var label = responseType switch
 {
-    private PaymentRequiredResponseType(string value) : base(value) { }
+    ResponseType.Success => "OK",
+    ResponseType.NotFound => "Not Found",
+    ResponseType.Conflict => "Conflict",
+    ResponseType.BadRequest => "Bad Request",
+    _ => "Other"
+};
+```
 
-    public static readonly PaymentRequiredResponseType Instance = new("PaymentRequired");
+### Parsing from strings
+
+Use the standard `System.Enum` APIs. Note that `Enum.TryParse` succeeds for **any** name (even undefined ones), so validate with `Enum.IsDefined` when the input comes from an untrusted source:
+
+```csharp showLineNumbers
+// ✅ Preferred — parse a known member name
+if (Enum.TryParse("NotFound", ignoreCase: true, out ResponseType type))
+{
+    // type == ResponseType.NotFound
+}
+
+// ⚠️ Numeric strings parse successfully to *undefined* values
+Enum.TryParse("123", out ResponseType undefined); // true — (ResponseType)123, not a defined member
+
+// ✅ Validate untrusted input with Enum.IsDefined
+if (Enum.TryParse(value, ignoreCase: true, out ResponseType parsed) && Enum.IsDefined(parsed))
+{
+    // safe to use parsed
 }
 ```
 
-### Step 2: Define a custom exception
+### Default value
 
-Create an exception that uses your custom response type:
+`default(ResponseType)` (and uninitialized `ResponseType` fields) is `ResponseType.Success`, the first member (value `0`). Keep this in mind when declaring optional properties.
 
-```csharp showLineNumbers
-using RA.Utilities.Core.Constants;
-using RA.Utilities.Core.Exceptions;
+### No custom members
 
-namespace MyApp.Exceptions;
-
-public class PaymentRequiredException : RaBaseException
-{
-    public PaymentRequiredException(string message = "Payment is required.")
-        : base(402, PaymentRequiredResponseType.Instance, message)
-    {
-    }
-}
-```
-
-### Step 3: Throw and handle the exception
-
-Throw it like any built-in exception, and the exception-to-response mapper will use your custom response type:
+The set of values is closed — consuming projects cannot add new members. For an outcome that has no dedicated member (e.g., HTTP 402 Payment Required), use the closest built-in member and communicate the specifics through `ErrorCode`/`ResponseCode` and the message:
 
 ```csharp showLineNumbers
-// Throw
-throw new PaymentRequiredException("Premium subscription required.");
-
-// Or throw a generic RaBaseException with the custom type directly
-throw new RaBaseException(402, PaymentRequiredResponseType.Instance, "Premium subscription required.");
+throw new RaBaseException(402, ResponseType.Error, "Premium subscription required.");
 ```
 
-### Step 4: JSON output
-
-The custom response type serializes as a plain string in the API response:
+This serializes as:
 
 ```json showLineNumbers
 {
   "responseCode": 402,
-  "responseType": "PaymentRequired",
+  "responseType": "Error",
   "responseMessage": "Premium subscription required."
 }
-```
-
-### Grouping related types
-
-For multiple custom types, group them in a single static class for discoverability:
-
-```csharp showLineNumbers
-using RA.Utilities.Core.Constants;
-
-namespace MyApp.ResponseTypes;
-
-public static class AppResponseTypes
-{
-    public static readonly PaymentRequiredResponseType PaymentRequired = PaymentRequiredResponseType.Instance;
-    public static readonly RateLimitedResponseType RateLimited = RateLimitedResponseType.Instance;
-    public static readonly ServiceUnavailableResponseType ServiceUnavailable = ServiceUnavailableResponseType.Instance;
-}
-
-// Usage
-throw new RaBaseException(429, AppResponseTypes.RateLimited, "Too many requests.");
-```
-
-### Comparison with built-in types
-
-Custom types interoperate seamlessly with built-in ones — assignability, equality, and serialization all work:
-
-```csharp showLineNumbers
-ResponseType a = ResponseType.NotFound;                 // Built-in
-ResponseType b = PaymentRequiredResponseType.Instance;  // Custom
-
-bool same = a == b; // false — equality is based on the Value string
-
-// All serialize the same way in JSON:
-// "NotFound"
-// "PaymentRequired"
 ```
 
 ## Example JSON Response
@@ -154,7 +115,7 @@ bool same = a == b; // false — equality is based on the Value string
 {
   "responseCode": 404,
   // highlight-next-line
-  "responseType": "NotFound", // From the ResponseType record
+  "responseType": "NotFound", // From the ResponseType enum
   "responseMessage": "Product with value '99' not found."
 }
 ```

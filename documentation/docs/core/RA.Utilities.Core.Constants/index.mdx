@@ -35,7 +35,7 @@ The primary goal of this package is to ensure consistency across different proje
 - **HTTP Status Codes** — `BaseResponseCode` provides named constants for all common HTTP status codes (200–504)
 - **Standardized Messages** — `BaseResponseMessages` delivers consistent, production-ready API response text
 - **Validation Error Codes & Messages** — `BaseErrorCode` and `BaseErrorMessage` standardize field-level validation failures (email, currency, money, SSN)
-- **Semantic Response Types** — `ResponseType` is an extensible type-safe enum pattern for API outcome classification
+- **Semantic Response Types** — `ResponseType` is an enum for API outcome classification, serialized as a plain string in JSON
 - **HTTP Header Names** — `HeaderParameters` centralizes common header name strings for tracing, auth, and location
 - **Zero Dependencies** — No external package dependencies; pairs seamlessly with `RA.Utilities.Core.Exceptions`
 - **No Configuration** — Pure constants with no DI registration, no options, and no setup required
@@ -96,7 +96,7 @@ The package provides six constant classes, each serving a distinct role in your 
 | [`BaseResponseMessages`](./BaseResponseMessages) | Human-readable response messages as `string` constants | `BaseResponseMessages.NotFound` → `"The requested resource was not found."` |
 | [`BaseErrorCode`](./BaseErrorCode) | Machine-readable validation error codes as `string` constants | `BaseErrorCode.EmailRequired` → `"REQUIRED_EMAIL"` |
 | [`BaseErrorMessage`](./BaseErrorMessage) | Human-readable validation error messages as `string` constants | `BaseErrorMessage.EmailRequired` → `"The 'Email address' field is required."` |
-| [`ResponseType`](./ResponseType) | Semantic outcome labels using a type-safe enum pattern (`record`) | `ResponseType.NotFound` → `"NotFound"` |
+| [`ResponseType`](./ResponseType) | Semantic outcome labels as an `enum` with string JSON serialization | `ResponseType.NotFound` → `"NotFound"` |
 | [`HeaderParameters`](./HeaderParameters) | HTTP header name strings | `HeaderParameters.XRequestId` → `"x-request-id"` |
 
 ### How they work together
@@ -110,7 +110,7 @@ HTTP Response
 ├─ Status Code: BaseResponseCode.NotFound (404)
 ├─ Body:
 │   ├─ responseCode: 404
-│   ├─ responseType: "NotFound"    ← ResponseType record
+│   ├─ responseType: "NotFound"    ← ResponseType enum
 │   └─ responseMessage: "Product with value '99' not found."
 └─ Headers:
     └─ x-request-id: "abc-123"     ← HeaderParameters.XRequestId
@@ -119,7 +119,7 @@ HTTP Response
 ### Terminology
 
 - **Magic strings/numbers**: Hard-coded literals scattered throughout code. Replacing them with named constants improves readability and prevents typos.
-- **Type-safe enum pattern**: Using a `record` instead of a C# `enum` so consuming projects can extend the set of values via inheritance. See [`ResponseType`](./ResponseType) for details.
+- **Semantic response type**: A standard C# `enum` whose members label the outcome inside the JSON body. A custom `JsonConverter` serializes it as a plain string (e.g., `"NotFound"`) instead of a number. See [`ResponseType`](./ResponseType) for details.
 
 ---
 
@@ -205,15 +205,20 @@ if (string.IsNullOrWhiteSpace(request.Email))
 
 See [`BaseErrorCode`](./BaseErrorCode) and [`BaseErrorMessage`](./BaseErrorMessage) for the full catalog and the JSON shape these errors produce.
 
-### Create a custom ResponseType
+### Handle an outcome that has no dedicated ResponseType member
 
-See the full walkthrough in [`ResponseType` → Extending ResponseType](./ResponseType#extending-responsetype).
+The set of `ResponseType` values is closed. For an outcome without a dedicated member (e.g., HTTP 402 Payment Required), use the closest built-in member and communicate the specifics through the error code and message:
+
+```csharp showLineNumbers
+// highlight-next-line
+throw new RaBaseException(402, ResponseType.Error, "Premium subscription required.");
+```
 
 ---
 
 ## ⚙️ Configuration
 
-This package has **no configuration options**. There is no DI registration, no `appsettings.json` entries, and no options classes. All values are compile-time `const` or `static readonly` fields — reference them directly.
+This package has **no configuration options**. There is no DI registration, no `appsettings.json` entries, and no options classes. All values are compile-time `const` strings/integers or `enum` members — reference them directly.
 
 ---
 

@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using System.Text.Json;
 using FluentAssertions;
@@ -7,8 +6,8 @@ using RA.Utilities.Core.Constants;
 namespace RA.Utilities.Tests.RA.Utilities.Core.Constants;
 
 /// <summary>
-/// Contains unit tests for the <see cref="ResponseType"/> record,
-/// including equality, serialization, and extensibility.
+/// Contains unit tests for the <see cref="ResponseType"/> enum,
+/// including member values and serialization.
 /// </summary>
 public class ResponseTypeTests
 {
@@ -19,7 +18,7 @@ public class ResponseTypeTests
     // =================================================================
 
     /// <summary>
-    /// Provides all built-in ResponseType fields and their expected string values.
+    /// Provides all built-in ResponseType members and their expected string values.
     /// </summary>
     public static TheoryData<ResponseType, string> BuiltInValues =>
         new()
@@ -46,14 +45,14 @@ public class ResponseTypeTests
 
     [Theory]
     [MemberData(nameof(BuiltInValues))]
-    public void BuiltInValue_ShouldHaveCorrectValue(ResponseType responseType, string expectedValue)
+    public void BuiltInValue_ShouldHaveCorrectName(ResponseType responseType, string expectedValue)
     {
         // Assert
-        responseType.Value.Should().Be(expectedValue);
+        responseType.ToString().Should().Be(expectedValue);
     }
 
     [Fact]
-    public void BuiltInValues_ShouldBeDistinctByValue()
+    public void BuiltInValues_ShouldBeDistinct()
     {
         // Arrange
         ResponseType[] allValues =
@@ -79,72 +78,10 @@ public class ResponseTypeTests
 
     [Theory]
     [MemberData(nameof(BuiltInValues))]
-    public void ToString_ShouldReturnValue(ResponseType responseType, string expectedValue)
+    public void ToString_ShouldReturnMemberName(ResponseType responseType, string expectedValue)
     {
         // Act
         string result = responseType.ToString();
-
-        // Assert
-        result.Should().Be(expectedValue);
-    }
-
-    // =================================================================
-    // Equality
-    // =================================================================
-
-    [Fact]
-    public void SameStaticField_ShouldBeEqual()
-    {
-        // Arrange
-        ResponseType a = ResponseType.NotFound;
-        ResponseType b = ResponseType.NotFound;
-
-        // Act & Assert
-        (a == b).Should().BeTrue();
-        a.Equals(b).Should().BeTrue();
-    }
-
-    [Fact]
-    public void DifferentFields_ShouldNotBeEqual()
-    {
-        // Act & Assert
-        (ResponseType.NotFound == ResponseType.Conflict).Should().BeFalse();
-        ResponseType.NotFound.Equals(ResponseType.Conflict).Should().BeFalse();
-    }
-
-    [Fact]
-    public void DifferentInstances_SameValue_ShouldBeEqual()
-    {
-        // Arrange
-        var a = new ResponseType("Custom");
-        var b = new ResponseType("Custom");
-
-        // Act & Assert — records use value equality
-        (a == b).Should().BeTrue();
-        a.Equals(b).Should().BeTrue();
-    }
-
-    [Fact]
-    public void DifferentInstances_DifferentValue_ShouldNotBeEqual()
-    {
-        // Arrange
-        var a = new ResponseType("Alpha");
-        var b = new ResponseType("Beta");
-
-        // Act & Assert
-        (a == b).Should().BeFalse();
-    }
-
-    // =================================================================
-    // Implicit string conversion
-    // =================================================================
-
-    [Theory]
-    [MemberData(nameof(BuiltInValues))]
-    public void ImplicitConversionToString_ShouldReturnValue(ResponseType responseType, string expectedValue)
-    {
-        // Act
-        string result = responseType;
 
         // Assert
         result.Should().Be(expectedValue);
@@ -193,42 +130,40 @@ public class ResponseTypeTests
     // =================================================================
 
     [Fact]
-    public void Deserialize_ValidString_ShouldCreateInstance()
+    public void Deserialize_ValidString_ShouldReturnMatchingMember()
     {
         // Arrange
         const string json = "\"NotFound\"";
 
         // Act
-        ResponseType? result = JsonSerializer.Deserialize<ResponseType>(json);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Value.Should().Be("NotFound");
-    }
-
-    [Fact]
-    public void Deserialize_ValidString_ShouldEqualBuiltInField()
-    {
-        // Arrange
-        const string json = "\"NotFound\"";
-
-        // Act
-        ResponseType? result = JsonSerializer.Deserialize<ResponseType>(json);
+        ResponseType result = JsonSerializer.Deserialize<ResponseType>(json);
 
         // Assert
         result.Should().Be(ResponseType.NotFound);
     }
 
     [Fact]
-    public void Deserialize_Null_ShouldReturnNull()
+    public void Deserialize_ValidString_CaseInsensitive_ShouldReturnMatchingMember()
     {
-        // System.Text.Json returns null for null JSON before invoking the converter.
-        // This is expected behavior for reference types.
+        // Arrange
+        const string json = "\"notfound\"";
+
+        // Act
+        ResponseType result = JsonSerializer.Deserialize<ResponseType>(json);
+
+        // Assert
+        result.Should().Be(ResponseType.NotFound);
+    }
+
+    [Fact]
+    public void Deserialize_Null_ShouldReturnError()
+    {
+        // .NET 9+ passes null tokens to the converter; the null string falls back to Error.
         const string json = "null";
 
-        ResponseType? result = JsonSerializer.Deserialize<ResponseType>(json);
+        ResponseType result = JsonSerializer.Deserialize<ResponseType>(json);
 
-        result.Should().BeNull();
+        result.Should().Be(ResponseType.Error);
     }
 
     [Fact]
@@ -238,7 +173,7 @@ public class ResponseTypeTests
         const string json = "\"\"";
 
         // Act
-        ResponseType? result = JsonSerializer.Deserialize<ResponseType>(json);
+        ResponseType result = JsonSerializer.Deserialize<ResponseType>(json);
 
         // Assert
         result.Should().Be(ResponseType.Error);
@@ -251,7 +186,20 @@ public class ResponseTypeTests
         const string json = "\"   \"";
 
         // Act
-        ResponseType? result = JsonSerializer.Deserialize<ResponseType>(json);
+        ResponseType result = JsonSerializer.Deserialize<ResponseType>(json);
+
+        // Assert
+        result.Should().Be(ResponseType.Error);
+    }
+
+    [Fact]
+    public void Deserialize_UnknownString_ShouldReturnError()
+    {
+        // Arrange
+        const string json = "\"PaymentRequired\"";
+
+        // Act
+        ResponseType result = JsonSerializer.Deserialize<ResponseType>(json);
 
         // Assert
         result.Should().Be(ResponseType.Error);
@@ -260,120 +208,22 @@ public class ResponseTypeTests
     [Fact]
     public void RoundTrip_AllBuiltInValues_ShouldPreserveEquality()
     {
-        ResponseType[] allValues = new[]
-        {
+        ResponseType[] allValues =
+        [
             ResponseType.Success, ResponseType.Created, ResponseType.Updated,
             ResponseType.Deleted, ResponseType.NoContent, ResponseType.Accepted,
             ResponseType.Validation, ResponseType.Problem, ResponseType.NotFound,
             ResponseType.Conflict, ResponseType.Unauthorized, ResponseType.Error,
             ResponseType.BadRequest, ResponseType.Unprocessable, ResponseType.Forbidden,
             ResponseType.TooManyRequests, ResponseType.ServiceUnavailable, ResponseType.GatewayTimeout,
-        };
+        ];
 
         foreach (ResponseType responseType in allValues)
         {
             string json = JsonSerializer.Serialize(responseType);
-            ResponseType? deserialized = JsonSerializer.Deserialize<ResponseType>(json);
+            ResponseType deserialized = JsonSerializer.Deserialize<ResponseType>(json);
 
-            deserialized.Should().Be(responseType, $"round-trip should preserve equality for '{responseType.Value}'");
+            deserialized.Should().Be(responseType, $"round-trip should preserve equality for '{responseType}'");
         }
-    }
-
-    // =================================================================
-    // Constructor validation
-    // =================================================================
-
-    [Fact]
-    public void Constructor_NullValue_ShouldThrow()
-    {
-        // Act
-        Func<ResponseType> act = () => new ResponseType(null!);
-
-        // Assert
-        act.Should().Throw<ArgumentException>();
-    }
-
-    [Fact]
-    public void Constructor_EmptyValue_ShouldThrow()
-    {
-        // Act
-        Func<ResponseType> act = () => new ResponseType(string.Empty);
-
-        // Assert
-        act.Should().Throw<ArgumentException>();
-    }
-
-    [Fact]
-    public void Constructor_WhitespaceValue_ShouldThrow()
-    {
-        // Act
-        Func<ResponseType> act = () => new ResponseType("   ");
-
-        // Assert
-        act.Should().Throw<ArgumentException>();
-    }
-
-    // =================================================================
-    // Extensibility — custom derived response types
-    // =================================================================
-
-    private sealed record CustomResponseType : ResponseType
-    {
-        private CustomResponseType(string value) : base(value) { }
-        public static readonly CustomResponseType Instance = new("PaymentRequired");
-    }
-
-    [Fact]
-    public void CustomDerivedType_ShouldHaveCorrectValue()
-    {
-        // Assert
-        CustomResponseType.Instance.Value.Should().Be("PaymentRequired");
-    }
-
-    [Fact]
-    public void CustomDerivedType_ShouldBeAssignableToBase()
-    {
-        // Act
-        ResponseType type = CustomResponseType.Instance;
-
-        // Assert
-        type.Should().BeOfType<CustomResponseType>();
-        type.Value.Should().Be("PaymentRequired");
-    }
-
-    [Fact]
-    public void CustomDerivedType_ShouldSerializeAsPlainString()
-    {
-        // Serialize via the base type to ensure the converter is picked up
-        ResponseType value = CustomResponseType.Instance;
-        string json = JsonSerializer.Serialize(value);
-
-        json.Should().Be("\"PaymentRequired\"");
-    }
-
-    [Fact]
-    public void CustomDerivedType_ShouldDeserializeViaBaseConverter()
-    {
-        // Arrange
-        const string json = "\"PaymentRequired\"";
-
-        // Act
-        ResponseType? result = JsonSerializer.Deserialize<ResponseType>(json);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Value.Should().Be("PaymentRequired");
-    }
-
-    [Fact]
-    public void CustomDerivedType_ShouldNotEqualBuiltInWithSameValue()
-    {
-        // CustomResponseType("Success") is not the same type as ResponseType.Success
-        // but records use value equality — let's verify
-        var custom = new ResponseType("Success");
-
-        // Same Value, so record equality says true
-        (custom == ResponseType.Success).Should().BeTrue();
-        custom.Should().Be(ResponseType.Success);
     }
 }
