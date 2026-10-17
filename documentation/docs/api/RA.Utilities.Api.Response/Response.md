@@ -3,64 +3,63 @@ title: Response<T>
 sidebar_position: 1
 ---
 
-```powershell
-Namespace: RA.Utilities.Api.Results
+```bash
+Namespace: RA.Utilities.Api.Response
 ```
 
-The `Response<T>` class is the universal wrapper for all API responses within the RA.Utilities ecosystem. It provides a standardized structure for returning data, errors, and status information from your API endpoints, ensuring consistency and predictability for clients.
+The `Response<T>` class is the universal wrapper for all API responses in the RA.Utilities ecosystem. It defines the JSON envelope shared by every response model: `responseCode`, `responseType`, `responseMessage`, and `result`.
 
 ### 🎯 Purpose
 
-The `Response<T>` class is the foundational building block for creating standardized and predictable API responses in your application.
-Its primary purpose is to act as a universal wrapper for every response that your API sends back to a client.
+`Response<T>` is the base type for the package. It gives every success and failure response the same shape, so clients can parse the envelope once and then inspect the `Result` payload.
 
-By using this single, consistent structure, you gain several key advantages:
-
-1. **Standardization**: Every response, whether it's a success carrying data, a validation error, or a server-side failure, will have the same shape.
-It will always contain a `ResponseCode`, `ResponseType`, `ResponseMessage`, and a `Result` payload.
-
-2. **Predictability for Clients**: Frontend applications and other API consumers benefit immensely from this consistency.
-They can write generic handling logic to parse the response wrapper before dealing with the specific data inside the `Result` property.
-This simplifies client-side code and makes it more robust.
-
-3. **Clear Communication**: The wrapper explicitly communicates the outcome of the API call.
-The `ResponseType` (e.g., `Success`, `BadRequest`, `NotFound`) and the `ResponseMessage` provide immediate, clear context about what happened.
-
-4. **Extensibility**: It serves as the base class for more specific, semantic response types like `SuccessResponse<T>`, `BadRequestResponse`, and `NotFoundResponse`.
-These derived classes pre-configure the `Response<T>` properties for common scenarios, reducing boilerplate code in your controllers.
-
-In short, `Response<T>` is the cornerstone of a strategy to make your API's communication clear, consistent, and easy to work with for any consumer.
+1. **Standardization**: Every response carries the same four properties.
+2. **Predictability**: Clients can branch on `ResponseCode` or `ResponseType` before reading `Result`.
+3. **Extensibility**: The package's response classes derive from `Response<T>`; you can derive from it too when you need a status code the package does not wrap.
+4. **Immutability**: All properties use `init` accessors, so a response cannot be mutated after construction.
 
 ### Class Definition
 
 ```csharp showLineNumbers
 public class Response<T>
 {
-    public int ResponseCode { get; set; }
-    public ResponseType ResponseType { get; set; }
-    public string? ResponseMessage { get; set; }
-    public T? Result { get; set; }
+    public int ResponseCode { get; init; }
+    public ResponseType ResponseType { get; init; }
+    public string? ResponseMessage { get; init; }
+    public T? Result { get; init; }
 }
 ```
 
 ### Properties
 
-| Property          | Type                                       | Description                                                              |
-| ----------------- | ------------------------------------------ | ------------------------------------------------------------------------ |
-| **ResponseCode**    | `int`                                      | A code for the response, often mapping to an HTTP status code.           |
-| **ResponseType**    | `RA.Utilities.Core.Constants.ResponseType` | A record indicating the type of response (e.g., `Success`, `Error`, `NotFound`). Extensible via inheritance. |
-| **ResponseMessage** | `string?`                                  | A human-friendly message describing the outcome of the operation.        |
-| **Result**          | `T?`                                       | The actual data payload of the response. Can be `null` for error responses. |
+| Property | Type | Description |
+|---|---|---|
+| **ResponseCode** | `int` | The response code, typically an HTTP status code but allowed to be a domain-specific code. |
+| **ResponseType** | `ResponseType` | The semantic outcome (`Success`, `BadRequest`, `NotFound`, ...) from `RA.Utilities.Core.Constants`. Serialized as a number by default; see JSON serialization. |
+| **ResponseMessage** | `string?` | A human-readable message describing the outcome. |
+| **Result** | `T?` | The payload. `null` for responses that carry no data. |
 
-### Generic JSON Example
+Because all four properties are `init`-only, object initializers work, but mutation after construction does not:
 
-The following example shows the structure of a successful response containing a `Product` object.
-The `result` property would be `null` or contain error details for other response types.
+```csharp showLineNumbers
+var response = new Response<string>
+{
+    ResponseCode = BaseResponseCode.Success,
+    ResponseType = ResponseType.Success,
+    ResponseMessage = "Operation completed successfully.",
+    Result = "payload"
+};
+```
+
+### JSON Serialization
+
+ASP.NET Core serializes properties in camelCase by default. `ResponseType` is an enum, so `System.Text.Json` writes its **numeric value** unless a string-enum converter is registered.
 
 ```json showLineNumbers
 {
   "responseCode": 200,
-  "responseType": "Success",
+  // highlight-next-line
+  "responseType": 0,
   "responseMessage": "Operation completed successfully.",
   "result": {
     "id": 123,
@@ -68,3 +67,37 @@ The `result` property would be `null` or contain error details for other respons
   }
 }
 ```
+
+To write `"Success"` instead of `0`, register `JsonStringEnumConverter`:
+
+```csharp showLineNumbers
+using System.Text.Json.Serialization;
+
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    // highlight-next-line
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
+```
+
+For the full converter behavior and the numeric value of every member, see [`ResponseType`](../../core/RA.Utilities.Core.Constants/ResponseType#json-serialization).
+
+### Derived Types
+
+The package ships these derived response classes:
+
+| Type | HTTP | Result type |
+|---|---|---|
+| [`SuccessResponse<T>`](./SuccessResponse) | 200 | `T` |
+| [`BadRequestResponse`](./BadRequestResponse) | 400 | `BadRequestResult[]` |
+| [`UnauthorizedResponse`](./UnauthorizedResponse) | 401 | `ErrorResult` |
+| [`ForbiddenResponse`](./ForbiddenResponse) | 403 | `ErrorResult` |
+| [`NotFoundResponse`](./NotFoundResponse) | 404 | `NotFoundResult` |
+| [`ConflictResponse`](./ConflictResponse) | 409 | `ConflictResult` |
+| [`UnprocessableResponse`](./UnprocessableResponse) | 422 | `ErrorResult` |
+| [`TooManyRequestsResponse`](./TooManyRequestsResponse) | 429 | `ErrorResult` |
+| [`ErrorResponse`](./ErrorResponse) | 500 | `ErrorResult` |
+| [`ServiceUnavailableResponse`](./ServiceUnavailableResponse) | 503 | `ErrorResult` |
+| [`GatewayTimeoutResponse`](./GatewayTimeoutResponse) | 504 | `ErrorResult` |
+
+`Response<T>` has an implicit public parameterless constructor, so you can also instantiate it directly for a one-off response. Prefer a derived type when one matches your status code.

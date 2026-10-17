@@ -1,6 +1,6 @@
 using RA.Utilities.Core.Constants;
 
-namespace RA.Utilities.Api.Results;
+namespace RA.Utilities.Api.Response;
 
 /// <summary>
 /// Represents a standardized API response for an forbidden request (HTTP 403).
@@ -24,15 +24,27 @@ public sealed class ForbiddenResponse : Response<ErrorResult>
     /// Initializes a new instance of the <see cref="ForbiddenResponse"/> class.
     /// </summary>
     /// <param name="result">The error result details.</param>
+    public ForbiddenResponse(ErrorResult? result)
+    {
+        ResponseCode = BaseResponseCode.Forbidden;
+        ResponseMessage = BaseResponseMessages.Forbidden;
+        ResponseType = ResponseType.Forbidden;
+        Result = result;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ForbiddenResponse"/> class.
+    /// </summary>
+    /// <param name="result">The error result details.</param>
     /// <param name="responseCode">The response code.</param>
     /// <param name="responseMessage">The response message.</param>
     public ForbiddenResponse(
         ErrorResult? result,
-        int responseCode = BaseResponseCode.Forbidden,
-        string responseMessage = BaseResponseMessages.Forbidden)
+        int? responseCode,
+        string responseMessage = "")
     {
-        ResponseCode = responseCode;
-        ResponseMessage = responseMessage;
+        ResponseCode = responseCode ?? BaseResponseCode.Forbidden;
+        ResponseMessage = responseMessage ?? BaseResponseMessages.Forbidden;
         ResponseType = ResponseType.Forbidden;
         Result = result;
     }

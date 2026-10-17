@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Version>10.0.0</Version>
+    <Version>10.1.0</Version>
     <Title>Api Response</Title>
     <Description>Provides a standardized set of models for creating consistent API responses. This package includes generic wrappers for success, error, and validation failure scenarios, helping to streamline API development and improve client-side handling.</Description>
     <Summary>Provides a standardized set of models for creating consistent API responses, including generic wrappers for success, error, and validation failure scenarios.</Summary>

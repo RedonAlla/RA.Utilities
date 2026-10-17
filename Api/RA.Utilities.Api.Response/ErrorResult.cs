@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace RA.Utilities.Api.Results;
+namespace RA.Utilities.Api.Response;
 
 /// <summary>
 /// Represents a result containing error information.

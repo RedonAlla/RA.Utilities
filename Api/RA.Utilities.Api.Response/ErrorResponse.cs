@@ -1,6 +1,6 @@
 using RA.Utilities.Core.Constants;
 
-namespace RA.Utilities.Api.Results;
+namespace RA.Utilities.Api.Response;
 
 /// <summary>
 /// Creates an <see cref="Response{T}"/> object that produces an <see cref="ResponseType.Error"/> response, typically for unhandled server errors.
@@ -34,16 +34,28 @@ public sealed class ErrorResponse : Response<ErrorResult>
     /// Initializes a new instance of the <see cref="ErrorResponse"/> class.
     /// </summary>
     /// <param name="result">The error result details.</param>
+    public ErrorResponse(ErrorResult? result)
+    {
+        ResponseCode = BaseResponseCode.InternalServerError;
+        ResponseMessage = BaseResponseMessages.Error;
+        ResponseType = ResponseType.Error;
+        Result = result;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ErrorResponse"/> class.
+    /// </summary>
+    /// <param name="result">The error result details.</param>
     /// <param name="responseCode">The response code, defaulting to <see cref="BaseResponseCode.InternalServerError"/>.</param>
     /// <param name="responseMessage">The response message, defaulting to a generic server error message.</param>
     public ErrorResponse(
         ErrorResult? result,
-        int responseCode = BaseResponseCode.InternalServerError,
-        string responseMessage = BaseResponseMessages.Error
+        int? responseCode,
+        string responseMessage = ""
     )
     {
-        ResponseCode = responseCode;
-        ResponseMessage = responseMessage;
+        ResponseCode = responseCode ?? BaseResponseCode.InternalServerError;
+        ResponseMessage = responseMessage ?? BaseResponseMessages.Error;
         ResponseType = ResponseType.Error;
         Result = result;
     }

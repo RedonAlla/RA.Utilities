@@ -1,0 +1,282 @@
+---
+title: Migration Guides
+---
+
+# Migration Guides
+
+## v10.0.0 → v10.1.0
+
+v10.1.0 aligns the namespace with the package name, redesigns the constructor overloads, and changes how `responseType` is serialized. The envelope shape — `responseCode`, `responseType`, `responseMessage`, `result` — is unchanged.
+
+:::warning[Three breaking changes]
+
+1. The namespace moved from `RA.Utilities.Api.Results` to `RA.Utilities.Api.Response`.
+2. Optional constructor parameters were replaced by convenience and all-argument overloads.
+3. `responseType` is serialized as a number by default (through `RA.Utilities.Core.Constants` v10.0.4).
+
+:::
+
+### Breaking Change 1: Namespace is now `RA.Utilities.Api.Response`
+
+Every public type moved from the `RA.Utilities.Api.Results` namespace to `RA.Utilities.Api.Response` so the namespace matches the package id. The deprecated `RA.Utilities.Api.Results` package is no longer involved.
+
+### Why this change?
+
+- `RA.Utilities.Api.Results` and `RA.Utilities.Api.Response` both described the same types, which made package/namespace mismatches confusing.
+- The old package id is deprecated; keeping its namespace in the new package would preserve the confusion.
+- `RA.Utilities.Api` and `RA.Utilities.OpenApi` consume this package, so their transitive types use the new namespace too.
+
+### What changed
+
+| Aspect | v10.0.0 | v10.1.0 |
+|---|---|---|
+| Namespace | `RA.Utilities.Api.Results` | `RA.Utilities.Api.Response` |
+| Using directive | `using RA.Utilities.Api.Results;` | `using RA.Utilities.Api.Response;` |
+| Fully qualified name | `RA.Utilities.Api.Results.NotFoundResponse` | `RA.Utilities.Api.Response.NotFoundResponse` |
+| Package id | `RA.Utilities.Api.Response` | unchanged |
+| Binary compatibility | — | ❌ Types have new full names; recompile consumers |
+
+### Migration Steps
+
+#### 1. Replace the using directive
+
+**Before:**
+
+```csharp
+using RA.Utilities.Api.Results;
+```
+
+**After:**
+
+```csharp
+using RA.Utilities.Api.Response;
+```
+
+#### 2. Replace fully qualified names
+
+If you reference the types by full name (reflection, assembly scanning, XML config, `typeof` strings), update those too:
+
+**Before:**
+
+```csharp
+Type responseType = typeof(RA.Utilities.Api.Results.NotFoundResponse);
+```
+
+**After:**
+
+```csharp
+Type responseType = typeof(RA.Utilities.Api.Response.NotFoundResponse);
+```
+
+#### 3. Check global usings and test projects
+
+Search the solution for `RA.Utilities.Api.Results` and replace every match in `GlobalUsings.cs`, `_ViewImports.cshtml`, test projects, and source generators. Keep the package reference to `RA.Utilities.Api.Response` — only the namespace changed.
+
+If you consume `RA.Utilities.Api` or `RA.Utilities.OpenApi`, update them in the same pass: their public APIs expose these response types, so all projects must reference compatible versions.
+
+---
+
+### Breaking Change 2: Constructor overloads were split
+
+v10.0.0 used optional parameters whose defaults came from `const` fields:
+
+```csharp
+public NotFoundResponse(
+    NotFoundResult model,
+    int responseCode = BaseResponseCode.NotFound,
+    string responseMessage = BaseResponseMessages.NotFound)
+```
+
+In `RA.Utilities.Core.Constants` v10.0.4 those fields became `static readonly`, so they can no longer be used as default parameter values (CS1736). v10.1.0 replaces each optional-parameter constructor with:
+
+- a **convenience constructor** that applies the standard code and message, and
+- an **all-argument constructor** for custom codes and messages.
+
+### Why this change?
+
+C# requires compile-time constants for default parameter values. Rather than hardcode the literals, the constructors were split so the standard values still live in one place.
+
+### What changed
+
+| Call site | v10.0.0 | v10.1.0 |
+|---|---|---|
+| `new NotFoundResponse(model)` | ✅ 404 + standard message | ✅ Same result (convenience constructor) |
+| `new NotFoundResponse(model, 404)` | ✅ 404 + standard message | ⚠️ Compiles, but message becomes `""` |
+| `new NotFoundResponse(model, responseMessage: "x")` | ✅ | ❌ No matching overload — pass `responseCode` too |
+| `new BadRequestResponse(error)` | ✅ 400 + standard message | ✅ Same result |
+| `new BadRequestResponse(error, responseCode: 422)` | ✅ | ❌ Explicit overload requires `responseMessage` |
+| `new ConflictResponse(model, responseCode: 409)` | ✅ | ❌ Explicit overload requires `responseMessage` |
+| `new ErrorResponse()` | ✅ 500 + standard message | ✅ Same result |
+| `new ErrorResponse(result, 500)` | ✅ 500 + standard message | ⚠️ Compiles, but message becomes `""` |
+| `new ErrorResponse(result, responseMessage: "x")` | ✅ | ❌ No matching overload — pass `responseCode` too |
+| `new SuccessResponse<Product>(product)` | ✅ 200 + standard message | ✅ Same result |
+| `new SuccessResponse<Product>(product, responseCode: 201)` | ✅ 201 + standard message | ⚠️ Compiles, but message becomes `""` |
+| `new GatewayTimeoutResponse()` | ✅ 504 + standard message | ✅ Same result |
+
+The empty-message behavior follows from the new signatures: most explicit overloads declare `string responseMessage = ""` and only substitute the standard message when the value is `null`. `BadRequestResponse` and `ConflictResponse` go further and require the message argument.
+
+### Migration Steps
+
+#### 1. Prefer the convenience constructor
+
+If you only passed the payload, no change is required:
+
+```csharp
+return NotFound(new NotFoundResponse(new NotFoundResult("Product", id)));
+```
+
+#### 2. Update named arguments on custom calls
+
+The explicit overloads expect a positional code and message. Pass both:
+
+**Before:**
+
+```csharp
+return NotFound(new NotFoundResponse(model, responseMessage: "Product not found."));
+```
+
+**After:**
+
+```csharp
+return NotFound(new NotFoundResponse(model, null, "Product not found."));
+```
+
+#### 3. Keep the standard message when overriding only the code
+
+Because the explicit overload's message defaults to `""`, pass the standard message explicitly when you want it:
+
+**Before:**
+
+```csharp
+return StatusCode(500, new ErrorResponse(result, 500));
+```
+
+**After:**
+
+```csharp
+return StatusCode(500, new ErrorResponse(
+    result,
+    BaseResponseCode.InternalServerError,
+    BaseResponseMessages.Error));
+```
+
+Or use the convenience constructor and keep the standard 500 message:
+
+```csharp
+return StatusCode(500, new ErrorResponse(result));
+```
+
+#### 4. Add the missing argument to `BadRequestResponse` and `ConflictResponse`
+
+Their explicit overloads have no optional parameters:
+
+**Before:**
+
+```csharp
+return BadRequest(new BadRequestResponse(error, responseCode: 422));
+```
+
+**After:**
+
+```csharp
+return BadRequest(new BadRequestResponse(
+    error,
+    BaseResponseCode.Unprocessable,
+    "The request could not be processed."));
+```
+
+**Before:**
+
+```csharp
+return Conflict(new ConflictResponse(model, 409));
+```
+
+**After:**
+
+```csharp
+return Conflict(new ConflictResponse(
+    model,
+    BaseResponseCode.Conflict,
+    BaseResponseMessages.Conflict));
+```
+
+#### 5. Watch overload resolution when `T` is `string` or `int`
+
+`SuccessResponse<T>` now has dedicated `SuccessResponse(string responseMessage)` and `SuccessResponse(int responseCode)` constructors. For `T = string` or `T = int`, a single-argument call selects the non-generic constructor:
+
+```csharp
+// ⚠️ Sets ResponseMessage, not Result
+var wrong = new SuccessResponse<string>("hello");
+
+// ✅ Sets Result
+var right = new SuccessResponse<string>("hello", null);
+```
+
+Pass the second argument (`null` for the default code) whenever the payload type is `string` or `int`.
+
+#### 6. Recompile and rerun JSON tests
+
+The namespace and constructor changes are source-breaking. Rebuild every project that references the response models and update tests that assert the old message defaults.
+
+---
+
+### Breaking Change 3: `responseType` is numeric by default
+
+v10.0.0 depended on `RA.Utilities.Core.Constants` v10.0.2, where `ResponseType` was a `record` with a built-in `ResponseTypeJsonConverter` that wrote strings. v10.1.0 depends on v10.0.4, where `ResponseType` is a plain `enum` with no converter.
+
+### Why this change?
+
+The conversion from `record` to `enum` removed the attribute-level converter. `System.Text.Json` now follows its default enum behavior: numbers on write, numbers on read.
+
+### What changed
+
+| Response type | v10.0.0 JSON | v10.1.0 JSON (default) |
+|---|---|---|
+| `SuccessResponse<T>` | `"responseType": "Success"` | `"responseType": 0` |
+| `NotFoundResponse` | `"responseType": "NotFound"` | `"responseType": 8` |
+| `ConflictResponse` | `"responseType": "Conflict"` | `"responseType": 9` |
+| `UnauthorizedResponse` | `"responseType": "Unauthorized"` | `"responseType": 10` |
+| `ErrorResponse` | `"responseType": "Error"` | `"responseType": 11` |
+| `BadRequestResponse` | `"responseType": "BadRequest"` | `"responseType": 12` |
+| `UnprocessableResponse` | `"responseType": "Unprocessable"` | `"responseType": 13` |
+| `ForbiddenResponse` | `"responseType": "Forbidden"` | `"responseType": 14` |
+| `TooManyRequestsResponse` | `"responseType": "TooManyRequests"` | `"responseType": 15` |
+| `ServiceUnavailableResponse` | `"responseType": "ServiceUnavailable"` | `"responseType": 16` |
+| `GatewayTimeoutResponse` | `"responseType": "GatewayTimeout"` | `"responseType": 17` |
+
+### Migration Steps
+
+#### 1. Register `JsonStringEnumConverter` to keep names
+
+```csharp
+using System.Text.Json.Serialization;
+
+// Minimal APIs and Results.Json (used by RA.Utilities.Api)
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
+
+// MVC controllers
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
+```
+
+#### 2. Or update clients to accept numbers
+
+If numeric values are acceptable, no server change is needed. Treat the numbers as part of the contract; the values are stable (see the `ResponseType` table).
+
+#### 3. Account for stricter deserialization
+
+Unlike the old converter, `JsonStringEnumConverter` throws `JsonException` for unknown names and `null` for non-nullable enums. Validate input first if you need tolerant behavior.
+
+See [`ResponseType`](../../core/RA.Utilities.Core.Constants/ResponseType#json-serialization) for the complete mapping and behavior.
+
+---
+
+## Full Changelog
+
+See the [package release notes](https://github.com/RedonAlla/RA.Utilities/blob/main/Api/RA.Utilities.Api.Response/releasenotes.md) for a complete version history.

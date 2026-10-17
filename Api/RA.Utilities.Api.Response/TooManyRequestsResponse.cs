@@ -1,6 +1,6 @@
 using RA.Utilities.Core.Constants;
 
-namespace RA.Utilities.Api.Results;
+namespace RA.Utilities.Api.Response;
 
 /// <summary>
 /// Represents a standardized API response for a rate limit or too many requests error (HTTP 429).
@@ -24,15 +24,27 @@ public sealed class TooManyRequestsResponse : Response<ErrorResult>
     /// Initializes a new instance of the <see cref="TooManyRequestsResponse"/> class.
     /// </summary>
     /// <param name="result">The error result details.</param>
+    public TooManyRequestsResponse(ErrorResult? result = null)
+    {
+        ResponseCode = BaseResponseCode.TooManyRequests;
+        ResponseMessage = BaseResponseMessages.TooManyRequests;
+        ResponseType = ResponseType.TooManyRequests;
+        Result = result;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TooManyRequestsResponse"/> class.
+    /// </summary>
+    /// <param name="result">The error result details.</param>
     /// <param name="responseCode">The response code, defaulting to <see cref="BaseResponseCode.TooManyRequests"/>.</param>
     /// <param name="responseMessage">The response message, defaulting to <see cref="BaseResponseMessages.TooManyRequests"/>.</param>
     public TooManyRequestsResponse(
-        ErrorResult? result = null,
-        int responseCode = BaseResponseCode.TooManyRequests,
-        string responseMessage = BaseResponseMessages.TooManyRequests)
+        ErrorResult result,
+        int? responseCode,
+        string responseMessage = "")
     {
-        ResponseCode = responseCode;
-        ResponseMessage = responseMessage;
+        ResponseCode = responseCode ?? BaseResponseCode.TooManyRequests;
+        ResponseMessage = responseMessage ?? BaseResponseMessages.TooManyRequests;
         ResponseType = ResponseType.TooManyRequests;
         Result = result;
     }

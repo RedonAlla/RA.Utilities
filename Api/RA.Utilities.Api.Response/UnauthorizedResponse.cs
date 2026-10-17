@@ -1,6 +1,6 @@
 using RA.Utilities.Core.Constants;
 
-namespace RA.Utilities.Api.Results;
+namespace RA.Utilities.Api.Response;
 
 /// <summary>
 /// Represents a standardized API response for an unauthorized request (HTTP 401).
@@ -24,15 +24,27 @@ public sealed class UnauthorizedResponse : Response<ErrorResult>
     /// Initializes a new instance of the <see cref="UnauthorizedResponse"/> class.
     /// </summary>
     /// <param name="result">The error result details.</param>
+    public UnauthorizedResponse(ErrorResult? result = null)
+    {
+        ResponseCode = BaseResponseCode.Unauthorized;
+        ResponseMessage = BaseResponseMessages.Unauthorized;
+        ResponseType = ResponseType.Unauthorized;
+        Result = result;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UnauthorizedResponse"/> class.
+    /// </summary>
+    /// <param name="result">The error result details.</param>
     /// <param name="responseCode">The response code, defaulting to <see cref="BaseResponseCode.Unauthorized"/>.</param>
     /// <param name="responseMessage">The response message, defaulting to <see cref="BaseResponseMessages.Unauthorized"/>.</param>
     public UnauthorizedResponse(
-        ErrorResult? result = null,
-        int responseCode = BaseResponseCode.Unauthorized,
-        string responseMessage = BaseResponseMessages.Unauthorized)
+        ErrorResult result,
+        int? responseCode,
+        string responseMessage = "")
     {
-        ResponseCode = responseCode;
-        ResponseMessage = responseMessage;
+        ResponseCode = responseCode ?? BaseResponseCode.Unauthorized;
+        ResponseMessage = responseMessage ?? BaseResponseMessages.Unauthorized;
         ResponseType = ResponseType.Unauthorized;
         Result = result;
     }

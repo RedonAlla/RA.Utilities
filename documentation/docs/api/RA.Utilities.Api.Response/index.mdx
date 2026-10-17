@@ -18,28 +18,345 @@ import LogoSvg from '../../../../Assets/Images/results.svg';
 [![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Api.Response.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api.Response/)
 [![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
 [![Publish NuGet](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml/badge.svg)](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml)
-[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?label=License&logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
 
-The `RA.Utilities.Api.Results` namespace contains a comprehensive set of standardized response models for ASP.NET Core APIs. These types are published in the standalone `RA.Utilities.Api.Response` NuGet package. `RA.Utilities.Api` also ships them as a transitive dependency, so both packages provide the same `RA.Utilities.Api.Results` namespace.
+`RA.Utilities.Api.Response` provides a set of ready-made response models for ASP.NET Core APIs. Every model shares the same envelope — `responseCode`, `responseType`, `responseMessage`, and `result` — so clients can handle success and failure uniformly.
 
-## Available Response Types
+Use it when you want consistent JSON contracts across endpoints without hand-building response objects, or when you need typed error payloads such as `NotFoundResult` and `BadRequestResult`.
 
-All response types inherit from `Response<T>` and provide a consistent JSON envelope with `responseCode`, `responseType`, `responseMessage`, and `result` properties.
+## 🎯 Purpose
 
-| Response Class | HTTP Code | ResponseType | Result Type |
+Hand-built API responses drift: one endpoint returns `{ "error": "..." }`, another returns a bare string, and a third uses a different status field. This package replaces that with a single envelope and a family of pre-configured response types. It helps you:
+
+- **Standardize the contract**: Every response has the same four top-level properties.
+- **Reduce boilerplate**: `SuccessResponse<T>` and the error responses set the status code, semantic type, and default message for you.
+- **Keep errors typed**: `NotFoundResult`, `ConflictResult`, and `BadRequestResult` carry structured domain context instead of a plain string.
+- **Integrate with the ecosystem**: Works with `RA.Utilities.Api` middleware, exception mapping, and the constants in `RA.Utilities.Core.Constants`.
+
+### ✨ Key Features
+
+- **One envelope** — `Response<T>` defines `ResponseCode`, `ResponseType`, `ResponseMessage`, and `Result`
+- **11 pre-configured responses** — success, 400, 401, 403, 404, 409, 422, 429, 500, 503, and 504
+- **Typed error payloads** — `BadRequestResult`, `NotFoundResult`, `ConflictResult`, and `ErrorResult`
+- **Convenience constructors** — single-argument constructors apply the standard code and message
+- **Custom overloads** — override the response code and message when a domain needs it
+- **Immutable after construction** — all `Response<T>` properties use `init` accessors
+- **Zero configuration** — no DI registration, no options, no setup
+
+:::warning[Upgrading from v10.0.0?]
+
+v10.1.0 changes the namespace from `RA.Utilities.Api.Results` to `RA.Utilities.Api.Response`, redesigns the constructor overloads, and — through `RA.Utilities.Core.Constants` v10.0.4 — writes `responseType` as a number by default. See the [Migration Guides](./migration-guides.mdx).
+
+:::
+
+---
+
+## 🛠️ Getting Started
+
+### Prerequisites
+
+- **.NET 10.0** or later
+
+### Installation
+
+**.NET CLI**
+
+```bash
+dotnet add package RA.Utilities.Api.Response
+```
+
+**Package Manager Console**
+
+```powershell
+Install-Package RA.Utilities.Api.Response
+```
+
+**PackageReference (csproj)**
+
+```xml
+<PackageReference Include="RA.Utilities.Api.Response" Version="10.1.0" />
+```
+
+### Hello World
+
+```csharp showLineNumbers
+using Microsoft.AspNetCore.Mvc;
+// highlight-next-line
+using RA.Utilities.Api.Response;
+
+[ApiController]
+[Route("api/[controller]")]
+public class ProductsController : ControllerBase
+{
+    [HttpGet("{id}")]
+    public IActionResult GetProduct(int id)
+    {
+        var product = _productService.GetById(id);
+
+        if (product is null)
+        {
+            // 404 with a structured NotFoundResult payload
+            // highlight-next-line
+            return NotFound(new NotFoundResponse(new NotFoundResult("Product", id)));
+        }
+
+        // 200 with the product as the result payload
+        // highlight-next-line
+        return Ok(new SuccessResponse<Product>(product));
+    }
+}
+```
+
+No DI registration or configuration is required. Add the `using` directive and return the model from your action.
+
+---
+
+## 🧠 Core Concepts
+
+| Type | HTTP | `ResponseType` | Result payload |
 |---|---|---|---|
-| `SuccessResponse<T>` | 200 | `Success` | `T` |
-| `BadRequestResponse` | 400 | `BadRequest` | `BadRequestResult[]` |
-| `UnauthorizedResponse` | 401 | `Unauthorized` | `ErrorResult` |
-| `ForbiddenResponse` | 403 | `Forbidden` | `ErrorResult` |
-| `NotFoundResponse` | 404 | `NotFound` | `NotFoundResult` |
-| `ConflictResponse` | 409 | `Conflict` | `ConflictResult` |
-| `UnprocessableResponse` | 422 | `Unprocessable` | `ErrorResult` |
-| `TooManyRequestsResponse` | 429 | `TooManyRequests` | `ErrorResult` |
-| `ErrorResponse` | 500 | `Error` | `ErrorResult` |
-| `ServiceUnavailableResponse` | 503 | `ServiceUnavailable` | `ErrorResult` |
-| `GatewayTimeoutResponse` | 504 | `GatewayTimeout` | `ErrorResult` |
+| [`Response<T>`](./Response) | any | any | `T` |
+| [`SuccessResponse<T>`](./SuccessResponse) | 200 | `Success` (JSON `0`) | `T` |
+| [`BadRequestResponse`](./BadRequestResponse) | 400 | `BadRequest` (JSON `12`) | `BadRequestResult[]` |
+| [`UnauthorizedResponse`](./UnauthorizedResponse) | 401 | `Unauthorized` (JSON `10`) | `ErrorResult` |
+| [`ForbiddenResponse`](./ForbiddenResponse) | 403 | `Forbidden` (JSON `14`) | `ErrorResult` |
+| [`NotFoundResponse`](./NotFoundResponse) | 404 | `NotFound` (JSON `8`) | `NotFoundResult` |
+| [`ConflictResponse`](./ConflictResponse) | 409 | `Conflict` (JSON `9`) | `ConflictResult` |
+| [`UnprocessableResponse`](./UnprocessableResponse) | 422 | `Unprocessable` (JSON `13`) | `ErrorResult` |
+| [`TooManyRequestsResponse`](./TooManyRequestsResponse) | 429 | `TooManyRequests` (JSON `15`) | `ErrorResult` |
+| [`ErrorResponse`](./ErrorResponse) | 500 | `Error` (JSON `11`) | `ErrorResult` |
+| [`ServiceUnavailableResponse`](./ServiceUnavailableResponse) | 503 | `ServiceUnavailable` (JSON `16`) | `ErrorResult` |
+| [`GatewayTimeoutResponse`](./GatewayTimeoutResponse) | 504 | `GatewayTimeout` (JSON `17`) | `ErrorResult` |
 
-<br />
+### How they work together
+
+Every response class derives from `Response<T>` and fills the envelope in its constructor. The controller returns the model (usually through `Ok`, `BadRequest`, `NotFound`, `Conflict`, or `StatusCode`), and ASP.NET Core serializes it.
+
+```
+new NotFoundResponse(new NotFoundResult("Product", 99))
+  ├─ ResponseCode    = 404
+  ├─ ResponseType    = ResponseType.NotFound      → JSON: 8
+  ├─ ResponseMessage = "The requested resource was not found."
+  └─ Result          = NotFoundResult
+                        ├─ Entity     = "Product"
+                        ├─ Value      = 99
+                        ├─ ErrorCode  = "NotFound"
+                        └─ ErrorMessage = ""      (set explicitly to override)
+```
+
+### Terminology
+
+- **Envelope**: The four properties inherited from `Response<T>` that wrap every payload.
+- **Result payload**: The `Result` property — a success object, a `BadRequestResult[]`, or an `ErrorResult` subtype.
+- **Convenience constructor**: A single-argument constructor that applies the standard HTTP code, semantic type, and default message.
+- **Custom overload**: A constructor that takes an explicit `responseCode` and `responseMessage` for domain-specific overrides.
+- **Numeric `responseType`**: `ResponseType` is an enum. With default `System.Text.Json` options it is written as a number; register `JsonStringEnumConverter` to write names such as `"NotFound"`.
+
+---
+
+## 📖 How-To Guides
+
+### Return a successful response
+
+```csharp showLineNumbers
+using Microsoft.AspNetCore.Mvc;
+using RA.Utilities.Api.Response;
+
+[HttpGet("{id}")]
+public IActionResult GetProduct(int id)
+{
+    var product = _productService.GetById(id);
+    if (product is null)
+    {
+        return NotFound(new NotFoundResponse(new NotFoundResult("Product", id)));
+    }
+
+    // highlight-next-line
+    return Ok(new SuccessResponse<Product>(product));
+}
+```
+
+### Return a success with no payload
+
+`SuccessResponse<T>` has a parameterless constructor that leaves `Result` at `default`:
+
+```csharp showLineNumbers
+// highlight-next-line
+return Ok(new SuccessResponse<Product>());
+```
+
+For a `204 No Content`, prefer ASP.NET Core's `NoContent()` — this package has no dedicated no-content model.
+
+### Return a 400 with validation errors
+
+```csharp showLineNumbers
+var errors = new[]
+{
+    new BadRequestResult
+    {
+        PropertyName = "Email",
+        ErrorMessage = "'Email' must not be empty.",
+        AttemptedValue = request.Email,
+        ErrorCode = "NotEmptyValidator"
+    },
+    new BadRequestResult
+    {
+        PropertyName = "Age",
+        ErrorMessage = "'Age' must be 18 or older.",
+        AttemptedValue = request.Age,
+        ErrorCode = "AGE_TOO_LOW"
+    }
+};
+
+// highlight-next-line
+return BadRequest(new BadRequestResponse(errors));
+```
+
+`BadRequestResult` is the element type; `BadRequestResponse` is the envelope whose `Result` is `BadRequestResult[]`.
+
+### Return a 404 with entity details
+
+```csharp showLineNumbers
+// highlight-next-line
+return NotFound(new NotFoundResponse(new NotFoundResult("Product", id)));
+```
+
+`NotFoundResult` defaults its `ErrorCode` to `"NotFound"` and its `ErrorMessage` to an **empty string**. Pass the optional `message` argument when you want the nested payload to carry text:
+
+```csharp showLineNumbers
+var result = new NotFoundResult(
+    "Product",
+    id,
+    errorCode: "PRODUCT_NOT_FOUND",
+    // highlight-next-line
+    message: $"Product with id {id} was not found.");
+
+return NotFound(new NotFoundResponse(result));
+```
+
+### Return a 409 conflict
+
+```csharp showLineNumbers
+var conflict = new ConflictResult("User", request.Email)
+{
+    // highlight-next-line
+    ErrorMessage = $"A user with email '{request.Email}' already exists."
+};
+
+// highlight-next-line
+return Conflict(new ConflictResponse(conflict));
+```
+
+`ConflictResult` defaults `ErrorCode` to `null` (omitted from JSON) and `ErrorMessage` to an empty string.
+
+### Return a 500 without leaking details
+
+```csharp showLineNumbers
+// highlight-next-line
+return StatusCode(500, new ErrorResponse());
+```
+
+The parameterless constructor sets `ResponseCode = 500`, `ResponseType = ResponseType.Error`, `ResponseMessage = "Something happened on our end."`, and leaves `Result` null.
+
+### Override the code and message
+
+Every error response has an all-argument overload. `BadRequestResponse` and `ConflictResponse` require both values; the others accept a nullable code and an optional message:
+
+```csharp showLineNumbers
+// BadRequestResponse requires responseCode AND responseMessage
+return BadRequest(new BadRequestResponse(
+    validationError,
+    // highlight-next-line
+    responseCode: 422,
+    responseMessage: "The request could not be processed."));
+
+// NotFoundResponse accepts a nullable code and optional message
+return NotFound(new NotFoundResponse(
+    new NotFoundResult("Product", id),
+    // highlight-next-line
+    responseCode: null,
+    responseMessage: "Product not found."));
+```
+
+> **Empty-message default:** On the all-argument overloads the `responseMessage` parameter defaults to `""`, not to the standard message. If you omit it, `ResponseMessage` is empty. Use the convenience constructor when you want the standard text.
+
+### Serialize `ResponseType` as a string
+
+The models contain a `ResponseType` enum. By default, `System.Text.Json` writes its numeric value (`8`, `12`, ...). Register `JsonStringEnumConverter` if your clients expect names:
+
+```csharp showLineNumbers
+using System.Text.Json.Serialization;
+
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    // highlight-next-line
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
+```
+
+This configures `System.Text.Json`; the package itself has no converter. See [`ResponseType`](../../core/RA.Utilities.Core.Constants/ResponseType#json-serialization) for the full behavior.
+
+### Create a custom response type
+
+Derive from `Response<T>` when you need a status code the package does not wrap. The `init` accessors can be set from the constructor:
+
+```csharp showLineNumbers
+using RA.Utilities.Api.Response;
+using RA.Utilities.Core.Constants;
+
+public sealed class TeapotResponse : Response<ErrorResult>
+{
+    public TeapotResponse()
+    {
+        ResponseCode = 418;
+        ResponseType = ResponseType.Error;
+        ResponseMessage = "I'm a teapot.";
+        Result = new ErrorResult
+        {
+            ErrorCode = "TEAPOT",
+            ErrorMessage = "The server refuses to brew coffee."
+        };
+    }
+}
+```
+
+---
+
+## ⚙️ Configuration
+
+This package has **no configuration options**. There is no DI registration, no `appsettings.json` entries, and no options classes.
+
+The only optional setup is JSON serialization: register `JsonStringEnumConverter` if your API contract expects `responseType` names instead of numbers. See [Serialize `ResponseType` as a string](#serialize-responsetype-as-a-string).
+
+---
+
+## ✨ Available Response Types
 
 <DocCardList />
+
+---
+
+## 🙌 Contributing & Support
+
+### Found a bug or have a suggestion?
+
+- **GitHub Issues**: [Report a bug or request a feature](https://github.com/RedonAlla/RA.Utilities/issues)
+- **Discussions**: [Ask questions or start a discussion](https://github.com/RedonAlla/RA.Utilities/discussions)
+
+### Contributing
+
+Contributions are welcome! Please follow the standard workflow:
+
+1. **Fork** the [RA.Utilities repository](https://github.com/RedonAlla/RA.Utilities)
+2. **Create a branch** from `main` with a descriptive name (e.g., `feature/add-response-type`)
+3. **Make your changes** — add XML doc comments for new public APIs and keep the envelope shape unchanged
+4. **Submit a pull request** to the `main` branch with a clear description
+
+### Links
+
+| Resource | URL |
+|---|---|
+| **NuGet** | [RA.Utilities.Api.Response](https://www.nuget.org/packages/RA.Utilities.Api.Response/) |
+| **Source** | [GitHub — RedonAlla/RA.Utilities](https://github.com/RedonAlla/RA.Utilities) |
+| **License** | [MIT](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE) |
+| **Build Status** | [GitHub Actions](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml) |

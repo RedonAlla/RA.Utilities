@@ -3,68 +3,50 @@ title: ForbiddenResponse
 sidebar_position: 7
 ---
 
-```powershell
-Namespace: RA.Utilities.Api.Results
+```bash
+Namespace: RA.Utilities.Api.Response
 ```
 
-The `ForbiddenResponse` class is a specialized model for creating standardized `403 Forbidden` responses.
-It is used when the server understands the request but refuses to authorize it.
-It inherits from [`Response<T>`](./Response), with the `Result` property typed as an [`ErrorResult`](./ErrorResult) object.
+The `ForbiddenResponse` class creates a standardized `403 Forbidden` response. It derives from [`Response<T>`](./Response) with `T = ErrorResult` and is used when the caller is authenticated but lacks permission.
 
 ### 🎯 Purpose
 
-The `ForbiddenResponse` class is a specialized model for creating standardized `403 Forbidden` API responses.
-It is used to signal that the authenticated user does not have the necessary permissions to access a specific resource or perform a specific action.
+Use `ForbiddenResponse` when authorization fails — for example, when a user tries to modify a resource they do not own.
 
-Its primary functions are:
+- **Standard envelope**: `ResponseCode = 403`, `ResponseType = ResponseType.Forbidden`, `ResponseMessage = "You do not have permission to access this resource."`
+- **Optional payload**: `Result` can be `null` or an [`ErrorResult`](./ErrorResult) describing the missing permission.
 
-1. **Standardizes Authorization Errors**: It provides a consistent structure for all `403 Forbidden` errors.
+### Constructors
 
-2. **Reduces Boilerplate**: It automatically sets the response properties for a forbidden request:
+| Constructor | `Result` | `ResponseCode` | `ResponseMessage` |
+|---|---|---|---|
+| `ForbiddenResponse(int responseCode, string responseMessage)` | `null` | `responseCode` | `responseMessage` |
+| `ForbiddenResponse(ErrorResult? result)` | `result` | `403` | `"You do not have permission to access this resource."` |
+| `ForbiddenResponse(ErrorResult? result, int? responseCode, string responseMessage = "")` | `result` | `responseCode ?? 403` | `responseMessage ?? standard` (the `""` default is used as-is) |
 
-  * **ResponseCode**: Set to `403` (from `BaseResponseCode.Forbidden`).
-  * **ResponseType**: Set to `ResponseType.Forbidden`.
-  * **ResponseMessage**: Defaults to `"You do not have permission to access this resource."` (from `BaseResponseMessages.Forbidden`).
+`ResponseType` is always `ResponseType.Forbidden` (JSON `14`). There is no parameterless constructor; pass `null` to `ForbiddenResponse(ErrorResult?)` if you need no payload.
 
-3. **Provides Structured Context**: It uses an [`ErrorResult`](./ErrorResult) payload to provide specific details about why the request was forbidden.
-
-### ⚙️ How It Works
-
-When you create an instance of `ForbiddenResponse`, it pre-configures the following properties:
-
-- **`ResponseCode`**: Set to `403` (from `BaseResponseCode.Forbidden`).
-- **`ResponseType`**: Set to `ResponseType.Forbidden`.
-- **`ResponseMessage`**: Defaults to `"You do not have permission to access this resource."`.
-- **`Result`**: An [`ErrorResult`](./ErrorResult) object containing the error code and message.
-
-### 🚀 Usage in a Controller
-
-You can use this class in your controller actions when a permission check fails.
+### Usage
 
 ```csharp showLineNumbers
 using Microsoft.AspNetCore.Mvc;
 // highlight-next-line
-using RA.Utilities.Api.Results;
+using RA.Utilities.Api.Response;
 
-[ApiController]
-[Route("api/[controller]")]
-public sealed class AdminController : ControllerBase
+[HttpGet("secure-data")]
+public IActionResult GetSecureData()
 {
-    [HttpGet("secure-data")]
-    public IActionResult GetSecureData()
+    if (!User.IsInRole("Admin"))
     {
-        if (!User.IsInRole("Admin"))
+        // highlight-next-line
+        return StatusCode(403, new ForbiddenResponse(new ErrorResult
         {
-            // highlight-next-line
-            return StatusCode(403, new ForbiddenResponse(new ErrorResult 
-            { 
-                ErrorCode = "AccessDenied", 
-                ErrorMessage = "You do not have the 'Admin' role required to access this resource." 
-            }));
-        }
-
-        return Ok(new SuccessResponse<string>("Sensitive Data"));
+            ErrorCode = "AccessDenied",
+            ErrorMessage = "You do not have the 'Admin' role required to access this resource."
+        }));
     }
+
+    return Ok(new SuccessResponse<string>("Sensitive Data"));
 }
 ```
 
@@ -73,7 +55,8 @@ public sealed class AdminController : ControllerBase
 ```json showLineNumbers
 {
   "responseCode": 403,
-  "responseType": "Forbidden",
+  // highlight-next-line
+  "responseType": 14,
   "responseMessage": "You do not have permission to access this resource.",
   "result": {
     "errorCode": "AccessDenied",
@@ -81,3 +64,5 @@ public sealed class AdminController : ControllerBase
   }
 }
 ```
+
+With `JsonStringEnumConverter`, `responseType` is `"Forbidden"`.

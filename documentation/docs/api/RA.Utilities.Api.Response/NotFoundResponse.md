@@ -3,45 +3,71 @@ title: NotFoundResponse
 sidebar_position: 4
 ---
 
-```powershell
-Namespace: RA.Utilities.Api.Results
+```bash
+Namespace: RA.Utilities.Api.Response
 ```
 
-The `NotFoundResponse` class is a specialized model for creating standardized `404 Not Found` responses.
-It is used when a requested resource cannot be found. It inherits from [`Response<T>`](./Response), with the `Result` property typed as a [`NotFoundResult`](#notfoundresult) object.
+The `NotFoundResponse` class creates a standardized `404 Not Found` response. It derives from [`Response<T>`](./Response) with `T = NotFoundResult`, so `Result` identifies the entity that was searched for and the value that was used.
 
 ### 🎯 Purpose
 
-The `NotFoundResponse` class is a specialized model used to create standardized `404 Not Found` API responses.
-It inherits from the base [`Response<T>`](./Response) class and is designed to clearly communicate when a requested resource does not exist.
+Use `NotFoundResponse` when a lookup returns nothing. Instead of a bare "not found" string, the payload tells the client which resource type and identifier failed, and can carry a machine-readable code.
 
-Here's a breakdown of its key functions:
+- **Standard envelope**: `ResponseCode = 404`, `ResponseType = ResponseType.NotFound`, `ResponseMessage = "The requested resource was not found."`
+- **Typed payload**: `Result` is a [`NotFoundResult`](#notfoundresult) with `Entity` and `Value`.
+- **Customizable**: Override the envelope code/message or the nested error code/message.
 
-1. **Simplifies 404 Responses**: It reduces boilerplate code by automatically setting the response properties for a "not found" scenario:
+### Constructors
 
-  * **ResponseCode**: Set to `404` (from `BaseResponseCode.NotFound`).
-  * **ResponseType**: Set to `ResponseType.NotFound`.
-  * **ResponseMessage**: Defaults to `"The requested resource was not found."` (from `BaseResponseMessages.NotFound`).
+| Constructor | `Result` | `ResponseCode` | `ResponseMessage` |
+|---|---|---|---|
+| `NotFoundResponse(NotFoundResult model)` | `model` | `404` | `"The requested resource was not found."` |
+| `NotFoundResponse(NotFoundResult model, int? responseCode, string responseMessage = "")` | `model` | `responseCode ?? 404` | `responseMessage ?? standard` (the `""` default is used as-is) |
 
-2. **Provides Structured Context**: It uses a [`NotFoundResult`](#notfoundresult) object as its payload, containing the entity name and the identifier used in the search.
+`ResponseType` is always `ResponseType.NotFound` (JSON `8`).
 
-3. **Improves Client-Side Handling**: This structured response allows clients to provide more intelligent feedback to the user.
+### NotFoundResult
 
-### ⚙️ How It Works
+`NotFoundResult` inherits from [`ErrorResult`](./ErrorResult).
 
-When you create an instance of `NotFoundResponse`, it pre-configures the following properties:
+| Property | Type | Description |
+|---|---|---|
+| **Entity** | `string` | The type of resource that was searched for (e.g., `"Product"`, `"User"`). |
+| **Value** | `object` | The identifier used in the search (e.g., `123`, `"john.doe@example.com"`). |
+| **ErrorCode** | `string?` | Machine-readable code (inherited). Defaults to `"NotFound"`. Omitted from JSON when `null`. |
+| **ErrorMessage** | `string` | Human-readable message (inherited). Defaults to an **empty string**, not the standard envelope message. Omitted when `null`. |
 
-- **`ResponseCode`**: Set to `404` (from `BaseResponseCode.NotFound`).
-- **`ResponseType`**: Set to `ResponseType.NotFound`.
-- **`ResponseMessage`**: Defaults to `"The requested resource was not found."`.
-- **`Result`**: A [`NotFoundResult`](#notfoundresult) object containing the `Entity` name and `Value` that were searched for.
+Constructor:
 
-### 🚀 Usage in a Controller
+```csharp showLineNumbers
+public NotFoundResult(
+    string entity,
+    object value,
+    string errorCode = "NotFound",
+    string message = "")
+```
+
+:::warning[Nested message defaults to empty]
+
+The `NotFoundResponse(NotFoundResult)` convenience constructor sets the **envelope** message to `"The requested resource was not found."`, but it does not change the nested `NotFoundResult.ErrorMessage`. `new NotFoundResult("Product", 99)` therefore produces `"errorMessage": ""`.
+
+Pass the `message` argument or set the property when you want text in the nested payload:
+
+```csharp showLineNumbers
+var result = new NotFoundResult("Product", 99)
+{
+    ErrorMessage = "Product with id 99 was not found."
+};
+```
+
+:::
+
+### Usage
 
 ```csharp showLineNumbers
 using Microsoft.AspNetCore.Mvc;
 // highlight-next-line
-using RA.Utilities.Api.Results;
+using RA.Utilities.Api.Response;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -51,10 +77,8 @@ public class ProductsController : ControllerBase
     public IActionResult GetProduct(int id)
     {
         var product = _productService.GetById(id);
-
-        if (product == null)
+        if (product is null)
         {
-            // Return a 404 Not Found with structured details
             // highlight-next-line
             return NotFound(new NotFoundResponse(new NotFoundResult("Product", id)));
         }
@@ -64,28 +88,36 @@ public class ProductsController : ControllerBase
 }
 ```
 
-### NotFoundResult
-Inherits from [`ErrorResult`](./ErrorResult).
+Override the nested message and code:
 
-| Property | Type | Description |
-| --------------- | -------- | --------------- |
-| **Entity** | `string` | The type of resource that was being looked for (e.g., "Product", "User"). |
-| **Value** | `object` | The identifier that was used in the search (e.g., `123`, `"john.doe@example.com"`). |
-| **ErrorCode** | `string` | The specific error code (inherited from `ErrorResult`). |
-| **ErrorMessage** | `string` | The error message (inherited from `ErrorResult`). |
+```csharp showLineNumbers
+var result = new NotFoundResult(
+    "Product",
+    id,
+    errorCode: "PRODUCT_NOT_FOUND",
+    // highlight-next-line
+    message: $"Product with id {id} was not found.");
+
+return NotFound(new NotFoundResponse(result));
+```
 
 ### Example JSON Output
+
+Default constructor:
 
 ```json showLineNumbers
 {
   "responseCode": 404,
-  "responseType": "NotFound",
+  // highlight-next-line
+  "responseType": 8,
   "responseMessage": "The requested resource was not found.",
   "result": {
     "entity": "Product",
     "value": 999,
     "errorCode": "NotFound",
-    "errorMessage": "The requested resource was not found."
+    "errorMessage": ""
   }
 }
 ```
+
+With an explicit nested message, `errorMessage` carries the text. With `JsonStringEnumConverter`, `responseType` is `"NotFound"`.

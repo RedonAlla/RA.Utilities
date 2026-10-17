@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using RA.Utilities.Core.Constants;
 
-namespace RA.Utilities.Api.Results;
+namespace RA.Utilities.Api.Response;
 
 /// <summary>
 /// Creates an <see cref="Response{ConflictResult}"/> object that produces an <see cref="ResponseType.Conflict"/> response.
@@ -12,18 +12,31 @@ public sealed class ConflictResponse : Response<ConflictResult>
     /// Initializes a new instance of the <see cref="ConflictResponse"/> class.
     /// </summary>
     /// <param name="model">The conflict result data.</param>
+    public ConflictResponse(ConflictResult model)
+    {
+        ResponseCode = BaseResponseCode.Conflict;
+        ResponseMessage = BaseResponseMessages.Conflict;
+        ResponseType = ResponseType.Conflict;
+        Result = model;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ConflictResponse"/> class.
+    /// </summary>
+    /// <param name="model">The conflict result data.</param>
     /// <param name="responseCode">The response code, defaulting to <see cref="BaseResponseCode.Conflict"/>.</param>
     /// <param name="responseMessage">The response message. If null, a default message is generated.</param>
     public ConflictResponse(
         ConflictResult model,
-        int responseCode = BaseResponseCode.Conflict,
-        string responseMessage = BaseResponseMessages.Conflict
+        int responseCode,
+        string responseMessage
     )
     {
         ResponseCode = responseCode;
         ResponseMessage = responseMessage;
         ResponseType = ResponseType.Conflict;
         Result = model;
+        ResponseCode = responseCode;
     }
 }
 
@@ -38,18 +51,18 @@ public class ConflictResult : ErrorResult
     /// <param name="entity">The type of resource causing the conflict.</param>
     /// <param name="value">The specific value that caused the conflict.</param>
     /// <param name="errorCode">The machine-readable error code associated with this specific error.</param>
-    /// <param name="errorMessage">The human-readable description of the error.</param>
+    /// <param name="errorMessage">The machine-readable error message for the specific error.</param>
     public ConflictResult(
         string entity,
         object value,
         string? errorCode = null,
-        string errorMessage = BaseResponseMessages.Conflict
+        string errorMessage = ""
     )
     {
         Entity = entity;
         Value = value;
         ErrorCode = errorCode;
-        ErrorMessage = errorMessage;
+        ErrorMessage = errorMessage ?? BaseResponseMessages.Conflict;
     }
 
     /// <summary>

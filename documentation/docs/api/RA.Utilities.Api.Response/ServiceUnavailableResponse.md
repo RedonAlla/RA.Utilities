@@ -1,70 +1,52 @@
 ---
 title: ServiceUnavailableResponse
-sidebar_position: 10
+sidebar_position: 11
 ---
 
-```powershell
-Namespace: RA.Utilities.Api.Results
+```bash
+Namespace: RA.Utilities.Api.Response
 ```
 
-The `ServiceUnavailableResponse` class is a specialized model for creating standardized `503 Service Unavailable` responses.
-It is used when the server is temporarily unable to handle the request.
-It inherits from [`Response<T>`](./Response), with the `Result` property typed as an [`ErrorResult`](./ErrorResult) object.
+The `ServiceUnavailableResponse` class creates a standardized `503 Service Unavailable` response. It derives from [`Response<T>`](./Response) with `T = ErrorResult` and is used when the service is temporarily unable to handle requests.
 
 ### 🎯 Purpose
 
-The `ServiceUnavailableResponse` class is a specialized model for creating standardized `503 Service Unavailable` API responses.
-It is used to signal that the server is temporarily unable to handle the request, often due to maintenance or overload.
+Use `ServiceUnavailableResponse` during maintenance or overload. It tells clients the failure is temporary rather than a permanent server error.
 
-Its primary functions are:
+- **Standard envelope**: `ResponseCode = 503`, `ResponseType = ResponseType.ServiceUnavailable`, `ResponseMessage = "The service is temporarily unavailable. Please try again later."`
+- **Optional payload**: `Result` can be `null` or an [`ErrorResult`](./ErrorResult) describing the outage.
 
-1. **Standardizes Availability Errors**: It provides a consistent structure for all `503 Service Unavailable` errors.
+### Constructors
 
-2. **Reduces Boilerplate**: It automatically sets the response properties for an unavailable service:
+| Constructor | `Result` | `ResponseCode` | `ResponseMessage` |
+|---|---|---|---|
+| `ServiceUnavailableResponse(int responseCode, string responseMessage)` | `null` | `responseCode` | `responseMessage` |
+| `ServiceUnavailableResponse(ErrorResult? result = null)` | `result` | `503` | `"The service is temporarily unavailable. Please try again later."` |
+| `ServiceUnavailableResponse(ErrorResult result, int? responseCode, string responseMessage = "")` | `result` | `responseCode ?? 503` | `responseMessage ?? standard` (the `""` default is used as-is) |
 
-  * **ResponseCode**: Set to `503` (from `BaseResponseCode.ServiceUnavailable`).
-  * **ResponseType**: Set to `ResponseType.ServiceUnavailable`.
-  * **ResponseMessage**: Defaults to `"The service is temporarily unavailable. Please try again later."` (from `BaseResponseMessages.ServiceUnavailable`).
+`ResponseType` is always `ResponseType.ServiceUnavailable` (JSON `16`). The optional `result` parameter means `new ServiceUnavailableResponse()` is valid.
 
-3. **Provides Structured Context**: It uses an [`ErrorResult`](./ErrorResult) payload to provide specific details about why the service is unavailable.
-
-### ⚙️ How It Works
-
-When you create an instance of `ServiceUnavailableResponse`, it pre-configures the following properties:
-
-- **`ResponseCode`**: Set to `503` (from `BaseResponseCode.ServiceUnavailable`).
-- **`ResponseType`**: Set to `ResponseType.ServiceUnavailable`.
-- **`ResponseMessage`**: Defaults to `"The service is temporarily unavailable. Please try again later."`.
-- **`Result`**: An [`ErrorResult`](./ErrorResult) object containing the error code and message.
-
-### 🚀 Usage in a Controller
-
-You can use this class in your controller actions or middleware when the service is temporarily unavailable.
+### Usage
 
 ```csharp showLineNumbers
 using Microsoft.AspNetCore.Mvc;
 // highlight-next-line
-using RA.Utilities.Api.Results;
+using RA.Utilities.Api.Response;
 
-[ApiController]
-[Route("api/[controller]")]
-public sealed class WeatherController : ControllerBase
+[HttpGet("forecast")]
+public IActionResult GetForecast()
 {
-    [HttpGet("forecast")]
-    public IActionResult GetForecast()
+    if (IsUnderMaintenance())
     {
-        if (IsUnderMaintenance())
+        // highlight-next-line
+        return StatusCode(503, new ServiceUnavailableResponse(new ErrorResult
         {
-            // highlight-next-line
-            return StatusCode(503, new ServiceUnavailableResponse(new ErrorResult 
-            { 
-                ErrorCode = "MaintenanceMode", 
-                ErrorMessage = "The service is currently under maintenance. Please try again later." 
-            }));
-        }
-
-        return Ok(new SuccessResponse<string>("Forecast Data"));
+            ErrorCode = "MaintenanceMode",
+            ErrorMessage = "The service is currently under maintenance. Please try again later."
+        }));
     }
+
+    return Ok(new SuccessResponse<string>("Forecast Data"));
 }
 ```
 
@@ -73,7 +55,8 @@ public sealed class WeatherController : ControllerBase
 ```json showLineNumbers
 {
   "responseCode": 503,
-  "responseType": "ServiceUnavailable",
+  // highlight-next-line
+  "responseType": 16,
   "responseMessage": "The service is temporarily unavailable. Please try again later.",
   "result": {
     "errorCode": "MaintenanceMode",
@@ -81,3 +64,5 @@ public sealed class WeatherController : ControllerBase
   }
 }
 ```
+
+With `JsonStringEnumConverter`, `responseType` is `"ServiceUnavailable"`.

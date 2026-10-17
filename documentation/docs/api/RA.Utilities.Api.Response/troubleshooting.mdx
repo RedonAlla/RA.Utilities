@@ -1,0 +1,194 @@
+---
+title: Troubleshooting & FAQ
+---
+
+# Troubleshooting & FAQ
+
+## Common Issues
+
+### `RA.Utilities.Api.Results` no longer exists after upgrading
+
+**Cause**: v10.1.0 renamed the namespace to `RA.Utilities.Api.Response` to match the package id. The old `RA.Utilities.Api.Results` package is deprecated and is not involved.
+
+**Fix**: Replace the using directive and any fully qualified names:
+
+```csharp
+// Before
+using RA.Utilities.Api.Results;
+
+// After
+// highlight-next-line
+using RA.Utilities.Api.Response;
+```
+
+If you consume `RA.Utilities.Api` or `RA.Utilities.OpenApi`, update them together — their public APIs expose these types.
+
+### `responseType` is a number instead of a string
+
+**Cause**: `ResponseType` is a plain enum in `RA.Utilities.Core.Constants` v10.0.4+. `System.Text.Json` writes enum values as numbers by default (`ResponseType.NotFound` → `8`).
+
+**Fix**: Register `JsonStringEnumConverter` on the serializer used by your endpoints:
+
+```csharp showLineNumbers
+using System.Text.Json.Serialization;
+
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    // highlight-next-line
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
+```
+
+For MVC controllers, use `AddControllers().AddJsonOptions(...)` instead. See [`ResponseType`](../../core/RA.Utilities.Core.Constants/ResponseType#json-serialization).
+
+### `ResponseMessage` is empty when I pass a custom code
+
+**Cause**: The all-argument overloads declare `string responseMessage = ""`. The `??` fallback only applies to `null`, so an omitted message stays empty:
+
+```csharp
+// ResponseMessage == "" — the standard message is NOT applied
+new NotFoundResponse(model, 404)
+```
+
+**Fix**: Pass the standard message explicitly, or use the convenience constructor:
+
+```csharp
+// Pass the message
+var withMessage = new NotFoundResponse(model, 404, BaseResponseMessages.NotFound);
+
+// Or keep the standard code and message
+var standard = new NotFoundResponse(model);
+```
+
+### `NotFoundResult.ErrorMessage` or `ConflictResult.ErrorMessage` is empty
+
+**Cause**: `NotFoundResult` and `ConflictResult` default their nested error message to `""`. The convenience response constructor only sets the **envelope** message.
+
+**Fix**: Set the nested value explicitly:
+
+```csharp showLineNumbers
+var notFound = new NotFoundResult("Product", id)
+{
+    // highlight-next-line
+    ErrorMessage = $"Product with id {id} was not found."
+};
+
+return NotFound(new NotFoundResponse(notFound));
+```
+
+For `ConflictResult`, pass `errorMessage` or set the property the same way.
+
+### `new SuccessResponse<string>("value")` puts the value in the message
+
+**Cause**: `SuccessResponse<T>` has a dedicated `SuccessResponse(string responseMessage)` constructor. When `T` is `string`, a single string argument selects that overload instead of the generic `T` overload.
+
+**Fix**: Pass the second argument (`null` for the default code) so the generic overload is selected:
+
+```csharp showLineNumbers
+// ⚠️ ResponseMessage = "value", Result = null
+var wrong = new SuccessResponse<string>("value");
+
+// ✅ Result = "value"
+var right = new SuccessResponse<string>("value", null);
+```
+
+The same applies to `T = int`: `new SuccessResponse<int>(42)` sets `ResponseCode = 42`, not `Result = 42`. Use `new SuccessResponse<int>(42, null)`.
+
+### What is the difference between `BadRequestResponse` and `BadRequestResult`?
+
+`BadRequestResponse` is the envelope (`Response<BadRequestResult[]>`). `BadRequestResult` is one validation error. Return the response, and put one or more results inside it:
+
+```csharp showLineNumbers
+var error = new BadRequestResult { PropertyName = "Email", ErrorMessage = "Required." };
+return BadRequest(new BadRequestResponse(error));
+```
+
+### Can I change `ResponseCode` or `ResponseType` after construction?
+
+**Answer**: No. All `Response<T>` properties are `init`-only, so they can be set in a constructor or an object initializer but not mutated afterward:
+
+```csharp showLineNumbers
+var response = new Response<string>
+{
+    // ✅ init accessors work in an object initializer
+    ResponseCode = 200,
+    ResponseType = ResponseType.Success,
+    Result = "payload"
+};
+
+// ❌ CS8852 — init-only property
+response.ResponseCode = 201;
+```
+
+To vary the code, use a constructor overload or derive from `Response<T>`.
+
+### Why is `result` null for `new ErrorResponse()`?
+
+**Answer**: The parameterless constructor deliberately returns no payload so that internal exception details are not leaked. `Result` is `null` and serializes as `"result": null`. Use `new ErrorResponse(new ErrorResult { ... })` when you want a structured payload.
+
+### Why doesn't `new ForbiddenResponse()` compile?
+
+**Answer**: `ForbiddenResponse` has no parameterless constructor; its convenience overload is `ForbiddenResponse(ErrorResult? result)` without a default value. Pass `null` when you need no payload:
+
+```csharp showLineNumbers
+return StatusCode(403, new ForbiddenResponse(null));
+```
+
+`UnauthorizedResponse`, `TooManyRequestsResponse`, `ServiceUnavailableResponse`, and `GatewayTimeoutResponse` do allow parameterless calls because their `result` parameter defaults to `null`.
+
+### Why is the HTTP response still 200 when I return an `ErrorResponse`?
+
+**Cause**: The response model sets `ResponseCode` **in the body**; it does not set the HTTP status code. Returning a model from `Ok(...)` keeps HTTP 200.
+
+**Fix**: Return it through the matching ASP.NET Core helper or `StatusCode`:
+
+```csharp showLineNumbers
+// ❌ HTTP 200, body says 500
+return Ok(new ErrorResponse());
+
+// ✅ HTTP 500
+return StatusCode(500, new ErrorResponse());
+```
+
+### Is there a `NoContentResponse`?
+
+**Answer**: No. Use ASP.NET Core's `NoContent()` for HTTP 204. `SuccessResponse<T>()` is a 200 response with a null result, which is a different contract.
+
+### Can I return a status code the package doesn't model?
+
+**Answer**: Yes. Derive from `Response<T>` and set the properties in the constructor:
+
+```csharp showLineNumbers
+public sealed class TeapotResponse : Response<ErrorResult>
+{
+    public TeapotResponse()
+    {
+        ResponseCode = 418;
+        ResponseType = ResponseType.Error;
+        ResponseMessage = "I'm a teapot.";
+        Result = new ErrorResult { ErrorCode = "TEAPOT", ErrorMessage = "Short and stout." };
+    }
+}
+```
+
+---
+
+## Known Limitations
+
+- **The model does not set the HTTP status**: `ResponseCode` is part of the JSON body. Return the model through `Ok`, `BadRequest`, `NotFound`, `Conflict`, `UnprocessableEntity`, or `StatusCode` so the transport status matches.
+- **Numeric `responseType` by default**: Register `JsonStringEnumConverter` if clients need names.
+- **Empty messages on explicit overloads**: `responseMessage` defaults to `""` on the all-argument constructors and on nested result constructors. Pass the standard message when you need it.
+- **No constructor validation**: `NotFoundResult` and `ConflictResult` accept `null` for `Entity`/`Value` at runtime even though the properties are non-nullable. Validate before constructing if the values come from untrusted input.
+- **Closed `ResponseType` set**: You cannot add enum members. Use `ResponseType.Error` for uncategorized outcomes and carry the specifics in `ResponseCode`/`ErrorCode`.
+- **No localization**: Messages are English-only constants. Treat them as defaults and localize in your API layer if needed.
+- **No `NoContent` or `Accepted` model**: Use ASP.NET Core's `NoContent()` and `Accepted()` helpers; the package focuses on success and error envelopes.
+
+---
+
+## Performance Tips
+
+- **Models are cheap**: Each response is a small object graph with no reflection or lazy initialization. Allocation cost is dominated by the payload you attach.
+- **Reuse the converter options**: Register `JsonStringEnumConverter` once at startup instead of building `JsonSerializerOptions` per request.
+- **Avoid building `ErrorResult` for the generic 500 path**: `new ErrorResponse()` is enough when you do not want to expose details.
+- **Do not serialize the model twice**: Return it from the action and let ASP.NET Core serialize it; avoid pre-serializing to a string and wrapping it again.
+- **Static empty responses are safe to reuse**: The models are immutable after construction, so a shared `new ErrorResponse()` is safe across requests if you do not need per-request payloads.

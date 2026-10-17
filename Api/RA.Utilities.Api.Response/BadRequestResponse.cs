@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using RA.Utilities.Core.Constants;
 
-namespace RA.Utilities.Api.Results;
+namespace RA.Utilities.Api.Response;
 
 /// <summary>
 /// Creates an <see cref="Response{BadRequestResult}"/> object that produces an <see cref="ResponseType.BadRequest"/> response.
@@ -12,12 +12,24 @@ public sealed class BadRequestResponse : Response<BadRequestResult[]>
     /// Initializes a new instance of the <see cref="BadRequestResponse"/> class with a single error.
     /// </summary>
     /// <param name="error">The bad request error details.</param>
+    public BadRequestResponse(BadRequestResult error)
+    {
+        ResponseCode = BaseResponseCode.BadRequest;
+        ResponseMessage = BaseResponseMessages.BadRequest;
+        ResponseType = ResponseType.BadRequest;
+        Result = [error];
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BadRequestResponse"/> class with a single error.
+    /// </summary>
+    /// <param name="error">The bad request error details.</param>
     /// <param name="responseCode">Response code.</param>
     /// <param name="responseMessage">Response message.</param>
     public BadRequestResponse(
         BadRequestResult error,
-        int responseCode = BaseResponseCode.BadRequest,
-        string responseMessage = BaseResponseMessages.BadRequest
+        int responseCode,
+        string responseMessage
     )
     {
         ResponseCode = responseCode;
@@ -30,12 +42,24 @@ public sealed class BadRequestResponse : Response<BadRequestResult[]>
     /// Initializes a new instance of the <see cref="BadRequestResponse"/> class to represent a client-side validation failure.
     /// </summary>
     /// <param name="errors">Errors type of <see cref="BadRequestResponse"/></param>
+    public BadRequestResponse(BadRequestResult[] errors)
+    {
+        ResponseCode = BaseResponseCode.BadRequest;
+        ResponseMessage = BaseResponseMessages.BadRequest;
+        ResponseType = ResponseType.BadRequest;
+        Result = errors;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BadRequestResponse"/> class to represent a client-side validation failure.
+    /// </summary>
+    /// <param name="errors">Errors type of <see cref="BadRequestResponse"/></param>
     /// <param name="responseCode">Response code.</param>
     /// <param name="responseMessage">Response message.</param>
     public BadRequestResponse(
         BadRequestResult[] errors,
-        int responseCode = BaseResponseCode.BadRequest,
-        string responseMessage = BaseResponseMessages.BadRequest
+        int responseCode,
+        string responseMessage
     )
     {
         ResponseCode = responseCode;

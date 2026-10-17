@@ -1,6 +1,6 @@
 using RA.Utilities.Core.Constants;
 
-namespace RA.Utilities.Api.Results;
+namespace RA.Utilities.Api.Response;
 
 /// <summary>
 /// Creates an <see cref="Response{NotFoundResult}"/> object that produces an <see cref="ResponseType.NotFound"/> response.
@@ -11,16 +11,28 @@ public sealed class NotFoundResponse : Response<NotFoundResult>
     /// Initializes a new instance of the <see cref="NotFoundResponse"/> class.
     /// </summary>
     /// <param name="model">The not found result data.</param>
+    public NotFoundResponse(NotFoundResult model)
+    {
+        ResponseCode = BaseResponseCode.NotFound;
+        ResponseMessage = BaseResponseMessages.NotFound;
+        ResponseType = ResponseType.NotFound;
+        Result = model;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="NotFoundResponse"/> class.
+    /// </summary>
+    /// <param name="model">The not found result data.</param>
     /// <param name="responseCode">The response code, defaulting to <see cref="BaseResponseCode.NotFound"/>.</param>
     /// <param name="responseMessage">The response message. If null, a default message is generated.</param>
     public NotFoundResponse(
         NotFoundResult model,
-        int responseCode = BaseResponseCode.NotFound,
-        string responseMessage = BaseResponseMessages.NotFound
+        int? responseCode,
+        string responseMessage = ""
     )
     {
-        ResponseCode = responseCode;
-        ResponseMessage = responseMessage;
+        ResponseCode = responseCode ?? BaseResponseCode.NotFound;
+        ResponseMessage = responseMessage ?? BaseResponseMessages.NotFound;
         ResponseType = ResponseType.NotFound;
         Result = model;
     }
@@ -42,13 +54,13 @@ public class NotFoundResult : ErrorResult
         string entity,
         object value,
         string errorCode = nameof(BaseResponseCode.NotFound),
-        string message = BaseResponseMessages.NotFound
+        string message = ""
     )
     {
         Entity = entity;
         Value = value;
         ErrorCode = errorCode;
-        ErrorMessage = message;
+        ErrorMessage = message ?? BaseResponseMessages.NotFound;
     }
 
     /// <summary>

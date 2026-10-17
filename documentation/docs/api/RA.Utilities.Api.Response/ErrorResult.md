@@ -1,24 +1,29 @@
 ---
 title: ErrorResult
-sidebar_position: 10
+sidebar_position: 13
 ---
 
-```powershell
-Namespace: RA.Utilities.Api.Results
+```bash
+Namespace: RA.Utilities.Api.Response
 ```
 
-The `ErrorResult` class is a base model used to represent structured error information in API responses. It is used as the `Result` payload for several specialized response types, including [`ErrorResponse`](./ErrorResponse), [`ForbiddenResponse`](./ForbiddenResponse), [`UnauthorizedResponse`](./UnauthorizedResponse), and [`UnprocessableResponse`](./UnprocessableResponse).
+The `ErrorResult` class is the base payload for structured errors. It is used directly by [`ErrorResponse`](./ErrorResponse), [`UnauthorizedResponse`](./UnauthorizedResponse), [`ForbiddenResponse`](./ForbiddenResponse), [`UnprocessableResponse`](./UnprocessableResponse), [`TooManyRequestsResponse`](./TooManyRequestsResponse), [`ServiceUnavailableResponse`](./ServiceUnavailableResponse), and [`GatewayTimeoutResponse`](./GatewayTimeoutResponse), and it is the base class for [`BadRequestResult`](./BadRequestResponse#badrequestresult), [`NotFoundResult`](./NotFoundResponse#notfoundresult), and [`ConflictResult`](./ConflictResponse#conflictresult).
 
 ### 🎯 Purpose
 
-The `ErrorResult` class provides a consistent way to return error details to the client. Instead of returning a simple string, it allows the API to provide both a machine-readable error code and a human-friendly error message.
+`ErrorResult` gives error responses two standard fields: a machine-readable `ErrorCode` and a human-readable `ErrorMessage`. Both are optional on the wire and are omitted when `null`.
 
 ### Class Definition
 
 ```csharp showLineNumbers
+using System.Text.Json.Serialization;
+
 public class ErrorResult
 {
-    public string ErrorCode { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ErrorCode { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string ErrorMessage { get; set; }
 }
 ```
@@ -26,33 +31,51 @@ public class ErrorResult
 ### Properties
 
 | Property | Type | Description |
-| -------- | --- | ------------------------------------------------ |
-| **ErrorCode** | `string` | A specific error code that can be used for translation or programmatic handling on the client side. |
-| **ErrorMessage** | `string` | A descriptive message explaining the error. |
+|---|---|---|
+| **ErrorCode** | `string?` | Machine-readable code for client-side handling. Omitted from JSON when `null`. |
+| **ErrorMessage** | `string` | Human-readable description of the error. Omitted from JSON when `null`. |
 
-### ⚙️ How It's Used
+:::note[Nominally non-nullable `ErrorMessage`]
 
-`ErrorResult` is rarely used on its own. Instead, it serves as the data payload for other response models.
-
-For example, when using [`ErrorResponse`](./ErrorResponse):
+`ErrorMessage` is declared as `string`, but the class does not initialize it. `new ErrorResult()` therefore leaves it `null` at runtime; always set it when you return the object:
 
 ```csharp showLineNumbers
-var errorResult = new ErrorResult 
-{ 
-    ErrorCode = "InternalServerError", 
-    ErrorMessage = "An unexpected error occurred." 
+var error = new ErrorResult
+{
+    ErrorCode = "PROCESSING_ERROR",
+    ErrorMessage = "An unexpected error occurred."
+};
+```
+
+:::
+
+### Usage
+
+```csharp showLineNumbers
+using RA.Utilities.Api.Response;
+
+var error = new ErrorResult
+{
+    ErrorCode = "PROCESSING_ERROR",
+    ErrorMessage = "An unexpected error occurred."
 };
 
-var response = new ErrorResponse(errorResult);
+return StatusCode(500, new ErrorResponse(error));
 ```
+
+### Derived Types
+
+| Type | Adds | Used by |
+|---|---|---|
+| [`BadRequestResult`](./BadRequestResponse#badrequestresult) | `PropertyName`, `AttemptedValue`, `ExpectedValue` | `BadRequestResponse` |
+| [`NotFoundResult`](./NotFoundResponse#notfoundresult) | `Entity`, `Value` | `NotFoundResponse` |
+| [`ConflictResult`](./ConflictResponse#conflictresult) | `Entity`, `Value` | `ConflictResponse` |
 
 ### Example JSON Output
 
-When serialized as part of a response, it looks like this:
-
 ```json showLineNumbers
 {
-  "errorCode": "InternalServerError",
+  "errorCode": "PROCESSING_ERROR",
   "errorMessage": "An unexpected error occurred."
 }
 ```

@@ -9,6 +9,8 @@
 `RA.Utilities.Api.Response` provides a standardized set of models for creating consistent API responses within the RA.Utilities ecosystem.
 This package includes generic wrappers for success, error, and domain-specific failure scenarios, helping to streamline API development and improve client-side handling.
 
+> **v10.1.0 changes**: The namespace is now `RA.Utilities.Api.Response` (previously `RA.Utilities.Api.Results`), constructor overloads were split into convenience and all-argument forms, and `responseType` is numeric by default. See the [migration guide](https://redonalla.github.io/RA.Utilities/nuget-packages/api/RA.Utilities.Api.Response/migration-guides).
+
 ## Purpose
 
 When building APIs, it's crucial to have a consistent and predictable response structure.
@@ -39,7 +41,7 @@ Here is a simple example of how you can use these response models in an ASP.NET 
 
 ```csharp
 using Microsoft.AspNetCore.Mvc;
-using RA.Utilities.Api.Results;
+using RA.Utilities.Api.Response;
 using RA.Utilities.Core.Constants;
 
 [ApiController]
@@ -93,11 +95,13 @@ public class ProductsController : ControllerBase
 
 ## Available Result Models
 
-The core of the package is `Response<T>`, a sealed class that serves as a universal wrapper for all API responses. All properties use `init`-only accessors to ensure immutability after construction.
+The core of the package is `Response<T>`, a non-sealed class that serves as a universal wrapper for all API responses. All properties use `init`-only accessors to ensure immutability after construction.
+
+> **JSON note**: `ResponseType` is an enum. With default `System.Text.Json` options, `responseType` is written as a number (`NotFound` → `8`). Register `JsonStringEnumConverter` to emit names such as `"NotFound"`.
 
 ### `Response<T>`
 
-Namespace: RA.Utilities.Api.Results<br>
+Namespace: RA.Utilities.Api.Response<br>
 Package: RA.Utilities.Api.Response<br>
 Source: [RA.Utilities.Api.Response](https://github.com/RedonAlla/RA.Utilities.git)
 
@@ -110,7 +114,7 @@ public class Response<T>
 | Property          | Type           | Description                                                 |
 | ----------------- | -------------- | ----------------------------------------------------------- |
 | `ResponseCode`    | `int`          | A code for the response, often mapping to HTTP status codes. |
-| `ResponseType`    | `ResponseType` | A record indicating the type of response (e.g., Success, Error). |
+| `ResponseType`    | `ResponseType` | An enum indicating the type of response (e.g., Success, Error). |
 | `ResponseMessage` | `string?`       | A human-friendly message describing the response.             |
 | `Result`          | `T?`           | The actual data payload of the response.                    |
 
@@ -118,7 +122,7 @@ public class Response<T>
 
 ### `SuccessResponse<T>`
 
-Namespace: RA.Utilities.Api.Results<br>
+Namespace: RA.Utilities.Api.Response<br>
 Package: RA.Utilities.Api.Response<br>
 Source: [RA.Utilities.Api.Response](https://github.com/RedonAlla/RA.Utilities.git)
 
@@ -141,10 +145,11 @@ Creates a `Response<T>` object that produces a `Success` response, typically cor
 ```json
 {
   "responseCode": 200,
-  "responseType": "Success",
+  "responseType": 0,
   "responseMessage": "Operation completed successfully.",
   "result": {
-    // The 'T' payload goes here
+    "id": 1,
+    "name": "Sample Product"
   }
 }
 ```
@@ -153,7 +158,7 @@ Creates a `Response<T>` object that produces a `Success` response, typically cor
 
 ### `BadRequestResponse`
 
-Namespace: RA.Utilities.Api.Results<br>
+Namespace: RA.Utilities.Api.Response<br>
 Package: RA.Utilities.Api.Response<br>
 Source: [RA.Utilities.Api.Response](https://github.com/RedonAlla/RA.Utilities.git)
 
@@ -191,7 +196,7 @@ Inherits from [`ErrorResult`](#errorresult).
 ```json
 {
   "responseCode": 400,
-  "responseType": "BadRequest",
+  "responseType": 12,
   "responseMessage": "The request is invalid.",
   "result": [
     {
@@ -214,7 +219,7 @@ Inherits from [`ErrorResult`](#errorresult).
 
 ### `NotFoundResponse`
 
-Namespace: RA.Utilities.Api.Results<br>
+Namespace: RA.Utilities.Api.Response<br>
 Package: RA.Utilities.Api.Response<br>
 Source: [RA.Utilities.Api.Response](https://github.com/RedonAlla/RA.Utilities.git)
 
@@ -248,22 +253,24 @@ Inherits from [`ErrorResult`](#errorresult).
 ```json
 {
   "responseCode": 404,
-  "responseType": "NotFound",
+  "responseType": 8,
   "responseMessage": "The requested resource was not found.",
   "result": {
     "entity": "Product",
     "value": 999,
     "errorCode": "NotFound",
-    "errorMessage": "The requested resource was not found."
+    "errorMessage": ""
   }
 }
 ```
+
+> The nested `NotFoundResult.ErrorMessage` defaults to `""`; set it explicitly when clients need text.
 
 ---
 
 ### `ConflictResponse`
 
-Namespace: RA.Utilities.Api.Results<br>
+Namespace: RA.Utilities.Api.Response<br>
 Package: RA.Utilities.Api.Response<br>
 Source: [RA.Utilities.Api.Response](https://github.com/RedonAlla/RA.Utilities.git)
 
@@ -297,22 +304,23 @@ Inherits from [`ErrorResult`](#errorresult).
 ```json
 {
   "responseCode": 409,
-  "responseType": "Conflict",
+  "responseType": 9,
   "responseMessage": "A conflict occurred with the current state of the resource.",
   "result": {
     "entity": "User",
     "value": "existing@example.com",
-    "errorCode": "Conflict",
-    "errorMessage": "A conflict occurred with the current state of the resource."
+    "errorMessage": ""
   }
 }
 ```
+
+> The nested `ConflictResult.ErrorMessage` defaults to `""`; set it explicitly when clients need text.
 
 ---
 
 ### `UnauthorizedResponse`
 
-Namespace: RA.Utilities.Api.Results<br>
+Namespace: RA.Utilities.Api.Response<br>
 Package: RA.Utilities.Api.Response<br>
 Source: [RA.Utilities.Api.Response](https://github.com/RedonAlla/RA.Utilities.git)
 
@@ -337,7 +345,7 @@ Used when the request requires user authentication.
 ```json
 {
   "responseCode": 401,
-  "responseType": "Unauthorized",
+  "responseType": 10,
   "responseMessage": "Authentication failed or is missing.",
   "result": null
 }
@@ -347,7 +355,7 @@ Used when the request requires user authentication.
 
 ### `ForbiddenResponse`
 
-Namespace: RA.Utilities.Api.Results<br>
+Namespace: RA.Utilities.Api.Response<br>
 Package: RA.Utilities.Api.Response<br>
 Source: [RA.Utilities.Api.Response](https://github.com/RedonAlla/RA.Utilities.git)
 
@@ -372,7 +380,7 @@ Used when the server understands the request but refuses to authorize it.
 ```json
 {
   "responseCode": 403,
-  "responseType": "Forbidden",
+  "responseType": 14,
   "responseMessage": "You do not have permission to access this resource.",
   "result": null
 }
@@ -382,7 +390,7 @@ Used when the server understands the request but refuses to authorize it.
 
 ### `TooManyRequestsResponse`
 
-Namespace: RA.Utilities.Api.Results<br>
+Namespace: RA.Utilities.Api.Response<br>
 Package: RA.Utilities.Api.Response<br>
 Source: [RA.Utilities.Api.Response](https://github.com/RedonAlla/RA.Utilities.git)
 
@@ -406,7 +414,7 @@ Used when the client has sent too many requests in a given amount of time.
 
 ### `UnprocessableResponse`
 
-Namespace: RA.Utilities.Api.Results<br>
+Namespace: RA.Utilities.Api.Response<br>
 Package: RA.Utilities.Api.Response<br>
 Source: [RA.Utilities.Api.Response](https://github.com/RedonAlla/RA.Utilities.git)
 
@@ -430,7 +438,7 @@ Used when the server understands the content type but was unable to process the 
 
 ### `ServiceUnavailableResponse`
 
-Namespace: RA.Utilities.Api.Results<br>
+Namespace: RA.Utilities.Api.Response<br>
 Package: RA.Utilities.Api.Response<br>
 Source: [RA.Utilities.Api.Response](https://github.com/RedonAlla/RA.Utilities.git)
 
@@ -454,7 +462,7 @@ Used when the server is temporarily unable to handle the request.
 
 ### `GatewayTimeoutResponse`
 
-Namespace: RA.Utilities.Api.Results<br>
+Namespace: RA.Utilities.Api.Response<br>
 Package: RA.Utilities.Api.Response<br>
 Source: [RA.Utilities.Api.Response](https://github.com/RedonAlla/RA.Utilities.git)
 
@@ -478,7 +486,7 @@ Used when the server, acting as a gateway or proxy, did not receive a timely res
 
 ### `ErrorResponse`
 
-Namespace: RA.Utilities.Api.Results<br>
+Namespace: RA.Utilities.Api.Response<br>
 Package: RA.Utilities.Api.Response<br>
 Source: [RA.Utilities.Api.Response](https://github.com/RedonAlla/RA.Utilities.git)
 
@@ -503,7 +511,7 @@ This response type is used for unexpected server-side errors and serves as a fal
 ```json
 {
   "responseCode": 500,
-  "responseType": "Error",
+  "responseType": 11,
   "responseMessage": "Something happened on our end.",
   "result": {
     "errorCode": "InternalServerError",
@@ -516,7 +524,7 @@ This response type is used for unexpected server-side errors and serves as a fal
 
 ### `ErrorResult`
 
-Namespace: RA.Utilities.Api.Results<br>
+Namespace: RA.Utilities.Api.Response<br>
 Package: RA.Utilities.Api.Response<br>
 Source: [RA.Utilities.Api.Response](https://github.com/RedonAlla/RA.Utilities.git)
 

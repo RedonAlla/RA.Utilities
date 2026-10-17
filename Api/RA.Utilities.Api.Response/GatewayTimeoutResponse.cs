@@ -1,6 +1,6 @@
 using RA.Utilities.Core.Constants;
 
-namespace RA.Utilities.Api.Results;
+namespace RA.Utilities.Api.Response;
 
 /// <summary>
 /// Represents a standardized API response for a gateway timeout error (HTTP 504).
@@ -24,15 +24,27 @@ public sealed class GatewayTimeoutResponse : Response<ErrorResult>
     /// Initializes a new instance of the <see cref="GatewayTimeoutResponse"/> class.
     /// </summary>
     /// <param name="result">The error result details.</param>
+    public GatewayTimeoutResponse(ErrorResult? result = null)
+    {
+        ResponseCode = BaseResponseCode.GatewayTimeout;
+        ResponseMessage = BaseResponseMessages.GatewayTimeout;
+        ResponseType = ResponseType.GatewayTimeout;
+        Result = result;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="GatewayTimeoutResponse"/> class.
+    /// </summary>
+    /// <param name="result">The error result details.</param>
     /// <param name="responseCode">The response code, defaulting to <see cref="BaseResponseCode.GatewayTimeout"/>.</param>
     /// <param name="responseMessage">The response message, defaulting to <see cref="BaseResponseMessages.GatewayTimeout"/>.</param>
     public GatewayTimeoutResponse(
-        ErrorResult? result = null,
-        int responseCode = BaseResponseCode.GatewayTimeout,
-        string responseMessage = BaseResponseMessages.GatewayTimeout)
+        ErrorResult result,
+        int? responseCode,
+        string responseMessage = "")
     {
-        ResponseCode = responseCode;
-        ResponseMessage = responseMessage;
+        ResponseCode = responseCode ?? BaseResponseCode.GatewayTimeout;
+        ResponseMessage = responseMessage ?? BaseResponseMessages.GatewayTimeout;
         ResponseType = ResponseType.GatewayTimeout;
         Result = result;
     }

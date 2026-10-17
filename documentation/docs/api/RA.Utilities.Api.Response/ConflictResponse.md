@@ -3,46 +3,70 @@ title: ConflictResponse
 sidebar_position: 5
 ---
 
-```powershell
-Namespace: RA.Utilities.Api.Results
+```bash
+Namespace: RA.Utilities.Api.Response
 ```
 
-The `ConflictResponse` class is a specialized model for creating standardized `409 Conflict` responses.
-It is used when a request cannot be completed because it conflicts with the current state of a resource, such as attempting to create a resource that already exists.
-It inherits from [`Response<T>`](./Response), with the `Result` property typed as a [`ConflictResult`](#conflictresult) object.
+The `ConflictResponse` class creates a standardized `409 Conflict` response. It derives from [`Response<T>`](./Response) with `T = ConflictResult`, so `Result` identifies the entity and value that caused the conflict.
 
 ### 🎯 Purpose
 
-The `ConflictResponse` class is a specialized model for creating standardized `409 Conflict` API responses.
-It inherits from the base [`Response<T>`](./Response) class and is used to signal that a request could not be completed because it conflicts with the current state of a resource.
+Use `ConflictResponse` when a request cannot be completed because it conflicts with existing state — for example, creating a user whose email address is already registered.
 
-Here are its primary functions:
+- **Standard envelope**: `ResponseCode = 409`, `ResponseType = ResponseType.Conflict`, `ResponseMessage = "A conflict occurred with the current state of the resource."`
+- **Typed payload**: `Result` is a [`ConflictResult`](#conflictresult) with `Entity` and `Value`.
+- **Customizable**: Override the envelope code/message or the nested error code/message.
 
-1. **Standardizes Conflict Errors**: It provides a consistent structure for all `409 Conflict` errors.
+### Constructors
 
-2. **Reduces Boilerplate**: It automatically sets the response properties for a conflict scenario:
+| Constructor | `Result` | `ResponseCode` | `ResponseMessage` |
+|---|---|---|---|
+| `ConflictResponse(ConflictResult model)` | `model` | `409` | `"A conflict occurred with the current state of the resource."` |
+| `ConflictResponse(ConflictResult model, int responseCode, string responseMessage)` | `model` | `responseCode` | `responseMessage` |
 
-  * **ResponseCode**: Set to `409` (from `BaseResponseCode.Conflict`).
-  * **ResponseType**: Set to `ResponseType.Conflict`.
-  * **ResponseMessage**: Defaults to `"The request could not be completed due to a conflict with the current state of the resource."` (from `BaseResponseMessages.Conflict`).
+`ResponseType` is always `ResponseType.Conflict` (JSON `9`).
 
-3. **Provides Structured Context**: The response payload is a [`ConflictResult`](#conflictresult) object, which contains the entity name and the value that caused the conflict.
+### ConflictResult
 
-### ⚙️ How It Works
+`ConflictResult` inherits from [`ErrorResult`](./ErrorResult).
 
-When you create an instance of `ConflictResponse`, it pre-configures the following properties:
+| Property | Type | Description |
+|---|---|---|
+| **Entity** | `string` | The resource type that caused the conflict (e.g., `"User"`). |
+| **Value** | `object` | The value that caused the conflict (e.g., `"test@example.com"`). |
+| **ErrorCode** | `string?` | Machine-readable code (inherited). Defaults to `null` and is omitted from JSON. |
+| **ErrorMessage** | `string` | Human-readable message (inherited). Defaults to an **empty string**, not the standard envelope message. |
 
-- **`ResponseCode`**: Set to `409` (from `BaseResponseCode.Conflict`).
-- **`ResponseType`**: Set to `ResponseType.Conflict`.
-- **`ResponseMessage`**: Defaults to the standard conflict message.
-- **`Result`**: A [`ConflictResult`](#conflictresult) object containing the `Entity` name and conflicting `Value`.
+Constructor:
 
-### 🚀 Usage in a Controller
+```csharp showLineNumbers
+public ConflictResult(
+    string entity,
+    object value,
+    string? errorCode = null,
+    string errorMessage = "")
+```
+
+:::warning[Nested message defaults to empty]
+
+`new ConflictResult("User", "a@b.com")` leaves `ErrorMessage` empty. The `ConflictResponse(ConflictResult)` convenience constructor only sets the envelope message. Set the nested message explicitly when clients need it:
+
+```csharp showLineNumbers
+var conflict = new ConflictResult("User", request.Email)
+{
+    ErrorCode = "EMAIL_ALREADY_EXISTS",
+    ErrorMessage = "A user with this email address already exists."
+};
+```
+
+:::
+
+### Usage
 
 ```csharp showLineNumbers
 using Microsoft.AspNetCore.Mvc;
 // highlight-next-line
-using RA.Utilities.Api.Results;
+using RA.Utilities.Api.Response;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -53,39 +77,38 @@ public class UsersController : ControllerBase
     {
         if (_userService.EmailExists(request.Email))
         {
-            // Return a 409 Conflict with structured details
+            var conflict = new ConflictResult("User", request.Email)
+            {
+                ErrorCode = "EMAIL_ALREADY_EXISTS",
+                // highlight-next-line
+                ErrorMessage = $"A user with email '{request.Email}' already exists."
+            };
+
             // highlight-next-line
-            return Conflict(new ConflictResponse(new ConflictResult("User", request.Email)));
+            return Conflict(new ConflictResponse(conflict));
         }
 
-        // ... proceed with user creation
-        return Ok();
+        // ... create the user
+        return Ok(new SuccessResponse<User>(user));
     }
 }
 ```
-
-### ConflictResult
-Inherits from [`ErrorResult`](./ErrorResult).
-
-| Property | Type | Description |
-| -------- | -------- | ---------------------------------------------- |
-| **Entity** | `string` | The type of resource causing the conflict (e.g., `"User"`). |
-| **Value** | `object` | The specific value that caused the conflict (e.g., `"test@example.com"`). |
-| **ErrorCode** | `string` | The specific error code (inherited from `ErrorResult`). |
-| **ErrorMessage** | `string` | The error message (inherited from `ErrorResult`). |
 
 ### Example JSON Output
 
 ```json showLineNumbers
 {
   "responseCode": 409,
-  "responseType": "Conflict",
-  "responseMessage": "The request could not be completed due to a conflict with the current state of the resource.",
+  // highlight-next-line
+  "responseType": 9,
+  "responseMessage": "A conflict occurred with the current state of the resource.",
   "result": {
     "entity": "User",
     "value": "existing.user@example.com",
-    "errorCode": "Conflict",
-    "errorMessage": "The request could not be completed due to a conflict with the current state of the resource."
+    "errorCode": "EMAIL_ALREADY_EXISTS",
+    "errorMessage": "A user with email 'existing.user@example.com' already exists."
   }
 }
 ```
+
+With `JsonStringEnumConverter`, `responseType` is `"Conflict"`.

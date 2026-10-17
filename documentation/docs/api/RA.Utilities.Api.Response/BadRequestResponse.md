@@ -3,101 +3,116 @@ title: BadRequestResponse
 sidebar_position: 3
 ---
 
-```powershell
-Namespace: RA.Utilities.Api.Results
+```bash
+Namespace: RA.Utilities.Api.Response
 ```
 
-The `BadRequestResponse` class is a specialized model for creating standardized `400 Bad Request` responses, typically used to communicate validation failures to the client. It inherits from [`Response<T>`](./Response), with the `Result` property typed as an array of [`BadRequestResult`](#badrequestresult) objects.
+The `BadRequestResponse` class creates a standardized `400 Bad Request` response for validation failures. It derives from [`Response<T>`](./Response) with `T = BadRequestResult[]`, so `Result` always contains one or more structured validation errors.
 
 ### 🎯 Purpose
 
-The `BadRequestResponse` class is a specialized model designed to create standardized `400 Bad Request` API responses, typically used for validation failures.
-It inherits from the base [`Response<T>`](./Response) class and streamlines the process of communicating input errors to the client.
+`BadRequestResponse` replaces ad-hoc validation error bodies with one consistent shape. Each element in `Result` describes a single field failure: which property failed, what value was attempted, what was expected, and a machine-readable error code.
 
-Here's why it's so useful:
+- **Standard envelope**: `ResponseCode = 400`, `ResponseType = ResponseType.BadRequest`, `ResponseMessage = "The request is invalid."`
+- **Typed payload**: `Result` is `BadRequestResult[]`, never a bare string.
+- **Client-friendly**: Clients can map errors to form fields using `PropertyName`.
 
-1. **Standardizes Validation Errors**: It provides a consistent structure for all validation-related errors.
-The `Result` property is specifically typed to hold an array of `BadRequestResult` objects, where each object details a single validation failure.
+### Constructors
 
-2. **Reduces Boilerplate**: It automatically sets the response properties for a bad request:
+| Constructor | `Result` | `ResponseCode` | `ResponseMessage` |
+|---|---|---|---|
+| `BadRequestResponse(BadRequestResult error)` | `[error]` | `400` | `"The request is invalid."` |
+| `BadRequestResponse(BadRequestResult error, int responseCode, string responseMessage)` | `[error]` | `responseCode` | `responseMessage` |
+| `BadRequestResponse(BadRequestResult[] errors)` | `errors` | `400` | `"The request is invalid."` |
+| `BadRequestResponse(BadRequestResult[] errors, int responseCode, string responseMessage)` | `errors` | `responseCode` | `responseMessage` |
 
-  * **`ResponseCode`**: Set to `400` (from `BaseResponseCode.BadRequest`).
-  * **`ResponseType`**: Set to `ResponseType.BadRequest`.
-  * **ResponseMessage**: Defaults to `"The request is invalid."` (from `BaseResponseMessages.BadRequest`).
+`ResponseType` is always `ResponseType.BadRequest` (JSON `12`).
 
-3. **Provides Clear Client Feedback**: By returning a structured list of errors, you give the client precise, actionable feedback.
+### BadRequestResult
 
-### ⚙️ How It Works
+`BadRequestResult` inherits from [`ErrorResult`](./ErrorResult).
 
-When you create an instance of `BadRequestResponse`, it pre-configures the following properties:
+| Property | Type | Description |
+|---|---|---|
+| **PropertyName** | `string?` | The request property that failed validation. Omitted from JSON when `null`. |
+| **AttemptedValue** | `object?` | The value supplied by the client. Omitted when `null`. |
+| **ExpectedValue** | `object?` | The expected value or format. Omitted when `null`. |
+| **ErrorCode** | `string?` | Machine-readable error code (inherited). Omitted when `null`. |
+| **ErrorMessage** | `string` | Human-readable description (inherited). Omitted when `null`. |
 
-- **`ResponseCode`**: Set to `400` (from `BaseResponseCode.BadRequest`).
-- **`ResponseType`**: Set to `ResponseType.BadRequest`.
-- **`ResponseMessage`**: Defaults to `"The request is invalid."`.
-- **`Result`**: Contains an array of [`BadRequestResult`](#badrequestresult) objects, each detailing a specific validation error.
+### Usage
 
-### 🚀 Usage in a Controller
+Return a single validation error:
 
 ```csharp showLineNumbers
 using Microsoft.AspNetCore.Mvc;
 // highlight-next-line
-using RA.Utilities.Api.Results;
+using RA.Utilities.Api.Response;
 
-[ApiController]
-[Route("api/[controller]")]
-public class UsersController : ControllerBase
+[HttpPost]
+public IActionResult CreateUser(CreateUserRequest request)
 {
-    [HttpPost]
-    public IActionResult CreateUser(CreateUserRequest request)
+    if (string.IsNullOrEmpty(request.Email))
     {
-        if (string.IsNullOrEmpty(request.Email))
+        var error = new BadRequestResult
         {
-            // Create a validation error detail
-            var validationError = new BadRequestResult
-            {
-                PropertyName = "Email",
-                ErrorMessage = "'Email' must not be empty.",
-                AttemptedValue = request.Email,
-                ErrorCode = "NotEmptyValidator"
-            };
+            PropertyName = "Email",
+            ErrorMessage = "'Email' must not be empty.",
+            AttemptedValue = request.Email,
+            ErrorCode = "NotEmptyValidator"
+        };
 
-            // Return a 400 Bad Request with the structured error
-            // highlight-next-line
-            return BadRequest(new BadRequestResponse(new[] { validationError }));
-        }
-
-        // ... proceed with user creation
-        return Ok();
+        // highlight-next-line
+        return BadRequest(new BadRequestResponse(error));
     }
+
+    // ... create the user
+    return Ok(new SuccessResponse<User>(user));
 }
 ```
 
-### BadRequestResult
-Inherits from [`ErrorResult`](./ErrorResult).
+Return several validation errors at once:
 
-| Property | Type | Description |
-| -------- | --- | ------------------------------------------------ |
-| **PropertyName** | `string` | The name of the property that failed validation. |
-| **ErrorMessage** | `string` | The error message (inherited from `ErrorResult`). |
-| **AttemptedValue** | `object` | The value that was sent in the request and caused the failure. |
-| **ExpectedValue** | `object` | The expected value or format for the property. |
-| **ErrorCode** | `string` | The specific error code (inherited from `ErrorResult`). |
+```csharp showLineNumbers
+var errors = new[]
+{
+    new BadRequestResult
+    {
+        PropertyName = "Email",
+        ErrorMessage = "'Email' must not be empty.",
+        AttemptedValue = request.Email,
+        ErrorCode = "NotEmptyValidator"
+    },
+    new BadRequestResult
+    {
+        PropertyName = "Age",
+        ErrorMessage = "'Age' must be 18 or older.",
+        AttemptedValue = request.Age,
+        ErrorCode = "AGE_TOO_LOW"
+    }
+};
+
+// highlight-next-line
+return BadRequest(new BadRequestResponse(errors));
+```
 
 ### Example JSON Output
 
 ```json showLineNumbers
 {
   "responseCode": 400,
-  "responseType": "BadRequest",
+  // highlight-next-line
+  "responseType": 12,
   "responseMessage": "The request is invalid.",
   "result": [
     {
       "propertyName": "Email",
-      "errorMessage": "'Email' must not be empty.",
       "attemptedValue": "",
       "errorCode": "NotEmptyValidator",
-      "expectedValue": null
+      "errorMessage": "'Email' must not be empty."
     }
   ]
 }
 ```
+
+`expectedValue` is omitted because it is `null` (the property uses `JsonIgnoreCondition.WhenWritingNull`). With `JsonStringEnumConverter`, `responseType` is `"BadRequest"`.

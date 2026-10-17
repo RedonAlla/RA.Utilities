@@ -1,6 +1,6 @@
 using RA.Utilities.Core.Constants;
 
-namespace RA.Utilities.Api.Results;
+namespace RA.Utilities.Api.Response;
 
 /// <summary>
 /// Creates an <see cref="Response{ErrorResult}"/> object that produces an <see cref="ResponseType.Unprocessable"/> response.
@@ -10,17 +10,41 @@ public sealed class UnprocessableResponse : Response<ErrorResult>
     /// <summary>
     /// Initializes a new instance of the <see cref="UnprocessableResponse"/> class with default unprocessable entity details.
     /// </summary>
-    /// <param name="responseCode">The response code, defaulting to <see cref="BaseResponseCode.Unprocessable"/>.</param>
-    /// <param name="responseMessage">The response message, defaulting to a generic unprocessable message.</param>
-    public UnprocessableResponse(
-        int responseCode = BaseResponseCode.Unprocessable,
-        string responseMessage = BaseResponseMessages.Unprocessable
-    )
+    public UnprocessableResponse()
     {
-        ResponseCode = responseCode;
-        ResponseMessage = responseMessage;
+        ResponseCode = BaseResponseCode.Unprocessable;
+        ResponseMessage = BaseResponseMessages.Unprocessable;
         ResponseType = ResponseType.Unprocessable;
         Result = default;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UnprocessableResponse"/> class with default unprocessable entity details.
+    /// </summary>
+    /// <param name="responseCode">The response code, defaulting to <see cref="BaseResponseCode.Unprocessable"/>.</param>
+    /// <param name="responseMessage">The response message, defaulting to a generic unprocessable message.</param>
+    public UnprocessableResponse(int responseCode, string responseMessage = "")
+    {
+        ResponseCode = responseCode;
+        ResponseMessage = responseMessage ?? BaseResponseMessages.Unprocessable;
+        ResponseType = ResponseType.Unprocessable;
+        Result = default;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UnprocessableResponse"/> class.
+    /// </summary>
+    /// <param name="result">The error result details.</param>
+    public UnprocessableResponse(ErrorResult result)
+    {
+        ResponseCode = BaseResponseCode.Unprocessable;
+        ResponseMessage = BaseResponseMessages.Unprocessable;
+        ResponseType = ResponseType.Unprocessable;
+        Result = result ?? new ErrorResult
+        {
+            ErrorCode = nameof(BaseResponseCode.Unprocessable),
+            ErrorMessage = BaseResponseMessages.Unprocessable
+        };
     }
 
     /// <summary>
@@ -30,13 +54,13 @@ public sealed class UnprocessableResponse : Response<ErrorResult>
     /// <param name="responseCode">The response code, defaulting to <see cref="BaseResponseCode.Unprocessable"/>.</param>
     /// <param name="responseMessage">The response message, defaulting to a generic unprocessable message.</param>
     public UnprocessableResponse(
-        ErrorResult? result,
-        int responseCode = BaseResponseCode.Unprocessable,
-        string responseMessage = BaseResponseMessages.Unprocessable
+        ErrorResult result,
+        int responseCode,
+        string responseMessage = ""
     )
     {
         ResponseCode = responseCode;
-        ResponseMessage = responseMessage;
+        ResponseMessage = responseMessage ?? BaseResponseMessages.Unprocessable;
         ResponseType = ResponseType.Unprocessable;
         Result = result ?? new ErrorResult
         {

@@ -3,71 +3,53 @@ title: UnprocessableResponse
 sidebar_position: 9
 ---
 
-```powershell
-Namespace: RA.Utilities.Api.Results
+```bash
+Namespace: RA.Utilities.Api.Response
 ```
 
-The `UnprocessableResponse` class is a specialized model for creating standardized `422 Unprocessable Entity` responses.
-It is used when the server understands the content type of the request entity, but was unable to process the contained instructions.
-It inherits from [`Response<T>`](./Response), with the `Result` property typed as an [`ErrorResult`](./ErrorResult) object.
+The `UnprocessableResponse` class creates a standardized `422 Unprocessable Entity` response. It derives from [`Response<T>`](./Response) with `T = ErrorResult` and is used when the request is syntactically valid but semantically impossible.
 
 ### 🎯 Purpose
 
-The `UnprocessableResponse` class is a specialized model for creating standardized `422 Unprocessable Entity` API responses.
-It is used to signal that while the request was syntactically correct (not a `400 Bad Request`), the server could not perform the requested operation due to business logic or semantic errors.
+Use `UnprocessableResponse` for business-rule violations that are not field validation errors — for example, cancelling an order that has already shipped.
 
-Its primary functions are:
+- **Standard envelope**: `ResponseCode = 422`, `ResponseType = ResponseType.Unprocessable`, `ResponseMessage = "Unprocessable entity."`
+- **Optional payload**: `Result` can be `null` or an [`ErrorResult`](./ErrorResult) describing the semantic failure.
 
-1. **Handles Semantic Errors**: It provides a way to communicate errors that are not strictly validation-related but prevent an operation from completing (e.g., "Insufficient funds", "Invalid transition state").
+### Constructors
 
-2. **Reduces Boilerplate**: It automatically sets the response properties for an unprocessable request:
+| Constructor | `Result` | `ResponseCode` | `ResponseMessage` |
+|---|---|---|---|
+| `UnprocessableResponse()` | `null` | `422` | `"Unprocessable entity."` |
+| `UnprocessableResponse(int responseCode, string responseMessage = "")` | `null` | `responseCode` | `responseMessage ?? standard` (the `""` default is used as-is) |
+| `UnprocessableResponse(ErrorResult result)` | `result`, or a default `ErrorResult` when `null` | `422` | `"Unprocessable entity."` |
+| `UnprocessableResponse(ErrorResult result, int responseCode, string responseMessage = "")` | `result`, or a default `ErrorResult` when `null` | `responseCode` | `responseMessage ?? standard` (the `""` default is used as-is) |
 
-  * **ResponseCode**: Set to `422` (from `BaseResponseCode.Unprocessable`).
-  * **ResponseType**: Set to `ResponseType.Unprocessable`.
-  * **ResponseMessage**: Defaults to `"The server understands the content type of the request entity, but was unable to process the contained instructions."` (from `BaseResponseMessages.Unprocessable`).
+`ResponseType` is always `ResponseType.Unprocessable` (JSON `13`). When `result` is `null`, the constructor substitutes an `ErrorResult` with `ErrorCode = "Unprocessable"` and `ErrorMessage = "Unprocessable entity."`.
 
-3. **Provides Structured Context**: It uses an [`ErrorResult`](./ErrorResult) payload to provide specific details about why the operation was invalid.
-
-### ⚙️ How It Works
-
-When you create an instance of `UnprocessableResponse`, it pre-configures the following properties:
-
-- **`ResponseCode`**: Set to `422` (from `BaseResponseCode.Unprocessable`).
-- **`ResponseType`**: Set to `ResponseType.Unprocessable`.
-- **`ResponseMessage`**: Defaults to the standard unprocessable message.
-- **`Result`**: An [`ErrorResult`](./ErrorResult) object containing the error code and message.
-
-### 🚀 Usage in a Controller
-
-You can use this class in your controller actions when a business rule is violated.
+### Usage
 
 ```csharp showLineNumbers
 using Microsoft.AspNetCore.Mvc;
 // highlight-next-line
-using RA.Utilities.Api.Results;
+using RA.Utilities.Api.Response;
 
-[ApiController]
-[Route("api/[controller]")]
-public class OrdersController : ControllerBase
+[HttpPost("{id}/cancel")]
+public IActionResult CancelOrder(int id)
 {
-    [HttpPost("{id}/cancel")]
-    public IActionResult CancelOrder(int id)
+    var order = _service.GetById(id);
+    if (order.Status == OrderStatus.Shipped)
     {
-        var order = _service.GetById(id);
-        
-        if (order.Status == OrderStatus.Shipped)
+        // highlight-next-line
+        return UnprocessableEntity(new UnprocessableResponse(new ErrorResult
         {
-            // highlight-next-line
-            return UnprocessableEntity(new UnprocessableResponse(new ErrorResult 
-            { 
-                ErrorCode = "ORDER_ALREADY_SHIPPED", 
-                ErrorMessage = "Cannot cancel an order that has already been shipped." 
-            }));
-        }
-
-        _service.Cancel(id);
-        return Ok(new SuccessResponse<string>("Order cancelled."));
+            ErrorCode = "ORDER_ALREADY_SHIPPED",
+            ErrorMessage = "Cannot cancel an order that has already been shipped."
+        }));
     }
+
+    _service.Cancel(id);
+    return Ok(new SuccessResponse<string>("Order cancelled."));
 }
 ```
 
@@ -76,11 +58,14 @@ public class OrdersController : ControllerBase
 ```json showLineNumbers
 {
   "responseCode": 422,
-  "responseType": "Unprocessable",
-  "responseMessage": "The server understands the content type of the request entity, but was unable to process the contained instructions.",
+  // highlight-next-line
+  "responseType": 13,
+  "responseMessage": "Unprocessable entity.",
   "result": {
     "errorCode": "ORDER_ALREADY_SHIPPED",
     "errorMessage": "Cannot cancel an order that has already been shipped."
   }
 }
 ```
+
+With `JsonStringEnumConverter`, `responseType` is `"Unprocessable"`.
