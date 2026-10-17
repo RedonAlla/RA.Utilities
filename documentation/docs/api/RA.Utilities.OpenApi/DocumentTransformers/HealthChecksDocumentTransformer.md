@@ -31,6 +31,7 @@ The transformer is registered automatically when you use the default set of tran
 
 ```csharp showLineNumbers
 // Program.cs
+using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using RA.Utilities.OpenApi.Extensions;
 
@@ -45,7 +46,14 @@ builder.Services.AddOpenApi(options =>
 
 var app = builder.Build();
 
-app.MapHealthChecks("/health");
+// JSON report for /health (the schema documented by the transformer)
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    // highlight-next-line
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+});
+
+// Plain-text liveness state for /alive
 app.MapHealthChecks("/alive", new HealthCheckOptions
 {
     Predicate = registration => registration.Tags.Contains("live")
@@ -55,6 +63,8 @@ app.MapOpenApi();
 
 app.Run();
 ```
+
+`UIResponseWriter.WriteHealthCheckUIResponse` comes from the `AspNetCore.HealthChecks.UI.Client` package; add it to your application if you want the documented JSON shape. The transformer itself only describes the contract — it does not write the health response.
 
 With this setup, the generated document contains both health check operations under the `Health` tag, including their response schemas.
 

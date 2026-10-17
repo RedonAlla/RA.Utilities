@@ -81,6 +81,8 @@ The `OpenApiRequestExample` class is a simple data structure used to pass a coll
 
 
 ```csharp
+using RA.Utilities.Api.Response;
+using RA.Utilities.OpenApi.Models;
 using RA.Utilities.OpenApi.Utilities;
 
 app.MapPost("todos", static async (
@@ -129,6 +131,7 @@ app.MapPost("todos", static async (
 Adds a named example to a specific status code response of an operation.
 
 ```csharp
+using RA.Utilities.Api.Response;
 using RA.Utilities.OpenApi.Utilities;
 
 app.MapPost("todos", static async (
@@ -172,8 +175,15 @@ Adds multiple response examples to the specified OpenApi operation.
 | Value | `object` | JSON value for Request or Response example. |
 | MediaType | `string` | The media type of the example (***default is application/json***). |
 
+:::caution[`MediaType` is ignored by `AddResponseExamples`]
+
+`AddResponseExamples` forwards each example to `AddResponseExample` without the per-item `MediaType`, so batched response examples always use `application/json`. Call `AddResponseExample(..., mediaType: "application/problem+json")` directly when you need another media type.
+
+:::
 
 ```csharp
+using RA.Utilities.Api.Response;
+using RA.Utilities.OpenApi.Models;
 using RA.Utilities.OpenApi.Utilities;
 
 app.MapPost("todos", static async (
@@ -227,7 +237,7 @@ app.MapPost("todos", static async (
 
 ### AddGeneralErrorResponse()
 
-A convenience method that adds a pre-defined example for a `500 Internal Server Error` response.
+A convenience method that adds a pre-defined example for a `500 Internal Server Error` response. It uses `new ErrorResponse()` from `RA.Utilities.Api.Response` and stores the example under the `InternalServerError` key.
 
 ```csharp
 public static void AddGeneralErrorResponse(OpenApiOperation operation);

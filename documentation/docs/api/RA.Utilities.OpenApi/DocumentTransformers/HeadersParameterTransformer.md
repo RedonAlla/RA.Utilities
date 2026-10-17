@@ -25,7 +25,7 @@ You can define separate lists for request headers and response headers.
 2. **Global Application**: It iterates through every single API operation defined in your OpenAPI document.
 3. **Adds Request Headers**: For each operation, it adds the configured request headers (e.g., `x-request-id`) to the list of parameters.
 This makes it clear to clients that these headers are expected.
-4. **Adds Response Headers**: It also adds the configured response headers to every possible response status code (`200`, `404`, `500`, etc.) for each operation.
+4. **Adds Response Headers**: It also adds the configured response headers to every response defined for the operation (`200`, `404`, `500`, etc.).
 This informs clients what headers they can expect to receive back from the API.
 
 By using this transformer, you ensure your API's contract is consistently and accurately documented, promoting best practices without adding any boilerplate to your application code.

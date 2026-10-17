@@ -6,10 +6,10 @@ The `FluentValidationSchemaTransformer` is a powerful utility that serves a sing
 
 In simpler terms, it reads the validation rules you've already written for your request models and applies them directly to your API documentation.
 For example:
-  * `NotNull()` or `NotEmpty()` will mark a property as required.
-  * `Length(min, max)` sets the `minLength` and `maxLength` schema properties.
+  * `NotEmpty()` or `NotNull()` will mark a property as required.
+  * `Length(min, max)` sets the `minLength` and `maxLength` schema properties. `MinimumLength` and `MaximumLength` are also recognised by validator name.
   * `Matches("regex")` sets the `pattern` property.
-  * `GreaterThan(10)` sets the `minimum` and `exclusiveMinimum` properties.
+  * `GreaterThan(10)` sets the `minimum` and `exclusiveMinimum` properties (numeric schemas only).
   * `EmailAddress()` sets the `format` to `"email"`.
 
 
@@ -31,9 +31,9 @@ For each model in your API:
 2. It inspects the rules for each property.
 3. It then applies the corresponding OpenAPI schema constraint. For example:
   * `NotNull()` or `NotEmpty()` will mark a property as `required`.
-  * `Length(min, max)` sets the `minLength` and `maxLength` schema properties.
+  * `Length(min, max)` sets the `minLength` and `maxLength` schema properties; `MinimumLength` / `MaximumLength` validators are handled by name.
   * `Matches("regex")` sets the `pattern` property.
-  * `GreaterThan(10)` sets the `minimum` and `exclusiveMinimum` properties.
+  * `GreaterThan(10)` sets the `minimum` and `exclusiveMinimum` properties (numeric schemas only).
   * `EmailAddress()` sets the `format` to `"email"`.
   * `CreditCard()` sets the `format` to `"credit-card"`.
 

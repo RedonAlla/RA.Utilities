@@ -1,7 +1,7 @@
 # Release Notes for RA.Utilities.OpenApi
 
 ## Version 10.1.1
-![Date Badge](https://img.shields.io/badge/Publish-14%20October%202026-lightblue?logo=fastly&logoColor=white)
+![Date Badge](https://img.shields.io/badge/Publish-17%20October%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.1.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.OpenApi/10.1.1)
 
 ### ⚠️ Breaking Change
@@ -11,6 +11,10 @@
 ### ✨ New Features
 
 * **`DocumentInfoTransformer` now populates `Summary`**: `OpenApiInfoSettings.Summary` is applied to `document.Info.Summary`. Previously the setting was ignored and the document summary stayed unset.
+
+### 📝 Improvements
+
+* **Response model dependency updated**: the package now references `RA.Utilities.Api.Response` 10.1.0, whose models moved from the `RA.Utilities.Api.Results` namespace to `RA.Utilities.Api.Response`. `DefaultResponsesOperationTransformer` resolves `ErrorResponse` from the new namespace. The OpenApi public API is unchanged; update `using` directives only if your custom transformers reference those models.
 
 ### ⚠️ Known Issue
 

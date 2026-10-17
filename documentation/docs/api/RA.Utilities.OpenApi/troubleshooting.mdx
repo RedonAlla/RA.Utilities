@@ -31,6 +31,55 @@ builder.Services.AddOpenApi(options =>
 
 **Fix**: Replace class-name references — `typeof(DependencyInjectionExtensions)`, static calls, reflection strings — with `OpenApiOptionsExtensions`. Regular extension-method call sites like `options.AddDefaultsDocumentTransformer()` are unaffected.
 
+### `RA.Utilities.Api.Results` no longer compiles in my custom transformer
+
+**Cause**: This package now references `RA.Utilities.Api.Response` 10.1.0, which moved its models from the `RA.Utilities.Api.Results` namespace to `RA.Utilities.Api.Response`.
+
+**Fix**: Update the using directive in your custom transformers or examples:
+
+```csharp
+// Before
+using RA.Utilities.Api.Results;
+
+// After
+// highlight-next-line
+using RA.Utilities.Api.Response;
+```
+
+`OpenApiOperationUtilities.AddGeneralErrorResponse` and the `DefaultResponsesOperationTransformer` schema also use `ErrorResponse` from this package; the OpenApi public API itself is unchanged.
+
+### `AddHealthChecksDocumentTransformer(tags)` doesn't add the health check endpoints
+
+**Cause**: Known bug in v10.1.0 and v10.1.1 — the method registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and ignores `tags`.
+
+**Fix**: Register the default pipeline instead:
+
+```csharp
+builder.Services.AddOpenApi(options =>
+{
+    // highlight-next-line
+    options.AddDefaultsDocumentTransformer();
+});
+```
+
+`AddDefaultsDocumentTransformer()` registers `HealthChecksDocumentTransformer` after the Bearer security transformer, so `/health` and `/alive` stay anonymous.
+
+### `AddResponseExamples` ignores my `MediaType`
+
+**Cause**: `AddResponseExamples` forwards each item to `AddResponseExample` without the per-item `MediaType`, so batched response examples always use `application/json`.
+
+**Fix**: Add the examples individually when you need another media type:
+
+```csharp
+OpenApiOperationUtilities.AddResponseExample(
+    operation,
+    StatusCodes.Status400BadRequest,
+    "ValidationError",
+    example,
+    // highlight-next-line
+    mediaType: "application/problem+json");
+```
+
 ### Swagger UI doesn't show the Authorize button
 
 **Cause**: `BearerSecurityDocumentTransformer` wasn't registered, or JWT Bearer authentication isn't configured.
@@ -161,13 +210,15 @@ No. It registers the four document transformers: `DocumentInfoTransformer`, `Bea
 
 ### How do I exclude specific endpoints from a transformer?
 
-Document transformers apply globally. To exclude specific endpoints, use a custom operation transformer that checks the operation's metadata, or configure the transformer settings (e.g., `HeadersParameterSettings` can be customized per endpoint since headers are only added if not already present).
+Document transformers apply globally. To exclude specific endpoints, use a custom operation transformer that checks the operation's metadata, or write a custom document transformer that filters `document.Paths` before delegating. Configuration settings such as `HeadersParameterSettings` are global; they do not support per-endpoint overrides.
 
 ---
 
 ## Known Limitations
 
+- **`AddHealthChecksDocumentTransformer(tags)` is broken in v10.1.1**: it registers `HeadersParameterTransformer` and ignores `tags`. Use `AddDefaultsDocumentTransformer()`.
+- **`AddResponseExamples` ignores per-item `MediaType`**: batched response examples always use `application/json`; use `AddResponseExample` for custom media types.
 - **No endpoint exclusion**: Document transformers apply to all operations. Use custom transformers for per-endpoint behavior.
 - **Single XML file**: `EnumXmlSchemaTransformer` currently supports only one XML documentation file.
-- **Synchronous callback**: The `configureOptions` equivalent for these transformers is registration-time; there is no per-operation callback.
 - **FluentValidation scope**: Only validators registered in the DI container are discovered. Attributes-based validation (DataAnnotations) is not supported.
+- **Numeric `responseType` in default examples**: `DefaultResponsesOperationTransformer` serializes `new ErrorResponse()` with default `System.Text.Json` options, so the example's `responseType` is numeric. Register `JsonStringEnumConverter` for string values.

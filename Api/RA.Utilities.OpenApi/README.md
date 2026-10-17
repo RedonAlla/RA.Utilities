@@ -10,6 +10,8 @@ A utility library to enhance and customize OpenAPI (Swagger) documentation in AS
 
 This package provides a collection of `IOpenApiDocumentTransformer` implementations to automate common modifications to your generated OpenAPI specification. Instead of manually annotating every endpoint with attributes for common headers or security schemes, you can apply these transformations globally.
 
+> **v10.1.1 note**: The registration extension class was renamed to `OpenApiOptionsExtensions` (call sites are unchanged), `DocumentInfoTransformer` now populates `Summary`, and the package depends on `RA.Utilities.Api.Response` 10.1.0 with its new `RA.Utilities.Api.Response` namespace.
+
 The primary goals are to:
 - **Reduce Boilerplate**: Automatically add common parameters (like correlation IDs) to all API operations.
 - **Enforce Consistency**: Ensure that all endpoints consistently document required headers and responses.
@@ -110,7 +112,7 @@ It is registered automatically by `AddDefaultsDocumentTransformer()`.
 ### `DefaultResponsesOperationTransformer`
 
 This operation transformer automatically adds standardized OpenAPI responses for common HTTP status codes for  `500`.
-It uses the response models from `RA.Utilities.Api` to generate the schema for these error responses.
+It uses the response models from `RA.Utilities.Api.Response` (namespace `RA.Utilities.Api.Response`) to generate the schema for these error responses.
 
 This transformer is an `IOpenApiOperationTransformer`, meaning it applies to each API operation individually.
 It is a more targeted alternative to the `ResponsesDocumentTransformer`.
@@ -142,10 +144,10 @@ To apply this transformer, use the `AddPolymorphismDocumentTransformer<T>` exten
 // Program.cs
 builder.Services.AddOpenApi(options =>
 {
-    options.AddPolymorphismDocumentTransformer<ErrorResponse>(new Dictionary<string, Type>
+    options.AddPolymorphismDocumentTransformer<Animal>(new Dictionary<string, Type>
     {
-        { "NotFound", typeof(NotFoundResponse) },
-        { "Conflict", typeof(ConflictResponse) },
+        { "Cat", typeof(Cat) },
+        { "Dog", typeof(Dog) },
     });
 });
 ```
@@ -301,6 +303,7 @@ Represents a single header to be added to the OpenAPI specification.
 -   [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/)
 -   [`Microsoft.AspNetCore.OpenApi`](https://www.nuget.org/packages/Microsoft.AspNetCore.OpenApi)
 -   [`RA.Utilities.Api`](https://redonalla.github.io/RA.Utilities/nuget-packages/api/RA.Utilities.Api/)
+-   [`RA.Utilities.Api.Response`](https://redonalla.github.io/RA.Utilities/nuget-packages/api/RA.Utilities.Api.Response/)
 
 
 ## Usage
@@ -319,7 +322,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // 1. (Optional) Configure settings from appsettings.json for the transformers.
 builder.Services.Configure<OpenApiInfoSettings>(builder.Configuration.GetSection(OpenApiInfoSettings.AppSettingsKey));
-builder.Services.Configure<HeadersParameterSettings>(builder.Configuration.GetSection("OpenApiHeaders"));
+builder.Services.Configure<HeadersParameterSettings>(builder.Configuration.GetSection(HeadersParameterSettings.AppSettingsKey));
 
 // 2. Add OpenAPI services and register the transformers.
 builder.Services.AddOpenApi(options =>
@@ -327,19 +330,16 @@ builder.Services.AddOpenApi(options =>
     // Default transformers (DocumentInfo, BearerSecurity, Headers, HealthChecks).
     options.AddDefaultsDocumentTransformer();
 
-    // 3. Register additional transformers individually.
-    options.AddBearerSecurityDocumentTransformer();
-
-    // 4. Register operation transformers for more granular control.
+    // 3. Register operation transformers for more granular control.
     options.AddDefaultResponsesOperationTransformer();
 
-    // 5. Register FluentValidation schema enrichment.
+    // 4. Register FluentValidation schema enrichment.
     options.AddFluentValidationRules();
 });
 
 var app = builder.Build();
 
-// 6. Map the OpenAPI document endpoint (e.g. /openapi/v1.json).
+// 5. Map the OpenAPI document endpoint (e.g. /openapi/v1.json).
 app.MapOpenApi();
 // Optional: map an interactive API reference UI (e.g. Scalar) over the document.
 
@@ -362,7 +362,9 @@ This is particularly useful when creating custom `IOpenApiOperationTransformer` 
 * **`AddRequestExamples(...)`**: Attaches multiple named examples to the request body of an operation.
 * **`AddResponseExample(...)`**: Attaches a named example to a specific HTTP status code response for an operation. This is great for showing what a successful response looks like or detailing the structure of a specific error.
 * **`AddGeneralErrorResponse(...)`**: A specialized shortcut method that adds a pre-defined example for a 500 Internal Server Error.
-* **`AddResponseExamples(...)`**: Attaches multiple named examples to a specific HTTP status code response.
+* **`AddResponseExamples(...)`**: Attaches multiple named response examples, each with its own status code, to an operation.
+
+> **Limitation**: `AddResponseExamples` currently ignores the per-item `OpenApiResponseExample.MediaType` and always uses `application/json`. Use `AddResponseExample` directly for other media types.
 
 #### Example Usage in a Custom Operation Transformer
 ```csharp

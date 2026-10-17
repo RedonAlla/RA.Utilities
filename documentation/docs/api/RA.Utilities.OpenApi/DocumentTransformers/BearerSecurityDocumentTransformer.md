@@ -26,7 +26,8 @@ The `BearerSecurityDocumentTransformer` eliminates this manual work.
 3. **Documentation Generation**: It then programmatically modifies the generated OpenAPI document to:
   * Add the standard "Bearer" security scheme definition. This is what creates the ***"Authorize"*** button and the input field for the token in the Swagger UI.
   * Apply this security requirement to every single API operation. This adds the lock icon next to each endpoint, indicating that it is protected.
-By using this transformer, your API documentation stays in sync with your authentication setup automatically, reducing boilerplate and preventing configuration mistakes.
+
+If a `"Bearer"` security scheme already exists in the document, the transformer leaves the document unchanged (it does not re-apply or merge security requirements). By using this transformer, your API documentation stays in sync with your authentication setup automatically, reducing boilerplate and preventing configuration mistakes.
 
 This ensures your API documentation accurately reflects your security setup without any extra code in your endpoint definitions.
 

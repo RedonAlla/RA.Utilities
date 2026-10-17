@@ -12,7 +12,7 @@ The purpose of the `TagOperationTransformer` class is to **enrich the OpenAPI do
 Here is a detailed breakdown of what it does:
 
 #### 1. Centralized Documentation:
-In OpenAP/SwaggerI, "Tags" are typically used to group operations (often mapping to Controller names in ASP.NET Core).
+In OpenAPI/Swagger, "Tags" are typically used to group operations (often mapping to Controller names in ASP.NET Core).
 By default, these tags might just be the controller name with no description.
 `TagOperationTransformer` allows you to inject descriptions for these groups from a central configuration (a `Dictionary<string, string>`) rather than adding attributes to every single controller class or minimal api.
 

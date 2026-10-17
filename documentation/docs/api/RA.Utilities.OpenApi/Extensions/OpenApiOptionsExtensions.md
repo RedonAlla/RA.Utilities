@@ -20,7 +20,7 @@ In v10.1.1 this class was renamed from `DependencyInjectionExtensions` to `OpenA
 This is the recommended starting point. It registers a sensible default set of document transformers with a single call.
 
 **What it does:**
-*   **`DocumentInfoTransformer`**: Populates the API's title, version, description, and summary from `appsettings.json`.
+*   **`DocumentInfoTransformer`**: Populates the API's title, version, description, summary, terms of service, contact, and license from `appsettings.json`.
 *   **`BearerSecurityDocumentTransformer`**: Automatically adds the "Authorize" button and JWT security scheme if Bearer authentication is detected.
 *   **`HeadersParameterTransformer`**: Adds common request and response headers (like `x-request-id`) to all API operations based on configuration.
 *   **`HealthChecksDocumentTransformer`**: Documents the `GET /health` (JSON health report) and `GET /alive` (plain-text liveness) endpoints and adds the `Health` tag, without applying the Bearer security scheme to them.
@@ -84,7 +84,7 @@ builder.Services.AddOpenApi(options =>
 
 ---
 
-### `AddPolymorphismDocumentTransformer<T>()`
+### `AddPolymorphismDocumentTransformer<T>(typesToInclude, discriminatorPropertyName = "Type")`
 
 This extension registers the [`PolymorphismDocumentTransformer`](../DocumentTransformers/PolymorphismDocumentTransformer.md) to correctly document polymorphic types (a base class with several derived classes) using the `oneOf` and `discriminator` keywords.
 
@@ -96,10 +96,10 @@ You provide the base type `T` and a dictionary mapping discriminator values to t
 // In Program.cs
 builder.Services.AddOpenApi(options =>
 {
-    options.AddPolymorphismDocumentTransformer<ErrorResponse>(new()
+    options.AddPolymorphismDocumentTransformer<Animal>(new()
     {
-        { "NotFound", typeof(NotFoundResponse) },
-        { "Conflict", typeof(ConflictResponse) },
+        { "Cat", typeof(Cat) },
+        { "Dog", typeof(Dog) },
     });
 });
 ```

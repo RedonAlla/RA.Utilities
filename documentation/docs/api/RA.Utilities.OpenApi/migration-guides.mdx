@@ -27,6 +27,7 @@ Add `using RA.Utilities.OpenApi.Extensions;` as before — the namespace is unch
 ### Other Changes (non-breaking)
 
 - **`DocumentInfoTransformer` now populates `Summary`**: `OpenApiInfoSettings.Summary` is applied to `document.Info.Summary`. Previously the `Summary` setting was ignored and the document summary stayed `null`.
+- **Response models moved to a new namespace**: this package now references `RA.Utilities.Api.Response` 10.1.0, which renames the response namespace from `RA.Utilities.Api.Results` to `RA.Utilities.Api.Response`. The OpenApi public API is unchanged; update `using` directives only if your custom transformers or examples reference those models directly. See the [Api.Response migration guide](../RA.Utilities.Api.Response/migration-guides.mdx).
 
 ### Known issue (unchanged from v10.1.0)
 

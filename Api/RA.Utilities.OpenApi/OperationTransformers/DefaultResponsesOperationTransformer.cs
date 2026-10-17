@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
-using RA.Utilities.Api.Results;
+using RA.Utilities.Api.Response;
 using RA.Utilities.Core.Constants;
 
 namespace RA.Utilities.OpenApi.OperationTransformers;

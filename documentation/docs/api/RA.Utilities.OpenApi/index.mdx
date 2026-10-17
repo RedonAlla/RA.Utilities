@@ -151,6 +151,10 @@ All transformers are `internal sealed` — register them through the extension m
 In v10.1.1 the extension class was renamed from `DependencyInjectionExtensions` to [`OpenApiOptionsExtensions`](./Extensions/OpenApiOptionsExtensions.md), and its methods are now declared as C# 14 extension members on `OpenApiOptions`. Method names, signatures, and call sites are unchanged — only code that references the class by name needs updating.
 :::
 
+:::note[v10.1.1 dependency]
+This release references `RA.Utilities.Api.Response` 10.1.0, which moved its response models from `RA.Utilities.Api.Results` to the `RA.Utilities.Api.Response` namespace. The OpenApi public API is unchanged; update `using` directives only if your custom transformers or examples reference those models directly.
+:::
+
 | Method | Registers |
 |---|---|
 | `AddDefaultsDocumentTransformer()` | `DocumentInfo` + `BearerSecurity` + `HeadersParameter` + `HealthChecks` document transformers |
@@ -160,9 +164,9 @@ In v10.1.1 the extension class was renamed from `DependencyInjectionExtensions` 
 | `AddDocumentInfoTransformer()` | `DocumentInfoTransformer` individually |
 | `AddBearerSecurityDocumentTransformer()` | `BearerSecurityDocumentTransformer` individually |
 | `AddHeadersParameterTransformer()` | `HeadersParameterTransformer` individually |
-| `AddPolymorphismDocumentTransformer<T>(types)` | `PolymorphismDocumentTransformer` |
+| `AddPolymorphismDocumentTransformer<T>(types, discriminatorPropertyName = "Type")` | `PolymorphismDocumentTransformer` |
 | `AddTagOperationTransformer(tags)` | `TagOperationTransformer` |
-| `AddHealthChecksDocumentTransformer(tags)` | `HealthChecksDocumentTransformer` — see the caution below |
+| `AddHealthChecksDocumentTransformer(tags)` | ⚠️ Currently registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer` — see the caution below |
 
 :::caution[v10.1.0, still present in v10.1.1]
 `AddHealthChecksDocumentTransformer(tags)` currently registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and the `tags` argument is ignored. Use `AddDefaultsDocumentTransformer()` to document health check endpoints until this is corrected.

@@ -17,9 +17,11 @@ Here's a breakdown of its key benefits:
 
 ### Properties
 
+The configuration section key is `"OpenApiInfoSettings"`, exposed as `OpenApiInfoSettings.AppSettingsKey`.
+
 | Property           | Type                               | Description                                                      |
 | ------------------ | ---------------------------------- | ---------------------------------------------------------------- |
-| **UiReferenceEndpoint** | `string`                      | The endpoint where the Scalar API reference UI is mapped. Defaults to `"/"`. |
+| **UiReferenceEndpoint** | `string`                      | The endpoint where the Scalar API reference UI is mapped. Defaults to `"/"`. The package exposes the setting; your UI-mapping code reads it. |
 | **Title**          | `string`                           | The title of the API.                                            |
 | **Summary**        | `string`                           | A short summary of the API. Populated into the document since v10.1.1. |
 | **Version**        | `string`                           | The version of the API.                                          |

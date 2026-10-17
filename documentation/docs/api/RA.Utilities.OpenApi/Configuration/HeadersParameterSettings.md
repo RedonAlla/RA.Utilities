@@ -19,6 +19,8 @@ The class comes with sensible defaults, pre-configuring `x-request-id` for reque
 
 ## Properties
 
+The configuration section key is `"OpenApiHeaders"`, exposed as `HeadersParameterSettings.AppSettingsKey`.
+
 | Property           | Type                     | Description                                                                 |
 | ------------------ | ------------------------ | --------------------------------------------------------------------------- |
 | **RequestHeaders** | [`List<HeaderDefinition>`](#headerdefinition) | A list of header definitions to add to all API requests.  |
@@ -33,7 +35,7 @@ Represents a single header to be added to the OpenAPI specification.
 | **Name**        | `string`  | `""`         | The name of the header (e.g., "x-request-id").                          |
 | **Description** | `string`  | `""`         | A description of the header's purpose.                                  |
 | **Required**    | `bool`    | `true`       | Specifies if the header is required.                                    |
-| **Type**        | `JsonSchemaType`| `String`| The schema type for the header value (e.g., "String", "Integer"). |
+| **Type**        | `JsonSchemaType`| `String`| The schema type for the header value (e.g., "String", "Integer"). Serialized as a string in configuration. |
 | **Format**      | `string?` | `null`       | The format of the header value (e.g., "uuid", "date-time"). The default header definitions use `"uuid"`. |
 | **Value**       | `object?` | `null`       | An example value for the header.                                        |
 
