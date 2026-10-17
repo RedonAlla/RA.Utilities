@@ -4,12 +4,12 @@ Namespace: RA.Utilities.Api.Mapper
 
 The `ErrorResultResponse` is a static helper class that provides a clean, centralized way to map exceptions from the
 [`RA.Utilities.Core.Results`](../../../core/RA.Utilities.Core.Results/index.mdx) layer into standardized `IResult` objects for ASP.NET Core Minimal APIs.
-It is a key component for creating consistent error responses when using the [`Result<T>`](../../RA.Utilities.Api.Response/index.mdx) pattern.
+It is a key component for creating consistent error responses when using the [`Result<T>`](../../../core/RA.Utilities.Core.Results/Results.md) pattern.
 
 ## 🎯 Purpose
 
-When your application logic returns a [`Result<T>`](../../RA.Utilities.Api.Response/index.mdx) that is in a `Failure` state, it contains an `Exception` object
-(e.g., [`NotFoundException`](../../../core/RA.Utilities.Core.Exceptions/NotFoundException.md), [`ConflictException`](../../../core/RA.Utilities.Core.Exceptions/ConflictException.md)). The `ErrorResultResponse.Result` method inspects this exception and automatically generates the appropriate HTTP error response (`404 Not Found`, `409 Conflict`, etc.) using the standardized response models from `RA.Utilities.Api` (namespace `RA.Utilities.Api.Results`).
+When your application logic returns a [`Result<T>`](../../../core/RA.Utilities.Core.Results/Results.md) that is in a `Failure` state, it contains an `Exception` object
+(e.g., [`NotFoundException`](../../../core/RA.Utilities.Core.Exceptions/NotFoundException.md), [`ConflictException`](../../../core/RA.Utilities.Core.Exceptions/ConflictException.md)). The `ErrorResultResponse.Result` method inspects this exception and automatically generates the appropriate HTTP error response (`404 Not Found`, `409 Conflict`, etc.) using the standardized response models from `RA.Utilities.Api` (namespace `RA.Utilities.Api.Response`).
 
 This allows you to handle all expected business-level failures in a single, declarative line of code within your API endpoints, keeping them clean and free of repetitive error-handling logic.
 
@@ -33,9 +33,11 @@ The `Result(Exception)` method uses a switch expression to map each supported ex
 
 Any exception that is not one of the known semantic exceptions is treated as an unexpected server error and returns a generic `500 Internal Server Error` response, avoiding leakage of sensitive implementation details.
 
+Only `BadRequestException`, `ConflictException`, and `NotFoundException` currently produce a structured `Result` payload. The other mappings use the `(int responseCode, string responseMessage)` constructors, which leave `result` as `null` and carry the details on the envelope. See [ErrorResultMapper](./ErrorResultMapper.md#-response-payload-shapes).
+
 ## 🚀 How to Use
 
-The primary use case for `ErrorResultResponse` is within the `Match` method of a [`Result<T>`](../../RA.Utilities.Api.Response/index.mdx) object. The `ErrorResultResponse.Result` method has the signature `Func<Exception, IResult>`, which perfectly matches the signature required by the `failure` delegate of `Match`.
+The primary use case for `ErrorResultResponse` is within the `Match` method of a [`Result<T>`](../../../core/RA.Utilities.Core.Results/Results.md) object. The `ErrorResultResponse.Result` method has the signature `Func<Exception, IResult>`, which perfectly matches the signature required by the `failure` delegate of `Match`.
 
 This allows you to pass the method directly, creating highly readable and maintainable endpoint code.
 
@@ -99,13 +101,22 @@ app.MapGet("/products/{id}", (int id, ProductService service) =>
 ```json showLineNumbers
 {
   "responseCode": 404,
-  "responseType": "NotFound",
+  // highlight-next-line
+  "responseType": 8,
   "responseMessage": "Product with value '99' was not found.",
   "result": {
     "entity": "Product",
     "value": 99,
-    "errorCode": "NotFound",
-    "errorMessage": "Product with value '99' was not found."
+    "errorCode": "Product with value '99' was not found.",
+    "errorMessage": ""
   }
 }
 ```
+
+:::warning[Known nested-payload issue]
+
+`ErrorResultMapper.ToResponse(NotFoundException)` currently writes the exception message into `NotFoundResult.ErrorCode` and leaves `ErrorMessage` empty. The envelope (`responseCode`, `responseType`, `responseMessage`) is correct. A fix is pending; see [Troubleshooting](../troubleshooting.mdx#why-is-the-nested-notfoundresult-payload-wrong).
+
+:::
+
+The `responseType` numbers are the default `System.Text.Json` output. Register `JsonStringEnumConverter` to write `"NotFound"` instead; see [`ResponseType`](../../../core/RA.Utilities.Core.Constants/ResponseType#json-serialization).

@@ -10,6 +10,8 @@
 
 By using this package, you can significantly reduce boilerplate code, enforce consistency across all your API endpoints, and keep your `Program.cs` file clean and maintainable.
 
+> **v10.2.2 note**: `MiddlewareExtensions` was split into `ServiceCollectionExtensions` (`Add*`) and `ApplicationBuilderExtensions` (`Use*`); call sites are unchanged. The package now depends on `RA.Utilities.Api.Response` 10.1.0, whose models live in the `RA.Utilities.Api.Response` namespace.
+
 ## 📚 Table of Contents
 
 - Getting Started
@@ -61,8 +63,8 @@ The `GlobalExceptionHandler` intercepts any unhandled exceptions thrown within y
 
 **How it works:**
 
-- It catches `NotFoundException`, `ConflictException`, and `BadRequestException` from the `RA.Utilities.Core.Exceptions` package.
-- It maps them to the built-in `NotFoundResponse`, `ConflictResponse`, and `BadRequestResponse` types (namespace `RA.Utilities.Api.Results`, provided by the `RA.Utilities.Api.Response` package, which this package references transitively).
+- It catches the semantic exceptions from `RA.Utilities.Core.Exceptions` — `BadRequestException`, `UnauthorizedException`, `ForbiddenException`, `NotFoundException`, `ConflictException`, `UnprocessableException`, `TooManyRequestsException`, `ServiceUnavailableException`, and `GatewayTimeoutException` — plus any other `RaBaseException`.
+- It maps them to the built-in response models (namespace `RA.Utilities.Api.Response`) provided by the `RA.Utilities.Api.Response` package, which this package references transitively.
 - For any other unhandled exception, it returns a generic `ErrorResponse` (HTTP 500) to avoid leaking sensitive information.
 - It logs every exception for debugging purposes.
 
@@ -103,16 +105,18 @@ A request to `/products/0` would automatically return a 404 response with the fo
 ```json
 {
   "responseCode": 404,
-  "responseType": "NotFound",
+  "responseType": 8,
   "responseMessage": "Product with value '0' was not found.",
   "result": {
     "entity": "Product",
     "value": 0,
-    "errorCode": "NotFound",
-    "errorMessage": "Product with value '0' was not found."
+    "errorCode": "Product with value '0' was not found.",
+    "errorMessage": ""
   }
 }
 ```
+
+> **Known issue**: `ErrorResultMapper.ToResponse(NotFoundException)` currently passes the exception message as `NotFoundResult.ErrorCode`, so the nested `errorCode` contains the message and `errorMessage` is empty. The envelope is correct; a fix is pending.
 
 ### 2. Endpoint Registration Helpers
 
@@ -227,7 +231,7 @@ On validation failure, the API returns:
 ```json
 {
   "responseCode": 400,
-  "responseType": "BadRequest",
+  "responseType": 12,
   "responseMessage": "The request is invalid.",
   "result": [
     {
@@ -400,7 +404,7 @@ A request that returns a product would yield the following JSON body, wrapped in
 ```json
 {
   "responseCode": 200,
-  "responseType": "Success",
+  "responseType": 0,
   "responseMessage": "Operation completed successfully.",
   "result": {
     "id": 1,

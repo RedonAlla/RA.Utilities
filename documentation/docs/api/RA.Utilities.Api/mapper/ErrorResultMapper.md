@@ -2,7 +2,7 @@
 Namespace: RA.Utilities.Api.Mapper
 ```
 
-The `ErrorResultMapper` is a static helper class responsible for the low-level task of **transforming** specific exception types from the [`RA.Utilities.Core.Exceptions`](../../../core/RA.Utilities.Core.Exceptions/index.mdx) package into their corresponding standardized response models from `RA.Utilities.Api` ([`RA.Utilities.Api.Results`](../../RA.Utilities.Api.Response/index.mdx) namespace).
+The `ErrorResultMapper` is a static helper class responsible for the low-level task of **transforming** specific exception types from the [`RA.Utilities.Core.Exceptions`](../../../core/RA.Utilities.Core.Exceptions/index.mdx) package into their corresponding standardized response models from `RA.Utilities.Api` (namespace `RA.Utilities.Api.Response`).
 
 ## 🎯 Purpose
 
@@ -39,7 +39,7 @@ public static IResult Result(Exception exception) => exception switch
     NotFoundException notFoundException => Microsoft.AspNetCore.Http.Results.Json(
         // highlight-next-line
         ErrorResultMapper.ToResponse(notFoundException), // Creates the response body
-        statusCode: notFoundException.ErrorCode
+        statusCode: BaseResponseCode.NotFound
     ),
 
     // ... other cases
@@ -81,3 +81,32 @@ The class provides a dedicated mapping method for each custom exception type:
 
 - **`ToResponse(RaBaseException ex)`**:
   Maps any other `RaBaseException` to a generic `ErrorResponse`, using the exception's message and error code.
+
+## 📦 Response Payload Shapes
+
+The mapper does not populate the same payload for every exception. The table below reflects the current implementation:
+
+| Exception | Response | `Result` payload |
+|---|---|---|
+| `BadRequestException` | `BadRequestResponse` | `BadRequestResult[]` built from `exception.Errors` |
+| `ConflictException` | `ConflictResponse` | `ConflictResult` with `Entity`, `Value`, and `ErrorMessage` |
+| `NotFoundException` | `NotFoundResponse` | `NotFoundResult` with `Entity` and `Value` |
+| `UnauthorizedException` | `UnauthorizedResponse` | `null` — the envelope carries the code and message |
+| `ForbiddenException` | `ForbiddenResponse` | `null` — the envelope carries the code and message |
+| `UnprocessableException` | `UnprocessableResponse` | `null` — the envelope carries the code and message |
+| `TooManyRequestsException` | `TooManyRequestsResponse` | `null` — the envelope carries the code and message |
+| `ServiceUnavailableException` | `ServiceUnavailableResponse` | `null` — the envelope carries the code and message |
+| `GatewayTimeoutException` | `GatewayTimeoutResponse` | `null` — the envelope carries the code and message |
+| `RaBaseException` | `ErrorResponse` | `null` — the envelope carries the code and message |
+
+:::warning[Known `NotFoundException` payload issue]
+
+`ToResponse(NotFoundException)` currently passes `exception.Message` as the third positional argument of `NotFoundResult`, but that parameter is `errorCode`, not the message. As a result:
+
+- `NotFoundResult.Entity` and `Value` are correct.
+- `NotFoundResult.ErrorCode` contains the exception message.
+- `NotFoundResult.ErrorMessage` is `""`.
+
+The outer `NotFoundResponse.ResponseMessage` is still correct. A fix is pending; see [Troubleshooting](../troubleshooting.mdx#why-is-the-nested-notfoundresult-payload-wrong).
+
+:::

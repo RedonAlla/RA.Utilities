@@ -28,7 +28,7 @@ Adding `ContextLoggingMiddleware` on top of it is redundant and adds unnecessary
 
 2. **Zero Configuration**: No options class, no setup callbacks — register and use. The middleware reads the `X-Request-Id` header from the incoming request, or falls back to `HttpContext.TraceIdentifier` if missing, via `CommonUtilities.GetRequestId(context)`.
 
-3. **Plays Well with Others**: Designed to sit at the very start of the middleware pipeline so that `DefaultHeadersMiddleware` and `LoggingMiddleware` — and your own code — all share the same enriched log scope.
+3. **Plays Well with Others**: Designed to sit at the very start of the middleware pipeline so that `DefaultHeadersMiddleware` — and your own code — share the same enriched log scope. Do not combine it with `LoggingMiddleware`; that middleware already creates its own request scope.
 
 ## 🚀 Usage Guide
 
@@ -60,12 +60,13 @@ Place `app.UseContextLoggingMiddleware()` **first** in the pipeline, before any 
 app.UseContextLoggingMiddleware();
 
 app.UseDefaultHeadersMiddleware();
-app.UseLoggingMiddleware();
 
 app.MapControllers();
 
 app.Run();
 ```
+
+> If you need structured request/response logging, use [`LoggingMiddleware`](./LoggingMiddleware.md) instead of this middleware — it creates its own request scope and adding both is redundant.
 
 ### How It Works
 
@@ -89,12 +90,11 @@ Any `ILogger` call made during the request — in your controllers, services, or
 
 ### Combining with Other Middlewares
 
-The recommended pipeline order places `ContextLoggingMiddleware` first so all subsequent middlewares inherit its scope:
+The recommended pipeline order places `ContextLoggingMiddleware` first so subsequent middlewares inherit its scope:
 
 ```
 app.UseContextLoggingMiddleware();   // ← enriches log scope
-app.UseDefaultHeadersMiddleware();          // ← validates headers
-app.UseLoggingMiddleware();                 // ← logs request/response
+app.UseDefaultHeadersMiddleware();   // ← validates headers
 ```
 
-This way, the `LoggingMiddleware`'s structured log output automatically includes the `X-Request-Id` from the scope set by `ContextLoggingMiddleware`.
+If you need HTTP request/response logging, register `LoggingMiddleware` instead of `ContextLoggingMiddleware`; it already enriches the scope it creates.

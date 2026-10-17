@@ -17,7 +17,8 @@ On failure, the filter returns an [**HTTP `400 Bad Request`**](../../RA.Utilitie
 ```json showLineNumbers
 {
   "responseCode": 400,
-  "responseType": "BadRequest",
+  // highlight-next-line
+  "responseType": 12,
   "responseMessage": "The request is invalid.",
   "result": [
     {
@@ -29,6 +30,8 @@ On failure, the filter returns an [**HTTP `400 Bad Request`**](../../RA.Utilitie
   ]
 }
 ```
+
+`responseType` is numeric by default; register `JsonStringEnumConverter` to write `"BadRequest"`.
 
 ### 🚀 Usage
 

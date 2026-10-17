@@ -7,7 +7,7 @@ The `SuccessResult` static class, located in the `RA.Utilities.Api` package, is 
 Its primary goals are:
 
 **1. Enforce Consistency**:
-It ensures that every successful response from your API (like a `200 OK` or `201 Created`) is wrapped in the standard `SuccessResponse<T>` model from `RA.Utilities.Api` ([`RA.Utilities.Api.Results`](../../RA.Utilities.Api.Response/index.mdx) namespace).
+It ensures that every successful response from your API (like a `200 OK` or `201 Created`) is wrapped in the standard `SuccessResponse<T>` model from `RA.Utilities.Api` (namespace `RA.Utilities.Api.Response`).
 This provides a predictable JSON structure (`responseCode`, `responseType`, `result`, etc.) for all your API's success outcomes, which is a mirror to how errors are handled.
 
 **2. Reduce Boilerplate**:
@@ -71,7 +71,8 @@ A request that returns a product would yield the following JSON body, wrapped in
 ```json showLineNumbers
 {
   "responseCode": 200,
-  "responseType": "Success",
+  // highlight-next-line
+  "responseType": 0,
   "responseMessage": "Operation completed successfully.",
   "result": {
     "id": 1,
@@ -79,6 +80,8 @@ A request that returns a product would yield the following JSON body, wrapped in
   }
 }
 ```
+
+`responseType` is numeric by default. Register `JsonStringEnumConverter` to write `"Success"`; see [`ResponseType`](../../../core/RA.Utilities.Core.Constants/ResponseType#json-serialization).
 
 ### Using the `Result` Type with Endpoints
 

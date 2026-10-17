@@ -1,6 +1,5 @@
 ---
 title: RA.Utilities.Api
-slug: /api/RA.Utilities.Api
 sidebar_position: 1
 sidebar_class_name: nav_session ra_utilities_api
 ---
@@ -17,53 +16,367 @@ import LogoSvg from '../../../../Assets/Images/api.svg';
 [![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Api?logo=nuget&label=NuGet)](https://www.nuget.org/packages/RA.Utilities.Api/)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Api.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api/)
 [![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
-[![Publish NuGet](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml/badge.svg)](https://github.com/RedonAlla/RA.Utilities/actions/runs/19447205565)
+[![Publish NuGet](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml/badge.svg)](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml)
 [![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?label=License&logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
 
-`RA.Utilities.Api` provides a collection of essential utilities for building robust and consistent ASP.NET Core APIs. This package includes endpoint registration helpers, standardized response models, and exception handling middleware to streamline development and promote best practices.
+`RA.Utilities.Api` provides the ASP.NET Core plumbing for consistent, predictable APIs: exception-to-response mapping, standardized success helpers, header enforcement, structured HTTP logging, FluentValidation endpoint filters, and compile-time endpoint registration.
 
-It acts as the glue between the [`RA.Utilities.Core.Results`](../../core/RA.Utilities.Core.Results/index.mdx)
-libraries and your web application, providing concrete implementations for ASP.NET Core.
+Use it when you want one error contract across every endpoint and a clean way to organize Minimal API endpoints without reflection-based scanning or manual registration lists.
 
 ## 🎯 Purpose
 
-This package is designed to solve two common challenges in API development:
+Hand-written APIs drift: one endpoint returns a bare string, another throws a raw exception, headers are validated inconsistently, and logging formats differ per service. This package centralizes those concerns:
 
-1.  **Consistent Error Handling**: It provides a middleware that automatically catches custom exceptions from
-[`RA.Utilities.Core.Exceptions`](../../core/RA.Utilities.Core.Exceptions/index.mdx)
-(like [`NotFoundException`](../../core/RA.Utilities.Core.Exceptions/NotFoundException.md), [`ConflictException`](../../core/RA.Utilities.Core.Exceptions/ConflictException.md))
-and transforms them into standardized JSON responses using the built-in response models (see [Results](../RA.Utilities.Api.Response/index.mdx)).
-2.  **Clean Endpoint Organization**: It offers a simple pattern for organizing API endpoints into separate files, keeping your `Program.cs` clean and your routes maintainable as the application grows.
+- **Consistent error handling** — every unhandled exception is logged and converted to the same JSON envelope.
+- **Standardized success responses** — `SuccessResult` wraps payloads in `SuccessResponse<T>` and sets the correct HTTP status.
+- **Clean endpoint organization** — `IEndpointGroup` + `IEndpoint` plus a source generator keep `Program.cs` small.
+- **Cross-cutting middleware** — required headers, request/response logging, and log-scope enrichment.
+- **Validation integration** — FluentValidation runs as an endpoint filter before your handler.
 
-By using this package, you can significantly reduce boilerplate code and enforce consistency across all your API endpoints.
+### ✨ Key Features
 
-## 🛠️ Installation
+- **Global exception handler** — implements `IExceptionHandler`; maps semantic exceptions to HTTP 400/401/403/404/409/422/429/500/503/504
+- **Exception mappers** — `ErrorResultResponse.Result(exception)` returns an `IResult`; `ErrorResultMapper` builds the response body
+- **Success helpers** — `SuccessResult.Ok`, `Created`, `CreatedAtRoute`, `Accepted`, and `NoContent`
+- **Compile-time endpoints** — `IEndpointGroup` + `IEndpoint` discovered by `RA.Utilities.Api.Generators`, invoked from `app.MapEndpoints()`
+- **Validation filter** — `.Validate<TModel>()` runs registered FluentValidation validators and short-circuits with a 400
+- **Required headers** — `DefaultHeadersMiddleware` enforces, auto-generates, and echoes configured headers
+- **Structured logging** — `LoggingMiddleware` uses pooled buffers and JSON-aware body logging
+- **Log scopes** — `ContextLoggingMiddleware` / `LoggingMiddleware` attach the request correlation ID
+- **Options pattern** — `DefaultHeadersOptions` and `HttpLoggingOptions` configure middleware through `Add*` overloads
 
-You can install the package via the .NET CLI:
+:::warning[Upgrading from v10.2.1?]
+
+v10.2.2 splits the monolithic `MiddlewareExtensions` class into `ServiceCollectionExtensions` (`Add*`) and `ApplicationBuilderExtensions` (`Use*`). Extension-method call sites are unchanged; only direct class-name references break. The package also now depends on `RA.Utilities.Api.Response` 10.1.0, whose models moved to the `RA.Utilities.Api.Response` namespace. See the [Migration Guides](./migration-guides.mdx).
+
+:::
+
+---
+
+## 🛠️ Getting Started
+
+### Prerequisites
+
+- **.NET 10.0** or later
+- An ASP.NET Core application using Minimal APIs or controllers
+- Optional: FluentValidation if you use `.Validate<TModel>()`
+
+### Installation
+
+**.NET CLI**
 
 ```bash
 dotnet add package RA.Utilities.Api
 ```
 
-Or through the NuGet Package Manager console:
+**Package Manager Console**
 
 ```powershell
 Install-Package RA.Utilities.Api
 ```
 
-Or through the NuGet Package Manager in Visual Studio.
+**PackageReference (csproj)**
 
-## 🔗 Dependencies
+```xml
+<PackageReference Include="RA.Utilities.Api" Version="10.2.2" />
+```
 
-- [`RA.Utilities.Api.Response`](../RA.Utilities.Api.Response/index.mdx)
-- [`RA.Utilities.Core.Constants`](../../core/RA.Utilities.Core.Constants/index.mdx)
-- [`RA.Utilities.Core.Exceptions`](../../core/RA.Utilities.Core.Exceptions/index.mdx)
-- [`RA.Utilities.Logging.Shared`](../../Logging/RA.Utilities.Logging.Shared/index.mdx)
-- [`Microsoft.AspNetCore.App`](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/metapackage-app)
-- [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/)
-- [`Microsoft.IO.RecyclableMemoryStream`](https://www.nuget.org/packages/Microsoft.IO.RecyclableMemoryStream/)
+### Hello World
 
-<br />
-<br />
+Register the exception handler and return a standardized success envelope:
+
+```csharp showLineNumbers
+using RA.Utilities.Api.Extensions;
+// highlight-next-line
+using RA.Utilities.Api.Mapper;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Register the handler with DI
+// highlight-start
+builder.Services.AddRaExceptionHandling();
+// highlight-end
+
+var app = builder.Build();
+
+// Add it early so it catches exceptions from endpoints
+// highlight-next-line
+app.UseRaExceptionHandling();
+
+app.MapGet("/products/{id}", (int id) =>
+    // highlight-next-line
+    SuccessResult.Ok(new Product(id, "Sample Product")));
+
+app.Run();
+```
+
+Any exception thrown by an endpoint is now converted into a `Response<T>` JSON body with the matching HTTP status; successful results are wrapped by `SuccessResult`.
+
+---
+
+## 🧠 Core Concepts
+
+| Component | Role |
+|---|---|
+| `GlobalExceptionHandler` | `IExceptionHandler` that logs unhandled exceptions and writes the mapped error response. |
+| `ErrorResultResponse` | Converts an `Exception` into an `IResult` with the correct HTTP status. |
+| `ErrorResultMapper` | Builds the response model (`NotFoundResponse`, `BadRequestResponse`, ...) from a semantic exception. |
+| `SuccessResult` | Creates `200`, `201`, `202`, and `204` results, wrapping payloads in `SuccessResponse<T>`. |
+| `IEndpointGroup` | Declares a shared route group (`GroupName`, `MapGroup`) for one feature. |
+| `IEndpoint` | Declares one endpoint (`GroupName`, `MapEndpoint`) mapped into its group. |
+| `ValidationEndpointFilter<T>` | FluentValidation endpoint filter; run through `.Validate<TModel>()`. |
+| `DefaultHeadersMiddleware` | Enforces required headers, optionally auto-generates and echoes them. |
+| `LoggingMiddleware` | Structured request/response logging with pooled buffers. |
+| `ContextLoggingMiddleware` | Adds a request-scoped log scope with the correlation ID and trace identifier. |
+| `DefaultHeadersOptions` / `HttpLoggingOptions` | Options classes for the two configurable middlewares. |
+
+### How they work together
+
+```
+HTTP request
+  → UseRaExceptionHandling()        ← catches everything below
+  → UseDefaultHeadersMiddleware()   ← validates / generates headers
+  → UseLoggingMiddleware()          ← logs request + response
+  → Your endpoint (MapEndpoints or MapGet/MapPost)
+        → Validate<TModel>()        ← FluentValidation filter
+        → handler
+             ├─ SuccessResult.*     → SuccessResponse<T>
+             └─ Result.Match(...)   → ErrorResultResponse.Result(exception)
+```
+
+The exception handler and the response helpers share the same envelope (`Response<T>`), so success and failure payloads have the same top-level shape. See [`RA.Utilities.Api.Response`](../RA.Utilities.Api.Response/index.mdx) for the models themselves.
+
+### Terminology
+
+- **Envelope**: The `responseCode` / `responseType` / `responseMessage` / `result` shape shared by all responses.
+- **Semantic exception**: An exception whose type communicates meaning (`NotFoundException`, `ConflictException`, ...). The handler maps it by type.
+- **Endpoint group**: A feature-level route prefix and set of conventions. Endpoints opt into it by `GroupName`.
+- **Source-generated endpoints**: `app.MapEndpoints()` is emitted by `RA.Utilities.Api.Generators`; no reflection or DI scanning at runtime.
+- **Endpoint filter**: ASP.NET Core's per-endpoint pipeline stage; `.Validate<TModel>()` adds `ValidationEndpointFilter<TModel>`.
+
+---
+
+## 📖 How-To Guides
+
+### Register services and the middleware pipeline
+
+```csharp showLineNumbers
+using RA.Utilities.Api.Extensions;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// highlight-start
+builder.Services.AddRaExceptionHandling();
+builder.Services.AddDefaultHeadersMiddleware(options =>
+{
+    options.PathsToIgnore.Add("/health");
+});
+builder.Services.AddLoggingMiddleware(options =>
+{
+    options.WarningThresholdMilliseconds = 2000;
+});
+// highlight-end
+
+var app = builder.Build();
+
+// highlight-start
+app.UseRaExceptionHandling();      // first — catches downstream failures
+app.UseDefaultHeadersMiddleware();
+app.UseLoggingMiddleware();
+// highlight-end
+
+app.MapEndpoints();
+
+app.Run();
+```
+
+Do not add `ContextLoggingMiddleware` when `LoggingMiddleware` is already registered: both create a request log scope.
+
+### Organize endpoints into feature groups
+
+```csharp showLineNumbers
+using RA.Utilities.Api.Abstractions;
+
+internal sealed class ProductsGroup : IEndpointGroup
+{
+    public static string GroupName => "Products";
+
+    public static RouteGroupBuilder MapGroup(IEndpointRouteBuilder app) =>
+        app.MapGroup("api/products").WithTags("Products");
+}
+
+internal sealed class GetProductEndpoint : IEndpoint
+{
+    public static string GroupName => "Products";
+
+    public static void MapEndpoint(RouteGroupBuilder group) =>
+        group.MapGet("/{id}", (int id) => SuccessResult.Ok(new Product(id, "Sample Product")));
+}
+```
+
+`app.MapEndpoints()` creates every group once, then maps every endpoint into the group matching its `GroupName`. Duplicate or missing group names are compile-time errors. See [`IEndpoint`](./Abstractions/IEndpoint.md) and [`IEndpointGroup`](./Abstractions/IEndpointGroup.md).
+
+### Validate a request model with FluentValidation
+
+```csharp showLineNumbers
+using FluentValidation;
+using RA.Utilities.Api.Extensions;
+
+public sealed class CreateProductRequestValidator : AbstractValidator<CreateProductRequest>
+{
+    public CreateProductRequestValidator()
+    {
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(100);
+        RuleFor(x => x.Price).GreaterThan(0);
+    }
+}
+
+// Register validators (requires FluentValidation.DependencyInjectionExtensions)
+builder.Services.AddValidatorsFromAssemblyContaining<CreateProductRequestValidator>();
+
+app.MapPost("/products", (CreateProductRequest request) => SuccessResult.Created(request))
+   // highlight-next-line
+   .Validate<CreateProductRequest>();
+```
+
+On failure the filter short-circuits with `400 Bad Request` and a `BadRequestResponse` body. See [`ValidationEndpointFilter`](./ValidationEndpointFilter.md).
+
+### Enforce required headers
+
+```csharp showLineNumbers
+builder.Services.AddDefaultHeadersMiddleware(options =>
+{
+    options.RequiredHeaders.Add(new RequiredHeaderDefinition
+    {
+        Name = "x-api-key",
+        AutoGenerate = false,
+        EchoInResponse = false,
+        ErrorMessage = "x-api-key is required."
+    });
+    options.PathsToIgnore.Add("/health");
+});
+```
+
+By default `x-request-id` is required, auto-generated when missing, and echoed in the response. See [`DefaultHeadersMiddleware`](./Middlewares/DefaultHeadersMiddleware.md).
+
+### Log requests and responses
+
+```csharp showLineNumbers
+builder.Services.AddLoggingMiddleware(options =>
+{
+    options.MaxBodyLogLength = 16 * 1024;
+    options.WarningThresholdMilliseconds = 2000;
+    options.PathsToIgnore.Add("/swagger");
+    options.ExcludedHeaders.Add("Authorization");
+});
+
+app.UseLoggingMiddleware();
+```
+
+Request logs are written at `Information`; response logs at `Warning`. A slow-call warning is added when `WarningThresholdMilliseconds` is exceeded. See [`LoggingMiddleware`](./Middlewares/LoggingMiddleware.md).
+
+### Return a standardized success response
+
+```csharp showLineNumbers
+using RA.Utilities.Api.Mapper;
+
+app.MapGet("/products/{id}", (int id) => SuccessResult.Ok(new Product(id, "Sample Product")));
+app.MapPost("/products", (Product product) => SuccessResult.Created($"/products/{product.Id}", product));
+app.MapDelete("/products/{id}", (int id) => SuccessResult.NoContent());
+```
+
+### Map a `Result<T>` failure to an HTTP response
+
+```csharp showLineNumbers
+using RA.Utilities.Api.Mapper;
+using RA.Utilities.Core.Results;
+
+app.MapGet("/products/{id}", (int id, ProductService service) =>
+{
+    Result<Product> result = service.GetProductById(id);
+
+    // highlight-start
+    return result.Match<IResult>(
+        success: product => SuccessResult.Ok(product),
+        failure: ErrorResultResponse.Result
+    );
+    // highlight-end
+});
+```
+
+See [`Result.Match`](../../core/RA.Utilities.Core.Results/Results.md) and [`ErrorResultResponse`](./mapper/ErrorResultResponse.md).
+
+### Handle exceptions globally
+
+```csharp showLineNumbers
+builder.Services.AddRaExceptionHandling();
+
+var app = builder.Build();
+app.UseRaExceptionHandling();
+```
+
+`GlobalExceptionHandler` logs 4xx semantic exceptions as warnings and everything else as errors, then writes the mapped response. See [`GlobalExceptionHandler`](./GlobalExceptionHandler.mdx).
+
+---
+
+## ⚙️ Configuration
+
+The package has no `appsettings.json` section of its own. Both configurable middlewares use the ASP.NET Core Options pattern through their `Add*` overloads.
+
+### `DefaultHeadersOptions`
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `PathsToIgnore` | `ISet<string>` | empty | Path prefixes that skip header validation (case-insensitive). |
+| `RequiredHeaders` | `ICollection<RequiredHeaderDefinition>` | `x-request-id` (auto-generate + echo) | Headers enforced on incoming requests. |
+
+`RequiredHeaderDefinition`:
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `Name` | `string` | `""` | Header name. |
+| `ErrorMessage` | `string?` | `null` | Custom 400 message; a default is generated when null. |
+| `AutoGenerate` | `bool` | `false` | Generate a GUID instead of rejecting a missing header. |
+| `EchoInResponse` | `bool` | `false` | Add the resolved value to the response headers. |
+
+### `HttpLoggingOptions`
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `PathsToIgnore` | `ISet<string>` | empty | Path prefixes excluded from logging (case-insensitive). |
+| `MaxBodyLogLength` | `int` | `32768` (32 KB) | Bodies larger than this are replaced with a truncation placeholder. |
+| `ExcludedHeaders` | `ISet<string>` | empty | Headers omitted from request and response logs. |
+| `WarningThresholdMilliseconds` | `double` | `0` | Adds a slow-call warning above this duration; `0` disables it. |
+
+See [Options](./Options/index.mdx) for the full reference.
+
+---
+
+## ✨ Available Components
 
 <DocCardList />
+
+---
+
+## 🙌 Contributing & Support
+
+### Found a bug or have a suggestion?
+
+- **GitHub Issues**: [Report a bug or request a feature](https://github.com/RedonAlla/RA.Utilities/issues)
+- **Discussions**: [Ask questions or start a discussion](https://github.com/RedonAlla/RA.Utilities/discussions)
+
+### Contributing
+
+1. **Fork** the [RA.Utilities repository](https://github.com/RedonAlla/RA.Utilities)
+2. **Create a branch** from `main` with a descriptive name
+3. **Make your changes** — keep new public APIs documented and add tests for mapper or middleware changes
+4. **Submit a pull request** to the `main` branch with a clear description
+
+### Links
+
+| Resource | URL |
+|---|---|
+| **NuGet** | [RA.Utilities.Api](https://www.nuget.org/packages/RA.Utilities.Api/) |
+| **Source** | [GitHub — RedonAlla/RA.Utilities](https://github.com/RedonAlla/RA.Utilities) |
+| **License** | [MIT](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file) |
+| **Build Status** | [GitHub Actions](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml) |

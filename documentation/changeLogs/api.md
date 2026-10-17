@@ -1,11 +1,11 @@
 ---
 title: RA.Utilities.Api
 authors: [RedonAlla]
-date: 2026-10-14
+date: 2026-10-17
 ---
 
 ## Version 10.2.2
-![Date Badge](https://img.shields.io/badge/Publish-14%20October%202026-lightblue?logo=fastly&logoColor=white)
+![Date Badge](https://img.shields.io/badge/Publish-17%20October%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.2.2-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api/10.2.2)
 
 The monolithic `MiddlewareExtensions` class is split back into one class per target type — `ApplicationBuilderExtensions` for the `Use*` methods and `ServiceCollectionExtensions` for the `Add*` methods — and every extension method is now declared with C# 14 extension members. Method names, signatures, and the namespace are unchanged.
@@ -27,6 +27,8 @@ The monolithic `MiddlewareExtensions` class is split back into one class per tar
 * **C# 14 extension members**: `ApplicationBuilderExtensions`, `ServiceCollectionExtensions`, and `ValidationExtensions` now declare their methods inside `extension(...)` blocks on `IApplicationBuilder`, `IServiceCollection`, and `RouteHandlerBuilder` respectively. The generated extension methods have identical names and signatures, so the refactor is source-compatible for all callers.
 
 * **`ValidationExtensions` refactored**: `Validate<TModel>()` is now a member of an `extension(RouteHandlerBuilder builder)` block. The calling syntax is unchanged: `app.MapPost(...).Validate<CreateRequest>()`.
+
+* **Response model dependency updated**: the package now references `RA.Utilities.Api.Response` 10.1.0, whose models moved from the `RA.Utilities.Api.Results` namespace to `RA.Utilities.Api.Response`. The mapper and header middleware use the new namespace. Consumer code only needs a `using` update if it references the response models directly.
 
 * The split restores the pre-10.1.0 organization (one extension class per target type) while keeping every method name, so upgrading from 10.2.1 requires no call-site changes.
 

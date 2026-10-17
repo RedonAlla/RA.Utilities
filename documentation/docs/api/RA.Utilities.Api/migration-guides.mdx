@@ -15,6 +15,18 @@ The extension methods themselves are unchanged — same names, same signatures. 
 
 Additionally, the extension methods are refactored to **C# 14 extension members** (extension blocks), grouping each receiver's members in a single place. The public API surface is unchanged.
 
+### Dependency change: response models moved namespace
+
+v10.2.2 references `RA.Utilities.Api.Response` 10.1.0, which moved its models from `RA.Utilities.Api.Results` to `RA.Utilities.Api.Response`. The `RA.Utilities.Api` public API is unchanged; update `using` directives only if your own code imports the response models directly:
+
+```csharp
+// Before
+using RA.Utilities.Api.Results;
+
+// After
+using RA.Utilities.Api.Response;
+```
+
 ### What changed
 
 | Aspect | v10.2.1 | v10.2.2 |
@@ -277,7 +289,7 @@ The response model types are published in the standalone `RA.Utilities.Api.Respo
 dotnet add package RA.Utilities.Api.Response
 ```
 
-No using-directive changes are needed — the types remain in the `RA.Utilities.Api.Results` namespace.
+With `RA.Utilities.Api.Response` v10.1.0+, the types live in the `RA.Utilities.Api.Response` namespace. Replace `using RA.Utilities.Api.Results;` with `using RA.Utilities.Api.Response;`. See the [Api.Response migration guide](../RA.Utilities.Api.Response/migration-guides.mdx) for the full before/after steps.
 
 #### 4. Update direct class name references (if any)
 

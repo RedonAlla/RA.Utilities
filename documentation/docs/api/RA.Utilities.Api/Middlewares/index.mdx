@@ -28,7 +28,7 @@ This middleware suite solves three common API challenges:
 - **Structured Logging** — Request/response bodies are parsed as JSON for structured log output
 - **Configurable Exclusion** — Ignore specific paths (e.g., `/swagger`, `/health`) to reduce noise
 - **Flexible Header Enforcement** — Define required headers, auto-generate missing values, and echo headers back in responses
-- **Standardized Error Responses** — Missing headers produce consistent `400 Bad Request` responses using `RA.Utilities.Api.Results`
+- **Standardized Error Responses** — Missing headers produce consistent `400 Bad Request` responses using `RA.Utilities.Api.Response`
 
 ## 🛠️ Getting Started
 
@@ -96,12 +96,18 @@ Incoming Request
       │
       ▼
 ┌────────────────────────────┐
-│ ContextLoggingMiddleware   │  ← Enriches log scope (X-Request-Id)
+│ GlobalExceptionHandler     │  ← catches exceptions from everything below
 └────────────────────────────┘
       │
       ▼
 ┌────────────────────────────┐
-│ DefaultHeadersMiddleware   │  ← Validates required headers (X-Request-Id, etc.)
+│ DefaultHeadersMiddleware   │  ← validates required headers
+└────────────────────────────┘
+      │
+      ▼
+┌────────────────────────────┐
+│ LoggingMiddleware          │  ← logs request/response
+│ (or ContextLoggingMiddleware)│
 └────────────────────────────┘
       │
       ▼
@@ -110,13 +116,10 @@ Incoming Request
 └────────────────────────────┘
       │
       ▼
-┌────────────────────────────┐
-│ LoggingMiddleware          │  ← Logs request/response details
-└────────────────────────────┘
-      │
-      ▼
 Outgoing Response
 ```
+
+`LoggingMiddleware` and `ContextLoggingMiddleware` both create a request log scope. Register one of them, not both.
 
 ### Terminology
 
@@ -156,16 +159,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDefaultHeadersMiddleware(options =>
 {
-    // Require X-Request-Id — auto-generate if missing
-    options.RequiredHeaders.Add(new RequiredHeaderDefinition
-    {
-        Name = "X-Request-Id",
-        AutoGenerate = true,
-        EchoInResponse = true,
-        ErrorMessage = "X-Request-Id header is required for request tracing."
-    });
-
-    // Require X-Tenant-Id — must be provided by caller
+    // x-request-id is required by default (auto-generated and echoed).
+    // Add another header that the caller must provide.
     options.RequiredHeaders.Add(new RequiredHeaderDefinition
     {
         Name = "X-Tenant-Id",
@@ -246,7 +241,7 @@ The standalone `RA.Utilities.Api.Middlewares` package is **deprecated**. If you'
 | Namespace `RA.Utilities.Api.Middlewares` | Namespace `RA.Utilities.Api.Middlewares` (unchanged) |
 | Extension namespace `RA.Utilities.Api.Middlewares.Extensions` | Extension namespace `RA.Utilities.Api.Extensions` |
 
-**No code changes** are needed for the `DefaultHeadersMiddleware` registration — only update your package reference and using directives. For `HttpLoggingMiddleware`, rename to `LoggingMiddleware` and use the new extension methods.
+**No method-name changes** are needed for the `DefaultHeadersMiddleware` registration — update the package reference and the using directive (`RA.Utilities.Api.Extensions`). For `HttpLoggingMiddleware`, rename to `LoggingMiddleware` and use the new extension methods.
 
 ## 🙌 Contributing & Support
 

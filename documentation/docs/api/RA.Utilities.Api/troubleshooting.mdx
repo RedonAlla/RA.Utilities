@@ -27,17 +27,17 @@ return SuccessResult.Ok(product);
 
 **Cause**: The response models were consolidated into `RA.Utilities.Api` in v10.0.6 and later revived as the standalone `RA.Utilities.Api.Response` package. `RA.Utilities.Api` depends on it, so the types arrive transitively — but a project that relied on the old `RA.Utilities.Api.Results` package id may have dropped the reference entirely.
 
-**Fix**: Add the revived package, or ensure `RA.Utilities.Api` (v10.1.0+) is referenced:
+**Fix**: Add the revived package, or ensure `RA.Utilities.Api` (v10.2.2+) is referenced:
 
 ```bash
 # Add the standalone response models package
 dotnet add package RA.Utilities.Api.Response
 
 # Alternatively, the models arrive transitively via the Api package
-dotnet add package RA.Utilities.Api --version 10.1.0
+dotnet add package RA.Utilities.Api --version 10.2.2
 ```
 
-No code changes are needed — the `using RA.Utilities.Api.Results;` directive still works.
+No package changes are needed, but the namespace changed in `RA.Utilities.Api.Response` v10.1.0 and arrives transitively with `RA.Utilities.Api` 10.2.2+: replace `using RA.Utilities.Api.Results;` with `using RA.Utilities.Api.Response;`.
 
 ### After upgrading, `MiddlewareExtensions` no longer compiles
 
@@ -118,11 +118,11 @@ app.Run();
 
 **Fix**: Rename one of the duplicate group names, or correct the endpoint's `GroupName` so it matches an existing group. Names computed at runtime (e.g. `typeof(X).Name`) cannot be validated at compile time — a mismatch among those throws an `InvalidOperationException` at startup naming the endpoint type and the missing group key.
 
-### `Validate<T>()` filter returns 500 instead of 400 on validation failure
+### `Validate<T>()` doesn't reject invalid requests
 
-**Cause**: The FluentValidation validators are not registered in the DI container.
+**Cause**: No `IValidator<T>` is registered in DI. `ValidationEndpointFilter<T>` resolves validators from DI; when none are registered, it passes the request through without validating.
 
-**Fix**: Register your validators with the DI container. The `ValidationEndpointFilter<T>` resolves `IValidator<T>` from DI:
+**Fix**: Register your validators with the DI container:
 
 ```csharp
 // Register all validators in the assembly
@@ -223,17 +223,44 @@ builder.Services.AddLoggingMiddleware(options =>
 
 ### I get a NU1903 vulnerability warning for Microsoft.OpenApi
 
-**Cause**: The `RA.Utilities.OpenApi` package depends on `Microsoft.OpenApi 2.0.0` which has a known vulnerability.
+**Cause**: Older `RA.Utilities.OpenApi` releases depended on `Microsoft.OpenApi 2.0.0`, which has a known vulnerability.
 
-**Fix**: Add a `NoWarn` to your project file or suppress the specific warning:
+**Fix**: Upgrade `RA.Utilities.OpenApi` to a version that pins `Microsoft.OpenApi` 2.12.2 or later. Current releases already do this; upgrade rather than suppressing the warning.
 
-```xml
-<PropertyGroup>
-  <NoWarn>NU1903</NoWarn>
-</PropertyGroup>
+### Why is the nested `NotFoundResult` payload wrong?
+
+**Cause**: `ErrorResultMapper.ToResponse(NotFoundException)` passes `exception.Message` as the third positional argument of `NotFoundResult`. That parameter is `errorCode`, not the message. As a result, the nested `errorCode` contains the message text and `errorMessage` is empty.
+
+**Current behavior**:
+
+```json showLineNumbers
+{
+  "responseCode": 404,
+  // highlight-next-line
+  "responseType": 8,
+  "responseMessage": "Product with value '99' was not found.",
+  "result": {
+    "entity": "Product",
+    "value": 99,
+    "errorCode": "Product with value '99' was not found.",
+    "errorMessage": ""
+  }
+}
 ```
 
-Or update the `Microsoft.OpenApi` package to the latest patched version.
+The envelope is correct. A source fix is pending; until then, do not rely on the nested `errorCode` for `NotFoundException` responses.
+
+### Why is `result` null for some error responses?
+
+**Cause**: `ErrorResultMapper` maps `Unauthorized`, `Forbidden`, `Unprocessable`, `TooManyRequests`, `ServiceUnavailable`, `GatewayTimeout`, and generic `RaBaseException` through the `(int responseCode, string responseMessage)` constructors. Those constructors set `Result = null`, so the error code and message exist only on the envelope.
+
+Only `BadRequestException`, `ConflictException`, and `NotFoundException` produce a structured `Result` payload. See [ErrorResultMapper](./mapper/ErrorResultMapper.md#-response-payload-shapes).
+
+### Why are `DefaultHeadersMiddleware` error fields PascalCase?
+
+**Cause**: `DefaultHeadersMiddleware` writes its 400 body with `JsonSerializer.Serialize(...)` and default options, not through MVC/Minimal API JSON options. The body therefore uses PascalCase property names (`ResponseCode`, `Result`, ...) and the numeric `ResponseType`.
+
+**Fix**: Parse this endpoint's error body with case-insensitive property matching, or normalize the casing in a custom middleware. This is a known inconsistency with the camelCase output of normal endpoints.
 
 ---
 
@@ -325,4 +352,7 @@ builder.Services.AddLoggingMiddleware(options =>
 - **Validation requires a bound argument**: `ValidationEndpointFilter<TModel>` validates the first non-null `TModel` argument of the endpoint delegate. If the model isn't a bound parameter (for example, you deserialize the body manually), the filter passes through without validating. It never reads the request body itself, so it doesn't interfere with body-reading middlewares.
 - **Discovery is per assembly**: The source generator only discovers `IEndpointGroup`/`IEndpoint` types declared in the project's own assembly. Endpoint types in referenced class libraries are not mapped by the executable's `MapEndpoints()` call; each library would need the package and its own registration entry point.
 - **`DefaultHeadersMiddleware` defaults to requiring `x-request-id` only**: Additional required headers must be configured via `DefaultHeadersOptions.RequiredHeaders`. The default auto-generates `x-request-id` if missing.
+- **`DefaultHeadersMiddleware` error body casing**: its 400 payload uses PascalCase and numeric `ResponseType` values, unlike the camelCase responses produced by Minimal API/controller JSON options.
+- **Mapper payloads are inconsistent**: only `BadRequestException`, `ConflictException`, and `NotFoundException` produce a structured `Result`; the other mapped exception types return `result: null` with the details on the envelope. `NotFoundException`'s nested `errorCode`/`errorMessage` are currently reversed/empty.
 - **`LoggingMiddleware` buffers full request/response bodies**: Large payloads will be fully read into memory. Use `MaxBodyLogLength` to truncate large bodies and `PathsToIgnore` to skip specific endpoints.
+- **`TooManyRequestsException` is logged at Error level**: `GlobalExceptionHandler` treats 400/401/403/404/409/422 as client errors; the 429 mapping is not in that list.

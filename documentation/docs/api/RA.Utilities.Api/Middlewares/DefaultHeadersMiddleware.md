@@ -31,16 +31,8 @@ var builder = WebApplication.CreateBuilder(args);
 // highlight-start
 builder.Services.AddDefaultHeadersMiddleware(options =>
 {
-    // Require X-Request-Id — auto-generate a GUID if missing
-    options.RequiredHeaders.Add(new RequiredHeaderDefinition
-    {
-        Name = "X-Request-Id",
-        AutoGenerate = true,
-        EchoInResponse = true,
-        ErrorMessage = "X-Request-Id header is required for request tracing."
-    });
-
-    // Require X-Tenant-Id — must be provided by the caller
+    // x-request-id is already required by default (auto-generated and echoed).
+    // Add another header that the caller must provide.
     options.RequiredHeaders.Add(new RequiredHeaderDefinition
     {
         Name = "X-Tenant-Id",
@@ -73,25 +65,31 @@ app.Run();
 
 ### Example: Missing Required Headers
 
-A request missing the `X-Request-Id` header receives:
+A request missing the required `X-Tenant-Id` header receives:
 
 ```json showLineNumbers
 {
-  "responseCode": 400,
-  "responseType": "BadRequest",
-  "responseMessage": "The request is invalid.",
-  "result": [
+  "ResponseCode": 400,
+  "ResponseType": 12,
+  "ResponseMessage": "The request is invalid.",
+  "Result": [
     {
-      "propertyName": "X-Request-Id",
-      "errorMessage": "Header 'X-Request-Id' is required.",
-      "errorCode": "NotNullValidator"
+      "PropertyName": "X-Tenant-Id",
+      "ErrorMessage": "X-Tenant-Id header is required for multi-tenant routing.",
+      "ErrorCode": "NotNullValidator"
     }
   ]
 }
 ```
 
+:::caution[PascalCase and numeric `ResponseType`]
+
+`DefaultHeadersMiddleware` serializes the payload with `JsonSerializer.Serialize(...)` and default options. Unlike normal endpoint responses (which use ASP.NET Core's camelCase convention), this body uses **PascalCase** property names and the numeric `ResponseType` value. Clients that share one response parser across endpoints should account for this difference.
+
+:::
+
 The response includes a `Location` header and an auto-generated `X-Request-Id` for traceability.
 
 ### Example: Auto-Generated Headers
 
-If `X-Request-Id` is missing but `AutoGenerate = true`, the middleware silently generates a GUID and echoes it in the response — no error is returned and the request proceeds normally.
+If `x-request-id` is missing and `AutoGenerate = true` (the default), the middleware silently generates a GUID and echoes it in the response — no error is returned and the request proceeds normally.

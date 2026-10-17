@@ -1,7 +1,6 @@
 ---
 title: RA.Utilities.Api.Response
 sidebar_position: 3
-slug: /api/RA.Utilities.Api.Response
 sidebar_class_name: nav_session ra_utilities_api_response
 ---
 
@@ -293,8 +292,6 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 ```
-
-This configures `System.Text.Json`; the package itself has no converter. See [`ResponseType`](../../core/RA.Utilities.Core.Constants/ResponseType#json-serialization) for the full behavior.
 
 ### Create a custom response type
 
