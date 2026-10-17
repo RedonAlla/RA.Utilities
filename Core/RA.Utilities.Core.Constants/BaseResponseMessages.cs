@@ -3,7 +3,7 @@ namespace RA.Utilities.Core.Constants;
 /// <summary>
 /// General default response messages used by all microservices.
 /// </summary>
-public partial class BaseResponseMessages
+public abstract partial class BaseResponseMessages
 {
     /// <summary>
     /// Default message for a successful response.

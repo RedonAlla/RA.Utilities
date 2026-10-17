@@ -3,7 +3,7 @@ namespace RA.Utilities.Core.Constants;
 /// <summary>
 /// General default error messages used by all microservices.
 /// </summary>
-public partial class BaseErrorMessage
+public abstract partial class BaseErrorMessage
 {
     /// <summary>
     /// Error message returned when the 'Email address' field is missing.

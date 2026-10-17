@@ -8,7 +8,6 @@
 		<PackageId>RA.Utilities.Core.Constants</PackageId>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageReleaseNotesFile>releasenotes.md</PackageReleaseNotesFile>
-		<NoWarn>CA1052</NoWarn>
 	</PropertyGroup>
 
   <ItemGroup>

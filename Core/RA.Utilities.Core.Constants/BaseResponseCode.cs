@@ -3,7 +3,7 @@ namespace RA.Utilities.Core.Constants;
 /// <summary>
 /// General default response codes used by all microservices.
 /// </summary>
-public partial class BaseResponseCode
+public abstract partial class BaseResponseCode
 {
     /// <summary>
     /// Represents the HTTP status code 200 (OK).

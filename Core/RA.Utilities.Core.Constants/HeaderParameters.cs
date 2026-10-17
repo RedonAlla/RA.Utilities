@@ -3,7 +3,7 @@ namespace RA.Utilities.Core.Constants;
 /// <summary>
 /// Defines common HTTP header parameter names used across services.
 /// </summary>
-public partial class HeaderParameters
+public abstract partial class HeaderParameters
 {
     /// <summary>
     /// Represents the 'x-request-id' header, used for request correlation and tracing.
