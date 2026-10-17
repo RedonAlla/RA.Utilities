@@ -33,10 +33,10 @@ This package defines a set of custom, semantic exceptions that represent excepti
 ## 3. `RA.Utilities.Core.Constants` - Eliminating Magic Strings
 This is the simplest but arguably one of the most important packages for maintaining consistency.
 
-* **Purpose**: It centralizes shared, static values like configuration keys, header names (`X-Request-Id`), or policy names.
+* **Purpose**: It centralizes shared, read-only values: HTTP status codes (`BaseResponseCode`), standard response messages (`BaseResponseMessages`), validation error codes and messages (`BaseErrorCode`, `BaseErrorMessage`), HTTP header names (`HeaderParameters`), and the semantic `ResponseType` enum.
 * **How it Supports Other Layers**: Any project that needs to reference a common value can depend on this package. For example:
-  * The `DefaultHeadersMiddleware` in `RA.Utilities.Api.Middlewares` needs to know the exact string for the `X-Request-Id` header. Instead of hardcoding it, it can reference a constant from this package.
-  * If you have specific claim types or authorization policy names, they would live here and be used by both the RA.Utilities.Authorization package (to define the policy) and the application layer (to require the policy).
+  * The `DefaultHeadersMiddleware` in `RA.Utilities.Api` needs the exact name of the request-id header. Instead of hardcoding `"x-request-id"`, it references `HeaderParameters.XRequestId` from this package.
+  * Exceptions in `RA.Utilities.Core.Exceptions` use `BaseResponseCode`, `BaseResponseMessages`, and `ResponseType` to build their default HTTP mapping, so every semantic exception reports the same code and wording as the rest of the ecosystem.
 
 ## 4. `RA.Utilities.Core.ValueObjects` - Strongly-Typed Domain Primitives
 

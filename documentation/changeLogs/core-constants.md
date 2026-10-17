@@ -8,18 +8,20 @@ date: 2026-10-17
 ![Date Badge](https://img.shields.io/badge/Publish-17%20October%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-v10.0.4-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Constants/10.0.4)
 
-`ResponseType` has been converted from an extensible `record` back to a plain C# `enum`, simplifying usage while keeping the JSON wire format unchanged.
+`ResponseType` has been converted from an extensible `record` back to a plain C# `enum`, and every constant field has moved from `const` to `static readonly`. The values themselves are unchanged.
 
 <!-- truncate -->
 
 ### ⚠️ Breaking Changes
 
-*   **`ResponseType` is now an `enum`, not a `record`**: The type-safe enum `record` introduced in v10.0.2 is replaced by a standard C# `enum` with the same built-in values (`Success`, `Created`, `Updated`, `Deleted`, `NoContent`, `Accepted`, `Validation`, `Problem`, `NotFound`, `Conflict`, `Unauthorized`, `Error`, `BadRequest`, `Unprocessable`, `Forbidden`, `TooManyRequests`, `ServiceUnavailable`, `GatewayTimeout`). The `Value` property, the implicit `string` conversion, and inheritance-based extensibility are removed. `ResponseTypeJsonConverter` still serializes values as plain strings. **Migration**: Replace `responseType.Value` with `responseType.ToString()`; replace custom types derived from `ResponseType` with the closest built-in member; switch expressions now support constant patterns (`ResponseType.NotFound =>`). See the [Migration Guide](/RA.Utilities/nuget-packages/core/RA.Utilities.Core.Constants/migration-guides) for detailed before/after examples.
+*   **`ResponseType` is now an `enum`, not a `record`**: The type-safe enum `record` introduced in v10.0.2 is replaced by a standard C# `enum` with the same built-in values (`Success`, `Created`, `Updated`, `Deleted`, `NoContent`, `Accepted`, `Validation`, `Problem`, `NotFound`, `Conflict`, `Unauthorized`, `Error`, `BadRequest`, `Unprocessable`, `Forbidden`, `TooManyRequests`, `ServiceUnavailable`, `GatewayTimeout`). The `Value` property, the implicit `string` conversion, and inheritance-based extensibility are removed. The built-in `ResponseTypeJsonConverter` is gone: with default `System.Text.Json` options the enum is written as a number (`NotFound` → `8`); register `JsonStringEnumConverter` to keep string output. **Migration**: Replace `responseType.Value` with `responseType.ToString()`; replace custom types derived from `ResponseType` with the closest built-in member; switch expressions now support constant patterns (`ResponseType.NotFound =>`); decide whether clients receive numbers (default) or names (converter). See the [Migration Guide](/RA.Utilities/nuget-packages/core/RA.Utilities.Core.Constants/migration-guides) for detailed before/after examples.
+*   **Constant fields are now `static readonly`**: Every field in `BaseResponseCode`, `BaseResponseMessages`, `BaseErrorCode`, `BaseErrorMessage`, and `HeaderParameters` is `public static readonly` instead of `public const`, and the holders are `partial class` declarations instead of `static class`. Ordinary reads are unchanged, but the fields can no longer be used where C# requires a constant expression — attribute arguments, default parameter values, `case` labels, or `const` declarations. **Migration**: Use `static readonly` for locals/fields that reference these values, a nullable default plus `??` for optional parameters, and `if` or a local `const` where the compiler requires a constant. See the [Migration Guide](/RA.Utilities/nuget-packages/core/RA.Utilities.Core.Constants/migration-guides) for before/after examples.
 
 ### 📝 Notes
 
-*   JSON deserialization is case-insensitive; `null`, empty, whitespace, or unknown strings fall back to `ResponseType.Error`.
+*   `ResponseType` uses `System.Text.Json` defaults: numeric wire values unless `JsonStringEnumConverter` is registered. With the converter, names are matched case-insensitively and unknown names (or `null` for a non-nullable enum) throw `JsonException`.
 *   `default(ResponseType)` is `ResponseType.Success` (value `0`).
+*   Because the fields are `static readonly`, correcting a value no longer requires recompiling consumers.
 
 
 

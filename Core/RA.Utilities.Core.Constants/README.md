@@ -22,13 +22,13 @@ Or through the NuGet Package Manager in Visual Studio.
 
 ## ✨ Available Constants
 
-The package currently provides the following constant classes:
+The package currently provides the following constant holders. Since v10.0.4, every value is a `public static readonly` field or an enum member — **not** a compile-time `const`. Ordinary reads are unchanged, but the values cannot be used in attributes, default parameter values, `case` labels, or `const` declarations.
 
 ### `BaseResponseCode`
 
-Contains integer constants for common HTTP status codes, aligning with standard web practices. This class was previously named `HttpStatusCodes`.
+Contains `public static readonly int` fields for common HTTP status codes, aligning with standard web practices. This class was previously named `HttpStatusCodes`.
 
-| Constant Name         | Value | Category           |
+| Field Name            | Value | Category           |
 |-----------------------|-------|--------------------|
 | `Success`             | 200   | Success (2xx)      |
 | `Created`             | 201   | Success (2xx)      |
@@ -50,7 +50,7 @@ Contains integer constants for common HTTP status codes, aligning with standard 
 
 Contains default string messages for common API responses. This helps maintain a consistent tone and messaging for your API consumers.
 
-| Constant Name       | Message                                                | Category |
+| Field Name          | Message                                                | Category |
 |---------------------|--------------------------------------------------------|----------|
 | `Success`           | "Operation completed successfully."                    | Success  |
 | `Created`           | "Resource created successfully."                       | Success  |
@@ -72,9 +72,9 @@ Contains default string messages for common API responses. This helps maintain a
 
 ### `BaseErrorCode`
 
-Contains machine-readable error codes (`const string`) for field-level validation failures. While `BaseResponseCode` covers transport-level concerns, `BaseErrorCode` describes *why* a request was rejected. The codes are used by the value objects in `RA.Utilities.Core.ValueObjects` (`Email`, `Currency`, `SSN`, `Money`) to populate structured `ValidationError` entries.
+Contains machine-readable error codes (`static readonly string`) for field-level validation failures. While `BaseResponseCode` covers transport-level concerns, `BaseErrorCode` describes *why* a request was rejected. The codes are used by the value objects in `RA.Utilities.Core.ValueObjects` (`Email`, `Currency`, `SSN`, `Money`) to populate structured `ValidationError` entries.
 
-| Constant Name      | Value              | Triggered When                                            |
+| Field Name         | Value              | Triggered When                                            |
 |--------------------|--------------------|-----------------------------------------------------------|
 | `EmailRequired`    | `REQUIRED_EMAIL`   | The 'Email address' field is missing.                     |
 | `EmailMaxLength`   | `EMAIL_MAX_LENGTH` | The 'Email address' field exceeds the maximum length.     |
@@ -89,9 +89,9 @@ Contains machine-readable error codes (`const string`) for field-level validatio
 
 ### `BaseErrorMessage`
 
-Contains the human-readable messages (`const string`) matching the codes in `BaseErrorCode`. The code identifies the failure programmatically, while the message explains it to humans.
+Contains the human-readable messages (`static readonly string`) matching the codes in `BaseErrorCode`. The code identifies the failure programmatically, while the message explains it to humans.
 
-| Constant Name        | Message                                    |
+| Field Name           | Message                                    |
 |----------------------|--------------------------------------------|
 | `EmailRequired`      | "The 'Email address' field is required."   |
 | `EmailNotValid`      | "'Email address' format is invalid."       |
@@ -103,13 +103,13 @@ Contains the human-readable messages (`const string`) matching the codes in `Bas
 | `SsnLength`          | "'SSN' must be exact 10 characters."       |
 | `SsnNotValid`        | "'SSN' format is invalid."                 |
 
-> **Note:** There is no `EmailMaxLength` message constant — the maximum-length message is built dynamically by the `Email` value object because it interpolates the configured limit into the text.
+> **Note:** There is no `EmailMaxLength` message field — the maximum-length message is built dynamically by the `Email` value object because it interpolates the configured limit into the text.
 
 ### `HeaderParameters`
 
-Contains constant strings for common HTTP header names, ensuring consistency when accessing or setting headers.
+Contains read-only string fields for common HTTP header names, ensuring consistency when accessing or setting headers.
 
-| Constant Name   | Value            | Description                                                              |
+| Field Name      | Value            | Description                                                              |
 |-----------------|------------------|--------------------------------------------------------------------------|
 | `XRequestId`    | `"x-request-id"` | Used for request correlation and tracing.                                |
 | `TraceId`       | `"trace-id"`     | Used for internal tracing.                                               |
@@ -118,30 +118,32 @@ Contains constant strings for common HTTP header names, ensuring consistency whe
 
 ### `ResponseType` (enum)
 
-The `ResponseType` is a C# `enum` that provides a strongly-typed, descriptive vocabulary for the outcomes of your API operations. The `[JsonConverter(typeof(ResponseTypeJsonConverter))]` attribute ensures it is serialized to JSON as a plain string (e.g., `"NotFound"`), so API responses stay self-documenting. Deserialization is case-insensitive, and `null`, empty, or unknown values fall back to `ResponseType.Error`.
+The `ResponseType` is a C# `enum` that provides a strongly-typed, descriptive vocabulary for the outcomes of your API operations. It has no built-in JSON converter, so with default `System.Text.Json` options it is serialized as its numeric member value (e.g., `NotFound` → `8`). Register `JsonStringEnumConverter` to emit names such as `"NotFound"`; the converter matches names case-insensitively and throws for unknown names.
 
-| Member             | Description                                                                     | Typical HTTP Status |
-|--------------------|---------------------------------------------------------------------------------|---------------------|
-| `Success`          | The operation was successful.                                                   | 200 OK              |
-| `Created`          | A resource was successfully created.                                            | 201 Created         |
-| `Updated`          | A resource was successfully updated.                                            | 200 OK              |
-| `Deleted`          | A resource was successfully deleted.                                            | 200 OK              |
-| `NoContent`        | The request succeeded with no content to return.                                | 204 No Content      |
-| `Accepted`         | The request was accepted for processing but is not yet complete.                | 202 Accepted        |
-| `Validation`       | The request failed due to invalid input data.                                   | 400 Bad Request     |
-| `Problem`          | An unexpected problem occurred, often used for RFC 7807 problem details.        | 500 Internal Server |
-| `NotFound`         | The requested resource was not found.                                           | 404 Not Found       |
-| `Conflict`         | The request conflicts with the current state of the resource.                   | 409 Conflict        |
-| `Unauthorized`     | The request requires user authentication.                                       | 401 Unauthorized    |
-| `Error`            | A general, non-specific error occurred during the operation.                    | 500 Internal Server |
-| `BadRequest`       | The request was malformed or could not be processed for reasons other than validation. | 400 Bad Request     |
-| `Unprocessable`    | The request was semantically incorrect and could not be processed.              | 422 Unprocessable   |
-| `Forbidden`        | The server understood the request but refuses to authorize it.                  | 403 Forbidden       |
-| `TooManyRequests`  | The client has sent too many requests in a given amount of time.                | 429 Too Many Requests |
-| `ServiceUnavailable`| The service is temporarily unavailable.                                         | 503 Service Unavailable |
-| `GatewayTimeout`   | The server, acting as a gateway, did not receive a timely response.             | 504 Gateway Timeout |
+| Member             | Value | Description                                                                     | Typical HTTP Status |
+|--------------------|-------|---------------------------------------------------------------------------------|---------------------|
+| `Success`          | 0     | The operation was successful.                                                   | 200 OK              |
+| `Created`          | 1     | A resource was successfully created.                                            | 201 Created         |
+| `Updated`          | 2     | A resource was successfully updated.                                            | 200 OK              |
+| `Deleted`          | 3     | A resource was successfully deleted.                                            | 200 OK              |
+| `NoContent`        | 4     | The request succeeded with no content to return.                                | 204 No Content      |
+| `Accepted`         | 5     | The request was accepted for processing but is not yet complete.                | 202 Accepted        |
+| `Validation`       | 6     | The request failed due to invalid input data.                                   | 400 Bad Request     |
+| `Problem`          | 7     | An unexpected problem occurred, often used for RFC 7807 problem details.        | 500 Internal Server |
+| `NotFound`         | 8     | The requested resource was not found.                                           | 404 Not Found       |
+| `Conflict`         | 9     | The request conflicts with the current state of the resource.                   | 409 Conflict        |
+| `Unauthorized`     | 10    | The request requires user authentication.                                       | 401 Unauthorized    |
+| `Error`            | 11    | A general, non-specific error occurred during the operation.                    | 500 Internal Server |
+| `BadRequest`       | 12    | The request was malformed or could not be processed for reasons other than validation. | 400 Bad Request     |
+| `Unprocessable`    | 13    | The request was semantically incorrect and could not be processed.              | 422 Unprocessable   |
+| `Forbidden`        | 14    | The server understood the request but refuses to authorize it.                  | 403 Forbidden       |
+| `TooManyRequests`  | 15    | The client has sent too many requests in a given amount of time.                | 429 Too Many Requests |
+| `ServiceUnavailable` | 16   | The service is temporarily unavailable.                                         | 503 Service Unavailable |
+| `GatewayTimeout`   | 17    | The server, acting as a gateway, did not receive a timely response.             | 504 Gateway Timeout |
 
 #### Example JSON Response
+
+With `JsonStringEnumConverter` registered:
 
 ```json
 {
@@ -150,6 +152,8 @@ The `ResponseType` is a C# `enum` that provides a strongly-typed, descriptive vo
   "responseMessage": "Product with value '99' not found."
 }
 ```
+
+Without the converter, `responseType` is the numeric value (`8` for `NotFound`).
 ---
 
 ## 🚀 Usage Examples
@@ -171,7 +175,7 @@ public class ProductsController : ControllerBase
 
         if (product == null)
         {
-            // Use constants for both the status code and the response message
+            // Use named values for both the status code and the response message
             return NotFound(BaseResponseMessages.NotFound);
         }
 
@@ -183,13 +187,13 @@ public class ProductsController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
-            // Use constants for a bad request
+            // Use the named value for a bad request
             return BadRequest(BaseResponseMessages.BadRequest);
         }
 
         var createdProduct = _productService.Create(newProduct);
 
-        // Use constants for a 'Created' response
+        // Use the named value for a 'Created' response
         return StatusCode(BaseResponseCode.Created, createdProduct);
     }
 }
@@ -218,4 +222,3 @@ Contributions are welcome! If you have a suggestion or find a bug, please open a
 - Keep changes focused. A pull request should address a single feature or bug.
 
 Thank you for contributing!
-```

@@ -6,15 +6,26 @@ title: Migration Guides
 
 ## v10.0.3 → v10.0.4
 
-### Breaking Change: `ResponseType` converted from `record` back to `enum`
+This release contains two breaking changes. The **values** are unchanged in both cases; what changed is how the compiler and the JSON serializer treat them.
+
+1. `ResponseType` was converted from a `record` back to a plain `enum`.
+2. Every constant field was migrated from `const` to `static readonly`, and the containing classes are no longer `static`.
+
+### Breaking Change 1: `ResponseType` converted from `record` back to `enum`
 
 In v10.0.4, `ResponseType` was changed from the **type-safe enum pattern** `record` (introduced in v10.0.2) back to a standard C# `enum`. The set of values is now closed, but everyday usage is simpler.
 
 ### Why this change?
 
 - A plain `enum` supports constant patterns in switch expressions, `Enum.TryParse`, and all other standard enum APIs
-- The JSON wire format is unchanged — values still serialize as plain strings (e.g., `"NotFound"`) via `ResponseTypeJsonConverter`
 - The built-in catalog already covers the standard HTTP outcome categories
+- The underlying values (`Success = 0` … `GatewayTimeout = 17`) are stable and explicit
+
+:::warning[JSON wire format changed]
+
+The old `record` carried a built-in `ResponseTypeJsonConverter` that always wrote strings. The new enum has **no built-in converter**, so `System.Text.Json` writes numbers (`"responseType": 8`) by default. If your clients expect `"NotFound"`, register `JsonStringEnumConverter` — see [Serialization](#5-decide-how-responsetype-is-serialized).
+
+:::
 
 ### What changed
 
@@ -26,8 +37,10 @@ In v10.0.4, `ResponseType` was changed from the **type-safe enum pattern** `reco
 | Implicit conversion to `string` | ✅ Yes | ❌ No — use `ToString()` |
 | Custom values | ✅ Via inheritance | ❌ Not supported — use the closest member |
 | Switch expressions | ⚠️ Property patterns only (`{ Value: "NotFound" } =>`) | ✅ Constant patterns (`ResponseType.NotFound =>`) |
-| JSON | Plain strings via `ResponseTypeJsonConverter` | Plain strings via `ResponseTypeJsonConverter` (unchanged) |
-| JSON read | Exact (ordinal) match; empty/whitespace → `Error` | Case-insensitive; `null`/empty/whitespace/unknown → `Error` |
+| JSON write (default options) | Plain strings via `ResponseTypeJsonConverter` | Numbers (`NotFound` → `8`) |
+| JSON write with `JsonStringEnumConverter` | Plain strings | Plain strings (`"NotFound"`) |
+| JSON read (default options) | Exact (ordinal) match; empty/whitespace → `Error` | Numbers only; a string throws `JsonException` |
+| JSON read with `JsonStringEnumConverter` | Exact (ordinal) match | Case-insensitive names; unknown values throw |
 | `default` | `null` (reference type) | `ResponseType.Success` (value `0`) |
 
 ### Migration Steps
@@ -108,9 +121,28 @@ throw new RaBaseException(402, PaymentRequiredResponseType.Instance, "Premium su
 throw new RaBaseException(402, ResponseType.Error, "Premium subscription required.");
 ```
 
-#### 5. Serialization is unchanged
+#### 5. Decide how `ResponseType` is serialized
 
-JSON output is identical. No changes needed to API clients:
+The numeric wire format is the default. To keep the names your clients saw in v10.0.3, register `JsonStringEnumConverter` on the serializer used by your API:
+
+```csharp
+using System.Text.Json.Serialization;
+
+// Minimal APIs and Results.Json (used by RA.Utilities.Api)
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
+
+// MVC controllers
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
+```
+
+With the converter, `ResponseType.NotFound` is written as `"NotFound"`; without it, it is written as `8`. Verify the contract your clients rely on:
 
 ```json
 {
@@ -119,6 +151,131 @@ JSON output is identical. No changes needed to API clients:
   "responseMessage": "Product with value '99' not found."
 }
 ```
+
+Behavior of `JsonStringEnumConverter` differs from the old converter: names are matched case-insensitively, but unknown names (and `null` for a non-nullable enum) throw `JsonException` instead of falling back to `Error`. Validate input before deserializing if you need tolerant behavior.
+
+#### 6. Check `default` handling
+
+`default(ResponseType)` is now `Success` (`0`) rather than `null`. If a model uses `ResponseType` as an optional property, decide whether `Success` is a safe default or whether the property should be `ResponseType?`.
+
+---
+
+### Breaking Change 2: Constant fields migrated from `const` to `static readonly`
+
+Every field in `BaseResponseCode`, `BaseResponseMessages`, `BaseErrorCode`, `BaseErrorMessage`, and `HeaderParameters` is now `public static readonly` instead of `public const`. The containing types changed from `static class` to `partial class` (with CA1052 suppressed).
+
+### Why this change?
+
+- `const` values are embedded into every consumer assembly at compile time, so correcting a value requires recompiling every consumer.
+- `static readonly` values are resolved from the package assembly at runtime. A corrected value ships in a package update and takes effect without recompiling consumers.
+- The classes can now be split across files inside the package using `partial`.
+
+:::info[Consumers cannot extend the partial types]
+
+`partial` only permits splitting a type's definition **inside the assembly that declares it**. You cannot add a `partial` part to `BaseResponseCode` from your own project; the compiled package type cannot be extended across assemblies.
+
+:::
+
+### What changed
+
+| Aspect | v10.0.3 | v10.0.4 |
+|---|---|---|
+| Declaration | `public const string EmailRequired = "REQUIRED_EMAIL";` | `public static readonly string EmailRequired = "REQUIRED_EMAIL";` |
+| Containing type | `static class` | `partial class` (non-static) |
+| Constant-required contexts | ✅ Allowed | ❌ Compiler error (CS0133, CS1736, CS0150, CS0182) |
+| Value inlining | Inlined into consumer IL | Read from the package assembly at runtime |
+| Changing a value | Requires recompiling consumers | Requires only updating the package |
+| Instantiation | Not possible | Possible (`new BaseResponseCode()`), but pointless |
+| Binary compatibility | — | ✅ Existing compiled consumers keep working |
+| Ordinary reads (`BaseResponseCode.NotFound`) | ✅ | ✅ Unchanged |
+
+### Migration Steps
+
+#### 1. Change `const` declarations that reference these fields
+
+`const` requires a compile-time constant (`CS0133`). Use `static readonly` instead:
+
+**Before:**
+
+```csharp
+private const string NotFoundMessage = BaseResponseMessages.NotFound;
+```
+
+**After:**
+
+```csharp
+private static readonly string NotFoundMessage = BaseResponseMessages.NotFound;
+```
+
+#### 2. Replace default parameter values
+
+Default parameter values must be compile-time constants (`CS1736`). Use a nullable sentinel plus a coalesce, or add an overload:
+
+**Before:**
+
+```csharp
+public IActionResult Fail(string message = BaseResponseMessages.BadRequest)
+{
+    return BadRequest(message);
+}
+```
+
+**After:**
+
+```csharp
+public IActionResult Fail(string? message = null)
+{
+    return BadRequest(message ?? BaseResponseMessages.BadRequest);
+}
+```
+
+#### 3. Replace `case` labels
+
+`case` labels must be compile-time constants (`CS0150`). Use `if`/`else`, or switch on the literal value when that is clearer:
+
+**Before:**
+
+```csharp
+switch (error.ErrorCode)
+{
+    case BaseErrorCode.EmailRequired:
+        ShowEmailError();
+        break;
+}
+```
+
+**After:**
+
+```csharp
+if (error.ErrorCode == BaseErrorCode.EmailRequired)
+{
+    ShowEmailError();
+}
+```
+
+#### 4. Replace attribute arguments
+
+Attribute arguments must be compile-time constants (`CS0182`). Define a local `const` in your own project (duplicating the literal) or inline the literal in the attribute:
+
+**Before:**
+
+```csharp
+[DefaultValue(BaseResponseMessages.NotFound)]
+public string? Message { get; set; }
+```
+
+**After:**
+
+```csharp
+private const string NotFoundMessage = "The requested resource was not found.";
+
+[DefaultValue(NotFoundMessage)]
+public string? Message { get; set; }
+```
+
+#### 5. Rebuild and re-test
+
+Call sites that only read the fields — by far the most common usage — require no source changes. A rebuild is still required to compile against the new package, and any JSON tests that asserted string output should be reviewed against [Breaking Change 1](#breaking-change-1-responsetype-converted-from-record-back-to-enum).
 
 ---
 
@@ -132,7 +289,7 @@ In v10.0.2, `ResponseType` was changed from a traditional C# `enum` to a **type-
 
 - Traditional `enum` types cannot be extended by consuming projects
 - The `record` pattern allows custom response types (e.g., `PaymentRequired`, `RateLimited`) while retaining strong typing
-- JSON serialization still produces plain strings (e.g., `"NotFound"`) via the built-in `ResponseTypeJsonConverter`
+- JSON serialization produced plain strings (e.g., `"NotFound"`) via the built-in `ResponseTypeJsonConverter`
 
 ### What changed
 

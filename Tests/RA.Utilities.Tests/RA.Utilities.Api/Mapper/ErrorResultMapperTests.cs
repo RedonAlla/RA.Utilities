@@ -1,7 +1,7 @@
 using System;
 using FluentAssertions;
 using RA.Utilities.Api.Mapper;
-using RA.Utilities.Api.Results;
+using RA.Utilities.Api.Response;
 using RA.Utilities.Core.Constants;
 using RA.Utilities.Core.Exceptions;
 

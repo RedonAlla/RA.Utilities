@@ -2,8 +2,7 @@
 Namespace: RA.Utilities.Core.Constants
 ```
 
-The `BaseErrorCode` class is a constants class within the `RA.Utilities.Core.Constants` package.
-Its primary purpose is to provide a centralized, single source of truth for the machine-readable error codes returned when field-level validation fails.
+The `BaseErrorCode` class provides a centralized, single source of truth for the machine-readable error codes returned when field-level validation fails.
 
 Where [`BaseResponseCode`](./BaseResponseCode) covers transport-level concerns (which HTTP status to return), `BaseErrorCode` describes *why* a request was rejected: a missing email address, an invalid SSN, a currency mismatch, and so on. Each code is a short, stable, uppercase string (e.g., `REQUIRED_EMAIL`, `INVALID_EMAIL`) that API consumers can branch on programmatically — unlike human-readable messages, which may be reworded over time.
 
@@ -16,10 +15,12 @@ The codes are grouped around the value objects shared across the RA.Utilities ec
 
 `BaseErrorCode` is designed to be paired with [`BaseErrorMessage`](./BaseErrorMessage), which holds the matching human-readable text. Together they populate the structured `ValidationError` entries thrown by the value objects in `RA.Utilities.Core.ValueObjects` (`Email`, `Currency`, `SSN`, `Money`), which the `RA.Utilities.Api` middleware translates into standardized HTTP 400 responses.
 
-## Constant Values
+> **Read-only, not `const`:** Since v10.0.4 these fields are `static readonly`, not compile-time constants. Read them directly at runtime, but do not use them where C# requires a constant expression — attribute arguments, default parameter values, `case` labels, or `const` declarations. See the [migration guide](./migration-guides.mdx) for replacements.
 
-| Constant Name      | Value              | Triggered When                                            |
-|--------------------|--------------------|-----------------------------------------------------------|
+## Values
+
+| Field Name      | Value              | Triggered When                                            |
+|-----------------|--------------------|-----------------------------------------------------------|
 | **EmailRequired**  | `REQUIRED_EMAIL`   | The 'Email address' field is missing.                     |
 | **EmailMaxLength** | `EMAIL_MAX_LENGTH` | The 'Email address' field exceeds the maximum length.     |
 | **EmailNotValid**  | `INVALID_EMAIL`    | The 'Email address' format is invalid.                    |
@@ -31,7 +32,7 @@ The codes are grouped around the value objects shared across the RA.Utilities ec
 | **SsnLength**      | `SSN_LENGTH`       | The 'SSN' field is not exactly 10 characters.              |
 | **SsnNotValid**    | `NOT_VALID_SSN`    | The 'SSN' format is invalid.                               |
 
-> **Note:** There is no `BaseErrorMessage.EmailMaxLength` counterpart. The maximum-length message is built dynamically by the `Email` value object because it interpolates the configured limit into the text (e.g., "Email address must not exceed 254 characters."), so only the error code is a constant.
+> **Note:** There is no `BaseErrorMessage.EmailMaxLength` counterpart. The maximum-length message is built dynamically by the `Email` value object because it interpolates the configured limit into the text (e.g., "Email address must not exceed 254 characters."), so only the error code has a reusable field.
 
 ## 🚀 Usage Examples
 

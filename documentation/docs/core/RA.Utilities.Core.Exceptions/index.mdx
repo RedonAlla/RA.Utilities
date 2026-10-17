@@ -33,7 +33,7 @@ Instead of throwing generic `Exception` or `ArgumentException` types, this packa
 
 - **9 semantic exception types** — `NotFoundException`, `ConflictException`, `BadRequestException`, `UnauthorizedException`, `ForbiddenException`, `UnprocessableException`, `GatewayTimeoutException`, `TooManyRequestsException`, `ServiceUnavailableException`
 - **Structured validation errors** — `ValidationError` class with property name, error message, attempted value, and error code
-- **Extensible base class** — `RaBaseException` with `ErrorCode` (int) and `ResponseType` (record) for consistent error contracts
+- **Extensible base class** — `RaBaseException` with `ErrorCode` (int) and `ResponseType` (enum) for consistent error contracts
 - **Auto-mapping to HTTP** — Pairs with `RA.Utilities.Api` middleware for automatic exception-to-JSON-response translation
 - **Result pattern compatible** — All exceptions implicitly convert to `Result.Failure` via `RA.Utilities.Core`
 
@@ -103,7 +103,7 @@ All exceptions inherit from `RaBaseException`, which extends `System.Exception`:
 
 ```
 System.Exception
- └─ RaBaseException                  ← ErrorCode (int) + ResponseType (record)
+ └─ RaBaseException                  ← ErrorCode (int) + ResponseType (enum)
       ├─ NotFoundException           ← EntityName + EntityValue
       ├─ ConflictException           ← EntityName + EntityValue
       ├─ BadRequestException         ← ValidationError[]
@@ -137,7 +137,7 @@ Result.Failure                  →     calls .Match() to produce
 
 - **Semantic exception**: An exception whose *type* communicates meaning (e.g., `NotFoundException` = "the thing doesn't exist"), rather than relying on message text.
 - **ErrorCode**: An `int` property (typically an HTTP status code) for machine-readable error identification.
-- **ResponseType**: A record from `RA.Utilities.Core.Constants` that categorizes the outcome (e.g., `"NotFound"`, `"Conflict"`) in the JSON response body.
+- **ResponseType**: An enum from `RA.Utilities.Core.Constants` that categorizes the outcome (e.g., `"NotFound"`, `"Conflict"`) in the JSON response body.
 - **Implicit conversion to Result**: When using `RA.Utilities.Core`, throwing or returning an `RaBaseException` automatically converts to `Result.Failure`.
 
 ---

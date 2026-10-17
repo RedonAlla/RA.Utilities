@@ -2,23 +2,25 @@
 Namespace: RA.Utilities.Core.Constants
 ```
 
-The `BaseErrorMessage` class provides a collection of predefined, constant string messages for field-level validation failures.
+The `BaseErrorMessage` class provides a collection of predefined, read-only string messages for field-level validation failures.
 It lives within the `RA.Utilities.Core.Constants` package and is designed to work alongside [`BaseErrorCode`](./BaseErrorCode): the code identifies the failure programmatically, while the message explains it to humans.
 
 While [`BaseResponseMessages`](./BaseResponseMessages) covers whole-response messaging (e.g., "The requested resource was not found."), `BaseErrorMessage` describes input-level problems: a missing email address, an invalid SSN, a currency mismatch, and so on.
 
-Using these constants offers the same benefits as the rest of the package:
+Using these values offers the same benefits as the rest of the package:
 
 1. **Consistency**: Every service in your ecosystem reports the same failure with the same wording, giving clients a predictable experience.
 2. **Readability**: `BaseErrorMessage.EmailRequired` is self-documenting, unlike a scattered string literal.
 3. **Maintainability**: If a message needs rewording, you change it in one central location.
-4. **Reduced Errors**: Named constants prevent typos in string literals that are difficult to spot.
+4. **Reduced Errors**: Named values prevent typos in string literals that are difficult to spot.
 
 These messages are used by the value objects in `RA.Utilities.Core.ValueObjects` (`Email`, `Currency`, `SSN`, `Money`) when they throw `BadRequestException` with structured `ValidationError` entries.
 
-## Constant Values
+> **Read-only, not `const`:** Since v10.0.4 these fields are `static readonly`, not compile-time constants. Read them directly at runtime, but do not use them where C# requires a constant expression — attribute arguments, default parameter values, `case` labels, or `const` declarations. See the [migration guide](./migration-guides.mdx) for replacements.
 
-| Constant Name        | Message                                    |
+## Values
+
+| Field Name           | Message                                    |
 |----------------------|--------------------------------------------|
 | **EmailRequired**    | "The 'Email address' field is required."   |
 | **EmailNotValid**    | "'Email address' format is invalid."       |
@@ -30,7 +32,7 @@ These messages are used by the value objects in `RA.Utilities.Core.ValueObjects`
 | **SsnLength**        | "'SSN' must be exact 10 characters."       |
 | **SsnNotValid**      | "'SSN' format is invalid."                 |
 
-> **Note:** There is no `EmailMaxLength` constant. The maximum-length message is built dynamically by the `Email` value object because it interpolates the configured limit into the text (e.g., "Email address must not exceed 254 characters."). See [`BaseErrorCode.EmailMaxLength`](./BaseErrorCode) for the matching error code.
+> **Note:** There is no `EmailMaxLength` field. The maximum-length message is built dynamically by the `Email` value object because it interpolates the configured limit into the text (e.g., "Email address must not exceed 254 characters."). See [`BaseErrorCode.EmailMaxLength`](./BaseErrorCode) for the matching error code.
 
 ## 🚀 Usage Examples
 
@@ -79,3 +81,5 @@ The structured error is serialized into the HTTP 400 response body, so consumers
   ]
 }
 ```
+
+> **JSON note:** `responseType` is an enum-backed field. The `"BadRequest"` form above appears only when a `JsonStringEnumConverter` is registered; with default `System.Text.Json` options it is written as the numeric value `12`. See [`ResponseType`](./ResponseType#json-serialization).

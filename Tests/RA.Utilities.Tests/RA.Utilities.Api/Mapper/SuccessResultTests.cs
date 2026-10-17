@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using RA.Utilities.Api.Mapper;
-using RA.Utilities.Api.Results;
+using RA.Utilities.Api.Response;
 using RA.Utilities.Core.Constants;
 
 namespace RA.Utilities.Tests.RA.Utilities.Api.Mapper;

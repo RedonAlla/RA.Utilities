@@ -4,6 +4,8 @@ title: Migration Guides
 
 # Migration Guides
 
+> **Note**: With `RA.Utilities.Core.Constants` v10.0.4+, `ResponseType` is a plain C# `enum` again (the `record` with a `Value` property was itself replaced — see the [Core.Constants migration guide](../RA.Utilities.Core.Constants/migration-guides)). Replace `ex.ResponseType.Value` with `ex.ResponseType.ToString()` when reading the semantic label.
+
 ## v10.0.3 → v10.0.4
 
 This release modernizes the exception base class and aligns the entire exception hierarchy with the new `ResponseType` record from `RA.Utilities.Core.Constants` v10.0.2.

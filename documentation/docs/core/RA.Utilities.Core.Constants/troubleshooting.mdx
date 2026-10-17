@@ -6,11 +6,34 @@ title: Troubleshooting & FAQ
 
 ## Common Issues
 
-### My `ResponseType` is serializing as a number instead of a string
+### How do I serialize `ResponseType` as a string instead of a number?
 
-**Cause**: Without a converter, `System.Text.Json` serializes enums as numbers (`11` instead of `"Error"`).
+**Cause**: `ResponseType` is a plain `enum` with no built-in converter. `System.Text.Json` therefore writes its numeric value (`ResponseType.NotFound` → `8`) by default.
 
-**Fix**: The `[JsonConverter(typeof(ResponseTypeJsonConverter))]` attribute is built into the package and applied automatically. If you see numeric output, ensure you're using `System.Text.Json` with default options, and that your custom `JsonSerializerOptions` don't override the attribute-level converter. The converter serializes to plain strings (e.g., `"NotFound"`).
+**Fix**: Register `JsonStringEnumConverter` on the serializer your endpoints use:
+
+```csharp showLineNumbers
+using System.Text.Json.Serialization;
+
+// Minimal APIs and Results.Json (what RA.Utilities.Api uses)
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    // highlight-next-line
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
+
+// MVC controllers
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // highlight-next-line
+        options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
+```
+
+With the converter, `ResponseType.NotFound` is written as `"NotFound"`. Note that the converter is stricter than the old `ResponseTypeJsonConverter`: unknown names and `null` for a non-nullable enum throw `JsonException` instead of falling back to `ResponseType.Error`.
+
+See [`ResponseType`](./ResponseType#json-serialization) for the full behavior matrix.
 
 ### Can I use `ResponseType` in a `switch` expression?
 
@@ -31,13 +54,13 @@ var label = responseType switch
 
 ### How do I compare two `ResponseType` values?
 
-Use `==` or `.Equals()` — enum members are singletons, so comparison is simple and allocation-free:
+Use `==` or `.Equals()` — enum members are value types, so comparison is simple and allocation-free:
 
 ```csharp
 ResponseType a = ResponseType.NotFound;
 ResponseType b = ResponseType.NotFound;
 
-bool same = a == b;       // true
+bool same = a == b;        // true
 bool sameEq = a.Equals(b); // true
 ```
 
@@ -56,32 +79,94 @@ if (Enum.TryParse(value, ignoreCase: true, out ResponseType parsed) && Enum.IsDe
 }
 ```
 
-Note: the JSON converter (`ResponseTypeJsonConverter`) is more lenient than `Enum.Parse` — it matches case-insensitively and falls back to `ResponseType.Error` for `null`, empty, whitespace, or unknown strings instead of throwing.
+`Enum.TryParse` succeeds for **any** name, including one that is not a `ResponseType` member, and for numeric strings. Always combine it with `Enum.IsDefined` when the input is untrusted.
 
-### `BaseResponseCode.Created` doesn't exist — what should I use?
+### Why can't I use `BaseResponseCode` values as default parameter values?
 
-`Created = 201` was intentionally omitted from `BaseResponseCode` because the package focuses on response codes commonly used in _error_ and _generic success_ scenarios. For a `201 Created` response, use the ASP.NET Core built-in helper:
+**Cause**: Since v10.0.4 the fields are `static readonly`, not `const`. C# requires a compile-time constant for a default parameter value, so `void Fail(int code = BaseResponseCode.BadRequest)` fails with **CS1736**.
+
+**Fix**: Use a nullable sentinel plus a coalesce, or add an overload:
 
 ```csharp
-return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, product);
+// ✅ Nullable sentinel
+public IActionResult Fail(string? message = null)
+{
+    return BadRequest(message ?? BaseResponseMessages.BadRequest);
+}
+
+// ✅ Overload
+public IActionResult Fail() => Fail(BaseResponseMessages.BadRequest);
+public IActionResult Fail(string message) => BadRequest(message);
 ```
 
-If you need the integer constant, define it in your own project or use `201` directly.
+### Why did `private const string X = BaseResponseMessages.NotFound;` stop compiling?
+
+**Cause**: A `const` initializer must itself be a compile-time constant. The package fields are now `static readonly`, so the compiler reports **CS0133**.
+
+**Fix**: Make your declaration `static readonly`:
+
+```csharp
+// ❌ CS0133
+private const string NotFoundMessage = BaseResponseMessages.NotFound;
+
+// ✅
+private static readonly string NotFoundMessage = BaseResponseMessages.NotFound;
+```
+
+### Why can't I use these values in attributes or `case` labels?
+
+**Cause**: Attribute arguments and `case` labels also require compile-time constants. Referencing a `static readonly` field produces **CS0182** (attribute argument) or **CS0150** (case label).
+
+**Fix**: Use a local `const` or a literal in those positions, or replace the `case` with an `if`:
+
+```csharp
+// Attribute — define the literal in your own project
+private const string NotFoundMessage = "The requested resource was not found.";
+
+[DefaultValue(NotFoundMessage)]
+public string? Message { get; set; }
+
+// case label -> if
+if (error.ErrorCode == BaseErrorCode.EmailRequired)
+{
+    ShowEmailError();
+}
+```
+
+These are the only source-breaking contexts. Ordinary reads such as `BaseResponseCode.NotFound` compile unchanged.
+
+### Does `BaseResponseCode` include `Created`?
+
+**Yes.** `BaseResponseCode.Created` is `201`, alongside `Success`, `Accepted`, `NoContent`, and the error codes. Use it when you construct a response manually; ASP.NET Core's `Created` and `CreatedAtAction` helpers already set `201`, so you usually do not need the field there.
+
+### Why can I write `new BaseResponseCode()`?
+
+**Cause**: Since v10.0.4 the constant holders are `partial class` declarations rather than `static class` declarations, so they have an implicit public parameterless constructor. They hold only static state.
+
+**Answer**: Don't instantiate them. Access the fields through the type name (`BaseResponseCode.NotFound`). Instantiating the class compiles but has no purpose.
+
+### Can I add my own values to these classes with `partial`?
+
+**No.** The `partial` keyword only permits splitting a type's definition inside the assembly that declares it. `BaseResponseCode` and the other types are compiled into `RA.Utilities.Core.Constants`; you cannot add a `partial` part from your own project. Define your own constants class for domain-specific values.
 
 ---
 
 ## Known Limitations
 
 - **Closed set of values**: Consuming projects cannot add new `ResponseType` members. For an outcome without a dedicated member (e.g., `PaymentRequired`), use the closest built-in member (typically `Error` or `Problem`) and communicate the specifics through the error code and message.
-- **Lenient deserialization**: Unknown JSON strings silently fall back to `ResponseType.Error` rather than throwing. Validate early if you need to distinguish "unknown type" from a genuine error.
+- **Numeric JSON by default**: Without `JsonStringEnumConverter`, `responseType` is serialized as a number. Register the converter if your clients depend on names such as `"NotFound"`.
+- **Strict string deserialization with the converter**: `JsonStringEnumConverter` throws `JsonException` for unknown names and for `null` when the target enum is non-nullable. Validate first if you need tolerant input.
 - **`default` is `Success`**: `default(ResponseType)` and uninitialized fields are `ResponseType.Success` (value `0`). Use explicit members in models where `Success` is not the right default.
 - **No implicit conversion from `string`**: Use `Enum.TryParse`/`Enum.Parse` or the built-in members directly.
+- **No compile-time constants**: Since v10.0.4 the fields are `static readonly`. They cannot be used in attributes, default parameter values, `case` labels, or `const` declarations.
 - **No localization support**: `BaseResponseMessages` provides English-only strings. For multi-language support, use these as fallback defaults and implement your own localization layer.
 
 ---
 
 ## Performance Tips
 
-- **Enum members are singletons**: `ResponseType.NotFound` involves no allocation — member access is as cheap as an enum gets.
+- **Static field reads are cheap**: `BaseResponseCode.NotFound` is a single static field load — no allocation, no computation.
+- **Values are not inlined**: Unlike the previous `const` fields, the JIT reads the value from the package assembly. The overhead is negligible in request-handling code, but extremely hot loops that compare thousands of values may benefit from a local variable.
+- **Enum members are values**: `ResponseType.NotFound` involves no allocation, and `ToString()` returns the member name.
 - **Prefer `TryParse` over `Parse`**: When the input may be invalid, `Enum.TryParse` avoids exception overhead on the failure path.
-- **Constants are inlined**: `BaseResponseCode` and `BaseResponseMessages` use `const`, so the values are inlined at compile time with zero runtime cost.
+- **Configure the converter once**: Register `JsonStringEnumConverter` in startup rather than creating `JsonSerializerOptions` per request.

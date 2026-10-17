@@ -19,26 +19,34 @@ import LogoSvg from '../../../../Assets/Images/constant.svg';
 [![Publish NuGet](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml/badge.svg)](https://github.com/RedonAlla/RA.Utilities/actions/runs/19603023761)
 [![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?label=License&logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
 
-A centralized and consistent set of core constants for the RA Utilities ecosystem.
-This package helps streamline development, improve code readability, and reduce "magic strings" and "magic numbers" by providing a single source of truth for common values.
+A centralized and consistent set of core values for the RA.Utilities ecosystem.
+It replaces magic strings and magic numbers with named read-only fields and a semantic `ResponseType` enum, giving every service a single source of truth for HTTP codes, messages, header names, and validation errors.
 
 ## 🎯 Purpose
 
-The primary goal of this package is to ensure consistency across different projects and services. By using these predefined constants, you can:
+The primary goal of this package is to ensure consistency across different projects and services. By using these predefined values, you can:
 
 - **Avoid Typos**: Prevent hard-to-find bugs caused by typos in strings or numbers.
 - **Improve Readability**: Make your code more self-documenting (e.g., `BaseResponseCode.NotFound` is clearer than `404`).
-- **Simplify Maintenance**: Update a constant in one place, and the change propagates everywhere it's used.
+- **Simplify Maintenance**: Update a value in one place, and the change propagates everywhere it's used.
+- **Stay Consistent**: Every service in the ecosystem reports the same status code and wording for the same outcome.
 
 ### ✨ Key Features
 
-- **HTTP Status Codes** — `BaseResponseCode` provides named constants for all common HTTP status codes (200–504)
+- **HTTP Status Codes** — `BaseResponseCode` exposes named `int` fields for all common HTTP status codes (200–504)
 - **Standardized Messages** — `BaseResponseMessages` delivers consistent, production-ready API response text
 - **Validation Error Codes & Messages** — `BaseErrorCode` and `BaseErrorMessage` standardize field-level validation failures (email, currency, money, SSN)
-- **Semantic Response Types** — `ResponseType` is an enum for API outcome classification, serialized as a plain string in JSON
-- **HTTP Header Names** — `HeaderParameters` centralizes common header name strings for tracing, auth, and location
+- **Semantic Response Types** — `ResponseType` is an enum for API outcome classification; its numeric values are stable and serializable
+- **HTTP Header Names** — `HeaderParameters` centralizes common header names for tracing, auth, and location
+- **Patchable Values** — fields are `static readonly` (not `const`), so a corrected value ships in a package update without recompiling every consumer
 - **Zero Dependencies** — No external package dependencies; pairs seamlessly with `RA.Utilities.Core.Exceptions`
-- **No Configuration** — Pure constants with no DI registration, no options, and no setup required
+- **No Configuration** — No DI registration, no options, and no setup required
+
+:::warning[Upgrading from v10.0.3?]
+
+v10.0.4 makes two breaking changes: every field moved from `const` to `static readonly`, and `ResponseType` became a plain `enum`. In both cases the values themselves are unchanged. See the [Migration Guides](./migration-guides.mdx) before upgrading.
+
+:::
 
 ---
 
@@ -65,12 +73,12 @@ Install-Package RA.Utilities.Core.Constants
 **PackageReference (csproj)**
 
 ```xml
-<PackageReference Include="RA.Utilities.Core.Constants" Version="10.0.3" />
+<PackageReference Include="RA.Utilities.Core.Constants" Version="10.0.4" />
 ```
 
 ### Hello World
 
-The simplest possible usage — replace a magic number with a named constant:
+The simplest possible usage — replace a magic number with a named value:
 
 ```csharp showLineNumbers
 using RA.Utilities.Core.Constants;
@@ -78,26 +86,32 @@ using RA.Utilities.Core.Constants;
 // Before: magic number
 return StatusCode(404, "The requested resource was not found.");
 
-// After: self-documenting constants
+// After: self-documenting values
 return StatusCode(BaseResponseCode.NotFound, BaseResponseMessages.NotFound);
 ```
 
-No DI registration, no setup, no configuration. Just add the `using` directive and reference the constants.
+No DI registration, no setup, no configuration. Just add the `using` directive and reference the values.
 
 ---
 
 ## 🧠 Core Concepts
 
-The package provides six constant classes, each serving a distinct role in your API layer:
+The package provides six types, each serving a distinct role in your API layer:
 
-| Class | Role | Example |
+| Type | Role | Example |
 |---|---|---|
-| [`BaseResponseCode`](./BaseResponseCode) | HTTP status codes as `int` constants | `BaseResponseCode.NotFound` → `404` |
-| [`BaseResponseMessages`](./BaseResponseMessages) | Human-readable response messages as `string` constants | `BaseResponseMessages.NotFound` → `"The requested resource was not found."` |
-| [`BaseErrorCode`](./BaseErrorCode) | Machine-readable validation error codes as `string` constants | `BaseErrorCode.EmailRequired` → `"REQUIRED_EMAIL"` |
-| [`BaseErrorMessage`](./BaseErrorMessage) | Human-readable validation error messages as `string` constants | `BaseErrorMessage.EmailRequired` → `"The 'Email address' field is required."` |
-| [`ResponseType`](./ResponseType) | Semantic outcome labels as an `enum` with string JSON serialization | `ResponseType.NotFound` → `"NotFound"` |
-| [`HeaderParameters`](./HeaderParameters) | HTTP header name strings | `HeaderParameters.XRequestId` → `"x-request-id"` |
+| [`BaseResponseCode`](./BaseResponseCode) | HTTP status codes as `static readonly int` fields | `BaseResponseCode.NotFound` → `404` |
+| [`BaseResponseMessages`](./BaseResponseMessages) | Human-readable response messages as `static readonly string` fields | `BaseResponseMessages.NotFound` → `"The requested resource was not found."` |
+| [`BaseErrorCode`](./BaseErrorCode) | Machine-readable validation error codes as `static readonly string` fields | `BaseErrorCode.EmailRequired` → `"REQUIRED_EMAIL"` |
+| [`BaseErrorMessage`](./BaseErrorMessage) | Human-readable validation error messages as `static readonly string` fields | `BaseErrorMessage.EmailRequired` → `"The 'Email address' field is required."` |
+| [`ResponseType`](./ResponseType) | Semantic outcome labels as an `enum` | `ResponseType.NotFound` → `8` (numeric value) |
+| [`HeaderParameters`](./HeaderParameters) | HTTP header names as `static readonly string` fields | `HeaderParameters.XRequestId` → `"x-request-id"` |
+
+:::info[Not compile-time constants]
+
+Since v10.0.4, none of the values are compile-time constants. You can read them anywhere, but you cannot use them where C# requires a constant expression — attribute arguments, default parameter values, `case` labels, or `const` declarations. See [Troubleshooting](./troubleshooting.mdx#why-cant-i-use-baseresponsecode-values-as-default-parameter-values) for workarounds.
+
+:::
 
 ### How they work together
 
@@ -110,16 +124,19 @@ HTTP Response
 ├─ Status Code: BaseResponseCode.NotFound (404)
 ├─ Body:
 │   ├─ responseCode: 404
-│   ├─ responseType: "NotFound"    ← ResponseType enum
+│   ├─ responseType: 8              ← ResponseType.NotFound (numeric by default)
 │   └─ responseMessage: "Product with value '99' not found."
 └─ Headers:
-    └─ x-request-id: "abc-123"     ← HeaderParameters.XRequestId
+    └─ x-request-id: "abc-123"      ← HeaderParameters.XRequestId
 ```
+
+`ResponseType` is a plain C# enum, so `System.Text.Json` writes its **numeric value** (`ResponseType.NotFound` → `8`) unless you register `JsonStringEnumConverter`. See [`ResponseType`](./ResponseType#json-serialization) for the exact setup.
 
 ### Terminology
 
-- **Magic strings/numbers**: Hard-coded literals scattered throughout code. Replacing them with named constants improves readability and prevents typos.
-- **Semantic response type**: A standard C# `enum` whose members label the outcome inside the JSON body. A custom `JsonConverter` serializes it as a plain string (e.g., `"NotFound"`) instead of a number. See [`ResponseType`](./ResponseType) for details.
+- **Magic strings/numbers**: Hard-coded literals scattered throughout code. Replacing them with named values improves readability and prevents typos.
+- **Static read-only field**: A `public static readonly` member whose value is assigned once when the type is initialized. It behaves like a constant at call sites but is *not* a compile-time constant, so it cannot be used in constant-required contexts.
+- **Semantic response type**: An `enum` member that labels the outcome inside the JSON body. `System.Text.Json` writes the numeric member value by default; register `JsonStringEnumConverter` if your contract expects names such as `"NotFound"`. See [`ResponseType`](./ResponseType) for details.
 
 ---
 
@@ -205,7 +222,26 @@ if (string.IsNullOrWhiteSpace(request.Email))
 
 See [`BaseErrorCode`](./BaseErrorCode) and [`BaseErrorMessage`](./BaseErrorMessage) for the full catalog and the JSON shape these errors produce.
 
-### Handle an outcome that has no dedicated ResponseType member
+### Serialize `ResponseType` as a string
+
+`ResponseType` is an enum with no built-in converter. If your API contract exposes names (`"NotFound"`) instead of numbers (`8`), register `JsonStringEnumConverter` for the serializer used by your endpoints:
+
+```csharp showLineNumbers
+using System.Text.Json.Serialization;
+
+// Minimal APIs / Results.Json — this is what RA.Utilities.Api uses
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    // highlight-next-line
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
+
+// MVC controllers — configure AddControllers().AddJsonOptions(...) the same way
+```
+
+Verify the behavior your clients depend on: with `JsonStringEnumConverter`, names are written as-is, matched case-insensitively on read, and unknown names throw `JsonException`. See [`ResponseType`](./ResponseType#json-serialization) for details.
+
+### Handle an outcome that has no dedicated `ResponseType` member
 
 The set of `ResponseType` values is closed. For an outcome without a dedicated member (e.g., HTTP 402 Payment Required), use the closest built-in member and communicate the specifics through the error code and message:
 
@@ -218,7 +254,9 @@ throw new RaBaseException(402, ResponseType.Error, "Premium subscription require
 
 ## ⚙️ Configuration
 
-This package has **no configuration options**. There is no DI registration, no `appsettings.json` entries, and no options classes. All values are compile-time `const` strings/integers or `enum` members — reference them directly.
+This package has **no configuration options**. There is no DI registration, no `appsettings.json` entries, and no options classes. All values are `public static readonly` fields or `enum` members — reference them directly.
+
+The only optional setup is JSON serialization: if your API contract requires enum names instead of numbers, register `JsonStringEnumConverter` as shown in [Serialize `ResponseType` as a string](#serialize-responsetype-as-a-string). That configures `System.Text.Json`, not this package.
 
 ---
 

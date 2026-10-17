@@ -22,9 +22,9 @@ var error = new ValidationError("Email is invalid.") { PropertyName = "Email" };
 
 ### `RaBaseException` does not contain a definition for `ResponseCode`
 
-**Cause**: In v10.0.4, `ResponseCode` (int) was removed and replaced by `ResponseType` (record).
+**Cause**: In v10.0.4, `ResponseCode` (int) was removed and replaced by `ResponseType` from `RA.Utilities.Core.Constants` (a `record` in Core.Constants v10.0.2–10.0.3; a plain `enum` again from Core.Constants v10.0.4 onward).
 
-**Fix**: Use `ErrorCode` for the HTTP status code and `ResponseType.Value` for the semantic label:
+**Fix**: Use `ErrorCode` for the HTTP status code and `ResponseType.ToString()` for the semantic label:
 
 ```csharp
 // ❌ v10.0.3
@@ -32,7 +32,7 @@ int status = ex.ResponseCode;
 
 // ✅ v10.0.4
 int status = ex.ErrorCode;
-string type = ex.ResponseType.Value;
+string type = ex.ResponseType.ToString();
 ```
 
 ### `ErrorCode` is `int` but my old code used it as `string`
