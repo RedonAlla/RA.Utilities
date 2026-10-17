@@ -115,7 +115,7 @@ No DI registration or configuration is required. Add the `using` directive and r
 
 | Type | HTTP | `ResponseType` | Result payload |
 |---|---|---|---|
-| [`Response<T>`](./Response) | any | any | `T` |
+| [`Response<T>`](./Response.md) | any | any | `T` |
 | [`SuccessResponse<T>`](./SuccessResponse) | 200 | `Success` (JSON `0`) | `T` |
 | [`BadRequestResponse`](./BadRequestResponse) | 400 | `BadRequest` (JSON `12`) | `BadRequestResult[]` |
 | [`UnauthorizedResponse`](./UnauthorizedResponse) | 401 | `Unauthorized` (JSON `10`) | `ErrorResult` |
