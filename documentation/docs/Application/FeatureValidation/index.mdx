@@ -4,70 +4,59 @@ sidebar_position: 1
 sidebar_class_name: nav_session ra_utilities_validation
 ---
 
+import DocCardList from '@theme/DocCardList';
 import LogoSvg from '../../../../Assets/Images/validation.svg';
 
 <p align="center">
 <LogoSvg width={'15rem'} height={'15rem'} className="header_icon" />
 </p>
 
+# RA.Utilities.Application.Validation
+
 [![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Application.Validation.svg?logo=nuget&label=NuGet)](https://www.nuget.org/packages/RA.Utilities.Application.Validation/)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Application.Validation.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Application.Validation/)
 [![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
-[![Publish NuGet](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml/badge.svg)](https://github.com/RedonAlla/RA.Utilities/actions/runs/19650635405)
-[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
+[![Publish NuGet](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml/badge.svg)](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?label=License&logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
 
-`RA.Utilities.Application.Validation` provides reusable validation utilities built on top of [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/) for validating incoming requests in web APIs.
+`RA.Utilities.Application.Validation` provides reusable validation utilities built on [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/) for validating incoming requests in web APIs.
 
-Use it to run multiple validators against a request in parallel, aggregate the failures, and convert them into a standardized `HTTP 400 Bad Request` response — without writing the orchestration code yourself.
+Use it to run every validator for a request in parallel, aggregate the failures, and convert them into a standardized `BadRequestException` — which `RA.Utilities.Api` turns into a consistent **HTTP 400** response — without writing the orchestration code yourself.
 
 ## 🎯 Purpose
 
-- **Centralize validation orchestration** — run every registered validator for a request in one call
-- **Standardize error payloads** — failures become a consistent [`BadRequestException`](../../core/RA.Utilities.Core.Exceptions/BadRequestException.md) with machine-readable details
-- **Avoid duplication** — share the same currency, email, and SSN rules across validators and services
-- **Stay fast** — validators run in parallel, and the currency format rule uses a source-generated regex
+Validation usually needs three things that FluentValidation leaves to you: running all validators for a request, merging their results safely, and producing one error payload. This package supplies all three, plus rules that reuse the domain's value objects:
+
+- **Centralize orchestration** — one call runs every registered validator for a request.
+- **Standardize error payloads** — failures become a [`BadRequestException`](../../core/RA.Utilities.Core.Exceptions/BadRequestException.md) with structured [`ValidationError`](../../core/RA.Utilities.Core.Exceptions/ValidationError.md) entries.
+- **Share rules with the domain** — the `MustBeValid*` rules construct the value objects from [`RA.Utilities.Core.ValueObjects`](../../core/RA.Utilities.Core.ValueObjects/index.mdx), so a request is accepted exactly when the domain would accept it.
+- **Stay fast** — validators run concurrently, single/empty validator lists take fast paths, and the currency format rule uses a source-generated regex.
 
 ### ✨ Key Features
 
-- **`ValidationUtilities.ValidateAsync`** — executes all validators for a request concurrently and flattens the failures
-- **`ValidationUtilities.CreateValidationErrorResult`** — maps `ValidationFailure[]` into a `BadRequestException` carrying structured `ValidationError` entries
-- **Cooperative cancellation** — `ValidationUtilities.ValidateAsync` forwards your `CancellationToken` to every validator
-- **`MustMatchesCurrencyFormat()`** — declarative ISO 4217 format rule (3 uppercase letters) for any string property
-- **`MustBeValidCurrency()` / `MustBeValidEmail()` / `MustBeValidSsn()`** — rules that validate `string?` properties through the value objects of [`RA.Utilities.Core.ValueObjects`](../../core/RA.Utilities.Core.ValueObjects/index.mdx), so request validation and the domain share one set of rules
-- **Zero configuration** — static utilities; validators are supplied by your own DI container
+- **`ValidationUtilities.ValidateAsync`** — runs all validators for a request concurrently and flattens the failures into one array
+- **`ValidationUtilities.CreateValidationErrorResult`** — maps `ValidationFailure[]` into a `BadRequestException` carrying `PropertyName`, `ErrorMessage`, `AttemptedValue`, and `ErrorCode`
+- **Cooperative cancellation** — the `CancellationToken` is forwarded to every validator
+- **`MustMatchesCurrencyFormat()`** — declarative ISO 4217 shape rule (3 uppercase letters) with a source-generated regex
+- **`MustBeValidCurrency()` / `MustBeValidEmail()` / `MustBeValidSsn()` / `MustBeValidIban()`** — rules that validate `string?` properties through the matching value object
+- **IBAN validation** — structure (13–34 characters) and ISO 7064 mod-97 check digits, with normalization of casing and grouping separators
+- **Zero configuration** — static utilities; validators come from your own DI container
 
-## 🧠 Core Concepts
+:::info[Version 10.2.0]
 
-| Abstraction | Role | Where |
-|---|---|---|
-| `ValidationUtilities` | Orchestrates validation and converts failures to an exception | [`Utilities`](./ValidationUtilities) |
-| `MustMatchesCurrencyFormat()` | FluentValidation rule for ISO 4217 currency codes | [`Extensions`](./CurrencyValidatorExtensions) |
-| `MustBeValidCurrency()` | Currency rule backed by the `Currency` value object | [`Extensions`](./CurrencyValidatorExtensions) |
-| `MustBeValidEmail()` | Email rule backed by the `Email` value object | [`Extensions`](./EmailValidatorExtensions) |
-| `MustBeValidSsn()` | SSN rule backed by the `SSN` value object | [`Extensions`](./SsnValidatorExtensions) |
-| `BadRequestException` / `ValidationError` | The standardized 400 payload produced on failure | [`RA.Utilities.Core.Exceptions`](../../core/RA.Utilities.Core.Exceptions/index.mdx) |
+This release is additive. It adds `MustBeValidIban()` and updates the `RA.Utilities.Core.ValueObjects` dependency to 10.2.0, which introduces the `IBAN` value object. No existing rule, signature, or behavior changed. See the [Migration Guides](./migration-guides.mdx#v1010--v1020).
 
-### How they work together
+:::
 
-```text
-Request ──► ValidateAsync(request, validators, ct) ──► ValidationFailure[] (empty if valid)
-                                                      │
-                                                      └─► CreateValidationErrorResult ──► BadRequestException ──► HTTP 400
-```
-
-`ValidateAsync` gives **each validator its own `ValidationContext`**, so validators can run in parallel without sharing mutable state — results cannot leak between validators and the ordering of failures is preserved.
-
-### Terminology
-
-- **Validator**: a FluentValidation `IValidator<T>` implementation holding the rules for one request type
-- **Validation failure**: FluentValidation's `ValidationFailure` — property name, message, attempted value, error code
-- **Format rule**: a rule that checks the *shape* of a value (e.g., 3 uppercase letters), not its presence
+---
 
 ## 🛠️ Getting Started
 
 ### Prerequisites
 
 - **.NET 10.0** or later
+- **[`FluentValidation`](https://docs.fluentvalidation.net/en/latest/) 12.1.1** or later — installed as a dependency
+- **[`RA.Utilities.Core.Exceptions`](../../core/RA.Utilities.Core.Exceptions/index.mdx)** and **[`RA.Utilities.Core.ValueObjects`](../../core/RA.Utilities.Core.ValueObjects/index.mdx)** — installed automatically as dependencies
 
 ### Installation
 
@@ -86,10 +75,12 @@ Install-Package RA.Utilities.Application.Validation
 **PackageReference (csproj)**
 
 ```xml
-<PackageReference Include="RA.Utilities.Application.Validation" Version="10.1.0" />
+<PackageReference Include="RA.Utilities.Application.Validation" Version="10.2.0" />
 ```
 
 ### Hello World
+
+Define a FluentValidation validator, run every validator for the request, and convert failures into the standardized exception:
 
 ```csharp showLineNumbers
 using FluentValidation;
@@ -97,62 +88,164 @@ using FluentValidation.Results;
 using RA.Utilities.Application.Validation.Extensions;
 using RA.Utilities.Application.Validation.Utilities;
 
-public record CreateOrderRequest(string Currency, decimal Amount);
+public sealed record CreatePaymentRequest(string Currency, string Iban, decimal Amount);
 
-public class CreateOrderValidator : AbstractValidator<CreateOrderRequest>
+public sealed class CreatePaymentValidator : AbstractValidator<CreatePaymentRequest>
 {
-    public CreateOrderValidator()
+    public CreatePaymentValidator()
     {
-        RuleFor(x => x.Currency).MustMatchesCurrencyFormat();
+        // highlight-next-line
+        RuleFor(x => x.Currency).MustBeValidCurrency();
+        // highlight-next-line
+        RuleFor(x => x.Iban).MustBeValidIban();
         RuleFor(x => x.Amount).GreaterThan(0);
     }
 }
+```
 
-// Run all validators, then throw a standardized BadRequestException on failure
-var request = new CreateOrderRequest("USD", 100);
+Then run every validator for the request and convert failures into the standardized exception:
+
+```csharp showLineNumbers
+var request = new CreatePaymentRequest("EUR", "GB82WEST12345698765432", 100m);
+var validators = new IValidator<CreatePaymentRequest>[] { new CreatePaymentValidator() };
 
 ValidationFailure[] failures = await ValidationUtilities.ValidateAsync(
-    request, [new CreateOrderValidator()], CancellationToken.None);
+    request,
+    validators,
+    CancellationToken.None);
 
 if (failures.Length > 0)
 {
+    // highlight-next-line
     throw ValidationUtilities.CreateValidationErrorResult(failures);
 }
 ```
 
-No DI or setup is required — the utilities are static and the validators come from your own service container.
+No DI registration or setup is required. The validators typically come from your container as `IEnumerable<IValidator<TRequest>>` — see [Register validators with DI](#register-validators-with-di).
+
+---
+
+## 🧠 Core Concepts
+
+### Types
+
+| Abstraction | Role | Reference |
+|---|---|---|
+| `ValidationUtilities` | Orchestrates validation and converts failures to an exception | [`ValidationUtilities`](./ValidationUtilities.md) |
+| `MustMatchesCurrencyFormat()` | ISO 4217 shape rule (3 uppercase letters) | [`CurrencyValidatorExtensions`](./CurrencyValidatorExtensions.md) |
+| `MustBeValidCurrency()` | Currency rule backed by the `Currency` value object | [`CurrencyValidatorExtensions`](./CurrencyValidatorExtensions.md) |
+| `MustBeValidEmail()` | Email rule backed by the `Email` value object | [`EmailValidatorExtensions`](./EmailValidatorExtensions.md) |
+| `MustBeValidSsn()` | SSN rule backed by the `SSN` value object | [`SsnValidatorExtensions`](./SsnValidatorExtensions.md) |
+| `MustBeValidIban()` | IBAN rule backed by the `IBAN` value object | [`IbanValidatorExtensions`](./IbanValidatorExtensions.md) |
+| `BadRequestException` / `ValidationError` | The standardized 400 payload produced on failure | [`RA.Utilities.Core.Exceptions`](../../core/RA.Utilities.Core.Exceptions/index.mdx) |
+
+### How they work together
+
+```text
+Request ──► ValidateAsync(request, validators, ct) ──► ValidationFailure[] (empty when valid)
+                                                      │
+                                                      └─► CreateValidationErrorResult ──► BadRequestException ──► HTTP 400
+```
+
+`ValidateAsync` gives **each validator its own `ValidationContext`**, so validators can run in parallel without sharing mutable state. FluentValidation's `ValidationResult` wraps its context's failure list, so a shared context would duplicate every failure into every result.
+
+The method has two fast paths: an empty validator list returns an empty array immediately, and a single validator is awaited directly instead of going through `Task.WhenAll`.
+
+### Format rules vs value-object rules
+
+| | Format rules | Value-object rules |
+|---|---|---|
+| Example | `MustMatchesCurrencyFormat()` | `MustBeValidCurrency()`, `MustBeValidEmail()`, `MustBeValidSsn()`, `MustBeValidIban()` |
+| Checks | Shape only | The full rules of the value object |
+| `null` / empty | `null` passes the format rule; `""` fails | Fails — the value object requires a value |
+| Failure message | Rule-specific message (e.g. `"Currency must be 3 uppercase letters (A-Z)."`) | The generic `BadRequestException` message (`"The request is invalid."`) |
+| Customization | `WithMessage(...)` | `WithMessage(...)` |
+
+Because value-object rules fail on `null`, they double as required checks. Format rules leave requiredness to `NotNull()` / `NotEmpty()`.
+
+### Where the rules apply
+
+The rules are declared as C# 14 extension members on `IRuleBuilder<T, string>` and constrain `T` to a reference type. They chain onto `RuleFor(x => x.Property)` for any `string`/`string?` property, including nested validators — failures are reported with the full property path.
+
+### Terminology
+
+- **Validator**: a FluentValidation `IValidator<T>` implementation holding the rules for one request type.
+- **Validation failure**: FluentValidation's `ValidationFailure` — property name, message, attempted value, error code.
+- **Format rule**: a rule that checks the shape of a value (e.g. 3 uppercase letters), not its presence or domain validity.
+- **Value-object rule**: a rule that constructs a value object to validate the input, so request and domain rules cannot drift apart.
+
+---
 
 ## 📖 How-To Guides
 
 ### Validate a request and return a 400 payload
 
 ```csharp showLineNumbers
-ValidationFailure[] failures = await ValidationUtilities.ValidateAsync(request, validators, CancellationToken.None);
+ValidationFailure[] failures = await ValidationUtilities.ValidateAsync(
+    request,
+    validators,
+    cancellationToken);
 
 if (failures.Length > 0)
+{
+    // highlight-next-line
     throw ValidationUtilities.CreateValidationErrorResult(failures);
+}
 ```
 
-Throw inside a global exception handler pipeline (or the [`ValidationBehavior`](../Feature/Behaviors/ValidationBehavior) of `RA.Utilities.Feature`, which does exactly this) and clients receive a consistent machine-readable 400 response. See [`ValidationUtilities`](./ValidationUtilities) for the full API.
+Throw inside a global exception handler pipeline, or use the [`ValidationBehavior`](../Feature/Behaviors/ValidationBehavior.md) from `RA.Utilities.Feature`, which performs these steps for every handler. See [`ValidationUtilities`](./ValidationUtilities.md) for the full API.
+
+### Register validators with DI
+
+The utilities are static and do not scan assemblies. Register your validators with FluentValidation and inject them as a collection:
+
+```csharp showLineNumbers
+using FluentValidation;
+using RA.Utilities.Application.Validation.Utilities;
+
+builder.Services.AddValidatorsFromAssemblyContaining<CreatePaymentValidator>();
+
+// In a handler or endpoint
+public sealed class CreatePaymentHandler(IEnumerable<IValidator<CreatePaymentRequest>> validators)
+{
+    public async Task HandleAsync(CreatePaymentRequest request, CancellationToken cancellationToken)
+    {
+        ValidationFailure[] failures = await ValidationUtilities.ValidateAsync(
+            request, validators, cancellationToken);
+
+        if (failures.Length > 0)
+        {
+            throw ValidationUtilities.CreateValidationErrorResult(failures);
+        }
+
+        // ... handle the request
+    }
+}
+```
+
+:::note[FluentValidation DI package]
+
+`AddValidatorsFromAssemblyContaining<T>()` comes from the `FluentValidation.DependencyInjectionExtensions` package, not from this package. Add it alongside `FluentValidation` if you want assembly scanning, or register each `IValidator<T>` manually.
+
+:::
 
 ### Add a currency format rule
 
 ```csharp showLineNumbers
 RuleFor(x => x.Currency).MustMatchesCurrencyFormat();
-// Optional: require the value as well
+
+// Required currency: reject null before checking the shape
 RuleFor(x => x.Currency).NotNull().MustMatchesCurrencyFormat();
 ```
 
-Null values pass the format rule — chain `NotNull()` / `NotEmpty()` when the currency is required. See [`CurrencyValidatorExtensions`](./CurrencyValidatorExtensions) for details.
+`null` passes the format rule; an empty string does not. See [`CurrencyValidatorExtensions`](./CurrencyValidatorExtensions.md) for the full valid/invalid table.
 
 ### Validate through value objects
 
-The `MustBeValid*` rules validate `string?` properties by constructing the matching value object from [`RA.Utilities.Core.ValueObjects`](../../core/RA.Utilities.Core.ValueObjects/index.mdx) behind the scenes — request validation and the domain share one set of rules:
-
 ```csharp showLineNumbers
-public record RegisterUserRequest(string Email, string Currency, string Ssn);
+public sealed record RegisterUserRequest(string Email, string Currency, string Ssn, string Iban);
 
-public class RegisterUserValidator : AbstractValidator<RegisterUserRequest>
+public sealed class RegisterUserValidator : AbstractValidator<RegisterUserRequest>
 {
     public RegisterUserValidator()
     {
@@ -160,42 +253,92 @@ public class RegisterUserValidator : AbstractValidator<RegisterUserRequest>
         RuleFor(x => x.Email).MustBeValidEmail();
         RuleFor(x => x.Currency).MustBeValidCurrency();
         RuleFor(x => x.Ssn).MustBeValidSsn();
+        // highlight-next-line
+        RuleFor(x => x.Iban).MustBeValidIban();
     }
 }
 ```
 
-Because the value object constructors reject `null`, empty, and whitespace input, these rules also fail on missing values — unlike `MustMatchesCurrencyFormat()`, where `null` passes and requiredness is left to `NotNull()` / `NotEmpty()`. The failure message is the generic `BadRequestException` message ("The request is invalid."); chain `WithMessage(...)` if you want a property-specific message. See [`EmailValidatorExtensions`](./EmailValidatorExtensions) and [`SsnValidatorExtensions`](./SsnValidatorExtensions) for details.
+These rules fail on `null`, empty, and whitespace input, and they normalize the value (case, surrounding whitespace, and — for IBAN — grouping separators) exactly as the value object does. See [`IbanValidatorExtensions`](./IbanValidatorExtensions.md) for IBAN-specific behavior.
 
-## 🔗 Dependencies
+### Provide a property-specific failure message
 
--  [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/) (12.1.1)
--  [`RA.Utilities.Core.Exceptions`](../../core/RA.Utilities.Core.Exceptions/index.mdx)
--  [`RA.Utilities.Core.ValueObjects`](../../core/RA.Utilities.Core.ValueObjects/index.mdx) (10.1.0 or later) — the `MustBeValid*` rules construct `Currency`, `Email`, and `SSN` instances to validate input
+Value-object rules report the generic `BadRequestException` message because the value object's specific detail lives in the exception's `Errors` array, not its `Message`. Chain `WithMessage` when the client should see a targeted message:
+
+```csharp showLineNumbers
+RuleFor(x => x.Iban)
+    .MustBeValidIban()
+    .WithMessage("'{PropertyName}' must be a valid IBAN.");
+```
+
+### Validate a nested object
+
+The rules report the full property path, so failures on nested models identify the exact member:
+
+```csharp showLineNumbers
+public sealed class RemittanceValidator : AbstractValidator<RemittanceRequest>
+{
+    public RemittanceValidator()
+    {
+        RuleFor(x => x.Beneficiary).SetValidator(new BeneficiaryValidator());
+    }
+}
+
+// A failure on Beneficiary.Iban reports PropertyName = "Beneficiary.Iban"
+```
+
+### Run validation inside a mediator pipeline
+
+`RA.Utilities.Feature`'s [`ValidationBehavior`](../Feature/Behaviors/ValidationBehavior.md) calls `ValidateAsync` and `CreateValidationErrorResult` for every handler, so the same rules and payloads apply without repeating the orchestration:
+
+```csharp
+services.AddFeature<CreatePayment, Result<PaymentId>, CreatePaymentHandler>()
+    .AddValidator<CreatePaymentValidator>();
+```
+
+See the [`RA.Utilities.Feature` documentation](../Feature/index.mdx) for registration details.
+
+---
 
 ## ⚙️ Configuration
 
-This package has no configuration options. Validators are supplied by the caller (typically injected via your DI container).
+This package has **no configuration options** and no options class. It registers nothing in DI.
 
-<br />
+- **Validators** are supplied by the caller, normally as `IEnumerable<IValidator<TRequest>>` from `AddValidatorsFromAssemblyContaining<T>()`.
+- **Error messages** are customized per rule with FluentValidation's `WithMessage(...)`.
+- **Language / localization** is FluentValidation's concern; configure `ValidatorOptions.Global.LanguageManager` in your application if needed.
 
-## 📚 API Reference
+---
 
-import DocCardList from '@theme/DocCardList';
+## 🔗 Dependencies
+
+| Package | Version | Why |
+|---|---|---|
+| [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/) | 12.1.1 | Rule builders, validators, `ValidationFailure` |
+| [`RA.Utilities.Core.Exceptions`](../../core/RA.Utilities.Core.Exceptions/index.mdx) | 10.1.0+ | `BadRequestException`, `ValidationError` |
+| [`RA.Utilities.Core.ValueObjects`](../../core/RA.Utilities.Core.ValueObjects/index.mdx) | 10.2.0 | `Currency`, `Email`, `SSN`, `IBAN` used by the `MustBeValid*` rules |
+
+---
+
+## ✨ Available Types
 
 <DocCardList />
 
-<br />
+---
 
 ## 🙌 Contributing & Support
 
 ### Found a bug or have a suggestion?
 
-- **GitHub Issues**: [RedonAlla/RA.Utilities/issues](https://github.com/RedonAlla/RA.Utilities/issues)
-- **Discussions**: [RedonAlla/RA.Utilities/discussions](https://github.com/RedonAlla/RA.Utilities/discussions)
+- **GitHub Issues**: [Report a bug or request a feature](https://github.com/RedonAlla/RA.Utilities/issues)
+- **Discussions**: [Ask questions or start a discussion](https://github.com/RedonAlla/RA.Utilities/discussions)
 
 ### Contributing
 
-1. Fork → 2. Branch → 3. Change → 4. PR
+1. **Fork** the [RA.Utilities repository](https://github.com/RedonAlla/RA.Utilities)
+2. **Create a branch** from `main` with a descriptive name (e.g., `feature/add-phone-validator`)
+3. **Make your changes** — new rules need XML doc comments, tests covering valid/invalid/missing input, and a migration note if behavior changes
+4. **Submit a pull request** to the `main` branch with a clear description
 
 ### Links
 
@@ -204,4 +347,4 @@ import DocCardList from '@theme/DocCardList';
 | **NuGet** | [RA.Utilities.Application.Validation](https://www.nuget.org/packages/RA.Utilities.Application.Validation) |
 | **Source** | [GitHub — RedonAlla/RA.Utilities](https://github.com/RedonAlla/RA.Utilities) |
 | **License** | [MIT](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file) |
-| **Build Status** | [GitHub Actions](https://github.com/RedonAlla/RA.Utilities/actions) |
+| **Build Status** | [GitHub Actions](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml) |

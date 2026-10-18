@@ -1,6 +1,6 @@
 ---
 title: ValidationUtilities
-sidebar_position: 4
+sidebar_position: 5
 ---
 
 ```bash
@@ -74,7 +74,7 @@ public static async Task<ValidationFailure[]> ValidateAsync<TRequest>(
 This method handles what happens after validation fails: it converts the raw [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/) output into a standardized application exception.
 
 * It takes the array of `ValidationFailure` objects produced by `ValidateAsync`.
-* It transforms each failure into a [`ValidationError`](../../core/RA.Utilities.Core.Exceptions/BadRequestException.md#validationerror-class) DTO (`PropertyName`, `ErrorMessage`, `AttemptedValue`, `ErrorCode`).
+* It transforms each failure into a [`ValidationError`](../../core/RA.Utilities.Core.Exceptions/ValidationError.md) DTO (`PropertyName`, `ErrorMessage`, `AttemptedValue`, `ErrorCode`).
 * It wraps the structured errors in a [`BadRequestException`](../../core/RA.Utilities.Core.Exceptions/BadRequestException.md) — typically thrown so a global exception handler produces a consistent, machine-readable `HTTP 400 Bad Request` response.
 
 ```csharp showLineNumbers

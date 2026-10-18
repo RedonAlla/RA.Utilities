@@ -70,14 +70,68 @@ foreach (IValidator<MyRequest> validator in validators)
     failures.AddRange((await validator.ValidateAsync(request)).Errors);
 ```
 
+### How do I validate an IBAN?
+
+**Answer**: chain `MustBeValidIban()` on the string property. It constructs the [`IBAN`](../../core/RA.Utilities.Core.ValueObjects/IBAN.md) value object, so structure (13–34 characters) and the ISO 7064 mod-97 checksum are enforced:
+
+```csharp showLineNumbers
+using RA.Utilities.Application.Validation.Extensions;
+
+RuleFor(x => x.Iban).MustBeValidIban();
+```
+
+The rule normalizes casing and grouping separators (`"gb82 west 1234 5698 7654 32"` passes) and **fails on `null`, empty, and whitespace** — it doubles as a required check.
+
+### Why does an IBAN that passes my country-length check still fail?
+
+**Cause**: `MustBeValidIban()` uses the `IBAN` value object, which validates the 13–34 character structural range and the mod-97 checksum. It does **not** consult a per-country length table or the SWIFT registry, and it does not prove the account exists.
+
+**Fix**: validate country-specific rules separately and report `BaseErrorCode.IbanLength`. See [`IbanValidatorExtensions`](./IbanValidatorExtensions.md#what-the-rule-does-not-check).
+
+### Why is the failure message `"The request is invalid."`?
+
+**Cause**: every `MustBeValid*` rule catches the `BadRequestException` thrown by the value object and uses `ex.Message`. The value object stores the specific detail (missing, wrong length, bad format, wrong check digits) in `ex.Errors[0].ErrorMessage`, while `ex.Message` is the generic `BaseResponseMessages.BadRequest`.
+
+**Fix**: chain `WithMessage` for the client-facing text:
+
+```csharp showLineNumbers
+RuleFor(x => x.Iban)
+    .MustBeValidIban()
+    .WithMessage("'{PropertyName}' must be a valid IBAN.");
+```
+
+If you need the specific value-object reason, read it from the caught exception in a custom `Custom` rule instead of using the built-in helper.
+
+### Can I make an IBAN optional?
+
+**Answer**: yes — skip the rule when the value is absent:
+
+```csharp showLineNumbers
+RuleFor(x => x.Iban)
+    .MustBeValidIban()
+    .When(x => !string.IsNullOrWhiteSpace(x.Iban));
+```
+
+This differs from `MustMatchesCurrencyFormat()`, where `null` passes by default and `""` still fails. The `MustBeValid*` rules treat every missing form as invalid.
+
+### Does `MustBeValidIban` work with `ValidateAsync`?
+
+**Answer**: yes. The rule is a FluentValidation `Custom` rule, so it runs for both `Validate` and `ValidateAsync`. IBAN validation itself is synchronous; the rule simply participates in the async pipeline.
+
+---
+
 ## Known Limitations
 
 - **`MustMatchesCurrencyFormat` checks format only** — it does not verify that a code exists in the official ISO 4217 list. Validate membership against a curated list for strict requirements.
 - **Cancellation is cooperative** — `ValidateAsync` requires a `CancellationToken` and forwards it to every validator; validators with async rules honour it, while purely synchronous rules run to completion.
 - **No DI registration helper** — the package deliberately registers nothing; supply `IEnumerable<IValidator<T>>` from your own container.
+- **Value-object rules report generic messages** — `MustBeValidCurrency()`, `MustBeValidEmail()`, `MustBeValidSsn()`, and `MustBeValidIban()` surface `BadRequestException.Message` (`"The request is invalid."`); use `WithMessage(...)` for specific text.
+- **IBAN validation is structural** — `MustBeValidIban()` checks the 13–34 character format and ISO 7064 mod-97 checksum, not per-country lengths, registry membership, or account existence.
+- **`MustMatchesCurrencyFormat()` is shape-only** — it accepts `U5D` and `123`; use `MustBeValidCurrency()` when only real ISO 4217 codes should pass.
 
 ## Performance Tips
 
 - **Validators run in parallel** — group independent rules across validators and let `Task.WhenAll` do the work.
 - **Source-generated regex** — the currency rule's `[GeneratedRegex]` compiles the pattern into your assembly; no runtime regex compilation cost.
 - **Validate once** — reuse the same `ValidationFailure[]` result for both logging and exception creation rather than calling `ValidateAsync` twice.
+- **Value-object rules allocate one value object per property** — the cost is small and buys domain-identical validation; for extremely hot paths, a compiled regex check may be cheaper but duplicates the domain rule.

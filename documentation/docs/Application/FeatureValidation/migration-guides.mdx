@@ -5,6 +5,73 @@ sidebar_class_name: nav_session ra_utilities_validation
 
 # Migration Guides
 
+## v10.1.0 → v10.2.0
+
+This release is **additive**. It adds `MustBeValidIban()` and updates the `RA.Utilities.Core.ValueObjects` dependency to 10.2.0, which introduces the `IBAN` value object. No existing rule, signature, or behavior changed.
+
+### What's new
+
+| Type / rule | Change |
+|---|---|
+| `RA.Utilities.Application.Validation.Extensions.IbanValidatorExtensions` | New |
+| `MustBeValidIban()` | New FluentValidation rule for `string?` IBAN properties |
+| `RA.Utilities.Core.ValueObjects` dependency | Updated to 10.2.0 (adds `IBAN`) |
+| `FluentValidation` dependency | Unchanged (12.1.1) |
+
+### Why this change?
+
+`IBAN` is a new value object in `RA.Utilities.Core.ValueObjects` 10.2.0. The package's other value-object rules already validate through the domain types, so request validation and the domain stay aligned only if an IBAN rule exists too.
+
+`MustBeValidIban()` follows the same design as `MustBeValidCurrency()`, `MustBeValidEmail()`, and `MustBeValidSsn()`:
+
+- It constructs `new IBAN(value)` behind the scenes and fails the rule when the constructor throws.
+- It normalizes casing and grouping separators, and enforces the 13–34 character structure plus the ISO 7064 mod-97 checksum.
+- It fails on `null`, empty, and whitespace input, so the rule doubles as a required check.
+- It reports the generic `BadRequestException` message (`"The request is invalid."`); use `WithMessage(...)` for a property-specific message.
+
+### Migration steps
+
+#### 1. Upgrade the package
+
+```bash
+dotnet add package RA.Utilities.Application.Validation --version 10.2.0
+```
+
+#### 2. Add the rule where IBANs are accepted
+
+```csharp showLineNumbers
+using RA.Utilities.Application.Validation.Extensions;
+
+public sealed class CreatePaymentValidator : AbstractValidator<CreatePaymentRequest>
+{
+    public CreatePaymentValidator()
+    {
+        // highlight-next-line
+        RuleFor(x => x.Iban).MustBeValidIban();
+    }
+}
+```
+
+#### 3. Decide whether the IBAN is required
+
+The rule fails on missing values. If the field is optional, apply a condition:
+
+```csharp showLineNumbers
+RuleFor(x => x.Iban)
+    .MustBeValidIban()
+    .When(x => !string.IsNullOrWhiteSpace(x.Iban));
+```
+
+#### 4. Keep country-length checks separate
+
+The rule validates structure and the checksum, not the length required by each country's registry. If your domain needs that, validate it separately and report `BaseErrorCode.IbanLength` — see [`IbanValidatorExtensions`](./IbanValidatorExtensions.md#what-the-rule-does-not-check).
+
+### Breaking changes
+
+None. Existing rules and `ValidationUtilities` signatures are unchanged.
+
+---
+
 ## v10.0.1 → v10.1.0
 
 ### Breaking Change: `ValidateAsync` now requires a `CancellationToken`

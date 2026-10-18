@@ -1,5 +1,45 @@
 # Release Notes
 
+## Version 10.2.0
+
+![Date Badge](https://img.shields.io/badge/Publish-18%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.2.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Application.Validation/10.2.0)
+
+Feature release: adds `MustBeValidIban()` so request validation can validate IBANs through the new `IBAN` value object, keeping the package's rule set aligned with `RA.Utilities.Core.ValueObjects` 10.2.0.
+
+### ✨ New Features
+
+*   **`MustBeValidIban()`** (in `RA.Utilities.Application.Validation.Extensions`): a `Custom` rule for `string?` properties that constructs `new IBAN(value)` behind the scenes. It enforces the 13–34 character structure and the ISO 7064 mod-97 checksum, normalizes casing and grouping separators (`"gb82 west 1234 5698 7654 32"` passes), and fails on `null`, empty, and whitespace input.
+*   Because it validates through the value object, request validation and the domain share one IBAN rule — no duplicate format logic in validators.
+
+```csharp
+public sealed class CreatePaymentValidator : AbstractValidator<CreatePaymentRequest>
+{
+    public CreatePaymentValidator()
+    {
+        RuleFor(x => x.Iban).MustBeValidIban();
+    }
+}
+```
+
+### 📝 Notes
+
+*   The failure message is the generic `BadRequestException` message (`"The request is invalid."`), like the other `MustBeValid*` rules; chain `WithMessage(...)` for a property-specific message.
+*   The rule does not check per-country lengths or SWIFT registry membership. Validate country-specific lengths separately and report `BaseErrorCode.IbanLength` when your domain requires it.
+*   Make the field optional with `.When(x => !string.IsNullOrWhiteSpace(x.Iban))`; the rule otherwise doubles as a required check.
+
+### 📦 Dependencies
+
+*   `RA.Utilities.Core.ValueObjects` **10.2.0** — adds `IBAN`.
+*   `FluentValidation` **12.1.1** (unchanged).
+*   `RA.Utilities.Core.Exceptions` (unchanged).
+
+### ⚠️ Breaking Changes
+
+None. Existing rules and `ValidationUtilities` signatures are unchanged.
+
+---
+
 ## Version 10.1.0
 
 ![Date Badge](https://img.shields.io/badge/Publish-11%20October%202026-lightblue?logo=fastly&logoColor=white)
