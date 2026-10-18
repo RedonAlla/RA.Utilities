@@ -1,24 +1,35 @@
 # Release Notes for RA.Utilities.OpenApi
 
-## Version 10.1.1
-![Date Badge](https://img.shields.io/badge/Publish-17%20October%202026-lightblue?logo=fastly&logoColor=white)
-[![NuGet version](https://img.shields.io/badge/NuGet-10.1.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.OpenApi/10.1.1)
+## Version 10.2.0
+![Date Badge](https://img.shields.io/badge/Publish-18%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.2.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.OpenApi/10.2.0)
+
+### ✨ New Features
+
+* **Added `ValueObjectSchemaTransformer`**: Documents the validation constraints enforced by the value objects from `RA.Utilities.Core.ValueObjects`, which the OpenAPI generator cannot infer from their validating constructors.
+    * `Email` — `string`, `format: email`, pattern, `minLength: 1`, `maxLength: 254`.
+    * `Currency` — `string`, pattern, `minLength: 3`, `maxLength: 3`.
+    * `SSN` — `string`, pattern, `minLength: 10`, `maxLength: 10`.
+    * `IBAN` — `string`, `format: iban`, pattern, `minLength: 13`, `maxLength: 34`.
+    * `Money` — object description and example.
+    * Every schema also receives a description and an example value.
+* **Added `AddValueObjectSchemaTransformer()`** for registering the transformer standalone.
+* **`DocumentInfoTransformer` now populates `Summary`**: `OpenApiInfoSettings.Summary` is applied to `document.Info.Summary`. Previously the setting was ignored and the document summary stayed unset.
+
+### 📝 Improvements
+
+* **`AddDefaultsDocumentTransformer()` now registers the value object schema transformer**, so APIs using the default setup document their value objects automatically.
+* **Added a dependency on `RA.Utilities.Core.ValueObjects` 10.2.0.**
+* **Response model dependency updated**: the package now references `RA.Utilities.Api.Response` 10.1.0, whose models moved from the `RA.Utilities.Api.Results` namespace to `RA.Utilities.Api.Response`. `DefaultResponsesOperationTransformer` resolves `ErrorResponse` from the new namespace. The OpenApi public API is unchanged; update `using` directives only if your custom transformers reference those models.
 
 ### ⚠️ Breaking Change
 
 * **`DependencyInjectionExtensions` renamed to `OpenApiOptionsExtensions`**: the static class holding all registration extension methods was renamed, and its methods are now declared as C# 14 extension members on `OpenApiOptions`. The namespace (`RA.Utilities.OpenApi.Extensions`), method names, signatures, and extension-method call sites are unchanged — only class-name references break (`typeof(DependencyInjectionExtensions)`, static calls, reflection).
 
-### ✨ New Features
+### 📝 Notes
 
-* **`DocumentInfoTransformer` now populates `Summary`**: `OpenApiInfoSettings.Summary` is applied to `document.Info.Summary`. Previously the setting was ignored and the document summary stayed unset.
-
-### 📝 Improvements
-
-* **Response model dependency updated**: the package now references `RA.Utilities.Api.Response` 10.1.0, whose models moved from the `RA.Utilities.Api.Results` namespace to `RA.Utilities.Api.Response`. `DefaultResponsesOperationTransformer` resolves `ErrorResponse` from the new namespace. The OpenApi public API is unchanged; update `using` directives only if your custom transformers reference those models.
-
-### ⚠️ Known Issue
-
-* `AddHealthChecksDocumentTransformer(IDictionary<string, string> tags)` still registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and the `tags` argument is ignored. Use `AddDefaultsDocumentTransformer()` to document the health check endpoints until this is corrected.
+* The transformer is idempotent, so registering it both through `AddDefaultsDocumentTransformer()` and `AddValueObjectSchemaTransformer()` is safe.
+* The release is backward compatible; existing OpenAPI output is unchanged except for the enriched value object schemas.
 
 ## Version 10.1.0
 ![Date Badge](https://img.shields.io/badge/Publish-11%20October%202026-lightblue?logo=fastly&logoColor=white)

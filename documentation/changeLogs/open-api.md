@@ -1,32 +1,44 @@
 ---
 title: RA.Utilities.OpenApi
 authors: [RedonAlla]
-date: 2026-10-17
+date: 2026-10-18
 ---
 
-## Version 10.1.1
-![Date Badge](https://img.shields.io/badge/Publish-17%20October%202026-lightblue?logo=fastly&logoColor=white)
-[![NuGet version](https://img.shields.io/badge/NuGet-10.1.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.OpenApi/10.1.1)
+## Version 10.2.0
+![Date Badge](https://img.shields.io/badge/Publish-18%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.2.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.OpenApi/10.2.0)
+
+The new `ValueObjectSchemaTransformer` documents the validation constraints of the value objects from `RA.Utilities.Core.ValueObjects`, and `AddDefaultsDocumentTransformer()` now registers it automatically.
+
+<!-- truncate -->
 
 `DocumentInfoTransformer` now populates the document `Summary`, and the registration extension class is renamed to `OpenApiOptionsExtensions` with its methods refactored to C# 14 extension members.
 
-<!-- truncate -->
+### ✨ New Features
+
+* **Added `ValueObjectSchemaTransformer`**: The OpenAPI generator cannot see the validation performed by a value object's constructor, so `Email`, `Currency`, `SSN`, and `IBAN` were emitted as property-less objects. The transformer now documents their constraints:
+    * `Email` — `string`, `format: email`, pattern, `minLength: 1`, `maxLength: 254`.
+    * `Currency` — `string`, pattern, `minLength: 3`, `maxLength: 3`.
+    * `SSN` — `string`, pattern, `minLength: 10`, `maxLength: 10`.
+    * `IBAN` — `string`, `format: iban`, pattern, `minLength: 13`, `maxLength: 34`.
+    * `Money` — object description and example.
+    * Every schema also receives a description and an example value.
+* **Added `AddValueObjectSchemaTransformer()`** for registering the transformer standalone.
 
 ### ⚠️ Breaking Change
 
 * **`DependencyInjectionExtensions` renamed to `OpenApiOptionsExtensions`**: the static class holding all registration extension methods was renamed, and its methods are now declared as C# 14 extension members on `OpenApiOptions`. The namespace (`RA.Utilities.OpenApi.Extensions`), method names, signatures, and extension-method call sites are unchanged — only class-name references break (`typeof(DependencyInjectionExtensions)`, static calls, reflection).
 
-### ✨ New Features
-
-* **`DocumentInfoTransformer` now populates `Summary`**: `OpenApiInfoSettings.Summary` is applied to `document.Info.Summary`. Previously the setting was ignored and the document summary stayed unset.
-
 ### 📝 Improvements
 
+* **`AddDefaultsDocumentTransformer()` now includes the value object schema transformer**, so the default setup documents value objects without additional configuration.
+* **Added a dependency on `RA.Utilities.Core.ValueObjects` 10.2.0.**
 * **Response model dependency updated**: the package now references `RA.Utilities.Api.Response` 10.1.0, whose models moved from the `RA.Utilities.Api.Results` namespace to `RA.Utilities.Api.Response`. `DefaultResponsesOperationTransformer` resolves `ErrorResponse` from the new namespace. The OpenApi public API is unchanged; update `using` directives only if your custom transformers reference those models.
 
-### ⚠️ Known Issue
+### 📝 Notes
 
-* `AddHealthChecksDocumentTransformer(IDictionary<string, string> tags)` still registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and the `tags` argument is ignored. Use `AddDefaultsDocumentTransformer()` to document the health check endpoints until this is corrected.
+* The transformer is idempotent and is safe to register more than once.
+* The release is backward compatible; existing OpenAPI output is unchanged except for the enriched value object schemas.
 
 ---
 

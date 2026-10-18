@@ -24,6 +24,7 @@ This is the recommended starting point. It registers a sensible default set of d
 *   **`BearerSecurityDocumentTransformer`**: Automatically adds the "Authorize" button and JWT security scheme if Bearer authentication is detected.
 *   **`HeadersParameterTransformer`**: Adds common request and response headers (like `x-request-id`) to all API operations based on configuration.
 *   **`HealthChecksDocumentTransformer`**: Documents the `GET /health` (JSON health report) and `GET /alive` (plain-text liveness) endpoints and adds the `Health` tag, without applying the Bearer security scheme to them.
+*   **`ValueObjectSchemaTransformer`**: Documents the constraints of the value objects from `RA.Utilities.Core.ValueObjects` (`Email`, `Currency`, `SSN`, `IBAN`, and `Money`).
 
 #### Usage
 ```csharp
@@ -46,6 +47,21 @@ This extension registers the [`FluentValidationSchemaTransformer`](../SchemaTran
 builder.Services.AddOpenApi(options =>
 {
     options.AddFluentValidationRules();
+});
+```
+
+---
+
+### `AddValueObjectSchemaTransformer()`
+
+This extension registers the [`ValueObjectSchemaTransformer`](../SchemaTransformers/ValueObjectSchemaTransformer.md), which documents the validation constraints enforced by the value objects from `RA.Utilities.Core.ValueObjects`. It is registered automatically by [`AddDefaultsDocumentTransformer()`](#adddefaultsdocumenttransformer); call it directly when you register schema transformers individually.
+
+#### Usage
+```csharp
+// In Program.cs
+builder.Services.AddOpenApi(options =>
+{
+    options.AddValueObjectSchemaTransformer();
 });
 ```
 
@@ -133,7 +149,7 @@ builder.Services.AddOpenApi(options =>
 
 This extension is intended to register the [`HealthChecksDocumentTransformer`](../DocumentTransformers/HealthChecksDocumentTransformer.md), which documents the health check endpoints in the OpenAPI document.
 
-:::caution[v10.1.0, still present in v10.1.1]
+:::caution[v10.1.0, still present in v10.2.0]
 As implemented, this method registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and the `tags` argument is not used. Use [`AddDefaultsDocumentTransformer()`](#adddefaultsdocumenttransformer) to document health check endpoints until this is corrected.
 :::
 

@@ -26,8 +26,13 @@ public static class OpenApiOptionsExtensions
         ///         <item><description><see cref="DocumentInfoTransformer"/>: Populates document info from configuration.</description></item>
         ///         <item><description><see cref="BearerSecurityDocumentTransformer"/>: Adds a Bearer token security scheme if JWT authentication is present.</description></item>
         ///         <item><description><see cref="HeadersParameterTransformer"/>: Adds configured request and response headers to all operations.</description></item>
+        ///         <item><description><see cref="HealthChecksDocumentTransformer"/>: Documents the health check endpoints.</description></item>
         ///       </list>
         ///     </description>
+        ///   </item>
+        ///   <item>
+        ///     <description>Adds the <see cref="ValueObjectSchemaTransformer"/>, which documents the validation
+        ///     constraints of the value objects from <c>RA.Utilities.Core.ValueObjects</c>.</description>
         ///   </item>
         /// </list>
         /// See the package README for details on configuring <c>appsettings.json</c>.
@@ -40,8 +45,28 @@ public static class OpenApiOptionsExtensions
             options.AddDocumentTransformer<BearerSecurityDocumentTransformer>();
             options.AddDocumentTransformer<HeadersParameterTransformer>();
             options.AddDocumentTransformer<HealthChecksDocumentTransformer>();
+            options.AddSchemaTransformer<ValueObjectSchemaTransformer>();
             return options;
         }
+
+        /// <summary>
+        /// Adds a schema transformer that documents the validation constraints of the value objects
+        /// from <c>RA.Utilities.Core.ValueObjects</c>.
+        /// </summary>
+        /// <remarks>
+        /// The transformer adds the constraints enforced by each value object to its OpenAPI schema:
+        /// <list type="bullet">
+        ///   <item><description><c>Email</c>: string, <c>format: email</c>, pattern, maximum length 254.</description></item>
+        ///   <item><description><c>Currency</c>: string, pattern, minimum and maximum length 3.</description></item>
+        ///   <item><description><c>SSN</c>: string, pattern, minimum and maximum length 10.</description></item>
+        ///   <item><description><c>IBAN</c>: string, <c>format: iban</c>, pattern, minimum length 13 and maximum length 34.</description></item>
+        ///   <item><description><c>Money</c>: object description and example.</description></item>
+        /// </list>
+        /// <see cref="AddDefaultsDocumentTransformer"/> registers this transformer automatically.
+        /// </remarks>
+        /// <returns>The configured <see cref="OpenApiOptions"/>.</returns>
+        public OpenApiOptions AddValueObjectSchemaTransformer() =>
+            options.AddSchemaTransformer<ValueObjectSchemaTransformer>();
 
         /// <summary>
         /// Adds schema transformers that incorporate FluentValidation rules into the OpenAPI document.
@@ -116,6 +141,6 @@ public static class OpenApiOptionsExtensions
         /// <param name="tags">The tags to associate with health check endpoints.</param>
         /// <returns>The configured <see cref="OpenApiOptions"/> for chaining.</returns>
         public OpenApiOptions AddHealthChecksDocumentTransformer(IDictionary<string, string> tags) =>
-            options.AddDocumentTransformer<HeadersParameterTransformer>();
+            options.AddDocumentTransformer<HealthChecksDocumentTransformer>();
     }
 }

@@ -46,7 +46,7 @@ The primary goals are:
 
 - **Document Transformers** — 6 transformers: `DocumentInfo`, `BearerSecurity`, `HeadersParameter`, `HealthChecks`, `Polymorphism`, `TagOperation`, plus a combined `AddDefaultsDocumentTransformer()` convenience method
 - **Operation Transformers** — `DefaultResponsesOperationTransformer` adds standardized 500 error responses
-- **Schema Transformers** — `FluentValidationSchemaTransformer` enriches schemas from validators, `EnumXmlSchemaTransformer` appends XML doc descriptions
+- **Schema Transformers** — `FluentValidationSchemaTransformer` enriches schemas from validators, `ValueObjectSchemaTransformer` documents the constraints of the value objects, `EnumXmlSchemaTransformer` appends XML doc descriptions
 - **Configuration-driven** — `OpenApiInfoSettings` and `HeadersParameterSettings` bind from `appsettings.json`
 - **Utility helpers** — `OpenApiOperationUtilities` for programmatically adding request/response examples
 
@@ -76,7 +76,7 @@ Install-Package RA.Utilities.OpenApi
 **PackageReference (csproj)**
 
 ```xml
-<PackageReference Include="RA.Utilities.OpenApi" Version="10.1.1" />
+<PackageReference Include="RA.Utilities.OpenApi" Version="10.2.0" />
 ```
 
 ### Hello World
@@ -122,7 +122,7 @@ The package provides three kinds of transformers, matching the ASP.NET Core Open
 |---|---|---|---|
 | **Document Transformer** | `IOpenApiDocumentTransformer` | Entire OpenAPI document | Info population, security schemes, header injection, polymorphism |
 | **Operation Transformer** | `IOpenApiOperationTransformer` | Individual API operations | Default error responses |
-| **Schema Transformer** | `IOpenApiSchemaTransformer` | Individual schema objects | FluentValidation rules, enum descriptions |
+| **Schema Transformer** | `IOpenApiSchemaTransformer` | Individual schema objects | FluentValidation rules, value object constraints, enum descriptions |
 
 ### Configuration flow
 
@@ -138,6 +138,9 @@ OpenApiHeaders       ────────────►  HeadersParameterTr
 
 (FluentValidation     ────────────► FluentValidationSchemaTransformer
   validators in DI)                   enriches schema properties
+
+(RA.Utilities.Core    ────────────►  ValueObjectSchemaTransformer
+  value objects)                      adds types, patterns, and lengths
 
 (XML doc comments)   ────────────►  EnumXmlSchemaTransformer
                                       appends enum value tables
@@ -155,10 +158,15 @@ In v10.1.1 the extension class was renamed from `DependencyInjectionExtensions` 
 This release references `RA.Utilities.Api.Response` 10.1.0, which moved its response models from `RA.Utilities.Api.Results` to the `RA.Utilities.Api.Response` namespace. The OpenApi public API is unchanged; update `using` directives only if your custom transformers or examples reference those models directly.
 :::
 
+:::note[v10.2.0 dependency]
+This release adds a dependency on `RA.Utilities.Core.ValueObjects` 10.2.0 for the value object schema definitions. `AddDefaultsDocumentTransformer()` registers the new `ValueObjectSchemaTransformer` automatically.
+:::
+
 | Method | Registers |
 |---|---|
-| `AddDefaultsDocumentTransformer()` | `DocumentInfo` + `BearerSecurity` + `HeadersParameter` + `HealthChecks` document transformers |
+| `AddDefaultsDocumentTransformer()` | `DocumentInfo` + `BearerSecurity` + `HeadersParameter` + `HealthChecks` document transformers, plus the `ValueObjectSchemaTransformer` |
 | `AddFluentValidationRules()` | `FluentValidationSchemaTransformer` |
+| `AddValueObjectSchemaTransformer()` | `ValueObjectSchemaTransformer` |
 | `AddEnumXmlDescriptionTransformer(path)` | `EnumXmlSchemaTransformer` |
 | `AddDefaultResponsesOperationTransformer()` | `DefaultResponsesOperationTransformer` |
 | `AddDocumentInfoTransformer()` | `DocumentInfoTransformer` individually |
@@ -168,7 +176,7 @@ This release references `RA.Utilities.Api.Response` 10.1.0, which moved its resp
 | `AddTagOperationTransformer(tags)` | `TagOperationTransformer` |
 | `AddHealthChecksDocumentTransformer(tags)` | ⚠️ Currently registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer` — see the caution below |
 
-:::caution[v10.1.0, still present in v10.1.1]
+:::caution[v10.1.0, still present in v10.2.0]
 `AddHealthChecksDocumentTransformer(tags)` currently registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and the `tags` argument is ignored. Use `AddDefaultsDocumentTransformer()` to document health check endpoints until this is corrected.
 :::
 
@@ -251,6 +259,17 @@ builder.Services.AddOpenApi(options =>
 ```
 
 Requires FluentValidation validators to be registered in DI. Supported rules: `NotNull`/`NotEmpty` (required), `Length` (minLength/maxLength), `Matches` (pattern), `GreaterThan`/`LessThan` (minimum/maximum), `InclusiveBetween`/`ExclusiveBetween`, `EmailAddress`, `CreditCard`.
+
+### Document value object constraints
+
+```csharp
+builder.Services.AddOpenApi(options =>
+{
+    options.AddValueObjectSchemaTransformer();
+});
+```
+
+Adds the `type`, `format`, `pattern`, `minLength`, and `maxLength` enforced by `Email`, `Currency`, `SSN`, and `IBAN`, plus a description and example to `Money`. `AddDefaultsDocumentTransformer()` registers this transformer automatically.
 
 ### Add enum value descriptions from XML comments
 

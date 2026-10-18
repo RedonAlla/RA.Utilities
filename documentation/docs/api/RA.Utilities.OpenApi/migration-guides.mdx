@@ -4,6 +4,38 @@ title: Migration Guides
 
 # Migration Guides
 
+## v10.1.1 → v10.2.0
+
+### No breaking changes
+
+This release is additive. `ValueObjectSchemaTransformer` documents the constraints of the value objects from `RA.Utilities.Core.ValueObjects`, and `AddDefaultsDocumentTransformer()` registers it automatically.
+
+Existing OpenAPI output is unchanged except for the enriched component schemas and parameter schemas for `Email`, `Currency`, `SSN`, `IBAN`, and `Money`. If you register transformers individually, add the transformer explicitly:
+
+```csharp
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDefaultsDocumentTransformer(); // already includes the value object schemas
+});
+```
+
+or:
+
+```csharp
+builder.Services.AddOpenApi(options =>
+{
+    options.AddValueObjectSchemaTransformer();
+});
+```
+
+The package now depends on `RA.Utilities.Core.ValueObjects` 10.2.0. No source changes are required.
+
+### Known issue (unchanged)
+
+`AddHealthChecksDocumentTransformer(IDictionary<string, string> tags)` still registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and the `tags` argument is ignored. Use `AddDefaultsDocumentTransformer()` until this is corrected.
+
+---
+
 ## v10.1.0 → v10.1.1
 
 ### Breaking Change: `DependencyInjectionExtensions` renamed to `OpenApiOptionsExtensions`

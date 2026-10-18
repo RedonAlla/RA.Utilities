@@ -10,8 +10,6 @@ A utility library to enhance and customize OpenAPI (Swagger) documentation in AS
 
 This package provides a collection of `IOpenApiDocumentTransformer` implementations to automate common modifications to your generated OpenAPI specification. Instead of manually annotating every endpoint with attributes for common headers or security schemes, you can apply these transformations globally.
 
-> **v10.1.1 note**: The registration extension class was renamed to `OpenApiOptionsExtensions` (call sites are unchanged), `DocumentInfoTransformer` now populates `Summary`, and the package depends on `RA.Utilities.Api.Response` 10.1.0 with its new `RA.Utilities.Api.Response` namespace.
-
 The primary goals are to:
 - **Reduce Boilerplate**: Automatically add common parameters (like correlation IDs) to all API operations.
 - **Enforce Consistency**: Ensure that all endpoints consistently document required headers and responses.
@@ -32,6 +30,7 @@ The primary goals are to:
   - [`DefaultResponsesOperationTransformer`](#defaultresponsesoperationtransformer)
 - [Schema Transformers](#schema-transformers)
   - [`FluentValidationSchemaTransformer`](#fluentvalidationschematransformer)
+  - [`ValueObjectSchemaTransformer`](#valueobjectschematransformer)
   - [`EnumXmlSchemaTransformer`](#enumxmlschematransformer)
 - [Utilities](#utilities)
   - [`OpenApiOperationUtilities`](#openapioperationutilities)
@@ -103,7 +102,7 @@ This document transformer adds your service's health check endpoints to the Open
 
 It is registered automatically by `AddDefaultsDocumentTransformer()`.
 
-> ⚠️ **Known issue (v10.1.0, still present in v10.1.1)**: The standalone `AddHealthChecksDocumentTransformer(IDictionary<string, string> tags)` extension method currently registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and the `tags` argument is ignored. Use `AddDefaultsDocumentTransformer()` until this is corrected.
+> ⚠️ **Known issue (v10.1.0, still present in v10.2.0)**: The standalone `AddHealthChecksDocumentTransformer(IDictionary<string, string> tags)` extension method currently registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and the `tags` argument is ignored. Use `AddDefaultsDocumentTransformer()` until this is corrected.
 
 ---
 
@@ -172,6 +171,27 @@ This transformer enriches your OpenAPI schema by applying constraints from your 
 builder.Services.AddOpenApi(options =>
 {
     options.AddFluentValidationRules();
+});
+```
+
+### `ValueObjectSchemaTransformer`
+
+Documents the constraints enforced by the value objects from [`RA.Utilities.Core.ValueObjects`](https://www.nuget.org/packages/RA.Utilities.Core.ValueObjects) directly in the generated schema. The OpenAPI generator cannot see the validation performed by a value object's constructor, so without this transformer `Email`, `Currency`, `SSN`, and `IBAN` appear as property-less objects.
+
+| Value object | Documented schema |
+| ------------ | ----------------- |
+| `Email` | `string`, `format: email`, pattern, `minLength: 1`, `maxLength: 254` |
+| `Currency` | `string`, pattern, `minLength: 3`, `maxLength: 3` |
+| `SSN` | `string`, pattern, `minLength: 10`, `maxLength: 10` |
+| `IBAN` | `string`, `format: iban`, pattern, `minLength: 13`, `maxLength: 34` |
+| `Money` | `object` description and example |
+
+Each schema also receives a description and an example value. The transformer is idempotent and is registered automatically by `AddDefaultsDocumentTransformer()`. When registering transformers individually, add it explicitly:
+
+```csharp
+builder.Services.AddOpenApi(options =>
+{
+    options.AddValueObjectSchemaTransformer();
 });
 ```
 
@@ -304,6 +324,7 @@ Represents a single header to be added to the OpenAPI specification.
 -   [`Microsoft.AspNetCore.OpenApi`](https://www.nuget.org/packages/Microsoft.AspNetCore.OpenApi)
 -   [`RA.Utilities.Api`](https://redonalla.github.io/RA.Utilities/nuget-packages/api/RA.Utilities.Api/)
 -   [`RA.Utilities.Api.Response`](https://redonalla.github.io/RA.Utilities/nuget-packages/api/RA.Utilities.Api.Response/)
+-   [`RA.Utilities.Core.ValueObjects`](https://redonalla.github.io/RA.Utilities/nuget-packages/core/RA.Utilities.Core.ValueObjects/)
 
 
 ## Usage
@@ -327,7 +348,8 @@ builder.Services.Configure<HeadersParameterSettings>(builder.Configuration.GetSe
 // 2. Add OpenAPI services and register the transformers.
 builder.Services.AddOpenApi(options =>
 {
-    // Default transformers (DocumentInfo, BearerSecurity, Headers, HealthChecks).
+    // Default transformers (DocumentInfo, BearerSecurity, Headers, HealthChecks) and the
+    // value object schema definitions.
     options.AddDefaultsDocumentTransformer();
 
     // 3. Register operation transformers for more granular control.

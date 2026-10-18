@@ -20,6 +20,10 @@ Based on the files, this namespace contains the following key transformers:
 ### [`FluentValidationSchemaTransformer`](./FluentValidationSchemaTransformer.md)
 This is a highly useful transformer that bridges the gap between your business logic's validation rules and your API documentation.
 
+### [`ValueObjectSchemaTransformer`](./ValueObjectSchemaTransformer.md)
+This transformer documents the validation constraints enforced by the value objects from `RA.Utilities.Core.ValueObjects`.
+It replaces the property-less schemas the OpenAPI generator produces for `Email`, `Currency`, `SSN`, and `IBAN` with string schemas that carry their `format`, `pattern`, `minLength`, and `maxLength`, and adds a description and example to `Money`.
+
 ### [`EnumXmlSchemaTransformer`](./EnumXmlSchemaTransformer.md)
 This transformer addresses a common pain point with enums in API documentation: making their values understandable.
 Its goal is to read the XML documentation comments you've written for your C# `enum` members and append them directly to the enum's schema description in the OpenAPI document.

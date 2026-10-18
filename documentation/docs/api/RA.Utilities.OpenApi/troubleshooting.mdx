@@ -50,7 +50,7 @@ using RA.Utilities.Api.Response;
 
 ### `AddHealthChecksDocumentTransformer(tags)` doesn't add the health check endpoints
 
-**Cause**: Known bug in v10.1.0 and v10.1.1 — the method registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and ignores `tags`.
+**Cause**: Known bug in v10.1.0 through v10.2.0 — the method registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and ignores `tags`.
 
 **Fix**: Register the default pipeline instead:
 
@@ -126,6 +126,19 @@ builder.Services.AddOpenApi(options =>
 ```
 
 The transformer resolves `IValidator<T>` from DI for each schema type. If the validator isn't registered, the schema is left unchanged.
+
+### Value objects have no type, pattern, or length in the schema
+
+**Cause**: `ValueObjectSchemaTransformer` isn't registered. The OpenAPI generator cannot see the validation performed by the value object constructors, so it emits `Email`, `Currency`, `SSN`, and `IBAN` as property-less objects.
+
+**Fix**: Register the default pipeline or the transformer explicitly:
+
+```csharp
+builder.Services.AddOpenApi(options =>
+    options.AddValueObjectSchemaTransformer());
+```
+
+`AddDefaultsDocumentTransformer()` already registers it. Once registered, `Email`, `Currency`, `SSN`, and `IBAN` become string schemas with `format`, `pattern`, `minLength`, and `maxLength`, and `Money` gets a description and example. The transformer also covers route, query, and header parameters.
 
 ### Enum descriptions aren't appearing
 
