@@ -1,10 +1,81 @@
 ---
 title: Migration Guides
-sidebar_position: 7
+sidebar_position: 8
 sidebar_class_name: nav_session ra_utilities_data_ef
 ---
 
 # Migration Guides
+
+## v10.1.0 → v10.2.0
+
+This release is **additive**. It adds `IbanConverter` so the `IBAN` value object introduced in `RA.Utilities.Core.ValueObjects` 10.2.0 can be persisted like the other value objects. No existing type, method signature, or registration changed.
+
+### What's new
+
+| Type | Change |
+|---|---|
+| `RA.Utilities.Data.EntityFramework.Conventions.IbanConverter` | New `ValueConverter<IBAN, string>` |
+| `RA.Utilities.Core.ValueObjects` dependency | Updated to 10.2.0 (adds `IBAN`) |
+| `RA.Utilities.Data.Abstractions` dependency | Updated to 10.0.5 |
+| `RA.Utilities.Data.Entities` | 10.1.2 (transitive) |
+
+### Why this change?
+
+`IBAN` is a new value object in `RA.Utilities.Core.ValueObjects` 10.2.0. EF Core cannot map a custom type without a converter, so the package now ships `IbanConverter` alongside `EmailConverter`, `CurrencyConverter`, `SsnConverter`, and `MoneyConverter`.
+
+The converter writes the normalized value (`GB82WEST12345698765432`) and reads through `new IBAN(value)`, so structural and ISO 7064 check-digit validation run on materialization exactly as they do for the other string-backed value objects.
+
+### Migration steps
+
+#### 1. Upgrade both packages
+
+```bash
+dotnet add package RA.Utilities.Data.EntityFramework --version 10.2.0
+dotnet add package RA.Utilities.Core.ValueObjects --version 10.2.0
+```
+
+#### 2. Configure `IBAN` properties
+
+Per property:
+
+```csharp showLineNumbers
+using RA.Utilities.Data.EntityFramework.Conventions;
+
+// highlight-next-line
+builder.Property(c => c.Iban).HasConversion(new IbanConverter());
+```
+
+Or model-wide:
+
+```csharp showLineNumbers
+protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+{
+    // highlight-next-line
+    configurationBuilder.Properties<IBAN>().HaveConversion<IbanConverter>();
+}
+```
+
+#### 3. Size the column
+
+An IBAN is at most 34 characters. Configure an appropriate maximum length (and uniqueness, if the account must be unique) rather than relying on the provider default:
+
+```csharp showLineNumbers
+builder.Property(c => c.Iban)
+    .HasConversion(new IbanConverter())
+    .HasMaxLength(34);
+```
+
+:::warning[Existing data]
+
+The converter validates on read. If a column already contains values that are not valid IBANs (wrong checksum, malformed structure), materializing those rows throws `BadRequestException`. Clean the data or migrate it before enabling the converter.
+
+:::
+
+### Breaking changes
+
+None. `IbanConverter` is new, and the dependency update does not change existing behavior.
+
+---
 
 ## v10.0.2 → v10.1.0
 

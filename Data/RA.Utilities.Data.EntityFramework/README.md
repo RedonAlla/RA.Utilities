@@ -6,15 +6,15 @@
 [![Documentation](https://img.shields.io/badge/Documentation-read-brightgreen.svg?logo=readthedocs&logoColor=fff)](https://redonalla.github.io/RA.Utilities/nuget-packages/Data/EntityFramework/)
 [![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
 
-This package provides concrete implementations of the repository and unit of work patterns for Entity Framework Core, based on the abstractions from `RA.Utilities.Data.Abstractions`. It's designed to accelerate the setup of a data access layer in a clean, testable, and maintainable way. It also maps the value objects from `RA.Utilities.Core.ValueObjects` (such as `Money`) to database columns.
+This package provides concrete implementations of the repository and unit of work patterns for Entity Framework Core, based on the abstractions from `RA.Utilities.Data.Abstractions`. It's designed to accelerate the setup of a data access layer in a clean, testable, and maintainable way. It also maps the value objects from `RA.Utilities.Core.ValueObjects` (`Email`, `Currency`, `SSN`, `IBAN`, `Money`) to database columns.
 
 ## ✨ Key Features
 * **Generic Repository Implementations**: Provides ready-to-use base classes for repository patterns, saving you from writing boilerplate CRUD (Create, Read, Update, Delete) code.
 * **Command Query Separation (CQS)**: Offers distinct `ReadRepositoryBase<T, TKey>` and `WriteRepositoryBase<T, TKey>` classes to help you build a clean architecture where read and write operations are separated.
-* **Performance-Optimized Queries**: The `ReadRepositoryBase<T, TKey>` uses `AsNoTracking()` by default for more efficient data retrieval.
+* **Performance-Optimized Queries**: `ReadRepositoryBase<T, TKey>.ListAsync` uses `AsNoTracking()` for more efficient data retrieval.
 * **Automatic Timestamping**: Includes a `BaseEntitySaveChangesInterceptor` that automatically sets the `CreatedAt` and `LastModifiedAt` properties on entities that expose them (the `BaseEntity<TKey>` and `WriteEntity<TKey>` base classes) when they are saved.
 * **Simplified Dependency Injection**: Provides extension methods to register your repositories with a single line of code in `Program.cs`.
-* **Value Object Mapping**: EF Core value converters and the `HasMoney` convention map the value objects from `RA.Utilities.Core.ValueObjects` (`Email`, `Currency`, `SSN`, `Money`) to database columns — a `Money` can be stored as two columns (amount + currency) or as a single JSON string column.
+* **Value Object Mapping**: EF Core value converters and the `HasMoney` convention map the value objects from `RA.Utilities.Core.ValueObjects` (`Email`, `Currency`, `SSN`, `IBAN`, `Money`) to database columns — a `Money` can be stored as two columns (amount + currency) or as a single JSON string column.
 
 ## Installation
 You can install the package via the .NET CLI:
@@ -33,7 +33,7 @@ Install-Package RA.Utilities.Data.EntityFramework
 This package provides concrete implementations for the interfaces defined in `RA.Utilities.Data.Abstractions`.
 
 * **`RepositoryBase<T, TKey>`**: A full-featured generic repository that implements `IRepositoryBase<T, TKey>` for complete CRUD functionality. It's a convenient all-in-one solution for services that need to both query and modify data.
-* **`ReadRepositoryBase<T, TKey>`**: A read-only repository implementing `IReadRepositoryBase<T, TKey>`. It is optimized for performance by using `AsNoTracking()` on queries, making it ideal for the "Query" side of a CQRS architecture.
+* **`ReadRepositoryBase<T, TKey>`**: A read-only repository implementing `IReadRepositoryBase<T, TKey>`. `ListAsync` uses `AsNoTracking()` for performance, making it ideal for the "Query" side of a CQRS architecture.
 * **`WriteRepositoryBase<T, TKey>`**: A write-only repository implementing `IWriteRepositoryBase<T, TKey>`. It is designed for "Command" operations like adding, updating, and deleting entities.
 
 ### Interceptors
@@ -42,8 +42,21 @@ This package provides concrete implementations for the interfaces defined in `RA
 ### Value Object Mapping
 The `Conventions` namespace contains EF Core value converters for the value objects of `RA.Utilities.Core.ValueObjects`:
 
-* **`CurrencyConverter` / `EmailConverter` / `SsnConverter`**: map the string-based value objects to and from their normalized `Value` string.
+* **`CurrencyConverter` / `EmailConverter` / `SsnConverter` / `IbanConverter`**: map the string-based value objects to and from their normalized `Value` string.
 * **`MoneyConverter`**: serializes the whole `Money` as JSON into a single string column.
+
+```csharp
+using RA.Utilities.Data.EntityFramework.Conventions;
+
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    modelBuilder.Entity<Customer>(builder =>
+    {
+        builder.Property(c => c.Email).HasConversion(new EmailConverter());
+        builder.Property(c => c.Iban).HasConversion(new IbanConverter());
+    });
+}
+```
 
 The `MoneyConventionExtensions.HasMoney` extension maps a `Money` property to two separate database columns instead — a decimal `Amount` column and a string `Currency` column (through `CurrencyConverter`). EF Core value converters can only map a property to a single column, so `HasMoney` maps the property as an EF Core complex property:
 
@@ -65,18 +78,18 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 
 The `ServiceCollectionExtensions` class simplifies the registration of the generic repositories in your application's DI container. The methods are declared as C# 14 extension members on `IServiceCollection`, so the calling syntax is unchanged.
 
-* `AddRepositoryBase()`: Registers the full `IRepositoryBase<>` implementation.
-* `AddReadRepositoryBase()`: Registers the read-only `IReadRepositoryBase<>` implementation.
-* `AddWriteRepositoryBase()`: Registers the write-only `IWriteRepositoryBase<>` implementation.
+* `AddRepositoryBase()`: Registers the full `IRepositoryBase<T, TKey>` implementation.
+* `AddReadRepositoryBase()`: Registers the read-only `IReadRepositoryBase<T, TKey>` implementation.
+* `AddWriteRepositoryBase()`: Registers the write-only `IWriteRepositoryBase<T, TKey>` implementation.
 
 ## Usage Example
 Here is how you can configure and use the components from this package in an ASP.NET Core application.
 
 ### 1. Define Your DbContext
-First, ensure your `DbContext` implements the `IDbContext` interface from `RA.Utilities.Data.Abstractions`.
+Define a normal EF Core `DbContext` with the entity sets you need. Implementing `IDbContext` from `RA.Utilities.Data.Abstractions` is optional — the repositories only require `DbContext`.
 
 ```csharp
-public class ApplicationDbContext : DbContext, IDbContext
+public class ApplicationDbContext : DbContext
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
@@ -96,15 +109,17 @@ var builder = WebApplication.CreateBuilder(args);
 // 1. Register the SaveChangesInterceptor
 builder.Services.AddScoped<BaseEntitySaveChangesInterceptor>();
 
-// 2. Register the DbContext and add the interceptor
-builder.Services.AddDbContext<ApplicationDbContext>((provider, options) =>
+// 2. Register the DbContext and add the interceptor.
+//    Register it as the implementation of DbContext so the open-generic
+//    repositories can resolve their DbContext constructor parameter.
+builder.Services.AddDbContext<DbContext, ApplicationDbContext>((provider, options) =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
            .AddInterceptors(provider.GetRequiredService<BaseEntitySaveChangesInterceptor>()));
 
 // 3. Register the generic repositories
-builder.Services.AddRepositoryBase(); // For IRepositoryBase<>
-builder.Services.AddReadRepositoryBase(); // For IReadRepositoryBase<>
-builder.Services.AddWriteRepositoryBase(); // For IWriteRepositoryBase<>
+builder.Services.AddRepositoryBase(); // For IRepositoryBase<T, TKey>
+builder.Services.AddReadRepositoryBase(); // For IReadRepositoryBase<T, TKey>
+builder.Services.AddWriteRepositoryBase(); // For IWriteRepositoryBase<T, TKey>
 
 // Register your custom repositories
 builder.Services.AddScoped<IProductRepository, ProductRepository>();

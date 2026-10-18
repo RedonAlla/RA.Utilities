@@ -16,87 +16,483 @@ import LogoSvg from '../../../../Assets/Images/entity_framework_core.svg';
 [![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Data.EntityFramework.svg?logo=nuget&label=NuGet)](https://www.nuget.org/packages/RA.Utilities.Data.EntityFramework/)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Data.EntityFramework.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.EntityFramework/)
 [![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
-[![Publish NuGet](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml/badge.svg)](https://github.com/RedonAlla/RA.Utilities/actions/runs/20216149254)
-[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
+[![Publish NuGet](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml/badge.svg)](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?label=License&logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
 
-The primary purpose of the `RA.Utilities.Data.EntityFramework` package is to provide concrete implementations of the data access abstractions defined in
-[`RA.Utilities.Data.Abstractions`](../Abstractions/index.mdx).
-It uses Entity Framework Core to build a ready-to-use, generic data access layer.
+`RA.Utilities.Data.EntityFramework` is the Entity Framework Core implementation of the data access abstractions in [`RA.Utilities.Data.Abstractions`](../Abstractions/index.mdx). It provides generic repositories, a `SaveChanges` interceptor for audit timestamps, and value converters that persist the value objects from `RA.Utilities.Core.ValueObjects`.
 
-In short, it's the "engine" that connects your application's abstract data access patterns (like the Repository and Unit of Work) to a real database using EF Core.
+It lets your business logic depend on `IRepositoryBase<T, TKey>` (or the read/write split interfaces) while the EF Core details — `DbContext`, tracking, SQL, converters — stay in the data layer.
 
-## 🔑 Key Components and Benefits
-This package accelerates the setup of a data access layer by providing several key components:
+## 🎯 Purpose
 
-#### 1. Generic Repository Implementations:
-* **[`RepositoryBase<T, TKey>`](./RepositoryBase.md)**: A full implementation of [`IRepositoryBase<T, TKey>`](../Abstractions/IRepositoryBase.md) that provides complete CRUD (`Create`, `Read`, `Update`, `Delete`) functionality out of the box.
-* **[`ReadRepositoryBase<T, TKey>`](./ReadRepositoryBase.md)**: A read-only repository that is optimized for querying data. It uses `AsNoTracking()` by default for better performance, which is ideal for CQS (Command Query Separation) patterns.
-* **[`WriteRepositoryBase<T, TKey>`](./WriteRepositoryBase.md)**: A write-only repository for command operations (`Add`, `Update`, `Delete`).
+Writing the same CRUD repository for every entity is repetitive, and mixing `DbContext` calls into business logic couples your application to EF Core. This package solves both problems:
 
-#### 2. Dependency Injection Extensions:
-It provides extension methods like `AddRepositoryBase()` to simplify the registration of these generic repositories in your application's DI container.
+- **One generic implementation per concern** — `ReadRepositoryBase<T, TKey>`, `WriteRepositoryBase<T, TKey>`, and `RepositoryBase<T, TKey>` cover queries and commands without per-entity boilerplate.
+- **CQS by construction** — inject `IReadRepositoryBase<T, TKey>` where only queries are allowed and `IWriteRepositoryBase<T, TKey>` where only commands are allowed.
+- **No-tracking reads** — `ListAsync` calls `AsNoTracking()`, reducing memory and change-tracker overhead for query paths.
+- **Value objects persist without losing validation** — converters store the normalized value and re-run the constructor when materializing, so invalid data fails loudly.
+- **Audit timestamps for free** — `BaseEntitySaveChangesInterceptor` maintains `CreatedAt` and `LastModifiedAt` on entities that expose them.
+- **Clean composition over inheritance** — `RepositoryBase<T, TKey>` inherits reads and *composes* writes, so each concern remains independently testable.
 
-#### 3. Value Object Mapping:
-The [`Conventions`](./Conventions/ValueObjectConverters) namespace provides EF Core value converters that persist the value objects of [`RA.Utilities.Core.ValueObjects`](../../core/RA.Utilities.Core.ValueObjects/index.mdx) — `Email`, `Currency`, `SSN`, and `Money`. The [`HasMoney()`](./Extensions/MoneyConventionExtensions) extension maps a `Money` property to two separate columns (decimal `Amount` + string `Currency`) as an EF Core complex property, while [`MoneyConverter`](./Conventions/ValueObjectConverters) stores it as a single JSON string column.
+### ✨ Key Features
 
-## 🧩 How It Fits into the Ecosystem
-This package is a crucial part of the `RA.Utilities` ecosystem.
-It sits in the **Infrastructure/Data Layer** and depends on:
+- **Three repository implementations** — full, read-only, and write-only, all generic over the primary key (`Guid`, `int`, `long`, `string`, …)
+- **Open-generic DI registration** — one line registers a repository for every `CoreEntity<TKey>` in your model
+- **Query flexibility** — `ListAsync` supports filtering, ordering, skip/take pagination, and `Include` for navigation properties
+- **Mark-then-save deletes** — deletes participate in the same `SaveChanges` transaction as the rest of the unit of work
+- **EF Core value converters** — `EmailConverter`, `CurrencyConverter`, `SsnConverter`, `IbanConverter`, and `MoneyConverter`
+- **Two-column `Money` mapping** — `HasMoney()` stores a `Money` as a decimal `Amount` plus a string `Currency` column
+- **Timestamp interceptor** — metadata-based detection, so it works with any entity that exposes `CreatedAt` / `LastModifiedAt`
+- **C# 14 extension members** — modern registration APIs with unchanged call sites
 
-* **[`RA.Utilities.Data.Abstractions`](../Abstractions/index.mdx)**:
-It implements the interfaces ([`IRepositoryBase<T, TKey>`](../Abstractions/IRepositoryBase.md), [`IReadRepositoryBase<T, TKey>`](../Abstractions/IReadRepositoryBase.md), [`IWriteRepositoryBase<T, TKey>`](../Abstractions/IWriteRepositoryBase.md)) from this package.
-* **[`RA.Utilities.Data.Entities`](../Entities/index.mdx)**: It works with the entity base classes defined in this package.
+:::info[Version 10.2.0]
 
-By using this package, you can avoid writing repetitive data access code and focus on your application's business logic,
-while still maintaining a clean, decoupled, and testable architecture.
+This release is additive. It adds `IbanConverter` to the `Conventions` namespace so the [`IBAN`](../../core/RA.Utilities.Core.ValueObjects/IBAN.md) value object can be persisted alongside the other value objects. No existing type, signature, or registration changed. See the [Migration Guides](./migration-guides.mdx#v1010--v1020).
 
-## ⚡️ In short, it helps you:
+:::
 
-* **Accelerate Development**:
-  It provides generic base classes ([`RepositoryBase`](./RepositoryBase.md), [`ReadRepositoryBase`](./ReadRepositoryBase.md), [`WriteRepositoryBase`](./WriteRepositoryBase.md)) that handle all the common CRUD
-  (`Create`, `Read`, `Update`, `Delete`) operations, so you don't have to write that boilerplate code yourself.
-* **Promote Clean Architecture**: By providing the implementation for the data access abstractions,
-it allows your application's business logic to depend on interfaces, not on a specific data technology like ***Entity Framework Core***.
-This makes your code more decoupled, maintainable, and easier to test.
+---
 
-## ⭕️ Core Components
-The package offers several key components to achieve this:
+## 🛠️ Getting Started
 
-* **[`RepositoryBase<T, TKey>`](./RepositoryBase.md)**: A full generic repository with both read and write functionality.
-* **[`ReadRepositoryBase<T, TKey>`](./ReadRepositoryBase.md)**: A read-only version optimized for performance (`AsNoTracking()`), ideal for query operations in a CQRS architecture.
-* **[`WriteRepositoryBase<T, TKey>`](./WriteRepositoryBase.md)**: A write-only version for add, update, and delete operations.
-* **[`BaseEntitySaveChangesInterceptor`](./Interceptors/BaseEntitySaveChangesInterceptor.md)**: A `SaveChanges` interceptor that automatically maintains timestamp properties (`CreatedAt`, `LastModifiedAt`) on entities that expose them.
-* **[`ServiceCollectionExtensions`](./Extensions/ServiceCollectionExtensions.md)**: One-line registration extensions (`AddRepositoryBase()`, `AddReadRepositoryBase()`, `AddWriteRepositoryBase()`).
-* **[Value object converters](./Conventions/ValueObjectConverters.md)**: EF Core value converters that map `Email`, `Currency`, `SSN`, and `Money` to database columns.
-* **[`MoneyConventionExtensions`](./Extensions/MoneyConventionExtensions.md)**: The `HasMoney()` convention that maps a `Money` property to two columns (decimal `Amount` + string `Currency`) as an EF Core complex property.
+### Prerequisites
 
-All repository implementations constrain their entity type to [`CoreEntity<TKey>`](../Entities/CoreEntity.md) (`where T : CoreEntity<TKey> where TKey : notnull`), so the primary key can be any non-nullable type.
+- **.NET 10.0** or later
+- **Microsoft.EntityFrameworkCore 10.0.12** or later (installed as a dependency)
+- **An EF Core database provider** — SQL Server, SQLite, PostgreSQL, etc. The package references only the EF Core core library, so add the provider your application uses
+- **[`RA.Utilities.Data.Abstractions`](../Abstractions/index.mdx)** and **[`RA.Utilities.Core.ValueObjects`](../../core/RA.Utilities.Core.ValueObjects/index.mdx)** — installed automatically as dependencies
 
-By using this package, you can quickly set up a robust and well-architected data access layer for your .NET applications.
+### Installation
 
-## 🛠️ Installation
-
-You can install the package via the .NET CLI:
+**.NET CLI**
 
 ```bash
 dotnet add package RA.Utilities.Data.EntityFramework
 ```
 
-Or through the NuGet Package Manager console:
+**Package Manager Console**
 
 ```powershell
 Install-Package RA.Utilities.Data.EntityFramework
 ```
 
-## 🔗 Dependencies
+**PackageReference (csproj)**
 
--   **[`RA.Utilities.Data.Abstractions`](../Abstractions/index.mdx)** (10.0.3 or later): Provides the core interfaces (`IRepositoryBase<T, TKey>`, `IReadRepositoryBase<T, TKey>`, `IWriteRepositoryBase<T, TKey>`, `IUnitOfWork`) that this package implements.
--   **[`RA.Utilities.Data.Entities`](../Entities/index.mdx)** (10.1.1 or later, transitively via the abstractions): Provides the entity base classes — [`CoreEntity<TKey>`](../Entities/CoreEntity.md) and its derivations — that the repository type parameters constrain to.
--   **[`RA.Utilities.Core.ValueObjects`](../../core/RA.Utilities.Core.ValueObjects/index.mdx)** (10.1.0 or later): Provides the `Email`, `Currency`, `SSN`, and `Money` value objects that the converters and the `HasMoney()` convention persist.
--   **[`Microsoft.EntityFrameworkCore`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.entityframeworkcore)**: The underlying ORM used for the implementations.
+```xml
+<PackageReference Include="RA.Utilities.Data.EntityFramework" Version="10.2.0" />
+```
 
+### Hello World
 
-<br />
-<br />
+A complete, working setup: an entity, a `DbContext`, the interceptor, one repository registration, and a minimal API endpoint.
+
+```csharp showLineNumbers
+using Microsoft.EntityFrameworkCore;
+using RA.Utilities.Data.Abstractions;
+using RA.Utilities.Data.Entities;
+using RA.Utilities.Data.EntityFramework.Extensions;
+using RA.Utilities.Data.EntityFramework.Interceptors;
+
+// 1. Entity: CoreEntity<Guid> supplies Id; BaseEntity<Guid> adds CreatedAt.
+public sealed class Product : BaseEntity<Guid>
+{
+    public string Name { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+}
+
+// 2. DbContext
+public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+{
+    public DbSet<Product> Products => Set<Product>();
+}
+
+// 3. Program.cs
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddScoped<BaseEntitySaveChangesInterceptor>();
+
+// Registers AppDbContext under the DbContext service type, which is what the
+// open-generic repositories ask for. See "Resolving the DbContext" below.
+builder.Services.AddDbContext<DbContext, AppDbContext>((provider, options) =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("Default"))
+           .AddInterceptors(provider.GetRequiredService<BaseEntitySaveChangesInterceptor>()));
+
+builder.Services.AddRepositoryBase();
+
+var app = builder.Build();
+
+// 4. Inject the repository interface
+app.MapGet("/products/{id:guid}", async (Guid id, IRepositoryBase<Product, Guid> repository) =>
+    await repository.GetByIdAsync(id) is { } product
+        ? Results.Ok(product)
+        : Results.NotFound());
+
+app.Run();
+```
+
+No custom repository is required for standard CRUD. Add one only when you need entity-specific queries (see [Custom repositories](#create-a-custom-repository)).
+
+---
+
+## 🧠 Core Concepts
+
+### Components
+
+| Type | Namespace | Role |
+|---|---|---|
+| [`ReadRepositoryBase<T, TKey>`](./ReadRepositoryBase.md) | `RA.Utilities.Data.EntityFramework` | Read-only queries (`GetByIdAsync`, `ListAsync`) with `AsNoTracking()` |
+| [`WriteRepositoryBase<T, TKey>`](./WriteRepositoryBase.md) | `RA.Utilities.Data.EntityFramework` | Commands (`Add`, `Update`, `Delete`, `SaveChanges`) |
+| [`RepositoryBase<T, TKey>`](./RepositoryBase.md) | `RA.Utilities.Data.EntityFramework` | Full CRUD: inherits reads, composes writes |
+| [`ServiceCollectionExtensions`](./Extensions/ServiceCollectionExtensions.md) | `…Data.EntityFramework.Extensions` | `AddReadRepositoryBase()`, `AddWriteRepositoryBase()`, `AddRepositoryBase()` |
+| [`MoneyConventionExtensions`](./Extensions/MoneyConventionExtensions.md) | `…Data.EntityFramework.Extensions` | `HasMoney()` — two-column `Money` mapping |
+| [Value object converters](./Conventions/ValueObjectConverters.md) | `…Data.EntityFramework.Conventions` | `EmailConverter`, `CurrencyConverter`, `SsnConverter`, `IbanConverter`, `MoneyConverter` |
+| [`BaseEntitySaveChangesInterceptor`](./Interceptors/BaseEntitySaveChangesInterceptor.md) | `…Data.EntityFramework.Interceptors` | Sets `CreatedAt` / `LastModifiedAt` before saving |
+
+### How the repositories fit together
+
+`RepositoryBase<T, TKey>` uses **composition over inheritance** for writes:
+
+```
+RepositoryBase<T, TKey>
+├─ inherits  ReadRepositoryBase<T, TKey>    → GetByIdAsync, ListAsync
+└─ composes  WriteRepositoryBase<T, TKey>   → AddAsync, UpdateAsync,
+                                               DeleteAsync, SaveChangesAsync
+```
+
+Both share the same `DbContext` instance, so a read followed by an update participates in one change tracker and one unit of work.
+
+The read and write interfaces come from `RA.Utilities.Data.Abstractions`:
+
+```
+IRepositoryBase<T, TKey>
+├─ IReadRepositoryBase<T, TKey>
+└─ IWriteRepositoryBase<T, TKey>
+```
+
+### Entity and key constraints
+
+Every repository is constrained by:
+
+```csharp
+where T : CoreEntity<TKey>
+where TKey : notnull
+```
+
+`T` must derive from [`CoreEntity<TKey>`](../Entities/CoreEntity.md), which supplies `Id`. Any non-nullable key type works: `Guid`, `int`, `long`, `string`, or a strongly typed ID. The write implementation reads `e.Id`, so the key property must be the one declared by `CoreEntity<TKey>`.
+
+Use [`BaseEntity<TKey>`](../Entities/BaseEntity.md) when you need `CreatedAt`, or [`WriteEntity<TKey>`](../Entities/WriteEntity.md) when you need `CreatedAt` and `LastModifiedAt`. `AuditableBaseEntity<TKey>` and `SoftDeleteEntity<TKey>` derive from `WriteEntity<TKey>`.
+
+### Resolving the `DbContext`
+
+The repository constructors take a **`DbContext`** parameter, not your concrete context type. `AddDbContext<TContext>()` registers the context under `TContext` only, so an open-generic `IRepositoryBase<Product, Guid>` cannot be constructed unless `DbContext` itself is resolvable.
+
+Use the two-generic overload:
+
+```csharp showLineNumbers
+// ✅ AppDbContext is registered as the implementation of DbContext
+builder.Services.AddDbContext<DbContext, AppDbContext>(options =>
+    options.UseSqlServer(connectionString));
+```
+
+or alias an existing registration:
+
+```csharp showLineNumbers
+// ✅ Alternative when you already registered the concrete context
+builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
+builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<AppDbContext>());
+```
+
+If you only register `AppDbContext` and rely on custom repositories whose constructors accept `AppDbContext`, the generic registrations are not required. See [Troubleshooting](./troubleshooting.mdx#unable-to-resolve-service-for-type-microsoftentityframeworkcoredbcontext).
+
+### Lifetimes
+
+All three registration methods use **scoped** lifetimes, matching the default scoped lifetime of `AddDbContext`:
+
+| Service | Lifetime | Registered by |
+|---|---|---|
+| `DbContext` / `AppDbContext` | Scoped | `AddDbContext(...)` |
+| `IReadRepositoryBase<,>` | Scoped | `AddReadRepositoryBase()` |
+| `IWriteRepositoryBase<,>` | Scoped | `AddWriteRepositoryBase()` |
+| `IRepositoryBase<,>` | Scoped | `AddRepositoryBase()` |
+
+Register the interceptor as scoped as well when it depends on scoped services.
+
+### Value object persistence
+
+| Value object | Converter | Column |
+|---|---|---|
+| [`Email`](../../core/RA.Utilities.Core.ValueObjects/Email.md) | `EmailConverter` | Normalized string, e.g. `user@example.com` |
+| [`Currency`](../../core/RA.Utilities.Core.ValueObjects/Currency.md) | `CurrencyConverter` | ISO code, e.g. `EUR` |
+| [`SSN`](../../core/RA.Utilities.Core.ValueObjects/SSN.md) | `SsnConverter` | Normalized string |
+| [`IBAN`](../../core/RA.Utilities.Core.ValueObjects/IBAN.md) | `IbanConverter` | Normalized IBAN, e.g. `GB82WEST12345698765432` |
+| [`Money`](../../core/RA.Utilities.Core.ValueObjects/Money.md) | `MoneyConverter` | JSON object in one string column |
+| [`Money`](../../core/RA.Utilities.Core.ValueObjects/Money.md) | `HasMoney()` | Two columns: `{Property}_Amount`, `{Property}_Currency` |
+
+The string converters read through the value object constructor, so data that no longer validates fails on materialization rather than entering your domain.
+
+### How a request flows
+
+```
+Endpoint / handler
+      │  injects IRepositoryBase<Product, Guid>
+      ▼
+RepositoryBase<Product, Guid>              (scoped)
+      ├─ ReadRepositoryBase  ──► DbSet<Product>.AsNoTracking() / FindAsync
+      └─ WriteRepositoryBase ──► Add/Update/Remove + SaveChangesAsync
+                                        │
+                                        ▼
+                          BaseEntitySaveChangesInterceptor
+                          sets CreatedAt / LastModifiedAt
+                                        │
+                                        ▼
+                                    Database
+```
+
+### Terminology
+
+- **Repository**: A class that exposes data access for one entity behind an interface.
+- **CQS / CQRS**: Command Query Separation — reads and writes have separate contracts. The package offers separate read and write repositories for this.
+- **Unit of work**: The `DbContext` change tracker. `SaveChangesAsync` commits everything tracked in the current scope, not just the last operation.
+- **Mark-then-save**: Deletes and updates change the entity state; nothing reaches the database until `SaveChangesAsync` is called.
+- **No-tracking query**: An EF Core query that does not add results to the change tracker. `ListAsync` uses it; `GetByIdAsync` uses `FindAsync`, which may return a tracked instance.
+- **Complex property**: An EF Core mapping that flattens an owned type into columns of the same table. `HasMoney()` uses it for two-column `Money` storage.
+
+---
+
+## 📖 How-To Guides
+
+### Register all repositories
+
+```csharp showLineNumbers
+using RA.Utilities.Data.EntityFramework.Extensions;
+
+builder.Services.AddRepositoryBase();       // IRepositoryBase<T, TKey>
+builder.Services.AddReadRepositoryBase();   // IReadRepositoryBase<T, TKey>
+builder.Services.AddWriteRepositoryBase();  // IWriteRepositoryBase<T, TKey>
+```
+
+Register only the interfaces you inject. Registering all three is harmless but unnecessary.
+
+### Query with filtering, ordering, and pagination
+
+```csharp showLineNumbers
+using RA.Utilities.Data.Abstractions;
+using RA.Utilities.Data.Entities;
+
+public sealed class ProductReader(IReadRepositoryBase<Product, Guid> repository)
+{
+    public Task<IReadOnlyList<Product>> GetPageAsync(int page, int size) =>
+        repository.ListAsync(
+            filter: p => p.Price > 0,
+            orderBy: q => q.OrderBy(p => p.Name),
+            skip: (page - 1) * size,
+            take: size);
+}
+```
+
+### Include navigation properties
+
+`includeProperties` is a `params` array, so pass one expression per navigation path:
+
+```csharp showLineNumbers
+IReadOnlyList<Order> orders = await repository.ListAsync(
+    filter: o => o.CustomerId == customerId,
+    includeProperties: [o => o.Lines, o => o.ShippingAddress]);
+```
+
+Collection expressions (`[...]`) work for the `params` array in C# 12+.
+
+### Write and save
+
+```csharp showLineNumbers
+public sealed class ProductWriter(IWriteRepositoryBase<Product, Guid> repository)
+{
+    public async Task AddAsync(string name, decimal price, CancellationToken cancellationToken)
+    {
+        var product = new Product { Name = name, Price = price };
+
+        // highlight-next-line
+        await repository.AddAsync(product, cancellationToken);
+
+        // Nothing is persisted until SaveChangesAsync runs.
+        // highlight-next-line
+        await repository.SaveChangesAsync(cancellationToken);
+    }
+}
+```
+
+`SaveChangesAsync` commits **all** pending changes tracked by the scoped `DbContext`, not only the entity passed to the repository.
+
+### Delete by key
+
+```csharp showLineNumbers
+// Loads the entity and marks it Deleted; no-op when the key does not exist.
+await repository.DeleteAsync(productId);
+
+// Returns the number of entities that were found and marked for deletion.
+int marked = await repository.DeleteRangeAsync([id1, id2, id3]);
+
+await repository.SaveChangesAsync();
+```
+
+### Create a custom repository
+
+Add entity-specific queries by deriving from `RepositoryBase<T, TKey>` (or `ReadRepositoryBase<T, TKey>` when the repository is read-only). The derived constructor accepts your concrete context, which keeps DI simple:
+
+```csharp showLineNumbers
+public interface IProductRepository : IRepositoryBase<Product, Guid>
+{
+    Task<Product?> FindByNameAsync(string name, CancellationToken cancellationToken = default);
+}
+
+public sealed class ProductRepository : RepositoryBase<Product, Guid>, IProductRepository
+{
+    private readonly AppDbContext _dbContext;
+
+    public ProductRepository(AppDbContext dbContext) : base(dbContext) => _dbContext = dbContext;
+
+    public Task<Product?> FindByNameAsync(string name, CancellationToken cancellationToken = default) =>
+        _dbContext.Products.FirstOrDefaultAsync(p => p.Name == name, cancellationToken);
+}
+```
+
+```csharp showLineNumbers
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+```
+
+### Map a value object to a column
+
+```csharp showLineNumbers
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using RA.Utilities.Data.EntityFramework.Conventions;
+
+public sealed class CustomerConfiguration : IEntityTypeConfiguration<Customer>
+{
+    public void Configure(EntityTypeBuilder<Customer> builder)
+    {
+        // highlight-next-line
+        builder.Property(c => c.Email).HasConversion(new EmailConverter());
+        builder.Property(c => c.Iban).HasConversion(new IbanConverter());
+        builder.Property(c => c.PreferredCurrency).HasConversion(new CurrencyConverter());
+    }
+}
+```
+
+### Store `Money` across two columns
+
+```csharp showLineNumbers
+using RA.Utilities.Data.EntityFramework.Extensions;
+
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    // Balance_Amount (decimal) + Balance_Currency (string)
+    // highlight-next-line
+    modelBuilder.Entity<Wallet>().HasMoney(w => w.Balance);
+}
+```
+
+The method returns a `ComplexPropertyBuilder<Money>`, so you can keep configuring facets:
+
+```csharp showLineNumbers
+modelBuilder.Entity<Wallet>()
+    .HasMoney(w => w.Balance)
+    .Property(m => m.Amount)
+    .HasColumnType("decimal(18,4)");
+```
+
+### Maintain timestamps automatically
+
+```csharp showLineNumbers
+builder.Services.AddScoped<BaseEntitySaveChangesInterceptor>();
+
+builder.Services.AddDbContext<DbContext, AppDbContext>((provider, options) =>
+    options.UseSqlServer(connectionString)
+           // highlight-next-line
+           .AddInterceptors(provider.GetRequiredService<BaseEntitySaveChangesInterceptor>()));
+```
+
+`CreatedAt` is set on `Added` entities and `LastModifiedAt` on `Modified` entities, provided the entity type exposes those properties. `CreatedBy` / `LastModifiedBy` on `AuditableBaseEntity<TKey>` are **not** set automatically.
+
+### Separate read and write services
+
+```csharp showLineNumbers
+public sealed class ProductQueries(IReadRepositoryBase<Product, Guid> reads)
+{
+    public Task<Product?> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
+        reads.GetByIdAsync(id, cancellationToken);
+}
+
+public sealed class ProductCommands(
+    IReadRepositoryBase<Product, Guid> reads,
+    IWriteRepositoryBase<Product, Guid> writes)
+{
+    public async Task RenameAsync(Guid id, string name, CancellationToken cancellationToken = default)
+    {
+        Product? product = await reads.GetByIdAsync(id, cancellationToken);
+        if (product is null)
+        {
+            return;
+        }
+
+        product.Name = name;
+        await writes.UpdateAsync(product, cancellationToken);
+        await writes.SaveChangesAsync(cancellationToken);
+    }
+}
+```
+
+`IWriteRepositoryBase<T, TKey>` has no query methods. When a command needs to load an entity first, inject `IReadRepositoryBase<T, TKey>` alongside it, or load it through your concrete `DbContext` in a custom repository.
+
+---
+
+## ⚙️ Configuration
+
+This package has **no options class** and no `appsettings.json` section of its own. Configuration happens where you register EF Core and build the model:
+
+| Setting | Type | Default | Where |
+|---|---|---|---|
+| `DbContext` lifetime | `ServiceLifetime` | `Scoped` | `AddDbContext<…>(…, ServiceLifetime.Scoped)` |
+| Repository lifetime | `ServiceLifetime` | `Scoped` (fixed) | `Add*RepositoryBase()` |
+| Interceptor lifetime | `ServiceLifetime` | — (you choose) | `AddScoped<BaseEntitySaveChangesInterceptor>()` |
+| Database provider | `DbContextOptionsBuilder` | — (required) | `options.UseSqlServer/UseSqlite/UseNpgsql(…)` |
+| Connection string | `string` | — | `builder.Configuration.GetConnectionString(…)` |
+| Value object mapping | `HasConversion(…)` / `HasMoney(…)` | No converter is applied automatically | `OnModelCreating` / `IEntityTypeConfiguration<T>` |
+| `Amount` column type | `string` | Provider default for `decimal` (`decimal(18,2)` on SQL Server, `TEXT` on SQLite) | `.Property(m => m.Amount).HasColumnType(…)` |
+| `Money` column names | `string` | `{Property}_Amount`, `{Property}_Currency` | `.HasMoney(…).Property(…)` |
+
+:::warning[Converters are opt-in]
+
+Nothing is mapped automatically. EF Core has no built-in mapping for a `Money`, `Email`, `IBAN`, or other value object, so a property of one of those types without `HasConversion` or `HasMoney` fails model building (or is mapped as an owned type by convention). Configure each value object property explicitly.
+
+:::
+
+---
+
+## ✨ Available Components
 
 <DocCardList />
+
+---
+
+## 🙌 Contributing & Support
+
+### Found a bug or have a suggestion?
+
+- **GitHub Issues**: [Report a bug or request a feature](https://github.com/RedonAlla/RA.Utilities/issues)
+- **Discussions**: [Ask questions or start a discussion](https://github.com/RedonAlla/RA.Utilities/discussions)
+
+### Contributing
+
+1. **Fork** the [RA.Utilities repository](https://github.com/RedonAlla/RA.Utilities)
+2. **Create a branch** from `main` with a descriptive name (e.g., `feature/ef-specification-support`)
+3. **Make your changes** — add XML doc comments for new public APIs and tests for new behavior
+4. **Submit a pull request** to the `main` branch with a clear description
+
+### Links
+
+| Resource | URL |
+|---|---|
+| **NuGet** | [RA.Utilities.Data.EntityFramework](https://www.nuget.org/packages/RA.Utilities.Data.EntityFramework/) |
+| **Source** | [GitHub — RedonAlla/RA.Utilities](https://github.com/RedonAlla/RA.Utilities) |
+| **License** | [MIT](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file) |
+| **Build Status** | [GitHub Actions](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml) |

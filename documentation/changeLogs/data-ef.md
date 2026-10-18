@@ -1,7 +1,50 @@
 ---
 title: RA.Utilities.Data.EntityFramework
 authors: [RedonAlla]
-date: 2026-10-14
+date: 2026-10-18
+---
+
+## Version 10.2.0
+![Date Badge](https://img.shields.io/badge/Publish-18%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.2.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Data.EntityFramework/10.2.0)
+
+This release adds `IbanConverter`, so the `IBAN` value object introduced in `RA.Utilities.Core.ValueObjects` 10.2.0 can be persisted alongside the other value objects. The release is additive: no existing type, signature, or registration changed.
+
+<!-- truncate -->
+
+### ✨ New Features
+
+*   **`IbanConverter`**: A `ValueConverter<IBAN, string>` in `RA.Utilities.Data.EntityFramework.Conventions`. It writes the normalized `Value` (for example `GB82WEST12345698765432`) and reads through `new IBAN(value)`, so structural and ISO 7064 mod-97 validation run on materialization.
+*   **Model-wide configuration**: The converter works with `configurationBuilder.Properties<IBAN>().HaveConversion<IbanConverter>()` as well as per-property `HasConversion(new IbanConverter())`.
+
+```csharp
+public sealed class CustomerConfiguration : IEntityTypeConfiguration<Customer>
+{
+    public void Configure(EntityTypeBuilder<Customer> builder)
+    {
+        // highlight-next-line
+        builder.Property(c => c.Iban).HasConversion(new IbanConverter()).HasMaxLength(34);
+    }
+}
+```
+
+### 📝 Notes
+
+*   Configure the column length explicitly. An IBAN has at most 34 characters; relying on the provider default (`nvarchar(max)` on SQL Server) works but is imprecise.
+*   Because the converter validates on read, rows that already contain malformed IBANs throw `BadRequestException` when materialized. Clean or migrate the data before enabling the converter.
+*   The converter writes the canonical form, so `gb82 west 1234 5698 7654 32` and `GB82WEST12345698765432` persist identically.
+
+### 📦 Dependencies
+
+*   `RA.Utilities.Core.ValueObjects` **10.2.0** — adds `IBAN`.
+*   `RA.Utilities.Data.Abstractions` **10.0.5**.
+*   `RA.Utilities.Data.Entities` **10.1.2** (transitive via the abstractions).
+*   `Microsoft.EntityFrameworkCore` **10.0.12**.
+
+### ⚠️ Breaking Changes
+
+None. Existing repositories, converters, registrations, and model configurations are unchanged.
+
 ---
 
 ## Version 10.1.0

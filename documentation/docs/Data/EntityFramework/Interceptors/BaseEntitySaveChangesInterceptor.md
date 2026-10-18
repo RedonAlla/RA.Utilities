@@ -1,37 +1,28 @@
 ---
-sidebar_position: 5
+title: BaseEntitySaveChangesInterceptor
+sidebar_position: 7
 ---
 
 ```bash
 Namespace: RA.Utilities.Data.EntityFramework.Interceptors
 ```
 
-The primary purpose of the `BaseEntitySaveChangesInterceptor` is to automatically set timestamp properties on your entities whenever they are created or modified.
-It "intercepts" the `SaveChanges` operation right before the changes are sent to the database and injects its own logic.
+`BaseEntitySaveChangesInterceptor` sets audit timestamps immediately before EF Core writes changes to the database. It is a `SaveChangesInterceptor` that overrides both `SavingChanges` and `SavingChangesAsync`.
 
-This solves a common problem: ensuring that every record has accurate `CreatedAt` and `LastModifiedAt` timestamps without requiring developers to set these values manually every time.
+## 🎯 Purpose
 
-## ⚙️ How It Works
-#### 1. Inheritance:
-The class inherits from `SaveChangesInterceptor`, a base class provided by EF Core for this exact purpose.
+Audit fields are easy to forget and easy to set inconsistently. The interceptor centralizes the logic: whenever an entity is added, `CreatedAt` is set to `DateTime.UtcNow`; whenever an entity is modified, `LastModifiedAt` is set to `DateTime.UtcNow`. No repository or business code has to remember.
 
-#### 2. Overriding Methods:
-It overrides the `SavingChanges` and `SavingChangesAsync` methods.
-These methods are automatically called by Entity Framework Core just before it writes any pending changes (inserts, updates, deletes) to the database.
+## How it works
 
-#### 3. Detecting Changes:
-Inside these methods, it calls the UpdateEntities helper method.
-This method iterates over **all** tracked entities (`context.ChangeTracker.Entries()`) and uses EF Core's model metadata (`entry.Metadata.FindProperty(...)`) to detect whether an entity exposes the relevant timestamp properties.
+1. EF Core calls `SavingChanges` (sync) or `SavingChangesAsync` (async).
+2. The interceptor enumerates `context.ChangeTracker.Entries()`.
+3. For every entry in the `Added` state, it checks the entity's model metadata for a `CreatedAt` property and sets it.
+4. For every entry in the `Modified` state, it checks for `LastModifiedAt` and, when present, sets it.
 
-#### 4. Applying Timestamps:
-It then checks the state of each entity:
+The check is **metadata-based** (`entry.Metadata.FindProperty(...)`), not type-based. Any entity that exposes a property with those names is updated, whether or not it derives from a RA.Utilities entity base class.
 
-  * If an entity's state is `Added` and it defines a `CreatedAt` property (the case for `BaseEntity<TKey>` and `WriteEntity<TKey>` descendants), the interceptor sets that property to the current UTC time.
-  * If an entity's state is `Modified` and it defines a `LastModifiedAt` property (the case for `WriteEntity<TKey>` descendants), the interceptor sets that property to the current UTC time.
-
-Here is the key logic from the `UpdateEntities` method that accomplishes this:
-
-```csharp
+```csharp showLineNumbers
 foreach (EntityEntry entry in context.ChangeTracker.Entries())
 {
     if (entry.State is EntityState.Added && entry.Metadata.FindProperty(CreatedAtProperty) is not null)
@@ -46,24 +37,54 @@ foreach (EntityEntry entry in context.ChangeTracker.Entries())
 }
 ```
 
-> [!NOTE]
-> Because the detection is metadata-based, the interceptor no longer depends on a specific entity base class and, as of v10.0.2, also updates the `LastModifiedAt` property of `WriteEntity<TKey>` descendants correctly.
+## Which entities are affected
 
-## 💭 Why Is This Useful?
-  * **Consistency**: It guarantees that auditing fields are always populated correctly.
-  * **Reduces Boilerplate**: Developers don't have to write repetitive code to set these timestamps in their business logic.
-  * **Centralized Logic**: The auditing logic is in one central, reusable place, making the system easier to maintain and understand.
-  * **Decoupling**: It separates the concern of auditing from the main business logic of your application.
+| Entity base | `CreatedAt` | `LastModifiedAt` |
+|---|---|---|
+| [`CoreEntity<TKey>`](../../Entities/CoreEntity.md) | ❌ | ❌ |
+| [`BaseEntity<TKey>`](../../Entities/BaseEntity.md) | ✅ | ❌ |
+| [`WriteEntity<TKey>`](../../Entities/WriteEntity.md) | ✅ | ✅ |
+| [`AuditableBaseEntity<TKey>`](../../Entities/AuditableBaseEntity.md) | ✅ | ✅ (plus `CreatedBy` / `LastModifiedBy`, **not** set by this interceptor) |
+| [`SoftDeleteEntity<TKey>`](../../Entities/SoftDeleteEntity.md) | ✅ | ✅ (`IsDeleted` is **not** managed by this interceptor) |
 
-To make this work, the interceptor needs to be registered with the `DbContext`.
-This registration tells Entity Framework Core to use this interceptor during its `SaveChanges` pipeline.
+The interceptor writes `DateTime.UtcNow` for both properties. It does not use the database clock.
 
-```csharp
-// In PersistenceDependencyInjection.cs
-services.AddScoped<BaseEntitySaveChangesInterceptor>();
+## 🚀 How to Use
 
-services.AddDbContext<TodoDbContext>((provider, options) => options
-    .UseInMemoryDatabase(connectionString)
-    .AddInterceptors(provider.GetRequiredService<BaseEntitySaveChangesInterceptor>()
-));
+Register the interceptor and attach it to the context's options:
+
+```csharp showLineNumbers
+using RA.Utilities.Data.EntityFramework.Interceptors;
+
+builder.Services.AddScoped<BaseEntitySaveChangesInterceptor>();
+
+builder.Services.AddDbContext<DbContext, AppDbContext>((provider, options) =>
+    options.UseSqlServer(connectionString)
+           // highlight-next-line
+           .AddInterceptors(provider.GetRequiredService<BaseEntitySaveChangesInterceptor>()));
 ```
+
+For a context constructed without DI, attach it directly:
+
+```csharp showLineNumbers
+protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+{
+    optionsBuilder
+        .UseSqlServer(connectionString)
+        // highlight-next-line
+        .AddInterceptors(new BaseEntitySaveChangesInterceptor());
+}
+```
+
+## ⚠️ Behavior and limitations
+
+- **Only `Added` and `Modified`** — `Deleted` entities keep their timestamps, and `Unchanged` entities are untouched.
+- **Exact property names** — the properties must be named `CreatedAt` and `LastModifiedAt` to be detected.
+- **Timestamps only** — `CreatedBy` and `LastModifiedBy` are not populated; read the current user and set them in your command handler or a separate interceptor.
+- **Soft delete is not applied** — `SoftDeleteEntity<TKey>.IsDeleted` is not queried or filtered automatically. Add a global query filter and set the flag in your own code.
+- **`DateTime`, not `DateTimeOffset`** — the properties are `DateTime`; values are UTC.
+- **Pooled contexts** — if you use `AddDbContextPool`, the interceptor is stateless, so it can safely be registered as a singleton instead of scoped:
+
+  ```csharp
+  builder.Services.AddSingleton<BaseEntitySaveChangesInterceptor>();
+  ```

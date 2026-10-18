@@ -6,223 +6,149 @@ sidebar_position: 4
 ```bash
 Namespace: RA.Utilities.Data.EntityFramework.Extensions
 ```
-The `ServiceCollectionExtensions` class in the `RA.Utilities.Data.EntityFramework` project serves as a convenience layer to simplify the registration of the generic repository patterns in an ASP.NET Core application's dependency injection (DI) container.
 
-Its primary goal is to **reduce boilerplate** and **promote convention** by providing simple, one-line extension methods for [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection).
+`ServiceCollectionExtensions` registers the open-generic repositories in the dependency injection container. Each method is a one-line replacement for a manual `AddScoped(typeof(...), typeof(...))` call.
 
 :::info[v10.1.0 rename]
-In v10.1.0 this class was renamed from `DependencyInjectionExtensions` to `ServiceCollectionExtensions`, and the methods are now declared as C# 14 extension members on `IServiceCollection`. Extension-method call sites are unchanged (`builder.Services.AddRepositoryBase()`, …) — only code that references the class by name, such as `typeof(DependencyInjectionExtensions)` or a static call, needs updating.
+This class was renamed from `DependencyInjectionExtensions` in v10.1.0 and its methods are now declared as C# 14 extension members. Extension-method call sites (`builder.Services.AddRepositoryBase()`) are unchanged; only code that references the class by name, such as `typeof(DependencyInjectionExtensions)` or a static call, needs updating.
 :::
 
-Instead of developers needing to remember and write the full generic type registration like this:
+## Methods
 
-```csharp
-// Manual, more verbose registration
-builder.Services.AddScoped(typeof(IRepositoryBase<,>), typeof(RepositoryBase<,>));
-```
-They can use the much cleaner and more readable extension method provided by this class:
-```csharp
-// Simplified registration using the extension method
+| Method | Service type | Implementation | Lifetime |
+|---|---|---|---|
+| `AddReadRepositoryBase()` | `IReadRepositoryBase<,>` | `ReadRepositoryBase<,>` | Scoped |
+| `AddWriteRepositoryBase()` | `IWriteRepositoryBase<,>` | `WriteRepositoryBase<,>` | Scoped |
+| `AddRepositoryBase()` | `IRepositoryBase<,>` | `RepositoryBase<,>` | Scoped |
+
+All registrations are **open generic**: one call covers every entity `T` that derives from [`CoreEntity<TKey>`](../../Entities/CoreEntity.md), with any non-nullable key type `TKey`.
+
+## ⚠️ Register the `DbContext` correctly
+
+The repository constructors take a `DbContext`, not your concrete context type. `AddDbContext<TContext>()` registers the context under `TContext` only, so `IRepositoryBase<Product, Guid>` cannot be resolved unless `DbContext` itself is registered.
+
+**Recommended — register the context as `DbContext`:**
+
+```csharp showLineNumbers
+using RA.Utilities.Data.EntityFramework.Extensions;
+
+builder.Services.AddDbContext<DbContext, AppDbContext>(options =>
+    options.UseSqlServer(connectionString));
+
+// highlight-next-line
 builder.Services.AddRepositoryBase();
 ```
 
-This approach has several key benefits:
+**Alternative — alias an existing registration:**
 
-* **Simplicity & Readability**: It makes the `Program.cs` file cleaner and the intent clearer.
-* **Reduced Errors**: It abstracts away the `typeof()` syntax, reducing the chance of typos or incorrect registrations.
-* **Encapsulation**: It encapsulates the library's registration logic, providing a clean public API for consumers of the NuGet package.
+```csharp showLineNumbers
+builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
+builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<AppDbContext>());
 
-## ✨ Available Extension Methods
-The class provides three distinct methods to support different architectural needs, such as **Command Query Separation (CQS)**:
+builder.Services.AddRepositoryBase();
+```
 
-The registrations are open-generic: any entity `T` deriving from [`CoreEntity<TKey>`](../../Entities/CoreEntity.md) — with any non-nullable key type `TKey` — resolves to the matching repository implementation.
+If you use custom repositories that accept `AppDbContext` directly, you do not need the open-generic registrations at all. See [Troubleshooting](../troubleshooting.mdx#unable-to-resolve-service-for-type-microsoftentityframeworkcoredbcontext).
 
-1. **`AddReadRepositoryBase()`**:
-Registers the generic, read-only repository ([`IReadRepositoryBase<>`](../../Abstractions/IReadRepositoryBase.md) and [`ReadRepositoryBase<>`](../../EntityFramework/ReadRepositoryBase.md)).
-This is ideal for services that only need to query data.
-2. **`AddWriteRepositoryBase()`: Registers the generic, write-only repository ([`IWriteRepositoryBase<>`](../../Abstractions/IWriteRepositoryBase.md) and [`WriteRepositoryBase<>`](../../EntityFramework/WriteRepositoryBase.md)). This is for services that only modify data.
-3. **`AddRepositoryBase()`: Registers the full-featured repository ([`IRepositoryBase<>`](../../Abstractions/IRepositoryBase.md) and [`RepositoryBase<>`](../../EntityFramework/RepositoryBase.md)) that handles both read and write operations.
 
-### `AddReadRepositoryBase`
-This method registers the generic **read-only repository**.
-It is ideal for services that only need to query data, enforcing the ***Command Query Separation (CQS)*** principle.
+:::note[Assumed entity]
+The examples assume `public sealed class Product : CoreEntity<Guid> { /* properties */ }` and an `AppDbContext` registered as shown above.
+:::
+## `AddReadRepositoryBase`
 
-#### Parameters
+Registers the read-only repository for services that only query data.
 
-| Parameter |	Type	| Description |
-| --------- | ----- | ----------- |
-| **services** | [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection) |	The [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection) to add the service registration to. |
-
-#### Example
-Here is how you would register and use the read-only repository.
-
-```csharp
-// In your Program.cs or Startup.cs
-// highlight-next-line
-using RA.Utilities.Data.EntityFramework.Extensions;
-
-var builder = WebApplication.CreateBuilder(args);
-
-// ... other service registrations
-
-// Register the generic read-only repository base.
-// highlight-next-line
+```csharp showLineNumbers
 builder.Services.AddReadRepositoryBase();
-
-// ...
-
-var app = builder.Build();
 ```
 
-Once registered, you can inject [`IReadRepositoryBase<>`](../../Abstractions/IReadRepositoryBase.md) into any service that needs to query data for a specific entity `T`.
-
 ```csharp showLineNumbers
-// In a service that only needs to read product data
-public class ProductReportService
+using RA.Utilities.Data.Abstractions;
+using RA.Utilities.Data.Entities;
+
+public sealed class ProductReportService
 {
-    // highlight-next-line
-    private readonly IReadRepositoryBase<Product, Guid> _productReadRepository;
+    private readonly IReadRepositoryBase<Product, Guid> _repository;
 
-    // The DI container injects the correct repository instance.
-    public ProductReportService(IReadRepositoryBase<Product, Guid> productReadRepository)
-    {
-        _productReadRepository = productReadRepository;
-    }
+    public ProductReportService(IReadRepositoryBase<Product, Guid> repository) =>
+        _repository = repository;
 
-    public async Task<IReadOnlyList<Product>> GetActiveProductsAsync()
-    {
-        // This repository only exposes query methods.
-        // highlight-next-line
-        return await _productReadRepository.ListAsync(filter: p => p.IsActive);
-    }
+    public Task<IReadOnlyList<Product>> GetActiveAsync(CancellationToken cancellationToken = default) =>
+        _repository.ListAsync(filter: p => p.IsActive, cancellationToken: cancellationToken);
 }
 ```
 
-### `AddWriteRepositoryBase`
-This method registers the generic **write-only** repository.
-It should be used in services that are responsible for creating, updating, or deleting data.
+## `AddWriteRepositoryBase`
 
-#### Parameters
+Registers the write-only repository for services that create, update, or delete data.
 
-| Parameter |	Type	| Description |
-| --------- | ----- | ----------- |
-| **services** | [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection) |	The [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection) to add the service registration to. |
-
-#### Example
-Here is how you would register and use the write-only repository.
-
-```csharp
-// In your Program.cs or Startup.cs
-// highlight-next-line
-using RA.Utilities.Data.EntityFramework.Extensions;
-
-var builder = WebApplication.CreateBuilder(args);
-
-// ... other service registrations
-
-// Register the generic write-only repository base.
-// highlight-next-line
+```csharp showLineNumbers
 builder.Services.AddWriteRepositoryBase();
-
-// ...
-
-var app = builder.Build();
 ```
 
-You can then inject [`IWriteRepositoryBase<>`](../../Abstractions/IWriteRepositoryBase.md) into services that modify data.
-
 ```csharp showLineNumbers
-// In a service that only needs to modify product data
-public class ProductCommandService
+public sealed class ProductCommandService
 {
-    private readonly IWriteRepositoryBase<Product, Guid> _productWriteRepository;
+    private readonly IWriteRepositoryBase<Product, Guid> _repository;
 
-    public ProductCommandService(
-      // highlight-next-line
-      IWriteRepositoryBase<Product, Guid> productWriteRepository)
-    {
-        _productWriteRepository = productWriteRepository;
-    }
+    public ProductCommandService(IWriteRepositoryBase<Product, Guid> repository) =>
+        _repository = repository;
 
-    public async Task CreateProductAsync(string name, decimal price)
+    public async Task CreateAsync(string name, decimal price, CancellationToken cancellationToken = default)
     {
-        var newProduct = new Product { Name = name, Price = price };
-        
-        // This repository only exposes write methods.
-        // highlight-start
-        await _productWriteRepository.AddAsync(newProduct);
-        await _productWriteRepository.SaveChangesAsync();
-        // highlight-end
+        var product = new Product { Name = name, Price = price };
+
+        await _repository.AddAsync(product, cancellationToken);
+        await _repository.SaveChangesAsync(cancellationToken);
     }
 }
 ```
 
-### `AddRepositoryBase`
-This method registers the full-featured generic repository that provides both **read and write** (CRUD) operations.
-It's a convenient, all-in-one solution for services that need to both query and modify data for an entity.
+## `AddRepositoryBase`
 
-#### Parameters
+Registers the full repository for services that both query and modify the same entity.
 
-| Parameter |	Type	| Description |
-| --------- | ----- | ----------- |
-| **services** | [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection) |	The [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection) to add the service registration to. |
-
-#### Example
-Here is how you would register and use the full repository.
-
-
-```csharp
-// In your Program.cs or Startup.cs
-// highlight-next-line
-using RA.Utilities.Data.EntityFramework.Extensions;
-
-var builder = WebApplication.CreateBuilder(args);
-
-// ... other service registrations
-
-// Register the generic full-featured repository base.
-// highlight-next-line
+```csharp showLineNumbers
 builder.Services.AddRepositoryBase();
-
-// ...
-
-var app = builder.Build();
 ```
-This allows you to inject [`IRepositoryBase<T, TKey>`](../../Abstractions/IRepositoryBase.md) for full data manipulation capabilities.
 
 ```csharp showLineNumbers
-// In a service that handles all operations for a product
-public class ProductManagementService
+public sealed class ProductService
 {
-    // highlight-next-line
-    private readonly IRepositoryBase<Product, Guid> _productRepository;
+    private readonly IRepositoryBase<Product, Guid> _repository;
 
-    public ProductManagementService(
-        // highlight-next-line
-        IRepositoryBase<Product, Guid> productRepository)
-    {
-        _productRepository = productRepository;
-    }
+    public ProductService(IRepositoryBase<Product, Guid> repository) => _repository = repository;
 
-    public async Task<Product?> GetProductByIdAsync(Guid id)
-    {
-        // Use the read capabilities
-        return await _productRepository.GetByIdAsync(id);
-    }
+    public Task<Product?> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
+        _repository.GetByIdAsync(id, cancellationToken);
 
-    public async Task UpdateProductPriceAsync(Guid id, decimal newPrice)
+    public async Task UpdatePriceAsync(Guid id, decimal price, CancellationToken cancellationToken = default)
     {
-        var product = await _productRepository.GetByIdAsync(id);
-        if (product != null)
+        Product? product = await _repository.GetByIdAsync(id, cancellationToken);
+        if (product is null)
         {
-            product.Price = newPrice;
-            // Use the write capabilities
-
-            // highlight-start
-            await _productRepository.UpdateAsync(product);
-            await _productRepository.SaveChangesAsync();
-            // highlight-end
+            return;
         }
+
+        product.Price = price;
+        await _repository.UpdateAsync(product, cancellationToken);
+        await _repository.SaveChangesAsync(cancellationToken);
     }
 }
 ```
+
+## Choosing what to register
+
+| Inject | Register |
+|---|---|
+| `IReadRepositoryBase<T, TKey>` | `AddReadRepositoryBase()` |
+| `IWriteRepositoryBase<T, TKey>` | `AddWriteRepositoryBase()` |
+| `IRepositoryBase<T, TKey>` | `AddRepositoryBase()` |
+
+Register only what you inject. Registering all three is harmless, but each entity then has three scoped repository instances resolving the same scoped `DbContext`.
+
+## Lifetime
+
+Every registration is scoped. That matches the default scoped lifetime of `AddDbContext` and keeps one `DbContext` per request/scope, so the repositories and the unit of work share a change tracker.
+
+Do not resolve these repositories from a singleton, and do not capture one in a background task that outlives the request scope.

@@ -1,4 +1,5 @@
 ---
+title: ReadRepositoryBase
 sidebar_position: 1
 ---
 
@@ -6,67 +7,103 @@ sidebar_position: 1
 Namespace: RA.Utilities.Data.EntityFramework
 ```
 
-The `ReadRepositoryBase<T, TKey>` class is a concrete implementation of a generic, **read-only repository** using ***Entity Framework Core***.
-Its primary purpose is to provide a standardized and efficient way to query data from a database without allowing any modifications.
+`ReadRepositoryBase<T, TKey>` is the EF Core implementation of [`IReadRepositoryBase<T, TKey>`](../Abstractions/IReadRepositoryBase.md). It provides read-only queries for any entity derived from [`CoreEntity<TKey>`](../Entities/CoreEntity.md) and never exposes a method that changes the database.
 
-It works with any entity class deriving from [`CoreEntity<TKey>`](../Entities/CoreEntity.md) — the type parameters are constrained by `where T : CoreEntity<TKey> where TKey : notnull`, so the primary key can be `Guid`, `int`, `long`, `string`, or any other non-nullable type.
+## 🎯 Purpose
 
-This class is a direct application of the **Command Query Separation (CQS)** principle, which is a core concept in the `RA.Utilities` ecosystem.
-It ensures that methods are either "Queries" (retrieving data) or "Commands" (changing data), but not both.
+Use this repository on the query side of your application. Depending on the interface instead of the `DbContext` makes the read-only intent explicit, keeps business logic free of EF Core calls, and lets you swap the implementation in tests.
 
-## 🔑 Key Purposes and Benefits
-#### 1. Enforces Read-Only Access:
-By inheriting from or using `ReadRepositoryBase`, you create a data access component that is guaranteed not to have methods for adding, updating, or deleting data.
-This is perfect for the "Query" side of a CQRS architecture, reporting services, or any part of your application that should only display information.
+`ListAsync` applies `AsNoTracking()`, so query results do not enter the change tracker. That reduces memory overhead and is the right default for data that will only be displayed or mapped to a DTO.
 
-#### 2. Performance Optimization:
-The documentation highlights a crucial implementation detail: `ReadRepositoryBase` uses ***Entity Framework Core***'s `.AsNoTracking()` method by default for all its queries.
-This tells EF Core not to track changes on the retrieved entities, which significantly reduces memory overhead and improves query performance, as there's no need to manage the state of objects that will never be updated.
+## Class signature
 
-#### 3. Accelerates Development:
-It provides out-of-the-box implementations for common query operations defined in the [`IReadRepositoryBase<T, TKey>`](../Abstractions/IReadRepositoryBase.md) interface, such as:
+```csharp showLineNumbers
+public class ReadRepositoryBase<T, TKey> : IReadRepositoryBase<T, TKey>
+    where T : CoreEntity<TKey>
+    where TKey : notnull
+```
 
-  * `GetByIdAsync`: To fetch a single entity by its primary key.
-  * `ListAsync`: A flexible method to get a list of entities with support for filtering, sorting, and pagination.
+## Constructor
 
-This means you don't have to write this boilerplate query logic yourself for every entity.
+| Constructor | Description |
+|---|---|
+| `ReadRepositoryBase(DbContext dbContext)` | Stores the context and resolves `DbContext.Set<T>()`. Throws `ArgumentNullException` when `dbContext` is `null`. |
 
-#### 4. Promotes Clean Architecture:
-It allows your application services to depend on a specific, read-only contract ([`IReadRepositoryBase<T, TKey>`](../Abstractions/IReadRepositoryBase.md)).
-This makes the intent of your code clearer and prevents developers from accidentally modifying data in a part of the application that is only supposed to read it.
+## Methods
 
-In short, `ReadRepositoryBase` is a specialized tool for building the query side of your data access layer. It's designed to be fast, safe, and to help you maintain a clean, separated architecture.
+| Method | Returns | Behavior |
+|---|---|---|
+| `GetByIdAsync(TKey id, CancellationToken cancellationToken = default)` | `Task<T?>` | Uses `DbSet<T>.FindAsync`. Returns `null` when the key does not exist. `FindAsync` returns an already-tracked instance when one exists, so this query is **not** no-tracking. |
+| `ListAsync(Expression<Func<T,bool>>? filter = null, Func<IQueryable<T>,IOrderedQueryable<T>>? orderBy = null, int? skip = null, int? take = null, CancellationToken cancellationToken = default, params Expression<Func<T,object>>[] includeProperties)` | `Task<IReadOnlyList<T>>` | Builds a query, applies `Include` for each navigation path, then `Where`, `OrderBy`, `Skip`, and `Take`, and executes it with `AsNoTracking()`. |
 
-## 🛠️ Example
-Here is an example of how you might register and use it based on the provided documentation:
+### `ListAsync` parameter order
 
-```csharp
-// In Program.cs, register the generic read-only repository
+`includeProperties` is a `params` array declared **after** `cancellationToken`. Callers can pass navigation paths positionally after the cancellation token or by name:
+
+```csharp showLineNumbers
+// Named arguments read best when several options are combined
+await repository.ListAsync(
+    filter: p => p.IsActive,
+    orderBy: q => q.OrderBy(p => p.Name),
+    skip: 0,
+    take: 20,
+    cancellationToken: cancellationToken,
+    includeProperties: [p => p.Category]);
+
+// Positional includes are also valid
+await repository.ListAsync(null, null, null, null, cancellationToken, p => p.Category, p => p.Supplier);
+```
+
+## Properties
+
+| Member | Type | Description |
+|---|---|---|
+| `dataContext` | `DbContext` | `protected` field holding the context, available to derived repositories. |
+
+## 🚀 How to Use
+
+:::note[Assumed entity]
+The examples below assume `public sealed class Product : CoreEntity<Guid> { /* properties */ }` and a registered `AppDbContext`. See [Getting Started](./index.mdx#hello-world) for the full setup.
+:::
+
+### Register the repository
+
+The repositories are open-generic and take a `DbContext`. Register your context under the `DbContext` service type so DI can construct them:
+
+```csharp showLineNumbers
+using RA.Utilities.Data.EntityFramework.Extensions;
+
+builder.Services.AddDbContext<DbContext, AppDbContext>(options =>
+    options.UseSqlServer(connectionString));
+
+// highlight-next-line
 builder.Services.AddReadRepositoryBase();
 ```
 
+### Query from a service
+
 ```csharp showLineNumbers
-// In a service that only needs to read data
-public class ProductReportService
+using RA.Utilities.Data.Abstractions;
+using RA.Utilities.Data.Entities;
+
+public sealed class ActiveProductReport
 {
-    // Inject the read-only repository for Products
-    private readonly IReadRepositoryBase<Product> _productReadRepository;
+    private readonly IReadRepositoryBase<Product, Guid> _repository;
 
-    public ProductReportService(IReadRepositoryBase<Product> productReadRepository)
-    {
-        _productReadRepository = productReadRepository;
-    }
+    public ActiveProductReport(IReadRepositoryBase<Product, Guid> repository) =>
+        _repository = repository;
 
-    public async Task<IReadOnlyList<Product>> GetActiveProductsReport()
-    {
-        // This repository only has query methods, preventing any accidental writes.
-        // The query will also be more performant due to AsNoTracking().
-        var activeProducts = await _productReadRepository.ListAsync(
+    public Task<IReadOnlyList<Product>> GetFirstPageAsync(CancellationToken cancellationToken = default) =>
+        _repository.ListAsync(
             filter: p => p.IsActive,
-            orderBy: q => q.OrderBy(p => p.Name)
-        );
-
-        return activeProducts;
-    }
+            orderBy: q => q.OrderBy(p => p.Name),
+            take: 20,
+            cancellationToken: cancellationToken);
 }
 ```
+
+## ⚠️ Constraints
+
+- **No projections**: `ListAsync` returns entities. For a DTO projection (`Select`), use the `DbContext` directly or add a custom repository method.
+- **No raw SQL / compiled queries**: the base class exposes only the two interface methods.
+- **No tracking on lists**: if you need to update entities loaded through `ListAsync`, attach them explicitly or reload them with `GetByIdAsync` (which uses `FindAsync`).

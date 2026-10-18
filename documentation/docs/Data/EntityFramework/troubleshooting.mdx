@@ -1,0 +1,247 @@
+---
+title: Troubleshooting & FAQ
+sidebar_position: 9
+sidebar_class_name: nav_session ra_utilities_data_ef
+---
+
+# Troubleshooting & FAQ
+
+## Common Issues
+
+### Unable to resolve service for type 'Microsoft.EntityFrameworkCore.DbContext'
+
+**Cause**: the open-generic repositories take a `DbContext` constructor parameter, but `AddDbContext<AppDbContext>()` registers the context under `AppDbContext` only. DI has no service registered for `DbContext`, so resolving `IRepositoryBase<Product, Guid>` fails.
+
+**Fix**: register the context under the `DbContext` service type, or alias an existing registration:
+
+```csharp showLineNumbers
+// ✅ Register AppDbContext as the implementation of DbContext
+builder.Services.AddDbContext<DbContext, AppDbContext>(options =>
+    options.UseSqlServer(connectionString));
+
+// ✅ Alternative alias (when the concrete context is already registered)
+builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
+builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<AppDbContext>());
+```
+
+A custom repository whose constructor takes `AppDbContext` does not need this; it can call `base(dbContext)` directly.
+
+### IRepositoryBase cannot be resolved for my entity
+
+**Cause**: the entity does not satisfy the generic constraint, or the repository was never registered.
+
+**Fix**: derive the entity from [`CoreEntity<TKey>`](../Entities/CoreEntity.md) and register the repository:
+
+```csharp showLineNumbers
+public sealed class Product : CoreEntity<Guid> { }   // ✅
+
+builder.Services.AddRepositoryBase();                // IRepositoryBase<T, TKey>
+```
+
+Open-generic registrations only resolve for types that meet `where T : CoreEntity<TKey> where TKey : notnull`.
+
+### `IReadRepositoryBase<T>` does not exist / wrong number of type arguments
+
+**Cause**: since v10.0.2 every repository interface and class is generic over the key type.
+
+**Fix**: supply both type arguments:
+
+```csharp
+// ❌ v10.0.1 and earlier
+IReadRepositoryBase<Product>
+
+// ✅ v10.0.2+
+IReadRepositoryBase<Product, Guid>
+```
+
+### My entity changes are not saved
+
+**Cause**: the entity is not tracked. `ListAsync` uses `AsNoTracking()`, so entities returned from it are detached. Mutating a detached entity and calling `UpdateAsync` marks it `Modified`, but changes made through a read-only interface without an explicit update are lost.
+
+**Fix**: load entities you intend to modify with `GetByIdAsync` (which uses `FindAsync` and may return a tracked instance), or call `UpdateAsync` before `SaveChangesAsync`:
+
+```csharp showLineNumbers
+Product? product = await reads.GetByIdAsync(id, cancellationToken);
+product.Name = "New name";
+await writes.UpdateAsync(product, cancellationToken);
+await writes.SaveChangesAsync(cancellationToken);
+```
+
+### DeleteAsync did not delete anything
+
+**Cause**: deletes are **mark-then-save**. `DeleteAsync` only marks the entity `Deleted`; the row is removed when `SaveChangesAsync` runs. Also, deleting a key that does not exist is a silent no-op.
+
+**Fix**: call `SaveChangesAsync`; check the key exists first if the caller needs to know:
+
+```csharp
+await repository.DeleteAsync(id, cancellationToken);
+await repository.SaveChangesAsync(cancellationToken); // 👈 required
+```
+
+### `SaveChangesAsync` saved more than I expected
+
+**Cause**: `SaveChangesAsync` commits the whole scoped `DbContext`, including changes made through other repositories in the same scope. That is the intended unit-of-work behavior.
+
+**Fix**: keep the scope focused, or use a separate `DbContext` scope when work must be isolated. Do not assume the repository saves only the entity it was given.
+
+### Timestamps are not set
+
+**Cause**: one of the following:
+
+- the interceptor is not registered on the context options;
+- the entity does not expose `CreatedAt` / `LastModifiedAt` (check the base class);
+- the entity state is not `Added` or `Modified` (for example, it is detached).
+
+**Fix**: attach the interceptor and use a base class that exposes the properties:
+
+```csharp showLineNumbers
+builder.Services.AddScoped<BaseEntitySaveChangesInterceptor>();
+
+builder.Services.AddDbContext<DbContext, AppDbContext>((provider, options) =>
+    options.UseSqlServer(connectionString)
+           .AddInterceptors(provider.GetRequiredService<BaseEntitySaveChangesInterceptor>()));
+```
+
+`BaseEntity<TKey>` has only `CreatedAt`; use `WriteEntity<TKey>` (or a derived type) when you also need `LastModifiedAt`.
+
+### `CreatedBy` / `LastModifiedBy` are always null
+
+**Cause**: `BaseEntitySaveChangesInterceptor` sets only `CreatedAt` and `LastModifiedAt`. The user identifiers on `AuditableBaseEntity<TKey>` are application concerns.
+
+**Fix**: set them in your command handler or add a second interceptor that resolves the current user:
+
+```csharp showLineNumbers
+public override InterceptionResult<int> SavingChanges(
+    DbContextEventData eventData, InterceptionResult<int> result)
+{
+    foreach (EntityEntry<AuditableBaseEntity<Guid>> entry in eventData.Context!.ChangeTracker.Entries<AuditableBaseEntity<Guid>>())
+    {
+        if (entry.State is EntityState.Added)
+        {
+            entry.Entity.CreatedBy = _currentUser.Id;
+        }
+
+        if (entry.State is EntityState.Modified)
+        {
+            entry.Entity.LastModifiedBy = _currentUser.Id;
+        }
+    }
+
+    return base.SavingChanges(eventData, result);
+}
+```
+
+### Soft-deleted entities are still returned
+
+**Cause**: the package does not apply global query filters or manage `SoftDeleteEntity<TKey>.IsDeleted`.
+
+**Fix**: configure the filter and set the flag yourself:
+
+```csharp showLineNumbers
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    modelBuilder.Entity<Product>().HasQueryFilter(p => !p.IsDeleted);
+}
+```
+
+Use `IgnoreQueryFilters()` in a custom repository when you need to see deleted rows.
+
+### Invalid data from the database throws while reading
+
+**Cause**: the value-object converters validate on read. A stored value that no longer satisfies the value object's rules (for example, an IBAN with a bad checksum) throws when EF materializes it — `BadRequestException` for the string-backed value objects, `JsonException` for a malformed `Money` JSON payload.
+
+**Fix**: clean or migrate the data. This is deliberate: invalid data should not enter the domain. If the column is nullable, ensure `NULL` maps to a nullable property (`IBAN?`).
+
+### `IbanConverter` / `HasMoney()` produces a model-building error
+
+**Cause**: the property is not the type the converter expects, or two mappings are configured for the same property.
+
+**Fix**:
+
+- `IbanConverter` requires an `IBAN` or `IBAN?` property.
+- `HasMoney()` requires a `Money` or `Money?` property and a reference-type entity.
+- Do not combine `HasMoney()` with `HasConversion(new MoneyConverter())` on the same property.
+
+### The IBAN column is too short
+
+**Cause**: an explicit length was set below 34 characters, or the existing column predates the converter. SQL Server rejects the insert (truncation error); some providers silently accept it.
+
+**Fix**: configure the maximum length explicitly and migrate the column if needed:
+
+```csharp showLineNumbers
+builder.Property(c => c.Iban)
+    .HasConversion(new IbanConverter())
+    .HasMaxLength(34);
+```
+
+### No database provider has been configured
+
+**Cause**: `RA.Utilities.Data.EntityFramework` references only `Microsoft.EntityFrameworkCore`; it does not include a provider.
+
+**Fix**: add the provider package (SQL Server, SQLite, PostgreSQL, …) and call the matching `Use...` method:
+
+```csharp showLineNumbers
+builder.Services.AddDbContext<DbContext, AppDbContext>(options =>
+    // highlight-next-line
+    options.UseSqlServer(connectionString));
+```
+
+### Can I use DTO projections, raw SQL, or bulk updates?
+
+Yes — add a custom repository that derives from `RepositoryBase<T, TKey>` and uses the concrete `DbContext`:
+
+```csharp showLineNumbers
+public sealed class ProductRepository(AppDbContext dbContext)
+    : RepositoryBase<Product, Guid>(dbContext)
+{
+    public Task<List<ProductSummary>> GetSummariesAsync(CancellationToken cancellationToken = default) =>
+        dbContext.Products
+            .AsNoTracking()
+            .Select(p => new ProductSummary(p.Id, p.Name, p.Price))
+            .ToListAsync(cancellationToken);
+
+    public Task<int> RenameAllAsync(string name, CancellationToken cancellationToken = default) =>
+        dbContext.Products.ExecuteUpdateAsync(
+            setters => setters.SetProperty(p => p.Name, name),
+            cancellationToken);
+}
+```
+
+The base repositories intentionally expose no `IQueryable`, no raw SQL, and no bulk APIs.
+
+### Can I use `AddDbContextPool`?
+
+Yes, but the repositories resolve a `DbContext` from the scope, so pooling changes how context instances are reused. Because `BaseEntitySaveChangesInterceptor` is stateless, register it as a singleton when the context is pooled:
+
+```csharp
+builder.Services.AddSingleton<BaseEntitySaveChangesInterceptor>();
+```
+
+Also remember that a pooled context must not be used concurrently and cannot rely on per-request scoped state configured in `OnConfiguring`.
+
+---
+
+## Known Limitations
+
+- **No `IQueryable` exposure**: repositories return entities, not composable queries. Projections and complex queries need a custom repository.
+- **No specification pattern**: filtering is limited to `ListAsync`'s `filter`/`orderBy`/paging arguments.
+- **No bulk operations**: `AddRangeAsync` and `UpdateRangeAsync` still go through the change tracker; use `ExecuteUpdateAsync` / `ExecuteDeleteAsync` for set-based work.
+- **No transaction abstraction**: a transaction spans one `SaveChangesAsync`. For multi-step boundaries, use `DbContext.Database.BeginTransactionAsync`.
+- **`UpdateAsync` writes all columns**: EF Core marks the whole entity `Modified`.
+- **No soft-delete support**: `SoftDeleteEntity<TKey>.IsDeleted` is not filtered or set automatically.
+- **No user auditing**: `CreatedBy` / `LastModifiedBy` are not populated by the interceptor.
+- **No concurrency token setup**: add `[ConcurrencyCheck]`, `IsRowVersion()`, or a `rowversion` column in your model if you need optimistic concurrency.
+- **UTC timestamps only**: the interceptor uses `DateTime.UtcNow`, not the database clock.
+- **GetByIdAsync may return a tracked entity**: it uses `FindAsync`, unlike the no-tracking `ListAsync`.
+
+---
+
+## Performance Tips
+
+- **Use `ListAsync` for read paths** — it is no-tracking and returns `IReadOnlyList<T>`.
+- **Paginate** — always pass `take` (and `skip`) for list endpoints; the repository does not paginate by default.
+- **Project in SQL** — for large entities, add a custom repository method with `Select` so you do not materialize unused columns.
+- **Batch writes** — add/update a range and call `SaveChangesAsync` once instead of saving per entity.
+- **Avoid resolving repositories in singletons** — they are scoped and hold a scoped `DbContext`; capturing them causes concurrency bugs.
+- **Prefer `ExecuteUpdateAsync` / `ExecuteDeleteAsync`** for set-based changes that do not need change tracking.
+- **Keep `GetByIdAsync` for single entities** — `FindAsync` returns a tracked instance if one is already loaded, avoiding an extra query.
