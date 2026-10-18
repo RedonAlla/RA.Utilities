@@ -1,6 +1,4 @@
-﻿#pragma warning disable CA1308
-
-using System;
+﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;

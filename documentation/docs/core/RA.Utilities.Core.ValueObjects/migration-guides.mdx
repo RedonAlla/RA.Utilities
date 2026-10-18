@@ -1,21 +1,103 @@
 ---
 title: Migration Guides
+sidebar_class_name: nav_session ra_utilities_value_objects
 ---
 
 # Migration Guides
 
-Use this page when upgrading `RA.Utilities.Core.ValueObjects` between versions that introduce breaking changes.
-
-## Version 10.0.0 — Initial Stable Release
-
-`10.0.0` is the first stable release of `RA.Utilities.Core.ValueObjects`, so there are no breaking changes to migrate from. If you are adopting the package for the first time, see the [Getting Started](./index.mdx#getting-started) guide and the [How-To Guides](./index.mdx#-how-to-guides).
-
-:::info Release Notes
-The full release notes for every version, including breaking-change callouts, live in the package's [releasenotes.md](https://www.nuget.org/packages/RA.Utilities.Core.ValueObjects) (bundled in the NuGet package).
-:::
+Use this guide when adopting new features or upgrading `RA.Utilities.Core.ValueObjects` between versions.
 
 ---
 
-### Future migrations
+## v10.1.0 → v10.2.0
 
-When a new major or minor version introduces a breaking change, a step-by-step migration section will be added here, following the format used by the other RA.Utilities packages.
+This release is **purely additive**: no existing types, methods, or signatures were modified. It introduces the [`IBAN`](./IBAN.md) value object for banking and financial applications.
+
+### Breaking Changes: None
+
+All existing code referencing `Email`, `Currency`, `SSN`, and `Money` compiles and behaves identically.
+
+### What's New
+
+*   **`IBAN` value object**: Validates and normalizes International Bank Account Numbers.
+    *   **Automatic paper format normalization**: Strips spaces, hyphens, backslashes, and apostrophes (e.g. `GB82 WEST 1234 5698 7654 32` → `GB82WEST12345698765432`) and normalizes to upper case.
+    *   **ISO 13616 structural validation**: Enforces a 2-letter country code, 2 check digits, and 9–30 alphanumeric BBAN (13–34 total characters).
+    *   **ISO 7064 mod-97 check digit verification**: Automatically computes and validates the expected check digits against the input.
+    *   **Properties**: Exposes `Value` (compact normalized string) and `CountryCode` (2-letter ISO 3166-1 alpha-2 code).
+    *   **`IParsable<IBAN>` support**: Enables `Parse` and `TryParse` for ASP.NET Core minimal API route, query, and header binding.
+    *   **JSON serialization**: Preconfigured with `ValueObjectJsonConverter<IBAN>` for string serialization.
+
+### Adopting `IBAN`
+
+#### 1. Replace raw strings in entity or DTO contracts
+
+**Before:**
+```csharp
+public class BankAccountDto
+{
+    public string Iban { get; set; } = string.Empty;
+}
+```
+
+**After:**
+```csharp
+using RA.Utilities.Core.ValueObjects;
+
+public class BankAccountDto
+{
+    public IBAN Iban { get; set; } = null!;
+}
+```
+
+#### 2. Bind directly in Minimal APIs
+
+```csharp showLineNumbers
+using RA.Utilities.Core.ValueObjects;
+
+app.MapGet("/accounts/{iban}", (IBAN iban) =>
+{
+    return Results.Ok(new { iban.Value, iban.CountryCode });
+});
+```
+
+---
+
+## v10.0.0 → v10.1.0
+
+This release is **purely additive**: no existing types or methods changed. It introduces `Money.Subtract` for currency-safe arithmetic.
+
+### Breaking Changes: None
+
+Existing uses of `Money.PositiveMoney` and `Money.Add` remain unchanged.
+
+### What's New
+
+*   **`Money.Subtract(Money other)`**: Returns a new `Money` instance containing the difference between two amounts. It verifies that both operands share the same currency, throwing `BadRequestException` with `BaseErrorCode.CurrencyMismatch` if they differ.
+
+### Usage Example
+
+```csharp showLineNumbers
+using RA.Utilities.Core.ValueObjects;
+
+var price = Money.PositiveMoney(19.99m, new Currency("EUR"));
+var discount = Money.PositiveMoney(4.00m, new Currency("EUR"));
+
+// highlight-next-line
+var netPrice = price.Subtract(discount); // 15.99 EUR
+
+// Currency mismatch guard:
+// price.Subtract(new Money(4m, new Currency("USD"))); // throws BadRequestException
+```
+
+---
+
+## Version 10.0.0 — Initial Stable Release
+
+Initial stable release introducing strongly-typed value objects with boundary validation and built-in JSON conversion:
+
+- **`Email`**: Validated email address with `LocalPart` and `Domain` properties.
+- **`Currency`**: ISO 4217 3-character currency code.
+- **`SSN`**: 10-character formatted social security number (`^[A-Z][0-9]{8}[A-Z]$`).
+- **`Money`**: Monetary `Amount` (`decimal`) paired with a `Currency`, with `PositiveMoney` and `Add`.
+- **`IValueObject<TSelf>`**: Base interface combining `Value` and `IParsable<TSelf>`.
+- **`ValueObjectJsonConverter<T>`**: Shared `System.Text.Json` converter.

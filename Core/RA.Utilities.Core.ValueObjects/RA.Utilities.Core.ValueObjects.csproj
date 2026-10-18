@@ -1,10 +1,10 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-		<Version>10.1.0</Version>
+		<Version>10.2.0</Version>
     <Title>RA.Utilities Core Value Objects</Title>
-		<Description>Strongly-typed, validated value objects for .NET, including Email, Currency, SSN, and Money, with built-in System.Text.Json converters and structured validation errors. Part of the RA.Utilities suite.</Description>
-		<PackageTags>value-objects;ddd;domain-driven-design;email;currency;ssn;json-converter;validation;dotnet</PackageTags>
+		<Description>Strongly-typed, validated value objects for .NET, including Email, Currency, SSN, Money, and IBAN, with built-in System.Text.Json converters and structured validation errors. Part of the RA.Utilities suite.</Description>
+		<PackageTags>value-objects;ddd;domain-driven-design;email;currency;ssn;iban;json-converter;validation;dotnet</PackageTags>
 		<PackageIcon>value-object.png</PackageIcon>
 		<PackageId>RA.Utilities.Core.ValueObjects</PackageId>
 		<PackageReadmeFile>README.md</PackageReadmeFile>

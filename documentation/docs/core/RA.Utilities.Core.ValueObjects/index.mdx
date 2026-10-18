@@ -1,5 +1,6 @@
 ---
 title: RA.Utilities.Core.ValueObjects
+sidebar_position: 4
 sidebar_class_name: nav_session ra_utilities_value_objects
 ---
 
@@ -7,7 +8,7 @@ import DocCardList from '@theme/DocCardList';
 import LogoSvg from '../../../../Assets/Images/value-object.svg';
 
 <p align="center">
-<LogoSvg width={'12rem'} height={'12rem'} className="header_ico_stroke" />
+  <LogoSvg width={'12rem'} height={'12rem'} className="header_icon_stroke header_ico_stroke" />
 </p>
 
 # RA.Utilities.Core.ValueObjects
@@ -18,25 +19,34 @@ import LogoSvg from '../../../../Assets/Images/value-object.svg';
 [![Publish NuGet](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml/badge.svg)](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml)
 [![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?label=License&logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
 
-`RA.Utilities.Core.ValueObjects` provides strongly-typed, validated value objects like [`Email`](./Email.md), [`Currency`](./Currency.md), [`SSN`](./SSN.md), and [`Money`](./Money.md). It solves the problem of passing raw, unvalidated strings and decimals around your domain, where formatting inconsistencies and invalid data can silently propagate.
+`RA.Utilities.Core.ValueObjects` provides strongly-typed, validated domain primitives: [`Email`](./Email.md), [`Currency`](./Currency.md), [`SSN`](./SSN.md), [`Money`](./Money.md), and [`IBAN`](./IBAN.md).
+It eliminates primitive obsession by ensuring that input values are validated and normalized once at system boundaries, so invalid states are unrepresentable throughout your application.
 
 ## 🎯 Purpose
 
-A value object is validated and normalized *once*, at the boundary of your system. After that, an `Email` that exists is always a valid, normalized email address. This approach has several key benefits:
+In typical applications, domain primitives like email addresses, currency codes, bank account numbers, and monetary figures are represented as primitive `string` or `decimal` values. This pattern invites subtle bugs: casing mismatches (`eur` vs `EUR`), whitespace corruption, invalid formatting, and cross-currency addition.
 
-- **Type Safety**: You can't accidentally pass a currency code where an email is expected; the compiler enforces intent.
-- **Fail Fast**: Invalid input throws a `BadRequestException` with structured `ValidationError` details that `RA.Utilities.Api` middleware can translate into standardized HTTP 400 responses automatically.
-- **Consistent Normalization**: Values are trimmed and case-normalized on creation, so `new Email(" User@Gmail.com ")` and `new Email("user@gmail.com")` are equal.
-- **Value Equality**: All value objects are records, so they compare by value, not by reference.
-- **Decoupled Logic**: Your domain code works with guaranteed-valid values and never needs defensive re-validation or duplicate format checks.
+A value object is validated and normalized *once*, at the boundary of your system. Once created, an instance is guaranteed to be valid and canonical.
+
+- **Type Safety**: The compiler prevents accidental parameter transposition — you cannot pass a raw string or an email where a currency code or IBAN is required.
+- **Fail Fast at the Boundary**: Invalid inputs immediately throw a `BadRequestException` containing structured `ValidationError` details (codes from `BaseErrorCode`, property names, and attempted values) that `RA.Utilities.Api` middleware translates into standardized HTTP 400 responses.
+- **Consistent Normalization**: Automatic formatting (lowercased emails, upper-cased currency/SSN/IBAN codes, stripped whitespace/separators) guarantees that logically equivalent values produce equal instances.
+- **Value Equality**: Implemented as C# records, instances compare by value rather than reference.
+- **Decoupled Domain Logic**: Core business logic receives guaranteed-valid models and never needs defensive re-validation or scattered regex checks.
 
 ### ✨ Key Features
 
-- **4 value object types** — `Email` (normalized address with `LocalPart`/`Domain`), `Currency` (ISO 4217 code), `SSN` (letter + 8 digits + letter), `Money` (amount + currency with guarded `Add`/`Subtract` arithmetic)
-- **Structured validation errors** — `BadRequestException` with `ValidationError` entries carrying error codes from `BaseErrorCode`, property names, and attempted values
-- **Built-in JSON support** — generic `ValueObjectJsonConverter<T>` serializes value objects as plain strings and deserializes back through validation
-- **`IParsable<T>` support** — `Parse`/`TryParse` enable route, query, and header binding in ASP.NET Core minimal APIs
-- **Extensible** — implement `IValueObject<TSelf>` and reuse the generic converter for your own string-based value objects
+- **5 value object types** — `Email` (RFC 5321 length, `LocalPart`/`Domain`), `Currency` (ISO 4217 code), `SSN` (letter + 8 digits + letter), `Money` (decimal amount + currency with guarded arithmetic), and `IBAN` (ISO 13616 structure and ISO 7064 mod-97 check digits)
+- **Structured validation errors** — `BadRequestException` carrying `ValidationError` entries matching `BaseErrorCode` and `BaseErrorMessage`
+- **Built-in JSON support** — generic `ValueObjectJsonConverter<T>` serializes string-backed value objects as plain strings and validates them on deserialization
+- **`IParsable<T>` support** — `Parse`/`TryParse` implementations enable automatic route, query, and header binding in ASP.NET Core minimal APIs
+- **Extensible architecture** — implement `IValueObject<TSelf>` to reuse the generic JSON converter for your own string-based value objects
+- **Zero external dependencies** — depends only on `RA.Utilities.Core.Exceptions`
+- **No Configuration** — no DI registration or options setup required
+
+:::info[Looking for recent updates?]
+v10.1.0 introduced `Money.Subtract(other)` for currency-safe subtraction, and v10.2.0 introduced the `IBAN` value object. See the [Migration Guides](./migration-guides.mdx) for details.
+:::
 
 ---
 
@@ -45,7 +55,7 @@ A value object is validated and normalized *once*, at the boundary of your syste
 ### Prerequisites
 
 - **.NET 10.0** or later
-- **`RA.Utilities.Core.Exceptions`** (included as a dependency)
+- **`RA.Utilities.Core.Exceptions`** (included as a package dependency)
 
 ### Installation
 
@@ -64,32 +74,37 @@ Install-Package RA.Utilities.Core.ValueObjects
 **PackageReference (csproj)**
 
 ```xml
-<PackageReference Include="RA.Utilities.Core.ValueObjects" Version="10.1.0" />
+<PackageReference Include="RA.Utilities.Core.ValueObjects" Version="10.2.0" />
 ```
 
 ### Hello World
 
-The simplest usage — validate and normalize user input at the boundary of your system:
+Validate and normalize user inputs at the boundary of your system:
 
 ```csharp showLineNumbers
 using RA.Utilities.Core.ValueObjects;
 
 // highlight-next-line
 var email = new Email("  User@Gmail.com  ");
+Console.WriteLine(email.Value);     // "user@gmail.com"  (trimmed and lower-cased)
+Console.WriteLine(email.LocalPart); // "user"
+Console.WriteLine(email.Domain);    // "gmail.com"
 
-email.Value;      // "user@gmail.com"  (trimmed and lower-cased)
-email.LocalPart;  // "user"
-email.Domain;     // "gmail.com"
+// highlight-next-line
+var iban = new IBAN("gb82 west 1234 5698 7654 32");
+Console.WriteLine(iban.Value);       // "GB82WEST12345698765432" (normalized compact)
+Console.WriteLine(iban.CountryCode); // "GB"
 ```
 
 Invalid input throws a `BadRequestException` immediately:
 
 ```csharp showLineNumbers
 // highlight-next-line
-new Email("not-an-email"); // throws BadRequestException with a ValidationError
+new Email("not-an-email");           // throws BadRequestException with BaseErrorCode.EmailNotValid
+new IBAN("GB00WEST12345698765432"); // throws BadRequestException with BaseErrorCode.IbanCheckDigits
 ```
 
-No DI registration needed. The built-in JSON converter is applied automatically through the `[JsonConverter]` attribute on each value object.
+No DI registration is required. Built-in JSON converters are applied automatically through `[JsonConverter]` attributes on each value object.
 
 ---
 
@@ -97,16 +112,17 @@ No DI registration needed. The built-in JSON converter is applied automatically 
 
 ### Available Value Objects
 
-| Value object | Normalization                       | Validation                                                    | Typical use                          |
-|--------------|-------------------------------------|---------------------------------------------------------------|--------------------------------------|
-| [`Email`](./Email.md)    | trimmed, lower-cased                | required, max 254 chars, email format                         | user identities, notifications       |
-| [`Currency`](./Currency.md) | trimmed, upper-cased             | required, exactly 3 characters (ISO 4217)                     | pricing, payments, multi-currency    |
-| [`SSN`](./SSN.md)        | trimmed, upper-cased                | required, max 10 chars, `^[A-Z][0-9]{8}[A-Z]$`                | personal identifiers                 |
-| [`Money`](./Money.md)    | —                                   | `PositiveMoney` rejects negative amounts; `Add`/`Subtract` check currency | amounts that must carry a currency |
+| Value Object | Normalization | Validation | Typical Use |
+|---|---|---|---|
+| [`Email`](./Email.md) | trimmed, lower-cased | required, max 254 chars, email format regex | User identities, communication, login |
+| [`Currency`](./Currency.md) | trimmed, upper-cased | required, exactly 3 characters (ISO 4217) | Pricing, payments, multi-currency accounting |
+| [`SSN`](./SSN.md) | trimmed, upper-cased | required, max 10 chars, `^[A-Z][0-9]{8}[A-Z]$` | National identity, employee records |
+| [`Money`](./Money.md) | — | `PositiveMoney` rejects negative amounts; `Add`/`Subtract` guard currency mismatch | Pricing, invoice line items, balances |
+| [`IBAN`](./IBAN.md) | trimmed, stripped of grouping separators, upper-cased | required, 13–34 chars regex, ISO 7064 mod-97 check digits | Bank account numbers, SEPA wire transfers |
 
-### Shared behavior: `IValueObject<TSelf>`
+### Shared Behavior: `IValueObject<TSelf>`
 
-`Email`, `Currency`, and `SSN` implement `IValueObject<TSelf>`, which combines a normalized `Value` string with `IParsable<TSelf>`:
+`Email`, `Currency`, `SSN`, and `IBAN` implement `IValueObject<TSelf>`, which combines a normalized string `Value` with `IParsable<TSelf>`:
 
 ```csharp
 public interface IValueObject<TSelf> : IParsable<TSelf>
@@ -116,31 +132,33 @@ public interface IValueObject<TSelf> : IParsable<TSelf>
 }
 ```
 
-This lets you write generic algorithms over any value object, and it is what powers the shared JSON converter.
+This interface enables generic operations over string-backed value objects and powers `ValueObjectJsonConverter<T>`.
 
-### How validation flows through the system
+### How Validation Flows Through the System
 
 ```
-Boundary (API/DTO)                    Domain                        API Layer
-──────────────────                    ──────                        ─────────
-new Email(input)              →       guaranteed-valid       →      BadRequestException
-throws BadRequestException            Email instance                caught by middleware
-if invalid                                                          → HTTP 400 + JSON body
+Boundary (API/DTO)                     Domain                         API Layer
+──────────────────                     ──────                         ─────────
+new Email(input)               →       guaranteed-valid        →      BadRequestException
+new IBAN(input)                        value object instance          caught by middleware
+throws BadRequestException                                            → HTTP 400 + JSON body
+if invalid
 
-JsonSerializer.Deserialize<T>   →     same validation          →    JsonException on
-                                      via T.Parse                       invalid JSON
+JsonSerializer.Deserialize<T>  →       same validation         →      JsonException on
+                                       via T.Parse                    invalid JSON
 
-MapGet("/{email}")              →     TryParse binds route     →    automatic 400 on
-minimal API binding                   values with validation            invalid route values
+MapGet("/{iban}")              →       TryParse binds route    →      automatic 400 on
+minimal API binding                    values with validation         invalid route values
 ```
 
 ### Terminology
 
-- **Value object**: A type identified only by its value (not identity), validated and normalized on creation. Two instances with the same value are equal.
-- **Normalization**: Trimming and case-folding applied on creation, so equal values always have identical representations.
-- **`IValueObject<TSelf>`**: Interface for string-backed value objects; provides `Value` and `IParsable<TSelf>`.
-- **`ValueObjectJsonConverter<T>`**: Generic `System.Text.Json` converter shared by all value objects; serializes as a plain string, deserializes through `Parse`.
-- **`BadRequestException`**: Thrown by constructors when validation fails, carrying `ValidationError` entries with error codes from `BaseErrorCode`.
+- **Value Object**: An immutable type identified purely by its values rather than an identity key. Two instances with identical property values are equal.
+- **Normalization**: Canonical formatting (trimming, case normalization, separator stripping) applied during construction so logically equal values share the same internal string.
+- **`IValueObject<TSelf>`**: Shared interface for string-backed value objects, exposing `Value` and `IParsable<TSelf>`.
+- **`ValueObjectJsonConverter<T>`**: Shared `System.Text.Json` converter that writes value objects as plain strings and deserializes them through validation.
+- **`BadRequestException`**: Exception thrown upon validation failure, carrying `ValidationError` items with machine-readable error codes from `BaseErrorCode`.
+- **ISO 7064 Mod-97**: Mathematical checksum algorithm used by `IBAN` to detect transcription errors in bank account numbers.
 
 ---
 
@@ -149,6 +167,9 @@ minimal API binding                   values with validation            invalid 
 ### Validate an email address
 
 ```csharp showLineNumbers
+using RA.Utilities.Core.Exceptions;
+using RA.Utilities.Core.ValueObjects;
+
 public void RegisterUser(string emailInput)
 {
     // highlight-next-line
@@ -157,15 +178,18 @@ public void RegisterUser(string emailInput)
     var existing = _userRepository.FindByEmail(email);
     if (existing is not null)
     {
-        throw new ConflictException(nameof(User), email);
+        throw new ConflictException("User", email);
     }
-    // ... registration logic
+
+    _userRepository.Add(new User(email));
 }
 ```
 
 ### Enforce a valid currency on a price
 
 ```csharp showLineNumbers
+using RA.Utilities.Core.ValueObjects;
+
 public Money GetPrice(string currencyCode)
 {
     // highlight-next-line
@@ -174,51 +198,84 @@ public Money GetPrice(string currencyCode)
 }
 ```
 
+### Validate and normalize an International Bank Account Number (IBAN)
+
+```csharp showLineNumbers
+using RA.Utilities.Core.ValueObjects;
+
+public void ProcessTransfer(string rawIban, decimal amount, string currencyCode)
+{
+    // highlight-next-line
+    var destination = new IBAN(rawIban); // strips spaces/dashes, validates mod-97 check digits
+    var transferAmount = Money.PositiveMoney(amount, new Currency(currencyCode));
+
+    Console.WriteLine($"Sending {transferAmount} to {destination.CountryCode} account: {destination.Value}");
+}
+```
+
 ### Reject negative amounts and mismatched currencies
 
 ```csharp showLineNumbers
-// highlight-next-line
-var price = Money.PositiveMoney(19.99m, new Currency("EUR")); // throws if negative
+using RA.Utilities.Core.ValueObjects;
+
+var price = Money.PositiveMoney(19.99m, new Currency("EUR"));
 var shipping = Money.PositiveMoney(4.99m, new Currency("EUR"));
 var discount = Money.PositiveMoney(4.00m, new Currency("EUR"));
 
-var total = price.Add(shipping); // 24.98 EUR
+// highlight-next-line
+var total = price.Add(shipping);   // 24.98 EUR
+// highlight-next-line
 var net = price.Subtract(discount); // 15.99 EUR
 
-// highlight-next-line
-total.Add(new Money(5m, new Currency("USD"))); // throws BadRequestException (CurrencyMismatch)
-total.Subtract(new Money(1m, new Currency("USD"))); // same CurrencyMismatch guard
+// Attempting to combine different currencies throws BadRequestException (CurrencyMismatch):
+total.Add(new Money(5m, new Currency("USD")));
+total.Subtract(new Money(1m, new Currency("USD")));
 ```
 
-### Bind value objects in minimal APIs
+### Bind value objects in Minimal APIs
 
-`Parse`/`TryParse` support lets minimal APIs bind value objects from route, query, and header values, with automatic 400 responses for invalid input:
+`IParsable<T>` implementation enables direct binding from route, query, and header values in ASP.NET Core:
 
 ```csharp showLineNumbers
+using RA.Utilities.Core.ValueObjects;
+
 // highlight-next-line
-app.MapGet("/users/{email}", (Email email) => $"Looking up {email.LocalPart}");
+app.MapGet("/users/{email}", (Email email) => $"Looking up {email.LocalPart} at {email.Domain}");
+
+// highlight-next-line
+app.MapGet("/accounts/{iban}", (IBAN iban) => $"Routing to country: {iban.CountryCode}");
 ```
 
-### Serialize to and from JSON
+If an incoming value fails validation, ASP.NET Core minimal APIs return an automatic HTTP 400 Bad Request.
 
-Value objects serialize as plain strings and deserialize back through validation:
+### Serialize to and deserialize from JSON
+
+Value objects serialize as plain JSON strings and deserialize back through validation:
 
 ```csharp showLineNumbers
+using System.Text.Json;
+using RA.Utilities.Core.ValueObjects;
+
 var json = JsonSerializer.Serialize(new Email("User@Gmail.com"));
 // json == "\"user@gmail.com\""
 
 // highlight-next-line
 var email = JsonSerializer.Deserialize<Email>("\" User@Gmail.com \"");
-// email.Value == "user@gmail.com" (normalized)
+// email.Value == "user@gmail.com" (trimmed and normalized)
+
+// highlight-next-line
+var iban = JsonSerializer.Deserialize<IBAN>("\"GB82 WEST 1234 5698 7654 32\"");
+// iban.Value == "GB82WEST12345698765432"
 
 JsonSerializer.Deserialize<Currency>("\"EURO\""); // throws JsonException
 ```
 
 ### Create a custom value object
 
-Implement `IValueObject<TSelf>` and reuse the generic converter:
+Implement `IValueObject<TSelf>` and decorate the record with `[JsonConverter]`:
 
 ```csharp showLineNumbers
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using RA.Utilities.Core.ValueObjects;
 using RA.Utilities.Core.ValueObjects.Converters;
@@ -237,16 +294,36 @@ public sealed partial record Sku : IValueObject<Sku>
 
     public static Sku Parse(string s, IFormatProvider? provider) => new(s);
 
-    public static bool TryParse(string? s, IFormatProvider? provider, out Sku result)
+    public static bool TryParse(
+        [NotNullWhen(true)] string? s,
+        IFormatProvider? provider,
+        [MaybeNullWhen(false)] out Sku result)
     {
         if (string.IsNullOrWhiteSpace(s))
         {
-            result = null!;
+            result = null;
             return false;
         }
-        result = new Sku(s);
-        return true;
+
+        try
+        {
+            result = new Sku(s);
+            return true;
+        }
+        catch
+        {
+            result = null;
+            return false;
+        }
     }
+
+    public static implicit operator string(Sku sku)
+    {
+        ArgumentNullException.ThrowIfNull(sku);
+        return sku.Value;
+    }
+
+    public override string ToString() => Value;
 }
 ```
 
@@ -254,7 +331,9 @@ public sealed partial record Sku : IValueObject<Sku>
 
 ## ⚙️ Configuration
 
-This package has **no configuration options**. There is no DI registration, no `appsettings.json` entries, and no options classes. Value objects are created directly — the API layer's `GlobalExceptionHandler` handles translation to HTTP 400 responses automatically when you use `RA.Utilities.Api`.
+This package has **no configuration options**. There are no dependency injection setup calls, no `appsettings.json` sections, and no options classes. Value objects are instantiated directly in your application code.
+
+When using `RA.Utilities.Api`, the `GlobalExceptionHandler` automatically translates any `BadRequestException` thrown by value object validation into standardized HTTP 400 responses.
 
 ---
 
@@ -269,16 +348,16 @@ This package has **no configuration options**. There is no DI registration, no `
 ### Found a bug or have a suggestion?
 
 - **GitHub Issues**: [Report a bug or request a feature](https://github.com/RedonAlla/RA.Utilities/issues)
-- **Discussions**: [Ask questions or start a discussion](https://github.com/RedonAlla/RA.Utilities/discussions)
+- **Discussions**: [Ask questions or discuss ideas](https://github.com/RedonAlla/RA.Utilities/discussions)
 
 ### Contributing
 
-Contributions are welcome! Please follow the standard workflow:
+Contributions are welcome! Follow these steps to contribute:
 
-1. **Fork** the [RA.Utilities repository](https://github.com/RedonAlla/RA.Utilities)
-2. **Create a branch** from `main` with a descriptive name (e.g., `feature/add-phone-value-object`)
-3. **Make your changes** — new value objects must implement `IValueObject<TSelf>`, include validation, XML doc comments, and unit tests
-4. **Submit a pull request** to the `main` branch with a clear description
+1. **Fork** the repository: [RedonAlla/RA.Utilities](https://github.com/RedonAlla/RA.Utilities)
+2. **Create a branch** for your feature or fix (e.g., `feature/add-phone-value-object`)
+3. **Implement changes** — new value objects must implement `IValueObject<TSelf>`, include unit tests, and provide complete XML doc comments
+4. **Submit a Pull Request** with a clear explanation of changes and test results
 
 ### Links
 

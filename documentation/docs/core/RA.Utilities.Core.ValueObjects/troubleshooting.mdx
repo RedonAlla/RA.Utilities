@@ -1,93 +1,160 @@
 ---
 title: Troubleshooting & FAQ
+sidebar_class_name: nav_session ra_utilities_value_objects
 ---
 
 # Troubleshooting & FAQ
 
-Common issues when working with `RA.Utilities.Core.ValueObjects` and how to resolve them.
+Common issues encountered when working with `RA.Utilities.Core.ValueObjects` and guidance on how to resolve them.
 
 ---
 
-## Why did deserialization throw a `JsonException` instead of my value object type?
+## Common Issues
 
-The built-in converters (`ValueObjectJsonConverter<T>`) throw a `JsonException` when the JSON value is `null`, empty, or fails validation — by design, so invalid data never reaches your domain. The exception message includes the JSON value that failed.
+### Why did deserialization throw a `JsonException` instead of my value object type?
 
-```csharp
+**Cause**: The built-in converter (`ValueObjectJsonConverter<T>`) catches validation failures during deserialization and wraps them in a `JsonException`. This is by design: malformed JSON inputs must not instantiate invalid domain objects.
+
+```csharp showLineNumbers
 try
 {
-    var order = JsonSerializer.Deserialize<Order>(json);
+    var account = JsonSerializer.Deserialize<BankAccount>(json);
 }
 catch (JsonException ex)
 {
-    // ex.Message contains the offending value, e.g.:
-    // "The JSON value 'usd12' could not be converted to RA.Utilities.Core.ValueObjects.Currency."
+    // ex.Message contains the failed validation error details
 }
 ```
 
-**Fix:** Validate at the edge (e.g., an endpoint filter or `TryParse` in minimal APIs) and surface the error before deserialization, or catch `JsonException` in middleware.
+**Fix**: Validate client input before passing it to deserialization, or use endpoint validation filters in your API framework.
 
 ---
 
-## `Email.Parse` throws even though the string "looks valid" — why?
+### `Email.Parse` throws even though the string "looks valid" — why?
 
-Validation runs on the **trimmed, lowercased** value, but a handful of inputs are rejected outright:
+**Cause**: Validation is performed on the trimmed, lowercased string. Common reasons for rejection:
+- Value is whitespace or empty → `BaseErrorCode.EmailRequired` (`REQUIRED_EMAIL`)
+- Exceeds 254 characters (RFC 5321 limit) → `BaseErrorCode.EmailMaxLength` (`EMAIL_MAX_LENGTH`)
+- Missing `@`, missing local part, missing domain, or domain lacks a dot → `BaseErrorCode.EmailNotValid` (`INVALID_EMAIL`)
 
-- Empty or whitespace-only → `REQUIRED_EMAIL`
-- Longer than 254 characters → `EMAIL_MAX_LENGTH`
-- No `@`, empty local part, or empty domain → `INVALID_EMAIL`
-
-If you believe a valid email is being rejected, normalize it first (`input.Trim().ToLowerInvariant()`) and confirm it meets the rules in the [Email reference](./Email.md#validation-rules).
+**Fix**: Ensure the input matches the standard format (`name@example.com`). Refer to the [Email API Reference](./Email.md#validation-rules).
 
 ---
 
-## My two `Currency` instances aren't equal — but the strings match?
+### Why did an IBAN throw `BadRequestException` with `IbanCheckDigits`?
 
-Equality compares the **normalized** `Value` exactly. Normalization (trim + uppercase/lowercase, depending on the type) happens in the constructor, so any instance that exists is already canonical: `new Currency(" usd ")` equals `Currency.Parse("USD")`.
+**Cause**: The account number failed the ISO 7064 mod-97 checksum calculation. Even a single transposed or mistyped digit alters the checksum remainder.
 
-If two values you expect to be equal aren't, check the actual normalized form:
+```csharp showLineNumbers
+// ❌ Check digits 00 do not match expected mod-97 check digits
+new IBAN("GB00WEST12345698765432"); // throws BadRequestException (IbanCheckDigits)
 
-```csharp
-var a = Currency.Parse(codeFromUser);
-var b = Currency.Parse(codeFromDatabase);
-a.Value.Should().Be(b.Value); // both trimmed + upper-cased
+// ✅ Check digits 82 match the mod-97 algorithm
+new IBAN("GB82WEST12345698765432");
 ```
 
-See [Equality and conversions](./Currency.md#equality-and-conversions).
+**Fix**: Verify that the account number was entered correctly by the user. The exception's `ValidationError` includes `ExpectedValue` with the correct check digits for that BBAN.
 
 ---
 
-## I get a `BadRequestException` from a constructor — is that expected?
+### Why does `IBAN` accept a 20-character German IBAN if DE IBANs are 22 characters?
 
-Yes. Unlike typical .NET value objects that throw `ArgumentException`, these types throw `BadRequestException` (with structured `ValidationError` details) so they compose with the RA.Utilities error pipeline. Catch it, or return it as a `Result.Failure` via the implicit conversion in `RA.Utilities.Core`.
+**Cause**: `IBAN` performs international structural validation (13 to 34 characters) and ISO 7064 mod-97 check digit verification. It does not hardcode per-country length registries into the core library, ensuring forward-compatibility with international banking changes.
 
----
+**Fix**: If your application enforces national length rules, validate the length in your application layer using `BaseErrorCode.IbanLength` (`IBAN_LENGTH`):
 
-## Can I store these in Entity Framework Core?
+```csharp showLineNumbers
+using RA.Utilities.Core.Constants;
+using RA.Utilities.Core.Exceptions;
+using RA.Utilities.Core.ValueObjects;
 
-Yes — they serialize to plain JSON strings via `System.Text.Json`. For EF Core, either:
-
-- Serialize as a string with a `ValueConverter<Currency, string>`, or
-- Use `OwnsOne` with the converter applied to the property.
-
-No special EF package is required.
-
----
-
-## Why can't I assign a string directly to an `Email` parameter?
-
-There is deliberately no implicit conversion **from `string` to a value object** — it would bypass validation and re-introduce primitive obsession. The opposite direction is fine: each value object implicitly converts *to* `string` (lossless), so `string code = someCurrency;` works.
-
----
-
-## Known limitations
-
-- **Currency validates format, not ISO membership** — `Currency.Parse("XXX")` succeeds because `XXX` is structurally valid (3 letters). Business-level currency lists are your responsibility.
-- **`Money` has no built-in JSON converter** — `Email`, `Currency`, and `SSN` do; `Money` serializes as a regular object. Register your own converter if you need a custom shape.
-- **Case is normalized on parse** — `Email` → lowercase, `Currency`/`SSN` → uppercase. Round-tripping preserves the normalized form, not the original casing.
+var iban = new IBAN(input);
+if (iban.CountryCode == "DE" && iban.Value.Length != 22)
+{
+    throw new BadRequestException(new ValidationError(BaseErrorMessage.IbanLength)
+    {
+        PropertyName = "IBAN",
+        ErrorCode = BaseErrorCode.IbanLength,
+        AttemptedValue = iban.Value,
+        ExpectedValue = "22"
+    });
+}
+```
 
 ---
 
-## Still stuck?
+### My two `Currency` or `IBAN` instances aren't equal — but the strings look the same?
 
-- [Open an issue](https://github.com/RedonAlla/RA.Utilities/issues)
-- [Start a discussion](https://github.com/RedonAlla/RA.Utilities/discussions)
+**Cause**: Equality compares the normalized `Value` property. While whitespace and casing are normalized automatically:
+- Different characters or invisible unicode characters will prevent equality.
+- Currencies must match ISO 4217 uppercase strings.
+
+```csharp showLineNumbers
+var a = Currency.Parse("EUR", provider: null);
+var b = new Currency(" eur ");
+
+Console.WriteLine(a == b); // true — normalized to "EUR"
+```
+
+---
+
+### I get a `BadRequestException` from a constructor — is that expected?
+
+**Cause**: Yes. Unlike standard .NET types that throw `ArgumentException`, value objects in this library throw `BadRequestException` populated with structured `ValidationError` records.
+
+**Fix**: Let the exception bubble up to the `RA.Utilities.Api` global error handler, which converts it to a standard HTTP 400 Bad Request response. If checking user input conditionally without exceptions, use `TryParse`.
+
+---
+
+### Can I store these value objects in Entity Framework Core?
+
+**Yes**. Because string-backed value objects expose a single normalized `Value` property, configure them in EF Core with a simple value converter:
+
+```csharp showLineNumbers
+modelBuilder.Entity<Customer>(entity =>
+{
+    entity.Property(e => e.Email)
+          .HasConversion(email => email.Value, str => new Email(str));
+
+    entity.Property(e => e.Iban)
+          .HasConversion(iban => iban.Value, str => new IBAN(str));
+});
+```
+
+For `Money`, map the composite properties using EF Core's `ComplexProperty` or `OwnsOne`.
+
+---
+
+### Why can't I assign a `string` directly to a value object parameter?
+
+**Cause**: There is intentionally no implicit conversion from `string` to any value object. Allowing implicit conversion would bypass validation and reintroduce primitive obsession bugs.
+
+**Fix**: Explicitly instantiate the value object or use `Parse` / `TryParse`:
+
+```csharp showLineNumbers
+// ❌ Does not compile by design
+// Email email = "user@gmail.com";
+
+// ✅ Explicit creation with boundary validation
+Email email = new("user@gmail.com");
+
+// ✅ Implicit conversion to string is supported (lossless)
+string raw = email;
+```
+
+---
+
+## Known Limitations
+
+- **Format verification over registry checks**:
+  - `Currency` validates that the code is exactly 3 characters; it does not check against a dynamic ISO currency list.
+  - `IBAN` validates the 13–34 character structure and ISO 7064 mod-97 check digits; it does not hardcode per-country lengths or domestic clearing codes.
+- **`Money` JSON serialization**: `Email`, `Currency`, `SSN`, and `IBAN` serialize as plain strings via `ValueObjectJsonConverter<T>`. `Money` has two properties (`Amount` and `Currency`) and serializes as a standard JSON object.
+- **Normalization is irreversible**: Trimming and canonical casing (lowercase for `Email`, uppercase for `Currency`, `SSN`, and `IBAN`, stripping separators for `IBAN`) modify input formatting permanently.
+
+---
+
+## Performance Tips
+
+- **Use `TryParse` for user-facing API validation**: When accepting input from untrusted clients where invalid input is expected, use `TryParse` to avoid exception throwing and stack trace generation.
+- **Records are lightweight**: Value objects are immutable sealed records with zero heap allocations beyond the backing string. Equality comparisons evaluate the underlying string.

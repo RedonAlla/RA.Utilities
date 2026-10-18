@@ -1,5 +1,29 @@
 # Release Notes for RA.Utilities.Core.ValueObjects
 
+## Version 10.2.0
+
+![Date Badge](https://img.shields.io/badge/Publish-18%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-v10.2.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.ValueObjects/10.2.0)
+
+Feature release: introduces the `IBAN` value object for validated, normalized International Bank Account Numbers with ISO 7064 mod-97 check digits and ASP.NET Core minimal API binding.
+
+### ✨ New Features
+
+*   **`IBAN` value object**: Validates and normalizes International Bank Account Numbers. Guarantees that any instance in your domain is canonical, structurally sound, and mathematically verified.
+*   **Automatic paper format normalization**: Strips grouping characters (spaces, hyphens, backslashes, apostrophes) and converts to upper case on creation (`"gb82 west 1234-5698-7654-32"` → `"GB82WEST12345698765432"`).
+*   **ISO 13616 structural validation**: Enforces a 2-letter country code, 2 check digits, and 9–30 alphanumeric BBAN (13–34 total characters), reporting `BaseErrorCode.IbanNotValid` (`NOT_VALID_IBAN`) on structural failures.
+*   **ISO 7064 mod-97 check digit verification**: Computes expected check digits and verifies them against the input, reporting `BaseErrorCode.IbanCheckDigits` (`IBAN_CHECK_DIGITS`) on checksum mismatches.
+*   **`CountryCode` property**: Exposes the 2-letter ISO 3166-1 alpha-2 country code extracted from the first two characters (e.g. `GB`).
+*   **Minimal API binding**: Implements `IParsable<IBAN>`, enabling route, query, and header binding in ASP.NET Core minimal APIs with automatic HTTP 400 responses on invalid input.
+*   **Built-in JSON converter**: Preconfigured with `ValueObjectJsonConverter<IBAN>` for string-based JSON serialization and deserialization.
+
+### 📝 Notes
+
+*   `IBAN` validates the general ISO 13616 structural range (13–34 characters) and ISO 7064 mod-97 check digits. Consumers wishing to enforce country-specific lengths can check `CountryCode` and report `BaseErrorCode.IbanLength` (`IBAN_LENGTH`).
+*   The release is backward compatible; existing code compiles and behaves unchanged.
+
+---
+
 ## Version 10.1.0
 
 ![Date Badge](https://img.shields.io/badge/Publish-11%20October%202026-lightblue?logo=fastly&logoColor=white)

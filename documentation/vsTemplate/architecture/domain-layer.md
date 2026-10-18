@@ -19,7 +19,7 @@ The Domain project references only two shared libraries from `RA.Utilities` — 
 | Package | Purpose |
 | :--- | :--- |
 | `RA.Utilities.Data.Entities` | Base entity types (`CoreEntity<TKey>`, `BaseEntity<TKey>`, `WriteEntity<TKey>`, `IEntity`) |
-| `RA.Utilities.Core.ValueObjects` | Reusable, validated value objects (`Email`, `Currency`, `Money`, `SSN`) |
+| `RA.Utilities.Core.ValueObjects` | Reusable, validated value objects (`Email`, `Currency`, `Money`, `SSN`, `IBAN`) |
 
 This deliberate minimal coupling keeps the core pure: everything else in the solution depends *on* Domain, never the reverse.
 
@@ -63,6 +63,7 @@ Value objects are immutable types defined solely by their properties, with no di
 | `Currency` | An ISO 4217 currency code | Trimmed, upper-cased, exactly 3 characters |
 | `Money` | An amount paired with a `Currency` | Factory-validated (e.g. non-negative), currency-safe arithmetic |
 | `SSN` | A social security number | Length and format validated |
+| `IBAN` | An international bank account number | Separator-stripped, upper-cased, ISO 13616 structure, ISO 7064 mod-97 check digits |
 
 Each of these implements `IValueObject<TSelf>` (a normalized `Value` plus `IParsable<TSelf>`), so an instance that exists is always valid. They expose:
 

@@ -6,7 +6,7 @@
 [![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Core.ValueObjects.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.ValueObjects/)
 [![Documentation](https://img.shields.io/badge/documentation-view-brightgreen.svg?logo=readthedocs&logoColor=fff)](https://redonalla.github.io/RA.Utilities/nuget-packages/core/RA.Utilities.Core.ValueObjects/)
 
-`RA.Utilities.Core.ValueObjects` provides strongly-typed, validated value objects like `Email`, `Currency`, `SSN`, and `Money`.
+`RA.Utilities.Core.ValueObjects` provides strongly-typed, validated value objects like `Email`, `Currency`, `SSN`, `Money`, and `IBAN`.
 It solves the problem of passing raw, unvalidated strings and decimals around your domain, where formatting inconsistencies and invalid data can silently propagate.
 
 By creating an instance of a value object, the input is validated and normalized *once*, at the boundary of your system. After that, an `Email` that exists is always a valid, normalized email address.
@@ -27,6 +27,7 @@ By creating an instance of a value object, the input is validated and normalized
   - `Currency`
   - `SSN`
   - `Money`
+  - `IBAN`
 - JSON Serialization
 - Extensibility
 - Best Practices
@@ -145,6 +146,28 @@ var net = price.Subtract(discount); // 15.99 EUR
 - `Money.PositiveMoney(amount, currency)`: factory that rejects negative amounts.
 - `Add(other)`: adds two amounts; throws `BadRequestException` if the currencies differ.
 - `Subtract(other)`: subtracts two amounts; throws `BadRequestException` if the currencies differ.
+
+### `IBAN`
+
+A validated, normalized International Bank Account Number. Values are trimmed, stripped of grouping separators (spaces, hyphens, backslashes, apostrophes) and upper-cased on creation, checked against the ISO 13616 structural pattern (13–34 alphanumeric characters), and verified using the ISO 7064 mod-97 check digit algorithm.
+
+**Usage:**
+
+```csharp
+public void ProcessPayment(string rawIban)
+{
+    var iban = new IBAN(rawIban); // throws BadRequestException if invalid
+
+    // Value == "GB82WEST12345698765432", CountryCode == "GB"
+    _paymentGateway.Transfer(iban, amount);
+}
+```
+
+**Key members:**
+- `Value`: the normalized, compact IBAN (e.g. `GB82WEST12345698765432`).
+- `CountryCode`: the 2-letter ISO 3166-1 alpha-2 country code (e.g. `GB`).
+- `Parse` / `TryParse`: `IParsable<IBAN>` support for minimal API binding.
+- Implicit conversion to `string`.
 
 ---
 
