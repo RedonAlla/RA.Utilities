@@ -5,7 +5,7 @@ Namespace: RA.Utilities.Core.Constants
 The `BaseErrorMessage` class provides a collection of predefined, read-only string messages for field-level validation failures.
 It lives within the `RA.Utilities.Core.Constants` package and is designed to work alongside [`BaseErrorCode`](./BaseErrorCode): the code identifies the failure programmatically, while the message explains it to humans.
 
-While [`BaseResponseMessages`](./BaseResponseMessages) covers whole-response messaging (e.g., "The requested resource was not found."), `BaseErrorMessage` describes input-level problems: a missing email address, an invalid SSN, a currency mismatch, and so on.
+While [`BaseResponseMessages`](./BaseResponseMessages) covers whole-response messaging (e.g., "The requested resource was not found."), `BaseErrorMessage` describes input-level problems: a missing email address, an invalid SSN, a failed IBAN check digit, a currency mismatch, and so on.
 
 Using these values offers the same benefits as the rest of the package:
 
@@ -14,7 +14,7 @@ Using these values offers the same benefits as the rest of the package:
 3. **Maintainability**: If a message needs rewording, you change it in one central location.
 4. **Reduced Errors**: Named values prevent typos in string literals that are difficult to spot.
 
-These messages are used by the value objects in `RA.Utilities.Core.ValueObjects` (`Email`, `Currency`, `SSN`, `Money`) when they throw `BadRequestException` with structured `ValidationError` entries.
+These messages are used by the value objects in `RA.Utilities.Core.ValueObjects` (`Email`, `Currency`, `SSN`, `Money`, `IBAN`) when they throw `BadRequestException` with structured `ValidationError` entries.
 
 > **Read-only, not `const`:** Since v10.0.4 these fields are `static readonly`, not compile-time constants. Read them directly at runtime, but do not use them where C# requires a constant expression — attribute arguments, default parameter values, `case` labels, or `const` declarations. See the [migration guide](./migration-guides.mdx) for replacements.
 
@@ -31,8 +31,14 @@ These messages are used by the value objects in `RA.Utilities.Core.ValueObjects`
 | **SsnRequired**      | "The 'SSN' field is required."             |
 | **SsnLength**        | "'SSN' must be exact 10 characters."       |
 | **SsnNotValid**      | "'SSN' format is invalid."                 |
+| **IbanRequired**     | "The 'IBAN' field is required."            |
+| **IbanLength**       | "'IBAN' length does not match the expected length for its country." |
+| **IbanNotValid**     | "'IBAN' format is invalid."                |
+| **IbanCheckDigits**  | "'IBAN' check digits are invalid."         |
 
 > **Note:** There is no `EmailMaxLength` field. The maximum-length message is built dynamically by the `Email` value object because it interpolates the configured limit into the text (e.g., "Email address must not exceed 254 characters."). See [`BaseErrorCode.EmailMaxLength`](./BaseErrorCode) for the matching error code.
+
+> **IBAN note:** The `IBAN` value object performs **structural** validation, so a malformed or wrongly sized value uses `IbanNotValid`. `IbanLength` is the message to use when you validate a country-specific length yourself. See the [IBAN troubleshooting entry](./troubleshooting.mdx#when-should-i-use-iban_length-instead-of-not_valid_iban).
 
 ## 🚀 Usage Examples
 
@@ -77,6 +83,26 @@ The structured error is serialized into the HTTP 400 response body, so consumers
       "propertyName": "Email",
       "errorMessage": "The 'Email address' field is required.",
       "errorCode": "REQUIRED_EMAIL"
+    }
+  ]
+}
+```
+
+IBAN failures can carry the offending value and, for check digits, the expected value:
+
+```json showLineNumbers
+{
+  "responseCode": 400,
+  "responseType": "BadRequest",
+  "responseMessage": "The request is invalid.",
+  "result": [
+    {
+      "propertyName": "IBAN",
+      "errorMessage": "'IBAN' check digits are invalid.",
+      // highlight-next-line
+      "errorCode": "IBAN_CHECK_DIGITS",
+      "attemptedValue": "GB81WEST12345698765432",
+      "expectedValue": "82"
     }
   ]
 }

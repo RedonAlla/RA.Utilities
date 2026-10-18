@@ -72,7 +72,7 @@ Contains default string messages for common API responses. This helps maintain a
 
 ### `BaseErrorCode`
 
-Contains machine-readable error codes (`static readonly string`) for field-level validation failures. While `BaseResponseCode` covers transport-level concerns, `BaseErrorCode` describes *why* a request was rejected. The codes are used by the value objects in `RA.Utilities.Core.ValueObjects` (`Email`, `Currency`, `SSN`, `Money`) to populate structured `ValidationError` entries.
+Contains machine-readable error codes (`static readonly string`) for field-level validation failures. While `BaseResponseCode` covers transport-level concerns, `BaseErrorCode` describes *why* a request was rejected. The codes are used by the value objects in `RA.Utilities.Core.ValueObjects` (`Email`, `Currency`, `SSN`, `Money`, `IBAN`) to populate structured `ValidationError` entries.
 
 | Field Name         | Value              | Triggered When                                            |
 |--------------------|--------------------|-----------------------------------------------------------|
@@ -86,6 +86,10 @@ Contains machine-readable error codes (`static readonly string`) for field-level
 | `SsnRequired`      | `REQUIRED_SSN`     | The 'SSN' field is missing.                                |
 | `SsnLength`        | `SSN_LENGTH`       | The 'SSN' field is not exactly 10 characters.              |
 | `SsnNotValid`      | `NOT_VALID_SSN`    | The 'SSN' format is invalid.                               |
+| `IbanRequired`     | `REQUIRED_IBAN`    | The 'IBAN' field is missing.                               |
+| `IbanLength`       | `IBAN_LENGTH`      | The 'IBAN' total length does not match its country's expected length. |
+| `IbanNotValid`     | `NOT_VALID_IBAN`   | The 'IBAN' format or structure is invalid.                 |
+| `IbanCheckDigits`  | `IBAN_CHECK_DIGITS`| The 'IBAN' check digits fail the ISO 7064 mod-97 validation. |
 
 ### `BaseErrorMessage`
 
@@ -102,8 +106,14 @@ Contains the human-readable messages (`static readonly string`) matching the cod
 | `SsnRequired`        | "The 'SSN' field is required."             |
 | `SsnLength`          | "'SSN' must be exact 10 characters."       |
 | `SsnNotValid`        | "'SSN' format is invalid."                 |
+| `IbanRequired`       | "The 'IBAN' field is required."            |
+| `IbanLength`         | "'IBAN' length does not match the expected length for its country." |
+| `IbanNotValid`       | "'IBAN' format is invalid."                |
+| `IbanCheckDigits`    | "'IBAN' check digits are invalid."         |
 
 > **Note:** There is no `EmailMaxLength` message field — the maximum-length message is built dynamically by the `Email` value object because it interpolates the configured limit into the text.
+
+> **IBAN note:** The `IBAN` value object performs structural validation (a 13–34 character pattern plus the ISO 7064 mod-97 check), so malformed or wrongly sized values use `IbanNotValid`. `IbanLength` is provided for consumers that validate a country-specific length themselves.
 
 ### `HeaderParameters`
 

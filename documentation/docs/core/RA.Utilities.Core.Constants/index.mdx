@@ -35,16 +35,16 @@ The primary goal of this package is to ensure consistency across different proje
 
 - **HTTP Status Codes** — `BaseResponseCode` exposes named `int` fields for all common HTTP status codes (200–504)
 - **Standardized Messages** — `BaseResponseMessages` delivers consistent, production-ready API response text
-- **Validation Error Codes & Messages** — `BaseErrorCode` and `BaseErrorMessage` standardize field-level validation failures (email, currency, money, SSN)
+- **Validation Error Codes & Messages** — `BaseErrorCode` and `BaseErrorMessage` standardize field-level validation failures (email, currency, money, SSN, IBAN)
 - **Semantic Response Types** — `ResponseType` is an enum for API outcome classification; its numeric values are stable and serializable
 - **HTTP Header Names** — `HeaderParameters` centralizes common header names for tracing, auth, and location
 - **Patchable Values** — fields are `static readonly` (not `const`), so a corrected value ships in a package update without recompiling every consumer
 - **Zero Dependencies** — No external package dependencies; pairs seamlessly with `RA.Utilities.Core.Exceptions`
 - **No Configuration** — No DI registration, no options, and no setup required
 
-:::warning[Upgrading from v10.0.3?]
+:::warning[Upgrading from v10.0.3 or earlier?]
 
-v10.0.4 makes two breaking changes: every field moved from `const` to `static readonly`, and `ResponseType` became a plain `enum`. In both cases the values themselves are unchanged. See the [Migration Guides](./migration-guides.mdx) before upgrading.
+v10.0.4 made two breaking changes: every field moved from `const` to `static readonly`, and `ResponseType` became a plain `enum`. The values themselves are unchanged. v10.0.5 is purely additive — it adds four IBAN validation codes and messages. See the [Migration Guides](./migration-guides.mdx) before upgrading.
 
 :::
 
@@ -73,7 +73,7 @@ Install-Package RA.Utilities.Core.Constants
 **PackageReference (csproj)**
 
 ```xml
-<PackageReference Include="RA.Utilities.Core.Constants" Version="10.0.4" />
+<PackageReference Include="RA.Utilities.Core.Constants" Version="10.0.5" />
 ```
 
 ### Hello World
@@ -109,7 +109,7 @@ The package provides six types, each serving a distinct role in your API layer:
 
 :::info[Not compile-time constants]
 
-Since v10.0.4, none of the values are compile-time constants. You can read them anywhere, but you cannot use them where C# requires a constant expression — attribute arguments, default parameter values, `case` labels, or `const` declarations. See [Troubleshooting](./troubleshooting.mdx#why-cant-i-use-baseresponsecode-values-as-default-parameter-values) for workarounds.
+Since v10.0.4, the constant holders expose `static readonly` fields rather than compile-time constants. You can read them anywhere, but you cannot use them where C# requires a constant expression — attribute arguments, default parameter values, `case` labels, or `const` declarations. (`ResponseType` is an enum, so its members remain constant expressions.) See [Troubleshooting](./troubleshooting.mdx#why-cant-i-use-baseresponsecode-values-as-default-parameter-values) for workarounds.
 
 :::
 
@@ -117,7 +117,7 @@ Since v10.0.4, none of the values are compile-time constants. You can read them 
 
 `BaseResponseCode` and `BaseResponseMessages` handle the transport-level concerns (what HTTP code and what message), while `ResponseType` adds a machine-readable semantic label inside the JSON response body. `HeaderParameters` ensures header access is consistent across middleware, endpoints, and HTTP clients.
 
-`BaseErrorCode` and `BaseErrorMessage` operate one level deeper: they describe *why* a request was rejected at the field level. Each code/message pair (e.g., `BaseErrorCode.EmailRequired` + `BaseErrorMessage.EmailRequired`) populates a structured `ValidationError`, which the value objects in `RA.Utilities.Core.ValueObjects` throw and the `RA.Utilities.Api` middleware translates into standardized HTTP 400 responses.
+`BaseErrorCode` and `BaseErrorMessage` operate one level deeper: they describe *why* a request was rejected at the field level. Each code/message pair (e.g., `BaseErrorCode.EmailRequired` + `BaseErrorMessage.EmailRequired`) populates a structured `ValidationError`, which the value objects in `RA.Utilities.Core.ValueObjects` (`Email`, `Currency`, `Money`, `SSN`, `IBAN`) throw and the `RA.Utilities.Api` middleware translates into standardized HTTP 400 responses.
 
 ```
 HTTP Response
@@ -221,6 +221,61 @@ if (string.IsNullOrWhiteSpace(request.Email))
 ```
 
 See [`BaseErrorCode`](./BaseErrorCode) and [`BaseErrorMessage`](./BaseErrorMessage) for the full catalog and the JSON shape these errors produce.
+
+### Validate an IBAN and pick the right error code
+
+IBAN validation has four codes so clients can tell a missing value from a country-length mismatch, a malformed value, and a failed check digit:
+
+| Situation | Error code | Message |
+|---|---|---|
+| Value is null, empty, or whitespace | `BaseErrorCode.IbanRequired` | `BaseErrorMessage.IbanRequired` |
+| Structure is invalid (country code, check digits, or 13–34 characters) | `BaseErrorCode.IbanNotValid` | `BaseErrorMessage.IbanNotValid` |
+| ISO 7064 mod-97 check fails | `BaseErrorCode.IbanCheckDigits` | `BaseErrorMessage.IbanCheckDigits` |
+| Length does not match the country's registry entry | `BaseErrorCode.IbanLength` | `BaseErrorMessage.IbanLength` |
+
+The `IBAN` value object in `RA.Utilities.Core.ValueObjects` applies the first three checks and throws the matching `BadRequestException`:
+
+```csharp showLineNumbers
+using RA.Utilities.Core.Exceptions;
+using RA.Utilities.Core.ValueObjects;
+
+// highlight-next-line
+IBAN iban = new(request.Iban); // REQUIRED_IBAN, NOT_VALID_IBAN, or IBAN_CHECK_DIGITS
+```
+
+The value object validates the IBAN **structure** (13–34 characters) rather than a per-country length table, so use `IbanLength` when you enforce the registry length yourself:
+
+```csharp showLineNumbers
+using System.Collections.Generic;
+using RA.Utilities.Core.Constants;
+using RA.Utilities.Core.Exceptions;
+
+// A subset of the SWIFT IBAN registry: country code -> total length.
+private static readonly Dictionary<string, int> IbanLengths = new()
+{
+    ["DE"] = 22,
+    ["FR"] = 27,
+    ["GB"] = 22,
+    ["NL"] = 18
+};
+
+public static void EnsureCountryLength(string countryCode, string compactIban)
+{
+    if (IbanLengths.TryGetValue(countryCode, out int expected) && compactIban.Length != expected)
+    {
+        // highlight-next-line
+        throw new BadRequestException(new ValidationError(BaseErrorMessage.IbanLength)
+        {
+            PropertyName = "IBAN",
+            ErrorCode = BaseErrorCode.IbanLength,
+            AttemptedValue = compactIban.Length,
+            ExpectedValue = expected
+        });
+    }
+}
+```
+
+See [`BaseErrorCode`](./BaseErrorCode) and [`BaseErrorMessage`](./BaseErrorMessage) for the full catalog.
 
 ### Serialize `ResponseType` as a string
 

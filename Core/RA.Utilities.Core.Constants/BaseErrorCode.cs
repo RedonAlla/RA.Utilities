@@ -31,12 +31,12 @@ public abstract partial class BaseErrorCode
     public static readonly string CurrencyLength = "CURRENCY_LENGTH";
 
     /// <summary>
-    /// Error code returned when two 'Currency' should me the same.
+    /// Error code returned when two 'Currency' values should be the same.
     /// </summary>
     public static readonly string CurrencyMismatch = "CURRENCY_MISMATCH";
 
     /// <summary>
-    /// Error code returned when the 'Amount' it is negative (less then 0).
+    /// Error code returned when the 'Amount' is negative (less than 0).
     /// </summary>
     public static readonly string PositiveMoney = "POSITIVE_MONEY";
 
@@ -46,7 +46,7 @@ public abstract partial class BaseErrorCode
     public static readonly string SsnRequired = "REQUIRED_SSN";
 
     /// <summary>
-    /// Error code returned when the 'Currency' field is not exactly 10 characters.
+    /// Error code returned when the 'SSN' field is not exactly 10 characters.
     /// </summary>
     public static readonly string SsnLength = "SSN_LENGTH";
 
@@ -54,5 +54,25 @@ public abstract partial class BaseErrorCode
     /// Error code returned when the 'SSN' format is invalid.
     /// </summary>
     public static readonly string SsnNotValid = "NOT_VALID_SSN";
+
+    /// <summary>
+    /// Error code returned when the 'IBAN' field is missing.
+    /// </summary>
+    public static readonly string IbanRequired = "REQUIRED_IBAN";
+
+    /// <summary>
+    /// Error code returned when the 'IBAN' total length does not match the expected length for its country.
+    /// </summary>
+    public static readonly string IbanLength = "IBAN_LENGTH";
+
+    /// <summary>
+    /// Error code returned when the 'IBAN' format or structure is invalid.
+    /// </summary>
+    public static readonly string IbanNotValid = "NOT_VALID_IBAN";
+
+    /// <summary>
+    /// Error code returned when the 'IBAN' check digits fail the ISO 7064 mod-97 validation.
+    /// </summary>
+    public static readonly string IbanCheckDigits = "IBAN_CHECK_DIGITS";
 
 }

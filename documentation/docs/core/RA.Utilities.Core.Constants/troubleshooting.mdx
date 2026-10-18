@@ -135,6 +135,55 @@ if (error.ErrorCode == BaseErrorCode.EmailRequired)
 
 These are the only source-breaking contexts. Ordinary reads such as `BaseResponseCode.NotFound` compile unchanged.
 
+### Which IBAN error code should I use?
+
+Use the code that matches the check that failed:
+
+| Check | Error code | Message |
+|---|---|---|
+| Missing or whitespace input | `BaseErrorCode.IbanRequired` | `BaseErrorMessage.IbanRequired` |
+| Structure: country code, check digits, or 13–34 characters | `BaseErrorCode.IbanNotValid` | `BaseErrorMessage.IbanNotValid` |
+| ISO 7064 mod-97 check digits | `BaseErrorCode.IbanCheckDigits` | `BaseErrorMessage.IbanCheckDigits` |
+| Country-specific total length | `BaseErrorCode.IbanLength` | `BaseErrorMessage.IbanLength` |
+
+```csharp showLineNumbers
+using RA.Utilities.Core.Constants;
+using RA.Utilities.Core.Exceptions;
+
+// highlight-next-line
+throw new BadRequestException(new ValidationError(BaseErrorMessage.IbanNotValid)
+{
+    PropertyName = "IBAN",
+    ErrorCode = BaseErrorCode.IbanNotValid,
+    AttemptedValue = normalizedIban,
+    ExpectedValue = "2a2n[9-30c] in 2 to 7 groups of 3 to 5 characters"
+});
+```
+
+The `IBAN` value object picks the first three automatically. `IbanLength` is for your own country-registry checks; see below.
+
+### When should I use `IBAN_LENGTH` instead of `NOT_VALID_IBAN`?
+
+**Cause**: `RA.Utilities.Core.ValueObjects.IBAN` performs structural validation only — a two-letter country code, two check digits, and a 9–30 character BBAN (13–34 characters in total) — followed by the ISO 7064 mod-97 test. It does not consult a per-country length table, so an IBAN that is structurally valid but the wrong length for its country (for example, 20 characters for `DE`, which expects 22) passes.
+
+**Fix**: If your domain requires country-specific lengths, validate them separately and report `BaseErrorCode.IbanLength`:
+
+```csharp showLineNumbers
+// DE expects 22 characters in total
+if (compactIban.StartsWith("DE", StringComparison.Ordinal) && compactIban.Length != 22)
+{
+    throw new BadRequestException(new ValidationError(BaseErrorMessage.IbanLength)
+    {
+        PropertyName = "IBAN",
+        ErrorCode = BaseErrorCode.IbanLength,
+        AttemptedValue = compactIban.Length,
+        ExpectedValue = 22
+    });
+}
+```
+
+See [Validate an IBAN and pick the right error code](./index.mdx#validate-an-iban-and-pick-the-right-error-code) for a registry-based helper.
+
 ### Does `BaseResponseCode` include `Created`?
 
 **Yes.** `BaseResponseCode.Created` is `201`, alongside `Success`, `Accepted`, `NoContent`, and the error codes. Use it when you construct a response manually; ASP.NET Core's `Created` and `CreatedAtAction` helpers already set `201`, so you usually do not need the field there.
@@ -160,6 +209,7 @@ These are the only source-breaking contexts. Ordinary reads such as `BaseRespons
 - **No implicit conversion from `string`**: Use `Enum.TryParse`/`Enum.Parse` or the built-in members directly.
 - **No compile-time constants**: Since v10.0.4 the fields are `static readonly`. They cannot be used in attributes, default parameter values, `case` labels, or `const` declarations.
 - **No localization support**: `BaseResponseMessages` provides English-only strings. For multi-language support, use these as fallback defaults and implement your own localization layer.
+- **IBAN validation is structural**: `IBAN` checks the 13–34 character structure and the ISO 7064 mod-97 check digits, not a per-country length table. Report `BaseErrorCode.IbanLength` from your own registry check if your domain needs it.
 
 ---
 

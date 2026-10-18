@@ -4,7 +4,45 @@ title: Migration Guides
 
 # Migration Guides
 
-## v10.0.3 → v10.0.4
+## v10.0.3 → v10.1.0
+
+This release is **additive**: no field, type, value, or constructor signature changed. Four IBAN constants were added to `BaseErrorCode` and `BaseErrorMessage` so the new `IBAN` value object can report failures with the same vocabulary as the other value objects.
+
+### What's new
+
+| Field | `BaseErrorCode` | `BaseErrorMessage` |
+|---|---|---|
+| `IbanRequired` | `REQUIRED_IBAN` | "The 'IBAN' field is required." |
+| `IbanLength` | `IBAN_LENGTH` | "'IBAN' length does not match the expected length for its country." |
+| `IbanNotValid` | `NOT_VALID_IBAN` | "'IBAN' format is invalid." |
+| `IbanCheckDigits` | `IBAN_CHECK_DIGITS` | "'IBAN' check digits are invalid." |
+
+### Do I need to change anything?
+
+No. Upgrade the package; existing code compiles and behaves exactly as before. The new fields are `static readonly` strings, like every other field since v10.0.4.
+
+Use them when you validate IBANs:
+
+```csharp showLineNumbers
+using RA.Utilities.Core.Constants;
+using RA.Utilities.Core.Exceptions;
+
+if (string.IsNullOrWhiteSpace(request.Iban))
+{
+    // highlight-next-line
+    throw new BadRequestException(new ValidationError(BaseErrorMessage.IbanRequired)
+    {
+        PropertyName = "IBAN",
+        ErrorCode = BaseErrorCode.IbanRequired
+    });
+}
+```
+
+### `IbanLength` is not raised by the value object
+
+`RA.Utilities.Core.ValueObjects.IBAN` validates the IBAN structure (13–34 characters) and the ISO 7064 mod-97 check digits. It does not consult a per-country length table, so a value that is structurally valid but the wrong length for its country (for example, 20 characters for `DE`, which expects 22) passes. Use `IbanLength` in your own country-registry validation; see [Validate an IBAN and pick the right error code](./index.mdx#validate-an-iban-and-pick-the-right-error-code).
+
+---
 
 This release contains two breaking changes. The **values** are unchanged in both cases; what changed is how the compiler and the JSON serializer treat them.
 

@@ -1,10 +1,18 @@
 # Release Notes 
 
-## Version 10.0.4
+## Version 10.1.0
 ![Date Badge](https://img.shields.io/badge/Publish-17%20October%202026-lightblue?logo=fastly&logoColor=white)
-[![NuGet version](https://img.shields.io/badge/NuGet-v10.0.4-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Constants/10.0.4)
+[![NuGet version](https://img.shields.io/badge/NuGet-v10.1.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Constants/10.1.0)
+
+This release adds IBAN validation codes and messages to `BaseErrorCode` and `BaseErrorMessage`, completing the field-level error vocabulary used by the new `IBAN` value object. The release is additive: no existing field, type, or value changed.
 
 `ResponseType` has been converted from an extensible `record` back to a plain C# `enum`, and every constant field has moved from `const` to `static readonly`. The values themselves are unchanged.
+
+### ✨ New Features
+
+*   **`BaseErrorCode` IBAN codes**: `IbanRequired` (`REQUIRED_IBAN`), `IbanLength` (`IBAN_LENGTH`), `IbanNotValid` (`NOT_VALID_IBAN`), and `IbanCheckDigits` (`IBAN_CHECK_DIGITS`). API consumers can distinguish a missing IBAN, an IBAN whose length does not match its country, a structurally invalid IBAN, and a failed ISO 7064 mod-97 check digit.
+*   **`BaseErrorMessage` IBAN messages**: The matching human-readable messages, e.g. `The 'IBAN' field is required.` and `'IBAN' check digits are invalid.`
+*   **`IBAN` value object integration**: The new `IBAN` value object in `RA.Utilities.Core.ValueObjects` throws structured `ValidationError` entries using these constants: `IbanRequired` for missing input, `IbanNotValid` for structural failures (13–34 characters, country code and check-digit shape), and `IbanCheckDigits` when the mod-97 test fails.
 
 ### ⚠️ Breaking Changes
 
@@ -16,6 +24,7 @@
 *   `ResponseType` uses `System.Text.Json` defaults: numeric wire values unless `JsonStringEnumConverter` is registered. With the converter, names are matched case-insensitively and unknown names (or `null` for a non-nullable enum) throw `JsonException`.
 *   `default(ResponseType)` is `ResponseType.Success` (value `0`).
 *   Because the fields are `static readonly`, correcting a value no longer requires recompiling consumers.
+*   `BaseErrorCode.IbanLength` is available for consumers that validate a country-specific length. The built-in `IBAN` value object validates the structural range (13–34 characters) rather than a per-country length table, so it reports `IbanNotValid` for values outside that range.
 
 ---
 
