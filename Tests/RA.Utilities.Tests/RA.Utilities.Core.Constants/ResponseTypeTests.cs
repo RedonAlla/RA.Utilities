@@ -1,229 +1,115 @@
-using System.Linq;
+using System;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using FluentAssertions;
 using RA.Utilities.Core.Constants;
 
 namespace RA.Utilities.Tests.RA.Utilities.Core.Constants;
 
 /// <summary>
-/// Contains unit tests for the <see cref="ResponseType"/> enum,
-/// including member values and serialization.
+/// Contains unit tests for the <see cref="ResponseType"/> enum, covering its numeric values,
+/// member names, and JSON behavior with and without <see cref="JsonStringEnumConverter"/>.
 /// </summary>
 public class ResponseTypeTests
 {
-    private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = false };
+    private static readonly JsonSerializerOptions DefaultOptions = new();
 
-    // =================================================================
-    // Built-in values
-    // =================================================================
+    private static readonly JsonSerializerOptions StringEnumOptions = new()
+    {
+        Converters = { new JsonStringEnumConverter() },
+    };
 
     /// <summary>
-    /// Provides all built-in ResponseType members and their expected string values.
+    /// Provides all built-in <see cref="ResponseType"/> members with their documented
+    /// numeric values and names.
     /// </summary>
-    public static TheoryData<ResponseType, string> BuiltInValues =>
+    public static TheoryData<ResponseType, int, string> BuiltInValues =>
         new()
         {
-            { ResponseType.Success, "Success" },
-            { ResponseType.Created, "Created" },
-            { ResponseType.Updated, "Updated" },
-            { ResponseType.Deleted, "Deleted" },
-            { ResponseType.NoContent, "NoContent" },
-            { ResponseType.Accepted, "Accepted" },
-            { ResponseType.Validation, "Validation" },
-            { ResponseType.Problem, "Problem" },
-            { ResponseType.NotFound, "NotFound" },
-            { ResponseType.Conflict, "Conflict" },
-            { ResponseType.Unauthorized, "Unauthorized" },
-            { ResponseType.Error, "Error" },
-            { ResponseType.BadRequest, "BadRequest" },
-            { ResponseType.Unprocessable, "Unprocessable" },
-            { ResponseType.Forbidden, "Forbidden" },
-            { ResponseType.TooManyRequests, "TooManyRequests" },
-            { ResponseType.ServiceUnavailable, "ServiceUnavailable" },
-            { ResponseType.GatewayTimeout, "GatewayTimeout" },
+            { ResponseType.Success, 0, "Success" },
+            { ResponseType.Created, 1, "Created" },
+            { ResponseType.Updated, 2, "Updated" },
+            { ResponseType.Deleted, 3, "Deleted" },
+            { ResponseType.NoContent, 4, "NoContent" },
+            { ResponseType.Accepted, 5, "Accepted" },
+            { ResponseType.Validation, 6, "Validation" },
+            { ResponseType.Problem, 7, "Problem" },
+            { ResponseType.NotFound, 8, "NotFound" },
+            { ResponseType.Conflict, 9, "Conflict" },
+            { ResponseType.Unauthorized, 10, "Unauthorized" },
+            { ResponseType.Error, 11, "Error" },
+            { ResponseType.BadRequest, 12, "BadRequest" },
+            { ResponseType.Unprocessable, 13, "Unprocessable" },
+            { ResponseType.Forbidden, 14, "Forbidden" },
+            { ResponseType.TooManyRequests, 15, "TooManyRequests" },
+            { ResponseType.ServiceUnavailable, 16, "ServiceUnavailable" },
+            { ResponseType.GatewayTimeout, 17, "GatewayTimeout" },
         };
 
-    [Theory]
-    [MemberData(nameof(BuiltInValues))]
-    public void BuiltInValue_ShouldHaveCorrectName(ResponseType responseType, string expectedValue)
-    {
-        // Assert
-        responseType.ToString().Should().Be(expectedValue);
-    }
-
-    [Fact]
-    public void BuiltInValues_ShouldBeDistinct()
-    {
-        // Arrange
-        ResponseType[] allValues =
-        [
-            ResponseType.Success, ResponseType.Created, ResponseType.Updated,
-            ResponseType.Deleted, ResponseType.NoContent, ResponseType.Accepted,
-            ResponseType.Validation, ResponseType.Problem, ResponseType.NotFound,
-            ResponseType.Conflict, ResponseType.Unauthorized, ResponseType.Error,
-            ResponseType.BadRequest, ResponseType.Unprocessable, ResponseType.Forbidden,
-            ResponseType.TooManyRequests, ResponseType.ServiceUnavailable, ResponseType.GatewayTimeout,
-        ];
-
-        // Act
-        int distinct = allValues.Distinct().Count();
-
-        // Assert
-        distinct.Should().Be(allValues.Length);
-    }
-
     // =================================================================
-    // ToString
+    // Enum contract
     // =================================================================
 
     [Theory]
     [MemberData(nameof(BuiltInValues))]
-    public void ToString_ShouldReturnMemberName(ResponseType responseType, string expectedValue)
+    public void BuiltInValue_ShouldMatchDocumentedContract(
+        ResponseType responseType,
+        int expectedValue,
+        string expectedName)
     {
-        // Act
-        string result = responseType.ToString();
+        // Numeric value and member name
+        ((int)responseType).Should().Be(expectedValue);
+        responseType.ToString().Should().Be(expectedName);
 
-        // Assert
-        result.Should().Be(expectedValue);
-    }
+        // Default System.Text.Json options write the numeric value
+        string defaultJson = JsonSerializer.Serialize(responseType, DefaultOptions);
+        defaultJson.Should().Be(expectedValue.ToString());
+        JsonSerializer.Deserialize<ResponseType>(defaultJson, DefaultOptions).Should().Be(responseType);
 
-    // =================================================================
-    // JSON Serialization
-    // =================================================================
-
-    [Fact]
-    public void Serialize_ShouldWritePlainString()
-    {
-        // Act
-        string json = JsonSerializer.Serialize(ResponseType.NotFound);
-
-        // Assert
-        json.Should().Be("\"NotFound\"");
-    }
-
-    [Theory]
-    [MemberData(nameof(BuiltInValues))]
-    public void Serialize_AllBuiltInValues_ShouldWritePlainString(ResponseType responseType, string expectedValue)
-    {
-        // Act
-        string json = JsonSerializer.Serialize(responseType);
-
-        // Assert
-        json.Should().Be($"\"{expectedValue}\"");
+        // JsonStringEnumConverter writes and reads the member name
+        string namedJson = JsonSerializer.Serialize(responseType, StringEnumOptions);
+        namedJson.Should().Be($"\"{expectedName}\"");
+        JsonSerializer.Deserialize<ResponseType>(namedJson, StringEnumOptions).Should().Be(responseType);
     }
 
     [Fact]
-    public void Serialize_WithIndented_ShouldWritePlainString()
+    public void DefinedValues_ShouldBeUnique()
     {
-        // Arrange
-        var obj = new { Type = ResponseType.NotFound };
-
         // Act
-        string json = JsonSerializer.Serialize(obj, JsonOptions);
+        ResponseType[] allValues = Enum.GetValues<ResponseType>();
 
         // Assert
-        json.Should().Contain("\"NotFound\"");
+        allValues.Should().OnlyHaveUniqueItems();
     }
 
     // =================================================================
-    // JSON Deserialization
+    // JSON deserialization - JsonStringEnumConverter
     // =================================================================
 
     [Fact]
-    public void Deserialize_ValidString_ShouldReturnMatchingMember()
-    {
-        // Arrange
-        const string json = "\"NotFound\"";
-
-        // Act
-        ResponseType result = JsonSerializer.Deserialize<ResponseType>(json);
-
-        // Assert
-        result.Should().Be(ResponseType.NotFound);
-    }
-
-    [Fact]
-    public void Deserialize_ValidString_CaseInsensitive_ShouldReturnMatchingMember()
+    public void Deserialize_WithStringEnumConverter_ShouldMatchNameCaseInsensitively()
     {
         // Arrange
         const string json = "\"notfound\"";
 
         // Act
-        ResponseType result = JsonSerializer.Deserialize<ResponseType>(json);
+        ResponseType result = JsonSerializer.Deserialize<ResponseType>(json, StringEnumOptions);
 
         // Assert
         result.Should().Be(ResponseType.NotFound);
     }
 
-    [Fact]
-    public void Deserialize_Null_ShouldReturnError()
+    [Theory]
+    [InlineData("null")]
+    [InlineData("\"\"")]
+    [InlineData("\"   \"")]
+    [InlineData("\"PaymentRequired\"")]
+    public void Deserialize_WithStringEnumConverter_InvalidInput_ShouldThrow(string json)
     {
-        // .NET 9+ passes null tokens to the converter; the null string falls back to Error.
-        const string json = "null";
-
-        ResponseType result = JsonSerializer.Deserialize<ResponseType>(json);
-
-        result.Should().Be(ResponseType.Error);
-    }
-
-    [Fact]
-    public void Deserialize_EmptyString_ShouldReturnError()
-    {
-        // Arrange
-        const string json = "\"\"";
-
         // Act
-        ResponseType result = JsonSerializer.Deserialize<ResponseType>(json);
+        Action act = () => JsonSerializer.Deserialize<ResponseType>(json, StringEnumOptions);
 
         // Assert
-        result.Should().Be(ResponseType.Error);
-    }
-
-    [Fact]
-    public void Deserialize_WhitespaceString_ShouldReturnError()
-    {
-        // Arrange
-        const string json = "\"   \"";
-
-        // Act
-        ResponseType result = JsonSerializer.Deserialize<ResponseType>(json);
-
-        // Assert
-        result.Should().Be(ResponseType.Error);
-    }
-
-    [Fact]
-    public void Deserialize_UnknownString_ShouldReturnError()
-    {
-        // Arrange
-        const string json = "\"PaymentRequired\"";
-
-        // Act
-        ResponseType result = JsonSerializer.Deserialize<ResponseType>(json);
-
-        // Assert
-        result.Should().Be(ResponseType.Error);
-    }
-
-    [Fact]
-    public void RoundTrip_AllBuiltInValues_ShouldPreserveEquality()
-    {
-        ResponseType[] allValues =
-        [
-            ResponseType.Success, ResponseType.Created, ResponseType.Updated,
-            ResponseType.Deleted, ResponseType.NoContent, ResponseType.Accepted,
-            ResponseType.Validation, ResponseType.Problem, ResponseType.NotFound,
-            ResponseType.Conflict, ResponseType.Unauthorized, ResponseType.Error,
-            ResponseType.BadRequest, ResponseType.Unprocessable, ResponseType.Forbidden,
-            ResponseType.TooManyRequests, ResponseType.ServiceUnavailable, ResponseType.GatewayTimeout,
-        ];
-
-        foreach (ResponseType responseType in allValues)
-        {
-            string json = JsonSerializer.Serialize(responseType);
-            ResponseType deserialized = JsonSerializer.Deserialize<ResponseType>(json);
-
-            deserialized.Should().Be(responseType, $"round-trip should preserve equality for '{responseType}'");
-        }
+        act.Should().Throw<JsonException>();
     }
 }

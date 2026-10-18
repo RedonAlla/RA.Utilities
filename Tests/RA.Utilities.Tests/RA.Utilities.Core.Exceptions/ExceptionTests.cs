@@ -305,4 +305,97 @@ public class ExceptionTests
         ex.ErrorCode.Should().Be(errorCode);
         ex.Message.Should().Be(message);
     }
+
+    // =================================================================
+    // Tests for default message fallbacks and v10.1.0 convenience constructors
+    // =================================================================
+
+    /// <summary>
+    /// Omitting the message must fall back to the package default, not produce an empty message.
+    /// </summary>
+    [Fact]
+    public void Exceptions_WithErrorCodeOnly_ShouldUseDefaultMessage()
+    {
+        // Act
+        var notFound = new NotFoundException(BaseResponseCode.NotFound);
+        var conflict = new ConflictException(BaseResponseCode.Conflict);
+        var badRequest = new BadRequestException([new ValidationError("An error")], BaseResponseCode.BadRequest);
+        var tooManyRequests = new TooManyRequestsException(BaseResponseCode.TooManyRequests);
+
+        // Assert
+        notFound.Message.Should().Be(BaseResponseMessages.NotFound);
+        conflict.Message.Should().Be(BaseResponseMessages.Conflict);
+        badRequest.Message.Should().Be(BaseResponseMessages.BadRequest);
+        tooManyRequests.Message.Should().Be(BaseResponseMessages.TooManyRequests);
+    }
+
+    /// <summary>
+    /// Passing null for the message must fall back to the package default.
+    /// </summary>
+    [Fact]
+    public void Exceptions_WithNullMessage_ShouldUseDefaultMessage()
+    {
+        // Act
+        var notFound = new NotFoundException(404, null);
+        var conflict = new ConflictException(409, null);
+        var forbidden = new ForbiddenException(403, null);
+        var baseException = new RaBaseException(500, ResponseType.Error, null);
+
+        // Assert
+        notFound.Message.Should().Be(BaseResponseMessages.NotFound);
+        conflict.Message.Should().Be(BaseResponseMessages.Conflict);
+        forbidden.Message.Should().Be(BaseResponseMessages.Forbidden);
+        baseException.Message.Should().Be(BaseResponseMessages.Error);
+    }
+
+    /// <summary>
+    /// An explicitly empty message must be preserved rather than replaced with the default.
+    /// </summary>
+    [Fact]
+    public void Exceptions_WithEmptyMessage_ShouldPreserveEmptyMessage()
+    {
+        // Act
+        var ex = new UnauthorizedException(string.Empty);
+
+        // Assert
+        ex.Message.Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// The entity/value/message overload must keep the entity details and use the custom message.
+    /// </summary>
+    [Fact]
+    public void EntityExceptions_WithCustomMessage_ShouldSetEntityDetails()
+    {
+        // Act
+        var notFound = new NotFoundException("Student", 1225, "Student is no longer enrolled.");
+        var conflict = new ConflictException("Student", 1225, "Student is already enrolled.");
+
+        // Assert
+        notFound.Message.Should().Be("Student is no longer enrolled.");
+        notFound.EntityName.Should().Be("Student");
+        notFound.EntityValue.Should().Be(1225);
+        conflict.Message.Should().Be("Student is already enrolled.");
+        conflict.EntityName.Should().Be("Student");
+        conflict.EntityValue.Should().Be(1225);
+    }
+
+    /// <summary>
+    /// The parameterless constructors must use the documented defaults.
+    /// </summary>
+    [Fact]
+    public void ParameterlessExceptions_ShouldUseDocumentedDefaults()
+    {
+        // Act
+        var notFound = new NotFoundException();
+        var conflict = new ConflictException();
+
+        // Assert
+        notFound.ErrorCode.Should().Be(BaseResponseCode.NotFound);
+        notFound.ResponseType.Should().Be(ResponseType.NotFound);
+        notFound.Message.Should().Be(BaseResponseMessages.NotFound);
+        conflict.ErrorCode.Should().Be(BaseResponseCode.Conflict);
+        conflict.ResponseType.Should().Be(ResponseType.Conflict);
+        conflict.Message.Should().Be(BaseResponseMessages.Conflict);
+    }
 }
