@@ -12,9 +12,11 @@ public class BadRequestException : RaBaseException
     /// Initializes a new instance of the <see cref="BadRequestException"/> class with a single validation error.
     /// </summary>
     /// <param name="error">The validation error that caused the exception.</param>
-    public BadRequestException(
-        ValidationError error
-    ) : base(BaseResponseCode.BadRequest, ResponseType.BadRequest, BaseResponseMessages.BadRequest)
+    public BadRequestException(ValidationError error) : base(
+        BaseResponseCode.BadRequest,
+        ResponseType.BadRequest,
+        BaseResponseMessages.BadRequest
+    )
     {
         Errors = [error];
     }
@@ -24,12 +26,15 @@ public class BadRequestException : RaBaseException
     /// </summary>
     /// <param name="error">The validation error that caused the exception.</param>
     /// <param name="errorCode">A specific error code associated with the error.</param>
-    /// <param name="message">The error message.</param>
+    /// <param name="message">
+    /// The message that describes the error. When <see langword="null"/> or omitted,
+    /// <see cref="BaseResponseMessages.BadRequest"/> is used.
+    /// </param>
     public BadRequestException(
         ValidationError error,
         int errorCode,
-        string message = BaseResponseMessages.BadRequest
-    ) : base(errorCode, ResponseType.BadRequest, message)
+        string? message = null
+    ) : base(errorCode, ResponseType.BadRequest, message ?? BaseResponseMessages.BadRequest)
     {
         Errors = [error];
     }
@@ -40,7 +45,11 @@ public class BadRequestException : RaBaseException
     /// <param name="errors">An array of validation errors that caused the exception.</param>
     public BadRequestException(
         ValidationError[] errors
-    ) : base(BaseResponseCode.BadRequest, ResponseType.BadRequest, BaseResponseMessages.BadRequest)
+    ) : base(
+        BaseResponseCode.BadRequest,
+        ResponseType.BadRequest,
+        BaseResponseMessages.BadRequest
+    )
     {
         Errors = errors;
     }
@@ -50,12 +59,19 @@ public class BadRequestException : RaBaseException
     /// </summary>
     /// <param name="errors">An array of validation errors that caused the exception.</param>
     /// <param name="errorCode">A specific error code associated with the error.</param>
-    /// <param name="message">The error message.</param>
+    /// <param name="message">
+    /// The message that describes the error. When <see langword="null"/> or omitted,
+    /// <see cref="BaseResponseMessages.BadRequest"/> is used.
+    /// </param>
     public BadRequestException(
         ValidationError[] errors,
         int errorCode,
-        string message = BaseResponseMessages.BadRequest
-    ) : base(errorCode, ResponseType.BadRequest, message)
+        string? message = null
+    ) : base(
+        errorCode,
+        ResponseType.BadRequest,
+        message ?? BaseResponseMessages.BadRequest
+    )
     {
         Errors = errors;
     }

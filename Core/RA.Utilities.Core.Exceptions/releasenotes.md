@@ -1,5 +1,31 @@
 # Release Notes for RA.Utilities.Core.Exceptions
 
+## Version 10.1.0
+
+![Date Badge](https://img.shields.io/badge/Publish-18%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-v10.1.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Exceptions/10.1.0)
+
+This release adapts the exception hierarchy to the `static readonly` fields in `RA.Utilities.Core.Constants` v10.0.4+, adds convenience constructors for the most common shapes, and makes the default-message behavior explicit. There are no breaking changes for call sites.
+
+### ✨ New Features
+
+*   **Parameterless `NotFoundException` and `ConflictException`**: `new NotFoundException()` and `new ConflictException()` produce 404 and 409 responses with the standard package messages, so a generic failure no longer needs a dummy error code.
+*   **Single-error `BadRequestException` constructors**: `new BadRequestException(error)` and `new BadRequestException(error, errorCode, message)` remove the need to wrap one `ValidationError` in an array.
+*   **Entity/value/message overloads**: `new NotFoundException(entity, value, message)` and `new ConflictException(entity, value, message)` keep `EntityName`/`EntityValue` populated while allowing a custom message.
+*   **Optional messages everywhere**: every error-code overload accepts `string? message = null` and resolves it to `BaseResponseMessages.*` at runtime.
+
+### 📝 Improvements
+
+*   **Default messages resolved at runtime**: the message parameters are declared as `string? message = null` with a `?? BaseResponseMessages.*` fallback, so omitting the argument or passing `null` yields the package default. An explicit `""` is still preserved as an empty message.
+*   **XML documentation corrected**: the `NotFoundException` summaries no longer say "generic conflict", and the `UnauthorizedException`/`ForbiddenException` single-message constructors are documented as custom-message constructors.
+*   **Consistent constructor conventions**: all nine exceptions now follow the same default → error code + message → entity/value families, which keeps call sites stable when switching exception types.
+
+### 🔗 Dependency Update
+
+*   **`RA.Utilities.Core.Constants` 10.0.5**: aligned with the `static readonly` constant fields introduced in Core.Constants v10.0.4, which is why the exception defaults are resolved with a nullable sentinel rather than a compile-time default value.
+
+---
+
 ## Version 10.0.4
 
 ![Date Badge](https://img.shields.io/badge/Publish-27%20July%202026-lightblue?logo=fastly&logoColor=white)

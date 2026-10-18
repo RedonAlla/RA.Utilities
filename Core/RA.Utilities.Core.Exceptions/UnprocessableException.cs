@@ -28,12 +28,15 @@ public class UnprocessableException : RaBaseException
     /// Initializes a new instance of the <see cref="UnprocessableException"/> class with a custom error code and message.
     /// </summary>
     /// <param name="errorCode">A specific error code associated with the error.</param>
-    /// <param name="message">The message that describes the error.</param>
+    /// <param name="message">
+    /// The message that describes the error. When <see langword="null"/> or omitted,
+    /// <see cref="BaseResponseMessages.Unprocessable"/> is used.
+    /// </param>
     public UnprocessableException(
         int errorCode,
-        string message = BaseResponseMessages.Unprocessable
+        string? message = null
     )
-        : base(errorCode, ResponseType.Unprocessable, message)
+        : base(errorCode, ResponseType.Unprocessable, message ?? BaseResponseMessages.Unprocessable)
     {
     }
 }

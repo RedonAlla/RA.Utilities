@@ -28,9 +28,12 @@ public class ServiceUnavailableException : RaBaseException
     /// Initializes a new instance of the <see cref="ServiceUnavailableException"/> class with a custom error code and message.
     /// </summary>
     /// <param name="errorCode">A specific error code associated with the error.</param>
-    /// <param name="message">The message that describes the error.</param>
-    public ServiceUnavailableException(int errorCode, string message = BaseResponseMessages.ServiceUnavailable)
-        : base(errorCode, ResponseType.ServiceUnavailable, message)
+    /// <param name="message">
+    /// The message that describes the error. When <see langword="null"/> or omitted,
+    /// <see cref="BaseResponseMessages.ServiceUnavailable"/> is used.
+    /// </param>
+    public ServiceUnavailableException(int errorCode, string? message = null)
+        : base(errorCode, ResponseType.ServiceUnavailable, message ?? BaseResponseMessages.ServiceUnavailable)
     {
     }
 }

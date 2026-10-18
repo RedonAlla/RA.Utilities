@@ -6,7 +6,7 @@
 [![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Core.Exceptions.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Exceptions/)
 [![Documentation](https://img.shields.io/badge/documentation-view-brightgreen.svg?logo=readthedocs&logoColor=fff)](https://redonalla.github.io/RA.Utilities/nuget-packages/core/RA.Utilities.Core.Exceptions/)
 
-`RA.Utilities.Core.Exceptions` provides a set of standardized, semantic exceptions like `NotFoundException` and `ConflictException`. It solves the problem of using generic exceptions (e.g., `Exception` or `UnprocessableException`) for predictable business rule failures.
+`RA.Utilities.Core.Exceptions` provides a set of standardized, semantic exceptions like `NotFoundException` and `ConflictException`. It solves the problem of using generic exceptions (e.g., `Exception` or `ArgumentException`) for predictable business rule failures.
 
 By throwing exceptions that describe *what* went wrong (e.g., a resource was not found), you can create cleaner, more maintainable code. This allows other parts of your system, like API middleware, to catch specific exception types and produce standardized, meaningful error responses automatically.
 - **Clear Intent**: Throwing a `NotFoundException` is more descriptive than a generic exception with a "not found" message.
@@ -56,6 +56,28 @@ This package is designed to integrate seamlessly with an API's error-handling mi
 3.  **Automatic Mapping**: The middleware translates the exception into a standardized HTTP response (e.g., `NotFoundException` becomes `404 Not Found`).
 
 This decouples your business logic from API concerns and standardizes error responses across your application.
+
+### Constructors and default messages
+
+Every exception follows the same constructor conventions:
+
+| Shape | Available on | Example |
+|---|---|---|
+| Default | All exceptions | `new NotFoundException()` |
+| Message | `Unauthorized`, `Forbidden`, `Unprocessable`, `GatewayTimeout`, `TooManyRequests`, `ServiceUnavailable` | `new ForbiddenException("Not the owner.")` |
+| Error code + message | All exceptions (pass a `ValidationError` first for `BadRequestException`) | `new ForbiddenException(4030, "Not the owner.")` |
+| Entity aware | `NotFoundException`, `ConflictException` | `new NotFoundException("Product", 99)` |
+| Validation aware | `BadRequestException` | `new BadRequestException(error)` |
+
+Message parameters are `string? message = null`. Omitting the argument (or passing `null`) resolves to the matching `BaseResponseMessages` value at runtime; an explicit `""` is preserved as an empty message.
+
+```csharp
+new NotFoundException().Message;            // "The requested resource was not found."
+new NotFoundException(404, null).Message;   // "The requested resource was not found."
+new NotFoundException(404, "").Message;     // ""
+new NotFoundException("Product", 99).Message; // "Product with value '99' was not found."
+```
+
 ---
 
 ## Available Exceptions
@@ -72,7 +94,7 @@ public Product GetProductById(int id)
     var product = _productRepository.Find(id);
     if (product == null)
     {
-        throw new NotFoundException(nameof(product), id);
+        throw new NotFoundException(nameof(Product), id);
     }
     return product;
 }
@@ -123,9 +145,9 @@ public void UpdateOrderStatus(int orderId, string newStatus)
             ErrorCode = e.ErrorCode
         }).ToArray();
 
-        // Return a failure Result containing the structured exception
+        // Throw a failure containing the structured exception
         // highlight-next-line
-        return new BadRequestException(validationErrors);
+        throw new BadRequestException(validationErrors);
     }
     // ... update logic
 }
@@ -323,7 +345,7 @@ To get the most out of this exception model, follow these guidelines:
     The exception message should clearly state what went wrong for logging and debugging purposes. However, avoid putting sensitive information in the message, as it might be logged or inadvertently exposed in an error response.
 
 5.  **Combine with the `Result<T>` Pattern**:
-    For a more functional approach, use the `Result<T>` object from `RA.Utilities.Core` to handle outcomes within your business logic. In your API or controller layer, you can then use the `Match` method to map the failure case directly to one of these exceptions, which the middleware will then handle automatically.
+    For a functional approach, return `Result<T>` from your business logic and carry the semantic exception as the failure value (the implicit conversion handles this). At the API boundary, pass `ErrorResultResponse.Result` to `Result<T>.Match` so the failure is mapped to the standardized response without an extra `try-catch`.
 
 ---
 

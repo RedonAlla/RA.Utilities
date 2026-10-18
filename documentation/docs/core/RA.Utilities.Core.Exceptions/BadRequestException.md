@@ -7,60 +7,62 @@ sidebar_position: 4
 Namespace: RA.Utilities.Core.Exceptions
 ```
 
-The `BadRequestException` is a semantic exception used to represent failures caused by invalid client-side input.
-It is designed to be caught and translated into a standardized **HTTP 400 Bad Request** response.
+`BadRequestException` represents a failure caused by invalid client-side input. The API layer maps it to **HTTP 400 Bad Request**.
 
 ## 🎯 Purpose
 
-This exception is the primary tool for handling validation errors discovered within your business logic (e.g., in a CQRS handler or service). Instead of throwing a generic exception, you can use `BadRequestException` to encapsulate detailed, structured information about what went wrong.
+This is the primary tool for validation errors discovered inside business logic (for example, in a CQRS handler or application service). Instead of a generic exception with a single string, `BadRequestException` carries a structured array of [`ValidationError`](./ValidationError.md) items so the client can see exactly which fields failed and why.
 
-When used with the `Result` pattern, a `BadRequestException` is placed inside a `Failure` result. The API layer can then use this structured information to provide a rich, informative error response to the client, making it easy for developers and end-users to understand and correct the problem.
+Use it when the request itself is invalid. When the request is well formed but the resource state prevents the operation, use [`UnprocessableException`](./UnprocessableException.md) instead.
 
-## `ValidationError` Class
+## Properties
 
-The power of `BadRequestException` comes from its `Errors` property, which is an array of `ValidationError` objects. Each `ValidationError` object provides context about a single validation failure.
+| Property | Type | Description |
+|---|---|---|
+| **`Errors`** | `ValidationError[]` | The validation failures that caused the exception. |
+| `ErrorCode` | `int` | Inherited. `400` unless supplied explicitly. |
+| `ResponseType` | `ResponseType` | Inherited. `ResponseType.BadRequest`. |
+| `Message` | `string` | Inherited. `BaseResponseMessages.BadRequest` (`"The request is invalid."`) unless supplied explicitly. |
 
-| Property         | Type     | Description                                                              |
-|------------------|----------|--------------------------------------------------------------------------|
-| **PropertyName**   | `string?` | The name of the property that failed validation (e.g., "EmailAddress").  |
-| **ErrorMessage**   | `string`  | A user-friendly message describing the error (e.g., "Email is not valid."). |
-| **AttemptedValue** | `object?` | The actual value that was provided and caused the failure.               |
-| **ErrorCode**      | `string?` | A custom, machine-readable error code (e.g., "INVALID_FORMAT").          |
-| **ExpectedValue**  | `object?` | The expected value, if applicable.                                       |
+Each [`ValidationError`](./ValidationError.md) exposes `PropertyName`, `ErrorMessage`, `AttemptedValue`, `ExpectedValue`, and a custom `ErrorCode`.
+
+## Constructors
+
+| Constructor | `ErrorCode` | `Message` |
+|---|---|---|
+| `BadRequestException(ValidationError error)` | `400` | `BaseResponseMessages.BadRequest` |
+| `BadRequestException(ValidationError error, int errorCode, string? message = null)` | supplied | supplied, or `BaseResponseMessages.BadRequest` when `null`/omitted |
+| `BadRequestException(ValidationError[] errors)` | `400` | `BaseResponseMessages.BadRequest` |
+| `BadRequestException(ValidationError[] errors, int errorCode, string? message = null)` | supplied | supplied, or `BaseResponseMessages.BadRequest` when `null`/omitted |
+
+There is no message-only constructor: a `ValidationError` is always required.
 
 ## 🚀 How to Use
 
-Typically, you will create a `BadRequestException` within a service or handler when input validation fails.
-
 ### Example: Using with FluentValidation
 
-A common use case is to catch a `ValidationException` from FluentValidation and convert it into a `BadRequestException`.
+Catch a FluentValidation `ValidationException` and convert its failures into `ValidationError` items:
 
 ```csharp showLineNumbers
-// In a CQRS handler or application service
 using FluentValidation;
-using RA.Utilities.Core;
-// highlight-next-line
+using RA.Utilities.Core.Results;
 using RA.Utilities.Core.Exceptions;
 
 public async Task<Result<UserDto>> CreateUserAsync(CreateUserCommand command)
 {
     try
     {
-        // Assume _validator is a FluentValidation validator
         await _validator.ValidateAndThrowAsync(command);
     }
     catch (ValidationException ex)
     {
-        // Convert FluentValidation errors to our custom ValidationError
-        var validationErrors = ex.Errors.Select(e => new ValidationError(e.ErrorMessage)
+        ValidationError[] validationErrors = [.. ex.Errors.Select(e => new ValidationError(e.ErrorMessage)
         {
             PropertyName = e.PropertyName,
             AttemptedValue = e.AttemptedValue,
             ErrorCode = e.ErrorCode
-        }).ToArray();
+        })];
 
-        // Return a failure Result containing the structured exception
         // highlight-next-line
         return new BadRequestException(validationErrors);
     }
@@ -69,22 +71,35 @@ public async Task<Result<UserDto>> CreateUserAsync(CreateUserCommand command)
 }
 ```
 
-### Example JSON Output
+### Example: A single validation error
 
-When the API layer (using `ErrorResultResponse`) handles the `Result` from the example above, it will automatically generate a `400 Bad Request` response with a body like this:
+```csharp showLineNumbers
+using RA.Utilities.Core.Constants;
+using RA.Utilities.Core.Exceptions;
 
-```json showLineNumbers
+if (string.IsNullOrWhiteSpace(request.Email))
 {
-  "responseCode": 400,
-  "responseType": "BadRequest",
-  "responseMessage": "The request is invalid.",
-  "result": [
+    // highlight-next-line
+    throw new BadRequestException(new ValidationError(BaseErrorMessage.EmailRequired)
     {
-      "propertyName": "EmailAddress",
-      "errorMessage": "'Email Address' is not a valid email address.",
-      "attemptedValue": "not-an-email",
-      "errorCode": "EmailValidator"
-    }
-  ]
+        PropertyName = "Email",
+        ErrorCode = BaseErrorCode.EmailRequired
+    });
 }
 ```
+
+### Example: Attach a request-level code and message
+
+```csharp showLineNumbers
+return new BadRequestException(
+    errors: validationErrors,
+    errorCode: 4001,
+    message: "The registration form is invalid."
+);
+```
+
+## 🔗 HTTP mapping
+
+`ErrorResultResponse` maps `BadRequestException` to **HTTP 400** with a `BadRequestResponse` whose `result` is an array of the exception's `Errors`. The `ErrorCode` is echoed into `responseCode`; it does not change the HTTP status.
+
+See [`BadRequestResponse`](../../api/RA.Utilities.Api.Response/BadRequestResponse.md) for the exact JSON shape and the [`ValidationError`](./ValidationError.md) reference for each item's fields.

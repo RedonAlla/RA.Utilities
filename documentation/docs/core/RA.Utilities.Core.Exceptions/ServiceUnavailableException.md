@@ -1,41 +1,48 @@
 ---
 title: ServiceUnavailableException
+sidebar_position: 10
 ---
 
 ```bash
 Namespace: RA.Utilities.Core.Exceptions
 ```
 
-The `ServiceUnavailableException` is a semantic exception used to signal that the service is temporarily unable to handle requests.
-It is designed to be translated into a standardized **HTTP 503 Service Unavailable** response.
+`ServiceUnavailableException` signals that the service is temporarily unable to handle requests. The API layer maps it to **HTTP 503 Service Unavailable**.
 
 ## 🎯 Purpose
 
-This exception represents a temporary outage or maintenance scenario where the server is currently unable to process requests but may recover. Common scenarios include:
+Use this exception for temporary conditions that may resolve without a code change:
 
-- Scheduled maintenance mode
-- A critical downstream dependency is unhealthy
-- The database is undergoing a failover or restart
-- Circuit breaker has tripped for an external service
-- The application is starting up and not yet ready
+- Scheduled maintenance mode.
+- A critical downstream dependency is unhealthy.
+- The database is failing over or restarting.
+- A circuit breaker is open.
+- The application is starting and not yet ready.
 
-By throwing a `ServiceUnavailableException`, your business logic clearly communicates the temporary nature of the failure. Clients can use the `Retry-After` header to know when to retry.
+Tell the client when to retry with a `Retry-After` header where possible — the condition is expected to be temporary.
 
 ## Constructors
 
-| Constructor | Description |
-|---|---|
-| `ServiceUnavailableException()` | Uses default error code (`503`) and default message. |
-| `ServiceUnavailableException(string message)` | Uses default error code (`503`) with a custom message. |
-| `ServiceUnavailableException(int errorCode, string message = ...)` | Custom error code with an optional custom message. |
+| Constructor | `ErrorCode` | `Message` |
+|---|---|---|
+| `ServiceUnavailableException()` | `503` | `BaseResponseMessages.ServiceUnavailable` (`"The service is temporarily unavailable. Please try again later."`) |
+| `ServiceUnavailableException(string message)` | `503` | supplied |
+| `ServiceUnavailableException(int errorCode, string? message = null)` | supplied | supplied, or `BaseResponseMessages.ServiceUnavailable` when `null`/omitted |
+
+## Properties
+
+| Property | Type | Description |
+|---|---|---|
+| `ErrorCode` | `int` | Inherited. `503` unless supplied explicitly. |
+| `ResponseType` | `ResponseType` | Inherited. `ResponseType.ServiceUnavailable`. |
+| `Message` | `string` | Inherited. See the constructor table. |
 
 ## 🚀 How to Use
 
-### Example: Maintenance Mode Check
+### Example: Maintenance mode
 
 ```csharp showLineNumbers
-using RA.Utilities.Core;
-// highlight-next-line
+using RA.Utilities.Core.Results;
 using RA.Utilities.Core.Exceptions;
 
 public async Task<Result> ProcessRequestAsync()
@@ -53,44 +60,20 @@ public async Task<Result> ProcessRequestAsync()
 }
 ```
 
-### Example: Circuit Breaker
+### Example: Open circuit breaker
 
 ```csharp showLineNumbers
-public async Task<Result<Data>> FetchFromDownstreamAsync()
+if (_circuitBreaker.IsOpen)
 {
-    if (_circuitBreaker.IsOpen)
-    {
-        // highlight-next-line
-        return new ServiceUnavailableException(
-            errorCode: BaseResponseCode.ServiceUnavailable,
-            message: "The downstream service is currently unavailable. The circuit breaker will retry shortly."
-        );
-    }
-
-    try
-    {
-        return await _downstreamService.FetchDataAsync();
-    }
-    catch (HttpRequestException)
-    {
-        _circuitBreaker.RecordFailure();
-        return new ServiceUnavailableException("Unable to reach the downstream service.");
-    }
+    // highlight-next-line
+    return new ServiceUnavailableException(
+        "The downstream service is currently unavailable. The circuit breaker will retry shortly."
+    );
 }
 ```
 
-### Example JSON Output
+## 🔗 HTTP mapping
 
-When the API layer handles a `Failure` `Result` containing a `ServiceUnavailableException`, it will generate a `503 Service Unavailable` response:
+`ErrorResultResponse` maps `ServiceUnavailableException` to **HTTP 503** with a `ServiceUnavailableResponse`. The envelope carries `responseCode` from `ErrorCode` and `responseMessage` from `Message`; there is no nested `result` payload.
 
-```json showLineNumbers
-{
-  "responseCode": 503,
-  "responseType": "ServiceUnavailable",
-  "responseMessage": "The service is currently undergoing scheduled maintenance. Please try again in a few minutes.",
-  "result": {
-    "errorCode": 503,
-    "errorMessage": "The service is currently undergoing scheduled maintenance. Please try again in a few minutes."
-  }
-}
-```
+See [`ServiceUnavailableResponse`](../../api/RA.Utilities.Api.Response/ServiceUnavailableResponse.md) for the JSON shape.

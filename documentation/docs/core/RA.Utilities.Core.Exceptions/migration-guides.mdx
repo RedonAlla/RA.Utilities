@@ -1,14 +1,119 @@
 ---
 title: Migration Guides
+sidebar_class_name: nav_session ra_utilities_core_exceptions
 ---
 
 # Migration Guides
 
-> **Note**: With `RA.Utilities.Core.Constants` v10.0.4+, `ResponseType` is a plain C# `enum` again (the `record` with a `Value` property was itself replaced — see the [Core.Constants migration guide](../RA.Utilities.Core.Constants/migration-guides)). Replace `ex.ResponseType.Value` with `ex.ResponseType.ToString()` when reading the semantic label.
+> **Note**: `ResponseType` has changed shape twice. It was a plain enum through Core.Constants v10.0.1, a `record` in v10.0.2–v10.0.3, and is a plain enum again from Core.Constants v10.0.4 onward. With the current enum, read the semantic label with `ex.ResponseType.ToString()`, not `ex.ResponseType.Value`.
+
+## v10.0.4 → v10.1.0
+
+This release is **additive for call sites**. It adapts the package to `RA.Utilities.Core.Constants` v10.0.4+, adds convenience constructors, and makes the default-message behavior explicit.
+
+### Breaking Change: None
+
+Existing calls such as `new NotFoundException("Product", id)`, `new ForbiddenException(403, "…")`, and `new BadRequestException(errors)` compile and behave the same. The signature changes are limited to the nullability annotation of `message` (`string` → `string?`) and the split of the optional `errorCode` into a dedicated entity/value/message overload; neither affects source compatibility.
+
+### Why this change?
+
+`RA.Utilities.Core.Constants` v10.0.4 changed every field from `const` to `static readonly`. C# requires a compile-time constant for a default parameter value, so defaults such as `string message = BaseResponseMessages.NotFound` no longer compile. v10.1.0 expresses the same behavior with a nullable sentinel that is resolved at runtime:
+
+```csharp
+public NotFoundException(int errorCode, string? message = null)
+    : base(errorCode, ResponseType.NotFound, message ?? BaseResponseMessages.NotFound)
+{
+}
+```
+
+The release also removes the need to pass a redundant error code when you only want an entity-aware exception or a generic one.
+
+### What changed
+
+| Aspect | v10.0.4 | v10.1.0 |
+|---|---|---|
+| `message` parameter type | `string` | `string?` (default `null`) |
+| Default message source | Compile-time constant argument | `BaseResponseMessages.*` resolved at runtime |
+| `message: null` | Passed through (no package fallback) | Package default message |
+| `message: ""` | Empty message | Empty message (preserved) |
+| `NotFoundException` without entity | `new NotFoundException(BaseResponseCode.NotFound)` | `new NotFoundException()` |
+| `ConflictException` without entity | `new ConflictException(BaseResponseCode.Conflict)` | `new ConflictException()` |
+| Entity + custom message | `new NotFoundException(entity, value, message: "…")` | Supported (no `errorCode` required) |
+| `BadRequestException` single error | `new BadRequestException(new[] { error })` | `new BadRequestException(error)` |
+
+### New constructors
+
+| Type | New in v10.1.0 |
+|---|---|
+| `NotFoundException` | `NotFoundException()` · `NotFoundException(string entity, object value, string? message)` |
+| `ConflictException` | `ConflictException()` · `ConflictException(string entity, object value, string? message)` |
+| `BadRequestException` | `BadRequestException(ValidationError error)` · `BadRequestException(ValidationError error, int errorCode, string? message = null)` |
+| All exceptions | `message` is optional and nullable on the error-code overloads |
+
+### Migration Steps
+
+#### 1. No code changes required
+
+Upgrade the package and rebuild:
+
+```bash
+dotnet add package RA.Utilities.Core.Exceptions --version 10.1.0
+```
+
+#### 2. Optionally simplify redundant calls
+
+**Before:**
+
+```csharp
+return new NotFoundException(BaseResponseCode.NotFound);
+return new ConflictException(BaseResponseCode.Conflict);
+return new BadRequestException(new[] { error });
+```
+
+**After:**
+
+```csharp
+return new NotFoundException();
+return new ConflictException();
+return new BadRequestException(error);
+```
+
+#### 3. Audit explicit empty messages
+
+This behavior is unchanged, but it surprises callers: `""` is a real message and is never replaced by the default. If you passed `""` while expecting the package default, omit the argument instead.
+
+**Before:**
+
+```csharp
+throw new ForbiddenException(errorCode: 4030, message: ""); // empty message
+```
+
+**After:**
+
+```csharp
+throw new ForbiddenException(errorCode: 4030); // BaseResponseMessages.Forbidden
+```
+
+:::warning[Empty is not the same as omitted]
+
+`message ?? default` only defaults when the value is `null`. An explicit `""` is preserved:
+
+```csharp
+new ForbiddenException(4030, "").Message;   // ""
+new ForbiddenException(4030).Message;       // "You do not have permission to access this resource."
+```
+
+:::
+
+### Dependency
+
+`RA.Utilities.Core.Exceptions` 10.1.0 ships with a dependency on `RA.Utilities.Core.Constants` 10.0.5. If your project pins the Constants package directly, use 10.0.5 or later so the `static readonly` fields and the `ResponseType` enum used here are available.
+
+---
 
 ## v10.0.3 → v10.0.4
 
-This release modernizes the exception base class and aligns the entire exception hierarchy with the new `ResponseType` record from `RA.Utilities.Core.Constants` v10.0.2.
+This release modernizes the exception base class and aligns the hierarchy with the `ResponseType` type from `RA.Utilities.Core.Constants` (a `record` in Core.Constants v10.0.2–v10.0.3, and a plain enum from v10.0.4 onward).
 
 ### Breaking Change: `ErrorCode` changed from `string` to `int`
 
@@ -62,7 +167,7 @@ public class PaymentFailedException : RaBaseException
 
 ### Breaking Change: `ResponseCode` removed, `ResponseType` added
 
-`RaBaseException.ResponseCode` (an `int`) has been removed and replaced with `ResponseType` (a `record`).
+`RaBaseException.ResponseCode` (an `int`) has been removed and replaced with `ResponseType` (a `record` at the time; a plain enum from Core.Constants v10.0.4 onward).
 
 **Before (v10.0.3):**
 
@@ -79,8 +184,8 @@ catch (RaBaseException ex)
 ```csharp
 catch (RaBaseException ex)
 {
-    int statusCode = ex.ErrorCode;              // e.g., 404
-    string responseType = ex.ResponseType.Value; // e.g., "NotFound"
+    int statusCode = ex.ErrorCode;               // e.g., 404
+    string responseType = ex.ResponseType.ToString(); // e.g., "NotFound"
 }
 ```
 
@@ -116,7 +221,8 @@ Note: `ValidationError` now requires `errorMessage` as a constructor argument. P
 ### New Features in v10.0.4
 
 - **`GatewayTimeoutException`**: New exception class for HTTP 504 Gateway Timeout scenarios.
-- **Parameterless constructors**: `ForbiddenException`, `UnauthorizedException`, `UnprocessableException`, and `GatewayTimeoutException` now have parameterless constructors with sensible defaults.
+- **`TooManyRequestsException`** and **`ServiceUnavailableException`**: New exception classes for HTTP 429 and 503.
+- **Parameterless constructors**: `ForbiddenException`, `UnauthorizedException`, `UnprocessableException`, `GatewayTimeoutException`, `TooManyRequestsException`, and `ServiceUnavailableException` now have parameterless constructors with sensible defaults.
 - **`string message` constructors**: These exceptions now accept a single `string message` parameter.
 - **`init` accessors**: All exception properties now use `{ get; init; }` for immutability after construction.
 

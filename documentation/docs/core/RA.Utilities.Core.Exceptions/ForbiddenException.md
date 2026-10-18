@@ -1,38 +1,68 @@
 ---
 title: ForbiddenException
+sidebar_position: 7
 ---
 
 ```bash
 Namespace: RA.Utilities.Core.Exceptions
 ```
 
-The purpose of the `ForbiddenException` in your framework is to signal a permission-based failure.
+`ForbiddenException` signals that an authenticated caller is not allowed to perform the requested action. The API layer maps it to **HTTP 403 Forbidden**.
 
-It is used when a user has successfully authenticated (the server knows who they are), but they are specifically forbidden from performing the requested action or accessing the target resource because they lack the required roles, claims, or permissions. In RESTful standards, this maps to **HTTP 403 Forbidden**.
+## 🎯 Purpose
 
-## 🚀 Example: When to use it
-You should throw this exception in your domain services or application handlers when a business rule determines the user doesn't have the right "clearance," even if they are logged in.
+Use this exception when the server knows who the caller is but the caller lacks the required role, claim, ownership, or permission. The meaning is *"I know who you are, but you can't do this."*
 
-```csharp
+Do not use it for missing or invalid credentials — that is [`UnauthorizedException`](./UnauthorizedException.md) (401).
+
+## Constructors
+
+| Constructor | `ErrorCode` | `Message` |
+|---|---|---|
+| `ForbiddenException()` | `403` | `BaseResponseMessages.Forbidden` (`"You do not have permission to access this resource."`) |
+| `ForbiddenException(string message)` | `403` | supplied |
+| `ForbiddenException(int errorCode, string? message = null)` | supplied | supplied, or `BaseResponseMessages.Forbidden` when `null`/omitted |
+
+The type always sets `ResponseType.Forbidden`. The two-argument constructor is the only one that changes `ErrorCode`.
+
+## Properties
+
+| Property | Type | Description |
+|---|---|---|
+| `ErrorCode` | `int` | Inherited. `403` unless supplied explicitly. |
+| `ResponseType` | `ResponseType` | Inherited. `ResponseType.Forbidden`. |
+| `Message` | `string` | Inherited. See the constructor table. |
+
+## 🚀 How to Use
+
+```csharp showLineNumbers
+using RA.Utilities.Core.Results;
+using RA.Utilities.Core.Exceptions;
+
 public async Task<Result> UpdateSensitiveDataAsync(Guid resourceId, User currentUser)
 {
-    var resource = await _repository.GetByIdAsync(resourceId);
+    Resource? resource = await _repository.GetByIdAsync(resourceId);
 
-    // Business Rule: Only the 'Owner' or 'SuperAdmin' can edit this specific resource.
+    // Business rule: only the owner or a super admin may edit this resource.
     if (resource.OwnerId != currentUser.Id && !currentUser.IsSuperAdmin)
     {
-        // The user is logged in (authenticated), but they are FORBIDDEN from this action.
-        return new ForbiddenException(
-            403,
-            "You do not have permission to modify this resource."
-        );
+        // highlight-next-line
+        return new ForbiddenException("You do not have permission to modify this resource.");
     }
 
-    // ... proceed with update
+    // ... proceed with the update
     return Result.Success();
 }
 ```
 
-**ForbiddenException (403)**: "I know who you are, but you aren't allowed to do this."
+To attach a domain code while keeping the default message, pass `null`:
 
-By using `ForbiddenException`, your `GlobalExceptionHandler` can automatically return a 403 status code, which helps frontend applications differentiate between a user needing to log back in (401) and a user needing to request higher access levels (403).
+```csharp showLineNumbers
+throw new ForbiddenException(errorCode: 4030);
+```
+
+## 🔗 HTTP mapping
+
+`ErrorResultResponse` maps `ForbiddenException` to **HTTP 403** with a `ForbiddenResponse`. The envelope carries `responseCode` from `ErrorCode` and `responseMessage` from `Message`; there is no nested `result` payload.
+
+See [`ForbiddenResponse`](../../api/RA.Utilities.Api.Response/ForbiddenResponse.md) for the JSON shape.

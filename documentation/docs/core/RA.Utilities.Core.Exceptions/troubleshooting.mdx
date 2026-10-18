@@ -1,36 +1,77 @@
 ---
 title: Troubleshooting & FAQ
+sidebar_class_name: nav_session ra_utilities_core_exceptions
 ---
 
 # Troubleshooting & FAQ
 
 ## Common Issues
 
-### My `ValidationError` won't compile — "There is no argument given that corresponds to the required parameter 'errorMessage'"
+### Why is my exception message empty?
 
-**Cause**: In v10.0.4, `ValidationError` (formerly `ValidationErrors`) requires a constructor argument for `errorMessage`. You can no longer use object initializer syntax without passing the message first.
+**Cause**: You passed an explicitly empty string, or you passed `null` on a version that does not apply the fallback. Since v10.1.0, omitting `message` or passing `null` resolves to `BaseResponseMessages.*` at runtime, but `""` is a real message and is preserved.
 
-**Fix**: Pass the error message as the constructor argument:
+**Fix**: Omit the argument or pass `null`:
 
 ```csharp
-// ❌ Does not compile in v10.0.4
-var error = new ValidationError { PropertyName = "Email" };
+// ❌ Empty message
+throw new NotFoundException(404, "");
 
-// ✅ Correct
-var error = new ValidationError("Email is invalid.") { PropertyName = "Email" };
+// ✅ "The requested resource was not found."
+throw new NotFoundException(404);
+
+// ✅ Also the default
+throw new NotFoundException(404, null);
+```
+
+### How do I throw a generic `NotFoundException` or `ConflictException` without an entity?
+
+Use the parameterless constructor added in v10.1.0:
+
+```csharp
+return new NotFoundException();  // 404, "The requested resource was not found."
+return new ConflictException();  // 409, "A conflict occurred with the current state of the resource."
+```
+
+Before v10.1.0, the equivalent was `new NotFoundException(BaseResponseCode.NotFound)` or `new ConflictException(BaseResponseCode.Conflict)`.
+
+### Which constructor populates `EntityName` and `EntityValue`?
+
+Only the entity/value overloads:
+
+```csharp
+new NotFoundException("Product", 99);                  // EntityName = "Product", EntityValue = 99
+new NotFoundException("Product", 99, "Gone.");         // same, custom message
+new NotFoundException("Product", 99, 4040, "Gone.");   // same, custom code and message
+new NotFoundException();                               // both remain null
+new NotFoundException(4040);                           // both remain null
+```
+
+The same rule applies to `ConflictException`. If the API response should include the entity details, use an entity/value overload.
+
+### Why doesn't changing `ErrorCode` change the HTTP status?
+
+**Cause**: `ErrorResultResponse` selects the HTTP status from the exception *type* (`BaseResponseCode.NotFound` for `NotFoundException`, `BaseResponseCode.Conflict` for `ConflictException`, and so on). The exception's `ErrorCode` is copied into the JSON `responseCode` field instead.
+
+**Fix**: Keep `ErrorCode` equal to the matching `BaseResponseCode` value — or accept that the envelope's `responseCode` will differ from the HTTP status. Put domain detail in `ValidationError.ErrorCode` or in the message.
+
+```csharp
+// HTTP status: 404 (from the exception type)
+// JSON responseCode: 4040 (from ErrorCode)
+throw new NotFoundException(errorCode: 4040);
 ```
 
 ### `RaBaseException` does not contain a definition for `ResponseCode`
 
-**Cause**: In v10.0.4, `ResponseCode` (int) was removed and replaced by `ResponseType` from `RA.Utilities.Core.Constants` (a `record` in Core.Constants v10.0.2–10.0.3; a plain `enum` again from Core.Constants v10.0.4 onward).
+**Cause**: In v10.0.4, `ResponseCode` (int) was removed and replaced by `ResponseType` from `RA.Utilities.Core.Constants` (a `record` in Core.Constants v10.0.2–v10.0.3; a plain enum again from Core.Constants v10.0.4 onward).
 
-**Fix**: Use `ErrorCode` for the HTTP status code and `ResponseType.ToString()` for the semantic label:
+**Fix**: Use `ErrorCode` for the code and `ResponseType.ToString()` for the semantic label:
 
 ```csharp
 // ❌ v10.0.3
 int status = ex.ResponseCode;
 
-// ✅ v10.0.4
+// ✅ v10.0.4+
 int status = ex.ErrorCode;
 string type = ex.ResponseType.ToString();
 ```
@@ -39,23 +80,61 @@ string type = ex.ResponseType.ToString();
 
 **Cause**: `ErrorCode` changed from `string` to `int` in v10.0.4.
 
-**Fix**: Replace string-based error codes with integer constants from `BaseResponseCode`:
+**Fix**: Use the integer constants from `BaseResponseCode`:
 
 ```csharp
 // ❌ v10.0.3
 new ConflictException(errorCode: nameof(BaseResponseCode.Conflict))
 
-// ✅ v10.0.4
+// ✅ v10.0.4+
 new ConflictException(errorCode: BaseResponseCode.Conflict)
 ```
 
-### When should I use `throw` vs `return` with exceptions?
+### My `ValidationError` won't compile — "There is no argument given that corresponds to the required parameter 'errorMessage'"
 
-Both work — the choice depends on your error handling style:
+**Cause**: `ValidationError` (formerly `ValidationErrors`) requires the message as a constructor argument.
 
-- **`throw`**: Use when you have global exception handling middleware (e.g., `GlobalExceptionHandler` in `RA.Utilities.Api`). The exception propagates up and the middleware catches it.
+**Fix**: Pass the message first, then set the optional properties:
 
-- **`return` with `Result`**: Use when you prefer the `Result` pattern from `RA.Utilities.Core`. The exception is implicitly converted to `Result.Failure` and flows through your pipeline without throwing.
+```csharp
+// ❌ Does not compile
+var error = new ValidationError { PropertyName = "Email" };
+
+// ✅ Correct
+var error = new ValidationError("Email is invalid.") { PropertyName = "Email" };
+```
+
+### `message: ""` used to mean "use the default" — why doesn't it now?
+
+It never did: `""` is a real string, and the fallback operator only reacts to `null`. If you want the package default, omit the argument or pass `null`. This is also why the v10.1.0 signatures use `string? message = null` instead of `string message = ""`.
+
+### Which exception type should I use?
+
+| Scenario | Exception | HTTP |
+|---|---|---|
+| Resource doesn't exist | `NotFoundException` | 404 |
+| Duplicate / uniqueness violation | `ConflictException` | 409 |
+| Invalid input / validation | `BadRequestException` | 400 |
+| Missing or invalid authentication | `UnauthorizedException` | 401 |
+| Authenticated but not permitted | `ForbiddenException` | 403 |
+| Valid request but invalid state | `UnprocessableException` | 422 |
+| Rate limit exceeded | `TooManyRequestsException` | 429 |
+| Temporary outage / maintenance | `ServiceUnavailableException` | 503 |
+| Upstream timeout | `GatewayTimeoutException` | 504 |
+
+### 401 or 403?
+
+- **401 `UnauthorizedException`** — the server cannot identify the caller: missing token, expired token, invalid credentials.
+- **403 `ForbiddenException`** — the caller is identified but lacks the role, claim, ownership, or permission.
+
+Using 401 for a permission failure tells clients to re-authenticate, which will not help.
+
+### When should I `throw` vs `return` an exception?
+
+Both work; the choice depends on your error-handling style:
+
+- **`throw`** — when you have the global exception handler (`AddRaExceptionHandling()` from `RA.Utilities.Api`) installed. The exception propagates and the handler maps it.
+- **`return` with `Result`** — when you use the `Result` pattern from `RA.Utilities.Core.Results`. The exception implicitly converts to `Result.Failure` and flows through `.Match(...)`.
 
 ```csharp
 // throw style (with middleware)
@@ -65,32 +144,60 @@ throw new NotFoundException(nameof(Product), id);
 return new NotFoundException(nameof(Product), id); // implicit conversion to Result.Failure
 ```
 
-### Which exception type should I use?
+### How do I attach the original exception?
 
-| Scenario | Exception | HTTP |
-|---|---|---|
-| Resource doesn't exist | `NotFoundException` | 404 |
-| Duplicate / uniqueness violation | `ConflictException` | 409 |
-| Invalid input / validation | `BadRequestException` | 400 |
-| Missing or invalid auth | `UnauthorizedException` | 401 |
-| Authenticated but not permitted | `ForbiddenException` | 403 |
-| Valid request but invalid state | `UnprocessableException` | 422 |
-| Rate limit exceeded | `TooManyRequestsException` | 429 |
-| Temporary outage / maintenance | `ServiceUnavailableException` | 503 |
-| Upstream timeout | `GatewayTimeoutException` | 504 |
+`RaBaseException` exposes no `innerException` overload. Log the original exception, then throw the semantic one:
+
+```csharp
+catch (HttpRequestException ex)
+{
+    _logger.LogError(ex, "The payment gateway call failed.");
+    throw new GatewayTimeoutException("The payment gateway did not respond in time.");
+}
+```
+
+If the original exception must stay on the object graph, derive from `RaBaseException`, store it in your own property, and pass a message to the base constructor:
+
+```csharp
+public sealed class UpstreamFailedException : RaBaseException
+{
+    public UpstreamFailedException(Exception inner)
+        : base(502, ResponseType.Error, "The upstream service failed.")
+    {
+        Inner = inner;
+    }
+
+    public Exception Inner { get; }
+}
+```
+
+### Can I serialize these exceptions directly to JSON?
+
+No. They are plain exception classes with no serialization contract. The API layer projects them into response DTOs (`NotFoundResponse`, `ConflictResponse`, …) via `ErrorResultMapper`. Use `ErrorResultResponse.Result(exception)` or the global handler rather than `JsonSerializer.Serialize(exception)`.
+
+### Why are 429, 503, and 504 logged as errors?
+
+`GlobalExceptionHandler.IsClientError` treats `BadRequestException`, `ConflictException`, `UnprocessableException`, `NotFoundException`, `UnauthorizedException`, and `ForbiddenException` as client errors (logged at `Warning`). `TooManyRequestsException`, `ServiceUnavailableException`, `GatewayTimeoutException`, and generic `RaBaseException` are logged at `Error`. If those are routine in your system, filter the log level or add your own handler.
 
 ---
 
 ## Known Limitations
 
-- **No localization support**: Exception messages are English-only. For multi-language support, use the `ErrorCode` for lookup and implement your own localization layer.
-- **`ValidationError` requires constructor argument**: Unlike v10.0.3 where you could use object initializers alone, you must now pass the error message as a constructor argument.
-- **`ErrorCode` is HTTP-focused**: The `ErrorCode` property is an `int` designed to hold HTTP status codes. If you need custom business error codes beyond HTTP codes, consider encoding them elsewhere (e.g., in the message or a custom property on a derived exception).
+- **No inner-exception constructor**: `RaBaseException` does not accept an `innerException`. Log the original exception or use a derived type that stores it separately.
+- **No localization support**: Messages are English-only. For multi-language support, use the error code for lookup and implement your own localization layer.
+- **`EntityName` / `EntityValue` are unset for generic constructors**: the parameterless and error-code-only constructors leave them `null`, even though the properties are declared non-nullable. Use an entity/value overload when the response needs them.
+- **`ErrorCode` is not the HTTP status**: the API mapper selects the status from the exception type; `ErrorCode` is echoed into the JSON `responseCode`.
+- **Closed exception set for mapping**: `ErrorResultResponse` recognizes the nine built-in types. A custom derived exception falls through to `RaBaseException` and returns HTTP 500.
+- **`ResponseType` is a closed enum**: there is no way to add a member. Use the closest built-in value and carry domain detail in the message or a validation error code.
+- **Exceptions are not serialized**: the API layer maps them to response DTOs; there is no `[JsonConverter]` on the exception types.
+- **Log levels for 429/503/504**: these are logged at `Error` by the default handler, not `Warning`.
 
 ---
 
 ## Performance Tips
 
-- **Use parameterless constructors for default cases**: `new ForbiddenException()` has zero allocation overhead beyond the exception itself — all defaults come from `const` fields.
-- **Pass entities by name**: Use `nameof(Product)` instead of `"Product"` to avoid magic strings and get compile-time safety.
-- **Avoid excessive exception throwing in hot paths**: For high-throughput validation, consider using the `Result` pattern with `ValidationError` directly rather than throwing.
+- **Prefer parameterless constructors for default cases**: `new ForbiddenException()` allocates only the exception; no message formatting occurs.
+- **Use `nameof` for entity names**: `nameof(Product)` avoids magic strings and keeps the message correct after renames.
+- **Avoid custom interpolation in hot paths**: entity/value constructors use `string.Format`-style interpolation; if you throw thousands of exceptions per second, the message cost is measurable. Prefer the `Result` pattern with `ValidationError` for high-throughput validation.
+- **Don't throw for control flow**: exceptions capture stack traces. For expected outcomes in hot paths, return `Result.Failure` and map it at the boundary.
+- **Reuse `ValidationError` arrays where practical**: building a LINQ projection per failed request allocates; you can construct the array directly for fixed validation rules.

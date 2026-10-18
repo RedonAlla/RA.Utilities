@@ -7,70 +7,87 @@ sidebar_position: 2
 Namespace: RA.Utilities.Core.Exceptions
 ```
 
-The `NotFoundException` is a semantic exception used to indicate that a requested resource could not be found.
-It is designed to be translated into a standardized **HTTP 404 Not Found** response.
+`NotFoundException` signals that a requested resource does not exist. The API layer maps it to **HTTP 404 Not Found**.
 
 ## 🎯 Purpose
 
-This exception is used for predictable business-level failures when a lookup for a specific entity yields no result. Instead of returning `null` or throwing a generic exception, your business logic can return a `Failure` `Result` containing a `NotFoundException`.
+Use this exception for predictable lookups that return nothing. Instead of returning `null` or throwing a generic exception, the business layer throws (or returns) `NotFoundException`, and the API layer produces a consistent 404 response.
 
-This provides clear, structured information about the failure. The API layer is designed to catch this specific exception and automatically generate a 404 response, informing the client exactly what resource was missing.
+Two shapes are available:
+
+- **Entity-aware** — `new NotFoundException("Product", 99)` populates `EntityName` and `EntityValue` and generates `"Product with value '99' was not found."`
+- **Generic** — `new NotFoundException()` (or `new NotFoundException(errorCode, message)`) produces a 404 without disclosing an entity.
 
 ## Properties
 
-| Property      | Type     | Description                                                          |
-|---------------|----------|----------------------------------------------------------------------|
-| **EntityName**  | `string` | The name of the entity type that was not found (e.g., "Product").    |
-| **EntityValue** | `object` | The value or identifier used to search for the entity (e.g., an ID). |
+| Property | Type | Description |
+|---|---|---|
+| **`EntityName`** | `string` | Name of the entity that was not found (e.g., `"Product"`). Set only by the entity/value constructors. |
+| **`EntityValue`** | `object` | Identifier used in the lookup (e.g., `99`, `"a@b.com"`). Set only by the entity/value constructors. |
+| `ErrorCode` | `int` | Inherited. `404` unless supplied explicitly. |
+| `ResponseType` | `ResponseType` | Inherited. `ResponseType.NotFound`. |
+| `Message` | `string` | Inherited. The supplied message when one is given, the entity template for entity/value constructors, otherwise `BaseResponseMessages.NotFound`. |
+
+## Constructors
+
+| Constructor | `ErrorCode` | `Message` |
+|---|---|---|
+| `NotFoundException()` | `404` | `BaseResponseMessages.NotFound` |
+| `NotFoundException(int errorCode, string? message = null)` | supplied | supplied, or `BaseResponseMessages.NotFound` when `null`/omitted |
+| `NotFoundException(string entity, object value)` | `404` | `"{entity} with value '{value}' was not found."` |
+| `NotFoundException(string entity, object value, string? message)` | `404` | supplied, or the entity template when `null` |
+| `NotFoundException(string entity, object value, int errorCode, string? message = null)` | supplied | supplied, or the entity template when `null`/omitted |
+
+The entity/value constructors set `EntityName` and `EntityValue`; the others leave both unset.
 
 ## 🚀 How to Use
 
-You will typically create and return a `NotFoundException` from a service or handler when a database query or other lookup fails to find a required resource.
-
-### Example: Fetching a Resource
-
-In this example, a service attempts to retrieve a product by its ID. If the product doesn't exist, it returns a `Failure` `Result` with a `NotFoundException`.
+### Example: Fetching a resource
 
 ```csharp showLineNumbers
-// In a CQRS handler or application service
-using RA.Utilities.Core;
-// highlight-next-line
+using RA.Utilities.Core.Results;
 using RA.Utilities.Core.Exceptions;
 
 public async Task<Result<ProductDto>> GetProductByIdAsync(int productId)
 {
-    // Attempt to find the product in the database
-    var product = await _productRepository.FindByIdAsync(productId);
+    Product? product = await _productRepository.FindByIdAsync(productId);
 
-    if (product == null)
+    if (product is null)
     {
-        // Return a failure Result containing a NotFoundException
         // highlight-next-line
         return new NotFoundException(nameof(Product), productId);
     }
 
-    // ... map product to ProductDto and return success
     var productDto = _mapper.Map<ProductDto>(product);
     return productDto; // Implicit success conversion
 }
 ```
 
-### Example JSON Output
+The resulting exception has `ErrorCode = 404`, `ResponseType = ResponseType.NotFound`, `EntityName = "Product"`, `EntityValue = 99`, and `Message = "Product with value '99' was not found."`.
 
-When the API layer (using `ErrorResultResponse`) handles the `Failure` `Result` from the example above, it will automatically generate a `404 Not Found` response with a body like this:
+### Example: A generic 404
 
-```json showLineNumbers
-{
-  "responseCode": 404,
-  "responseType": "NotFound",
-  "responseMessage": "Product with value '99' was not found.",
-  "result": {
-    "entity": "Product",
-    "value": 99,
-    "errorCode": "NotFound",
-    "errorMessage": "Product with value '99' was not found."
-  }
-}
+Use the parameterless constructor when the response should not disclose an entity, or pass a custom code when your clients need one:
+
+```csharp showLineNumbers
+// 404 / ResponseType.NotFound / BaseResponseMessages.NotFound
+return new NotFoundException();
+
+// 404 / custom code / default message
+return new NotFoundException(errorCode: 4040);
+
+// 404 / custom code / custom message
+return new NotFoundException(4040, "The catalog item is no longer available.");
 ```
 
-This structured response is invaluable for clients, as it programmatically confirms which entity and identifier could not be located.
+## 🔗 HTTP mapping
+
+`ErrorResultResponse` maps `NotFoundException` to **HTTP 404** with a `NotFoundResponse` body containing `entity` and `value` from the exception. The `ErrorCode` is echoed into `responseCode`; it does not change the HTTP status.
+
+:::note[Known nested-payload issue]
+
+`ErrorResultMapper.ToResponse(NotFoundException)` currently passes the exception message as the `errorCode` argument of `NotFoundResult`, so the nested `errorCode` contains the message and `errorMessage` is empty. The envelope (`responseCode`, `responseType`, `responseMessage`) is correct. See [`ErrorResultResponse`](../../api/RA.Utilities.Api/mapper/ErrorResultResponse.md) for the current output.
+
+:::
+
+See also [`ConflictException`](./ConflictException.md) for uniqueness conflicts and [`Troubleshooting`](./troubleshooting.mdx) for common questions.

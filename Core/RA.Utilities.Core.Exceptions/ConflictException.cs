@@ -20,13 +20,27 @@ public class ConflictException : RaBaseException
     /// <summary>
     /// Initializes a new instance of the <see cref="ConflictException"/> class for a generic conflict.
     /// </summary>
-    /// <param name="errorCode">A specific error code associated with the error.</param>
-    /// <param name="message">The message that describes the error.</param>
-    public ConflictException(
-        int errorCode = BaseResponseCode.Conflict,
-        string message = BaseResponseMessages.Conflict
+    public ConflictException() : base(
+        BaseResponseCode.Conflict,
+        ResponseType.Conflict,
+        BaseResponseMessages.Conflict
     )
-        : base(errorCode, ResponseType.Conflict, message)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ConflictException"/> class for a generic conflict.
+    /// </summary>
+    /// <param name="errorCode">A specific error code associated with the error.</param>
+    /// <param name="message">
+    /// The message that describes the error. When <see langword="null"/> or omitted,
+    /// <see cref="BaseResponseMessages.Conflict"/> is used.
+    /// </param>
+    public ConflictException(int errorCode, string? message = null) : base(
+        errorCode,
+        ResponseType.Conflict,
+        message ?? BaseResponseMessages.Conflict
+    )
     {
     }
 
@@ -35,12 +49,50 @@ public class ConflictException : RaBaseException
     /// </summary>
     /// <param name="entity">The name of the entity type that caused the conflict.</param>
     /// <param name="value">The value or identifier of the conflicting entity.</param>
+    public ConflictException(string entity, object value) : base(
+        BaseResponseCode.Conflict,
+        ResponseType.Conflict,
+        $"{entity} with value '{value}' already exists."
+    )
+    {
+        EntityName = entity;
+        EntityValue = value;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ConflictException"/> class for a resource that already exists,
+    /// using a custom message.
+    /// </summary>
+    /// <param name="entity">The name of the entity type that caused the conflict.</param>
+    /// <param name="value">The value or identifier of the conflicting entity.</param>
+    /// <param name="message">
+    /// The message that describes the error. When <see langword="null"/>, the default
+    /// "&lt;entity&gt; with value '&lt;value&gt;' already exists." message is used.
+    /// </param>
+    public ConflictException(string entity, object value, string? message) : base(
+        BaseResponseCode.Conflict,
+        ResponseType.Conflict,
+        message ?? $"{entity} with value '{value}' already exists."
+    )
+    {
+        EntityName = entity;
+        EntityValue = value;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ConflictException"/> class for a resource that already exists.
+    /// </summary>
+    /// <param name="entity">The name of the entity type that caused the conflict.</param>
+    /// <param name="value">The value or identifier of the conflicting entity.</param>
     /// <param name="errorCode">A specific error code associated with the error.</param>
-    /// <param name="message">The message that describes the error.</param>
+    /// <param name="message">
+    /// The message that describes the error. When <see langword="null"/> or omitted,
+    /// "&lt;entity&gt; with value '&lt;value&gt;' already exists." is used.
+    /// </param>
     public ConflictException(
         string entity,
         object value,
-        int errorCode = BaseResponseCode.Conflict,
+        int errorCode,
         string? message = null
     )
         : base(errorCode, ResponseType.Conflict, message ?? $"{entity} with value '{value}' already exists.")

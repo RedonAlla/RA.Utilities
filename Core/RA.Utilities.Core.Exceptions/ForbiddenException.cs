@@ -16,23 +16,27 @@ public class ForbiddenException : RaBaseException
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ForbiddenException"/> class with a default message and error code.
+    /// Initializes a new instance of the <see cref="ForbiddenException"/> class with a custom message.
     /// </summary>
+    /// <param name="message">The message that describes the error.</param>
     public ForbiddenException(string message)
         : base(BaseResponseCode.Forbidden, ResponseType.Forbidden, message)
     {
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ForbiddenException"/> class with a custom message.
+    /// Initializes a new instance of the <see cref="ForbiddenException"/> class with a custom error code and message.
     /// </summary>
     /// <param name="errorCode">A specific error code associated with the error.</param>
-    /// <param name="message">The message that describes the error.</param>
+    /// <param name="message">
+    /// The message that describes the error. When <see langword="null"/> or omitted,
+    /// <see cref="BaseResponseMessages.Forbidden"/> is used.
+    /// </param>
     public ForbiddenException(
         int errorCode,
-        string message = BaseResponseMessages.Forbidden
+        string? message = null
     )
-        : base(errorCode, ResponseType.Forbidden, message)
+        : base(errorCode, ResponseType.Forbidden, message ?? BaseResponseMessages.Forbidden)
     {
     }
 }

@@ -1,5 +1,6 @@
 ---
 title: RA.Utilities.Core.Exceptions
+sidebar_position: 3
 sidebar_class_name: nav_session ra_utilities_core_exceptions
 ---
 
@@ -13,29 +14,41 @@ import LogoSvg from '../../../../Assets/Images/error.svg';
 # RA.Utilities.Core.Exceptions
 
 [![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Core.Exceptions?logo=nuget&label=NuGet)](https://www.nuget.org/packages/RA.Utilities.Core.Exceptions/)
-[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Core.Exceptions.svg)](https://www.nuget.org/packages/RA.Utilities.Core.Exceptions/)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Core.Exceptions.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Exceptions/)
 [![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
-[![Publish NuGet](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml/badge.svg)](https://github.com/RedonAlla/RA.Utilities/actions/runs/19610657217)
+[![Publish NuGet](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml/badge.svg)](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml)
 [![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?label=License&logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
 
-`RA.Utilities.Core.Exceptions` provides a set of standardized, semantic exceptions like [`NotFoundException`](./NotFoundException.md) and [`ConflictException`](./ConflictException.md). It solves the problem of using generic exceptions for predictable business rule failures by giving you exceptions that describe *what* went wrong.
+`RA.Utilities.Core.Exceptions` provides nine standardized, semantic exceptions such as [`NotFoundException`](./NotFoundException.md) and [`ConflictException`](./ConflictException.md). Each carries an HTTP error code, a semantic `ResponseType`, and a consistent message, so predictable business failures no longer need generic `Exception` or `ArgumentException` types.
+
+The package is the error vocabulary of the RA.Utilities ecosystem: the application layer throws these types without knowing about HTTP, and the API layer maps them to standardized responses.
 
 ## 🎯 Purpose
 
-Instead of throwing generic `Exception` or `ArgumentException` types, this package provides exceptions that carry semantic meaning. This approach has several key benefits:
+Instead of throwing a generic `Exception` with a message string, this package lets the *type* of the exception communicate the outcome. That has several benefits:
 
-- **Clear Intent**: Throwing a [`NotFoundException`](./NotFoundException.md) is more descriptive than a generic exception with a "not found" message.
-- **Standardized Error Handling**: Middleware (like in `RA.Utilities.Api`) can catch specific exception types and automatically map them to the correct HTTP status codes and structured error responses (e.g., 404 Not Found, 409 Conflict).
-- **Decoupled Logic**: Your domain or application layer can focus on business rules and throw semantic exceptions without needing to know about HTTP details. The web layer handles the translation.
-- **Reduced Boilerplate**: Eliminates the need for repetitive `try-catch` blocks in your controllers for common error scenarios.
+- **Clear intent** — `throw new NotFoundException(nameof(Product), id)` says exactly what happened; a generic exception forces every reader to parse the message.
+- **Standardized error handling** — `RA.Utilities.Api` catches these types and maps each one to the correct HTTP status code and a structured JSON body. No string matching required.
+- **Decoupled layers** — domain and application code can signal a missing entity or a conflict without referencing `Microsoft.AspNetCore.Http` or an HTTP status code.
+- **Consistent defaults** — every exception starts from the same `BaseResponseCode`, `BaseResponseMessages`, and `ResponseType` values used elsewhere in the ecosystem.
+- **Less boilerplate** — endpoints no longer need repeated `try-catch` blocks for common failures; one global handler covers them.
 
 ### ✨ Key Features
 
 - **9 semantic exception types** — `NotFoundException`, `ConflictException`, `BadRequestException`, `UnauthorizedException`, `ForbiddenException`, `UnprocessableException`, `GatewayTimeoutException`, `TooManyRequestsException`, `ServiceUnavailableException`
-- **Structured validation errors** — `ValidationError` class with property name, error message, attempted value, and error code
-- **Extensible base class** — `RaBaseException` with `ErrorCode` (int) and `ResponseType` (enum) for consistent error contracts
-- **Auto-mapping to HTTP** — Pairs with `RA.Utilities.Api` middleware for automatic exception-to-JSON-response translation
-- **Result pattern compatible** — All exceptions implicitly convert to `Result.Failure` via `RA.Utilities.Core`
+- **Defaults that always apply** — omitting `message` (or passing `null`) resolves to the package default at runtime; an explicit `""` is preserved
+- **Entity-aware constructors** — `NotFoundException` and `ConflictException` build messages such as `"Product with value '99' was not found."` and expose `EntityName` / `EntityValue`
+- **Structured validation errors** — [`ValidationError`](./ValidationError.md) carries property name, message, attempted value, expected value, and a custom error code
+- **Stable contract** — [`RaBaseException`](./RaBaseException.md) exposes `ErrorCode` (`int`) and `ResponseType` ([`ResponseType`](../RA.Utilities.Core.Constants/ResponseType) enum)
+- **Immutable after construction** — all properties are `init`-only or read-only
+- **Result-pattern ready** — any exception implicitly converts to `Result.Failure` through `RA.Utilities.Core.Results`
+- **No configuration** — no DI registration, no options, no `appsettings.json`; just throw the right type
+
+:::info[Version 10.1.0]
+
+This release is additive. It adds parameterless constructors to `NotFoundException` and `ConflictException`, entity/value convenience overloads to both, a single-error `BadRequestException` constructor, and entity/value/message overloads. `message` parameters are now `string?` with a `null` default, so omitting a message (or passing `null`) resolves to `BaseResponseMessages.*` at runtime. See the [Migration Guides](./migration-guides.mdx#v1004--v1010).
+
+:::
 
 ---
 
@@ -44,7 +57,7 @@ Instead of throwing generic `Exception` or `ArgumentException` types, this packa
 ### Prerequisites
 
 - **.NET 10.0** or later
-- **`RA.Utilities.Core.Constants`** (included as a dependency)
+- **[`RA.Utilities.Core.Constants`](../RA.Utilities.Core.Constants/index.mdx)** — installed automatically as a dependency
 
 ### Installation
 
@@ -63,19 +76,19 @@ Install-Package RA.Utilities.Core.Exceptions
 **PackageReference (csproj)**
 
 ```xml
-<PackageReference Include="RA.Utilities.Core.Exceptions" Version="10.0.4" />
+<PackageReference Include="RA.Utilities.Core.Exceptions" Version="10.1.0" />
 ```
 
 ### Hello World
 
-The simplest usage — throw a semantic exception from your business logic:
+Throw a semantic exception from your business logic — no setup required:
 
 ```csharp showLineNumbers
 using RA.Utilities.Core.Exceptions;
 
 public Product GetProductById(int id)
 {
-    var product = _repository.Find(id);
+    Product? product = _repository.Find(id);
 
     if (product is null)
     {
@@ -87,58 +100,141 @@ public Product GetProductById(int id)
 }
 ```
 
-No DI registration needed. If you use the `Result` pattern from `RA.Utilities.Core`, you can return exceptions as `Failure` results via implicit conversion:
+The exception already carries everything the API layer needs: `ErrorCode` is `404`, `ResponseType` is `ResponseType.NotFound`, and `Message` is `"Product with value '99' was not found."`.
+
+No DI registration is required. If you use the `Result` pattern, the same exception can be returned instead of thrown:
 
 ```csharp
-return new NotFoundException(nameof(Product), id); // Implicitly becomes Result.Failure
+// Implicitly converts to Result.Failure
+return new NotFoundException(nameof(Product), id);
 ```
 
 ---
 
 ## 🧠 Core Concepts
 
-### Exception Hierarchy
+### The hierarchy
 
-All exceptions inherit from `RaBaseException`, which extends `System.Exception`:
+`RaBaseException` is a concrete class (not `abstract`) and derives from `System.Exception`. Every semantic exception derives from it:
 
 ```
 System.Exception
- └─ RaBaseException                  ← ErrorCode (int) + ResponseType (enum)
-      ├─ NotFoundException           ← EntityName + EntityValue
-      ├─ ConflictException           ← EntityName + EntityValue
-      ├─ BadRequestException         ← ValidationError[]
-      ├─ UnauthorizedException       ← HTTP 401
-      ├─ ForbiddenException          ← HTTP 403
-      ├─ UnprocessableException      ← HTTP 422
-      ├─ GatewayTimeoutException     ← HTTP 504
-      ├─ TooManyRequestsException   ← HTTP 429
-      └─ ServiceUnavailableException ← HTTP 503
+ └─ RaBaseException                      ← ErrorCode (int) + ResponseType (enum)
+      ├─ NotFoundException               ← EntityName + EntityValue
+      ├─ ConflictException               ← EntityName + EntityValue
+      ├─ BadRequestException             ← ValidationError[]
+      ├─ UnauthorizedException           ← HTTP 401
+      ├─ ForbiddenException              ← HTTP 403
+      ├─ UnprocessableException          ← HTTP 422
+      ├─ GatewayTimeoutException         ← HTTP 504
+      ├─ TooManyRequestsException        ← HTTP 429
+      └─ ServiceUnavailableException     ← HTTP 503
+```
+
+`ValidationError` is not an exception. It is the value type stored in `BadRequestException.Errors`.
+
+### Constructor families
+
+Every exception follows the same constructor conventions, so switching types rarely changes the call shape:
+
+| Family | Available on | Example |
+|---|---|---|
+| **Default** — package code, type, and message | All 9 exceptions | `new NotFoundException()` |
+| **Message only** — package code and type, custom text | `Unauthorized`, `Forbidden`, `Unprocessable`, `GatewayTimeout`, `TooManyRequests`, `ServiceUnavailable` | `new ForbiddenException("Not the owner.")` |
+| **Error code + message** | All exceptions except `BadRequestException`, which needs a `ValidationError` first | `new ForbiddenException(4030, "Not the owner.")` |
+| **Entity aware** — builds the message and populates `EntityName` / `EntityValue` | `NotFoundException`, `ConflictException` | `new NotFoundException("Product", 99)` |
+| **Validation aware** — accepts one or many `ValidationError` items | `BadRequestException` | `new BadRequestException(error)` |
+
+`BadRequestException` has no message-only overload: pass a `ValidationError` first, then optionally an `errorCode` and `message`.
+
+### Message defaults
+
+Every overload that accepts a message declares it as `string? message = null`. When the argument is omitted or `null`, the constructor falls back to the matching `BaseResponseMessages` value:
+
+| Exception | `ErrorCode` | `ResponseType` | Default `Message` |
+|---|---|---|---|
+| `RaBaseException()` | `500` | `Error` | `Something happened on our end.` |
+| `BadRequestException(errors)` | `400` | `BadRequest` | `The request is invalid.` |
+| `NotFoundException()` | `404` | `NotFound` | `The requested resource was not found.` |
+| `ConflictException()` | `409` | `Conflict` | `A conflict occurred with the current state of the resource.` |
+| `UnauthorizedException()` | `401` | `Unauthorized` | `Authentication failed or is missing.` |
+| `ForbiddenException()` | `403` | `Forbidden` | `You do not have permission to access this resource.` |
+| `UnprocessableException()` | `422` | `Unprocessable` | `Unprocessable entity.` |
+| `TooManyRequestsException()` | `429` | `TooManyRequests` | `Too many requests. Please try again later.` |
+| `ServiceUnavailableException()` | `503` | `ServiceUnavailable` | `The service is temporarily unavailable. Please try again later.` |
+| `GatewayTimeoutException()` | `504` | `GatewayTimeout` | `The server, while acting as a gateway or proxy, did not receive a timely response from the upstream server.` |
+
+:::warning[`null` and `""` are not the same]
+
+Only `null` (or an omitted argument) triggers the default. An explicit empty string is treated as a real message and preserved:
+
+```csharp
+new NotFoundException(404, null);  // "The requested resource was not found."
+new NotFoundException(404, "");    // "" (empty)
+```
+
+:::
+
+`NotFoundException` and `ConflictException` replace the generic default with an entity-specific message whenever the entity/value overload is used:
+
+```csharp
+new NotFoundException("Product", 99).Message;   // "Product with value '99' was not found."
+new ConflictException("User", "a@b.com").Message; // "User with value 'a@b.com' already exists."
 ```
 
 ### How exceptions flow through the system
 
 ```
-Business Layer                        API Layer
-─────────────                         ─────────
-Service throws                        GlobalExceptionHandler
-NotFoundException               →     catches and maps to
-                                      404 JSON response
-
-Service throws                        ErrorResultMapper
-ConflictException               →     catches and maps to
-                                      409 JSON response
-
-Service returns                       Endpoint filter
-Result.Failure                  →     calls .Match() to produce
-(with exception)                      appropriate IResult
+Business / application layer              API layer (RA.Utilities.Api)
+──────────────────────────                ─────────────────────────────
+throw new NotFoundException("Product", 99)
+        │
+        ├─ GlobalExceptionHandler catches it
+        │      logs 4xx as Warning, 5xx as Error
+        │
+        └─ ErrorResultResponse.Result(exception)
+               pattern-matches on the exception type
+               → 404 + NotFoundResponse JSON
 ```
+
+Returning an exception through `Result.Failure` takes the same path when an endpoint passes `ErrorResultResponse.Result` to `Result.Match`:
+
+```csharp
+return result.Match<IResult>(
+    success: product => SuccessResult.Ok(product),
+    failure: ErrorResultResponse.Result
+);
+```
+
+The exact JSON envelope belongs to the API package. See [`ErrorResultResponse`](../../api/RA.Utilities.Api/mapper/ErrorResultResponse.md) for the payload shapes and the known `NotFoundResult` nested-payload issue.
+
+### Property reference
+
+| Type | Property | Type | Populated by |
+|---|---|---|---|
+| `RaBaseException` | `ErrorCode` | `int` | Every constructor |
+| `RaBaseException` | `ResponseType` | [`ResponseType`](../RA.Utilities.Core.Constants/ResponseType) | Every constructor |
+| `NotFoundException` | `EntityName` | `string` | Entity/value constructors only |
+| `NotFoundException` | `EntityValue` | `object` | Entity/value constructors only |
+| `ConflictException` | `EntityName` | `string` | Entity/value constructors only |
+| `ConflictException` | `EntityValue` | `object` | Entity/value constructors only |
+| `BadRequestException` | `Errors` | `ValidationError[]` | Every constructor |
+| `ValidationError` | `PropertyName` | `string?` | Object initializer |
+| `ValidationError` | `ErrorMessage` | `string` | Constructor |
+| `ValidationError` | `AttemptedValue` | `object?` | Object initializer |
+| `ValidationError` | `ExpectedValue` | `object?` | Object initializer |
+| `ValidationError` | `ErrorCode` | `string?` | Object initializer |
+
+The parameterless and error-code-only constructors of `NotFoundException` and `ConflictException` do not set `EntityName` or `EntityValue` (they remain `null` at runtime). Choose an entity/value overload when the API response should identify the entity.
 
 ### Terminology
 
-- **Semantic exception**: An exception whose *type* communicates meaning (e.g., `NotFoundException` = "the thing doesn't exist"), rather than relying on message text.
-- **ErrorCode**: An `int` property (typically an HTTP status code) for machine-readable error identification.
-- **ResponseType**: An enum from `RA.Utilities.Core.Constants` that categorizes the outcome (e.g., `"NotFound"`, `"Conflict"`) in the JSON response body.
-- **Implicit conversion to Result**: When using `RA.Utilities.Core`, throwing or returning an `RaBaseException` automatically converts to `Result.Failure`.
+- **Semantic exception**: an exception whose *type* communicates the outcome, rather than relying on message text.
+- **`ErrorCode`**: the machine-readable `int` carried by every exception. It defaults to an HTTP status code but can hold a domain-specific code when you pass one explicitly.
+- **`ResponseType`**: the enum from `RA.Utilities.Core.Constants` that labels the outcome. It serializes as a number unless `JsonStringEnumConverter` is registered — see [`ResponseType`](../RA.Utilities.Core.Constants/ResponseType#json-serialization).
+- **Entity-aware exception**: `NotFoundException` or `ConflictException` constructed with an entity name and value; it exposes both and generates the message.
+- **Default message**: the `BaseResponseMessages.*` value applied when `message` is `null` or omitted.
+- **Implicit conversion to `Result`**: `RA.Utilities.Core.Results` defines the conversion that turns an `RaBaseException` into `Result.Failure`.
 
 ---
 
@@ -147,9 +243,12 @@ Result.Failure                  →     calls .Match() to produce
 ### Return a 404 when a resource is missing
 
 ```csharp showLineNumbers
+using RA.Utilities.Core.Results;
+using RA.Utilities.Core.Exceptions;
+
 public async Task<Result<ProductDto>> GetProductAsync(int id)
 {
-    var product = await _repository.FindByIdAsync(id);
+    Product? product = await _repository.FindByIdAsync(id);
 
     if (product is null)
     {
@@ -159,6 +258,18 @@ public async Task<Result<ProductDto>> GetProductAsync(int id)
 
     return _mapper.Map<ProductDto>(product);
 }
+```
+
+### Return a 404 without entity details
+
+Use the parameterless constructor, or supply a custom code and message, when the endpoint should not disclose the entity name:
+
+```csharp showLineNumbers
+// Defaults: 404, ResponseType.NotFound, BaseResponseMessages.NotFound
+return new NotFoundException();
+
+// Or a domain-specific code with the default message (null → BaseResponseMessages.NotFound)
+return new NotFoundException(errorCode: 4040, message: null);
 ```
 
 ### Return a 409 when a duplicate is detected
@@ -177,7 +288,21 @@ public async Task<Result> CreateUserAsync(string email)
 }
 ```
 
+### Override the entity message while keeping the entity data
+
+Both entity-aware exceptions accept a custom message; `EntityName` and `EntityValue` are still populated:
+
+```csharp showLineNumbers
+throw new ConflictException(
+    entity: nameof(User),
+    value: email,
+    message: "An account with this email is already active."
+);
+```
+
 ### Return validation errors with a 400
+
+Convert FluentValidation failures into `ValidationError` items and pass the array to `BadRequestException`:
 
 ```csharp showLineNumbers
 try
@@ -186,40 +311,62 @@ try
 }
 catch (ValidationException ex)
 {
-    var errors = ex.Errors.Select(e => new ValidationError(e.ErrorMessage)
+    ValidationError[] errors = [.. ex.Errors.Select(e => new ValidationError(e.ErrorMessage)
     {
         PropertyName = e.PropertyName,
         AttemptedValue = e.AttemptedValue,
         ErrorCode = e.ErrorCode
-    }).ToArray();
+    })];
 
     // highlight-next-line
     return new BadRequestException(errors);
 }
 ```
 
-### Signal insufficient permissions with a 403
+To attach a custom error code and message to the whole request, use the `(errors, errorCode, message)` overload:
+
+```csharp
+return new BadRequestException(errors, errorCode: 4001, message: "The registration form is invalid.");
+```
+
+### Signal an invalid state transition with a 422
+
+Unlike `BadRequestException`, `UnprocessableException` means the request was well formed but the current resource state makes it impossible:
 
 ```csharp showLineNumbers
+public async Task<Result> CancelOrderAsync(Guid orderId)
+{
+    Order order = await _orderRepository.GetByIdAsync(orderId)
+        ?? throw new NotFoundException(nameof(Order), orderId);
+
+    if (order.Status == OrderStatus.Shipped)
+    {
+        // highlight-next-line
+        return new UnprocessableException("Cannot cancel an order that has already been shipped.");
+    }
+
+    order.Status = OrderStatus.Cancelled;
+    await _orderRepository.UpdateAsync(order);
+    return Result.Success();
+}
+```
+
+### Distinguish 401 from 403
+
+- **401 `UnauthorizedException`** — authentication is missing or failed; the client should authenticate.
+- **403 `ForbiddenException`** — authentication succeeded, but the identity lacks permission.
+
+```csharp showLineNumbers
+if (token is null)
+{
+    // highlight-next-line
+    return new UnauthorizedException("No authentication token was provided.");
+}
+
 if (resource.OwnerId != currentUser.Id)
 {
     // highlight-next-line
     return new ForbiddenException("You do not have permission to modify this resource.");
-}
-```
-
-### Handle gateway timeouts with a 504
-
-```csharp showLineNumbers
-try
-{
-    var result = await _paymentGateway.ProcessAsync(cts.Token);
-    return result;
-}
-catch (TaskCanceledException)
-{
-    // highlight-next-line
-    return new GatewayTimeoutException("The payment gateway did not respond in time.");
 }
 ```
 
@@ -247,15 +394,70 @@ if (_maintenanceModeService.IsActive())
 }
 ```
 
+### Handle upstream timeouts with a 504
+
+```csharp showLineNumbers
+try
+{
+    return await _paymentGateway.ProcessAsync(orderId, cts.Token);
+}
+catch (TaskCanceledException)
+{
+    // highlight-next-line
+    return new GatewayTimeoutException("The payment gateway did not respond in time.");
+}
+```
+
+### Add a domain-specific error code
+
+`ErrorCode` is an `int`, so it can carry anything the caller needs. Combine a custom code with the default message by passing `null`:
+
+```csharp showLineNumbers
+throw new ConflictException(
+    entity: nameof(Subscription),
+    value: subscriptionId,
+    errorCode: 4091,
+    message: "The subscription is already active."
+);
+```
+
+:::warning[`ErrorCode` is not the HTTP status]
+
+`ErrorResultResponse` selects the HTTP status from the exception *type* (`BaseResponseCode.Conflict` → 409). The exception's `ErrorCode` is copied into the JSON `responseCode` field instead. If clients compare `responseCode` with the HTTP status, keep `ErrorCode` equal to the matching `BaseResponseCode` value and put domain detail in `ValidationError.ErrorCode` or the message.
+
+:::
+
+### Create a derived exception
+
+Subclass `RaBaseException` when you need a new outcome type, and call the base constructor with the code, type, and message:
+
+```csharp showLineNumbers
+using RA.Utilities.Core.Constants;
+using RA.Utilities.Core.Exceptions;
+
+public sealed class PaymentDeclinedException : RaBaseException
+{
+    public PaymentDeclinedException(string reason)
+        : base(BaseResponseCode.BadRequest, ResponseType.BadRequest, $"Payment declined: {reason}")
+    {
+    }
+}
+```
+
 ---
 
 ## ⚙️ Configuration
 
-This package has **no configuration options**. There is no DI registration, no `appsettings.json` entries, and no options classes. Exceptions are thrown or returned directly — the API layer's `GlobalExceptionHandler` and `ErrorResultMapper` handle translation to HTTP responses automatically when you use `RA.Utilities.Api`.
+This package has **no configuration options**. There is no DI registration, no `appsettings.json` entries, and no options classes. Exceptions are thrown or returned directly.
+
+The optional setup lives in the consuming API project:
+
+- **Exception handling** — `AddRaExceptionHandling()` / `UseRaExceptionHandling()` from `RA.Utilities.Api` register the `GlobalExceptionHandler` that maps these exceptions.
+- **Enum serialization** — register `JsonStringEnumConverter` if clients expect `"responseType": "NotFound"` instead of `"responseType": 8`. See [`ResponseType`](../RA.Utilities.Core.Constants/ResponseType#json-serialization).
 
 ---
 
-## ✨ Available Exceptions
+## ✨ Available Types
 
 <DocCardList />
 
@@ -273,8 +475,8 @@ This package has **no configuration options**. There is no DI registration, no `
 Contributions are welcome! Please follow the standard workflow:
 
 1. **Fork** the [RA.Utilities repository](https://github.com/RedonAlla/RA.Utilities)
-2. **Create a branch** from `main` with a descriptive name (e.g., `feature/add-new-exception`)
-3. **Make your changes** — new exceptions must inherit from `RaBaseException` and include XML doc comments
+2. **Create a branch** from `main` with a descriptive name (e.g., `feature/add-payment-exception`)
+3. **Make your changes** — new exceptions must inherit from `RaBaseException`, include XML doc comments, and ship with tests
 4. **Submit a pull request** to the `main` branch with a clear description
 
 ### Links

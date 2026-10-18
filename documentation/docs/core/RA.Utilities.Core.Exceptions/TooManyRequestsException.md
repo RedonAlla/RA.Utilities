@@ -1,52 +1,53 @@
 ---
 title: TooManyRequestsException
+sidebar_position: 9
 ---
 
 ```bash
 Namespace: RA.Utilities.Core.Exceptions
 ```
 
-The `TooManyRequestsException` is a semantic exception used to signal that the client has exceeded a rate limit or throttling threshold.
-It is designed to be translated into a standardized **HTTP 429 Too Many Requests** response.
+`TooManyRequestsException` signals that the caller exceeded a rate limit or throttling threshold. The API layer maps it to **HTTP 429 Too Many Requests**.
 
 ## 🎯 Purpose
 
-This exception represents a rate limiting or throttling scenario where the client has sent too many requests in a given time window. Common scenarios include:
+Use this exception when a client sends too many requests in a time window. Typical sources are per-minute API limits, brute-force protection, tenant quotas, and traffic anomalies.
 
-- A client exceeding a per-minute API call limit
-- A user hitting a brute-force protection threshold
-- A tenant exceeding their plan's request quota
-- DDoS protection triggering on abnormal traffic patterns
-
-By throwing a `TooManyRequestsException`, your business logic clearly communicates the rate limit violation to the API layer, which can then generate an appropriate 429 response — often with a `Retry-After` header.
+Because the condition is temporary, include enough context for the client to back off — and send a `Retry-After` header from your endpoint or middleware when you know the window.
 
 ## Constructors
 
-| Constructor | Description |
-|---|---|
-| `TooManyRequestsException()` | Uses default error code (`429`) and default message. |
-| `TooManyRequestsException(string message)` | Uses default error code (`429`) with a custom message. |
-| `TooManyRequestsException(int errorCode, string message = ...)` | Custom error code with an optional custom message. |
+| Constructor | `ErrorCode` | `Message` |
+|---|---|---|
+| `TooManyRequestsException()` | `429` | `BaseResponseMessages.TooManyRequests` (`"Too many requests. Please try again later."`) |
+| `TooManyRequestsException(string message)` | `429` | supplied |
+| `TooManyRequestsException(int errorCode, string? message = null)` | supplied | supplied, or `BaseResponseMessages.TooManyRequests` when `null`/omitted |
+
+## Properties
+
+| Property | Type | Description |
+|---|---|---|
+| `ErrorCode` | `int` | Inherited. `429` unless supplied explicitly. |
+| `ResponseType` | `ResponseType` | Inherited. `ResponseType.TooManyRequests`. |
+| `Message` | `string` | Inherited. See the constructor table. |
 
 ## 🚀 How to Use
 
-### Example: Rate Limiting Middleware
+### Example: Per-client rate limit
 
 ```csharp showLineNumbers
-using RA.Utilities.Core;
-// highlight-next-line
+using RA.Utilities.Core.Results;
 using RA.Utilities.Core.Exceptions;
 
 public async Task<Result> EnforceRateLimitAsync(string clientId)
 {
-    var requestCount = await _rateLimitStore.GetCountAsync(clientId);
+    int requestCount = await _rateLimitStore.GetCountAsync(clientId);
 
     if (requestCount >= _maxRequestsPerMinute)
     {
         // highlight-next-line
         return new TooManyRequestsException(
-            errorCode: BaseResponseCode.TooManyRequests,
-            message: $"Rate limit exceeded. Maximum {_maxRequestsPerMinute} requests per minute allowed."
+            $"Rate limit exceeded. Maximum {_maxRequestsPerMinute} requests per minute allowed."
         );
     }
 
@@ -55,37 +56,20 @@ public async Task<Result> EnforceRateLimitAsync(string clientId)
 }
 ```
 
-### Example: Quota Enforcement
+### Example: Tenant quota
 
 ```csharp showLineNumbers
-public async Task<Result> CheckTenantQuotaAsync(Guid tenantId)
+if (usage.ApiCalls >= usage.PlanLimit)
 {
-    var usage = await _quotaService.GetMonthlyUsageAsync(tenantId);
-
-    if (usage.ApiCalls >= usage.PlanLimit)
-    {
-        // highlight-next-line
-        return new TooManyRequestsException(
-            "You have exceeded your plan's monthly API call limit. Please upgrade your plan."
-        );
-    }
-
-    return Result.Success();
+    // highlight-next-line
+    return new TooManyRequestsException(
+        "You have exceeded your plan's monthly API call limit. Please upgrade your plan."
+    );
 }
 ```
 
-### Example JSON Output
+## 🔗 HTTP mapping
 
-When the API layer handles a `Failure` `Result` containing a `TooManyRequestsException`, it will generate a `429 Too Many Requests` response:
+`ErrorResultResponse` maps `TooManyRequestsException` to **HTTP 429** with a `TooManyRequestsResponse`. The envelope carries `responseCode` from `ErrorCode` and `responseMessage` from `Message`; there is no nested `result` payload.
 
-```json showLineNumbers
-{
-  "responseCode": 429,
-  "responseType": "TooManyRequests",
-  "responseMessage": "Rate limit exceeded. Maximum 100 requests per minute allowed.",
-  "result": {
-    "errorCode": 429,
-    "errorMessage": "Rate limit exceeded. Maximum 100 requests per minute allowed."
-  }
-}
-```
+See [`TooManyRequestsResponse`](../../api/RA.Utilities.Api.Response/TooManyRequestsResponse.md) for the JSON shape.

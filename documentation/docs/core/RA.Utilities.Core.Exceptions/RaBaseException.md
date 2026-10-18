@@ -4,53 +4,55 @@ sidebar_position: 1
 ---
 
 ```bash
-Namespace: `RA.Utilities.Core.Exceptions`
+Namespace: RA.Utilities.Core.Exceptions
 ```
 
-`RaBaseException` is the abstract base class for all custom, semantic exceptions within the `RA.Utilities` ecosystem.
-It provides a standardized structure for exceptions that represent predictable business-level failures.
+`RaBaseException` is the base class for all custom, semantic exceptions in the `RA.Utilities` ecosystem. It is a concrete class — you can throw it directly — and derives from `System.Exception`.
 
 ## 🎯 Purpose
 
-The primary purpose of `RaBaseException` is to establish a consistent contract for all application-specific exceptions.
-It ensures that every exception carries not only a descriptive message but also a machine-readable error code, which typically corresponds to an HTTP status code.
+`RaBaseException` establishes the contract every semantic exception shares: a human-readable `Message`, a machine-readable `ErrorCode`, and a semantic `ResponseType`.
 
-By inheriting from `System.Exception` and adding both an `ErrorCode` property (an integer, typically an HTTP status code) and a `ResponseType` property (an enum indicating the semantic outcome), it ensures that every custom exception in your application carries two key pieces of information:
+1. **`Message`** — describes what went wrong, for logs and clients.
+2. **`ErrorCode`** — an `int` the API layer echoes into the JSON `responseCode` field.
+3. **`ResponseType`** — an enum value that categorizes the outcome and tells the API layer which response shape to produce.
 
-1. A human-readable `Message` describing what went wrong.
-2. A machine-readable `ErrorCode` (int) that can be used by higher-level handlers to translate the exception into a specific HTTP status code.
-3. A semantic `ResponseType` (enum) that categorizes the outcome (e.g., "NotFound", "Conflict") for structured error responses.
+Because every exception carries the same three pieces of information, higher layers can translate exceptions into HTTP responses without parsing message text.
 
-
-This allows higher-level layers, such as API middleware, to catch exceptions and automatically translate them into standardized HTTP error responses without needing to inspect the exception message text.
-
-All other custom exceptions in this library, such as `NotFoundException` and `ConflictException`, inherit from `RaBaseException`.
+The parameterless constructor produces a generic server error (`500`, `ResponseType.Error`). All other exceptions in this package derive from `RaBaseException` and supply their own code and type.
 
 ## Properties
 
-| Property       | Type                                       | Description                                                                                             |
-|----------------|--------------------------------------------|---------------------------------------------------------------------------------------------------------|
-| **ErrorCode**    | `int`                                      | The error code associated with the exception. By default, this is `500` (Internal Server Error).          |
-| **ResponseType** | [`ResponseType`](../RA.Utilities.Core.Constants/ResponseType) | An enum categorizing the semantic outcome of the operation (e.g., "NotFound", "Conflict"). |
-| **Message**      | `string`                                   | (Inherited from `Exception`) A human-readable message describing the error.                             |
+| Property | Type | Description |
+|---|---|---|
+| **`ErrorCode`** | `int` | Machine-readable code. `500` for the parameterless constructor; otherwise supplied by the derived type or caller. |
+| **`ResponseType`** | [`ResponseType`](../RA.Utilities.Core.Constants/ResponseType) | Semantic outcome. `ResponseType.Error` for the parameterless constructor. |
+| **`Message`** | `string` | Inherited from `Exception`. Defaults to `BaseResponseMessages.Error` (`"Something happened on our end."`). |
+
+`ErrorCode` and `ResponseType` use `{ get; init; }` and are immutable after construction.
+
+## Constructors
+
+| Constructor | `ErrorCode` | `ResponseType` | `Message` |
+|---|---|---|---|
+| `RaBaseException()` | `500` | `Error` | `BaseResponseMessages.Error` |
+| `RaBaseException(int errorCode, ResponseType errorType, string? message = null)` | supplied | supplied | supplied, or `BaseResponseMessages.Error` when `null`/omitted |
 
 ## 🚀 How to Use
 
-While you can throw `RaBaseException` directly for generic errors, its main function is to be the parent for more specific exceptions.
+### Example 1: Throw a general error
 
-### Example 1: Throwing a General Error
+Use `RaBaseException` when no more specific type fits. The constructor has no `innerException` parameter, so log the original exception before throwing:
 
-If an error occurs that doesn't fit a more specific exception type, you can use `RaBaseException`. It's good practice to wrap the original exception as an `innerException` to preserve the stack trace.
-
-```csharp
+```csharp showLineNumbers
 try
 {
-    // Some operation that might fail
     await _externalService.DoSomethingCritical();
 }
 catch (HttpRequestException ex)
 {
-    // Wrap the original exception in a RaBaseException
+    _logger.LogError(ex, "The external service call failed.");
+
     throw new RaBaseException(
         BaseResponseCode.InternalServerError,
         ResponseType.Error,
@@ -59,17 +61,34 @@ catch (HttpRequestException ex)
 }
 ```
 
-### Example 2: Creating a Custom Derived Exception
+### Example 2: Rely on the defaults
 
-The most common use case is to create your own semantic exceptions that inherit from `RaBaseException`.
+Omitting the message resolves to `BaseResponseMessages.Error` at runtime:
 
 ```csharp showLineNumbers
-public class PaymentFailedException : RaBaseException
+// 500 / ResponseType.Error / "Something happened on our end."
+var error = new RaBaseException();
+
+// 500 / ResponseType.Error / "Something happened on our end."
+var same = new RaBaseException(500, ResponseType.Error);
+```
+
+### Example 3: Create a derived exception
+
+Deriving is the idiomatic way to add a new outcome type. Use `BaseResponseCode` values so the exception matches the rest of the ecosystem:
+
+```csharp showLineNumbers
+public sealed class PaymentFailedException : RaBaseException
 {
-    // Set a specific, non-default error code and response type for this exception type.
-    public PaymentFailedException(string reason) 
+    public PaymentFailedException(string reason)
         : base(BaseResponseCode.BadRequest, ResponseType.BadRequest, $"Payment failed: {reason}")
     {
     }
 }
 ```
+
+## 🔗 HTTP mapping
+
+`ErrorResultResponse` maps an `RaBaseException` that does not match a more specific type to **HTTP 500** with an `ErrorResponse` body. The exception's `ErrorCode` is echoed into `responseCode`; it does not change the HTTP status.
+
+See [`ErrorResultResponse`](../../api/RA.Utilities.Api/mapper/ErrorResultResponse.md) for the response shapes and [`Troubleshooting`](./troubleshooting.mdx) for common questions.

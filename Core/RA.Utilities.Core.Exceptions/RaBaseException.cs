@@ -32,12 +32,15 @@ public class RaBaseException : Exception
     /// </summary>
     /// <param name="errorCode">A specific error code associated with the error.</param>
     /// <param name="errorType">The error type associated with the exception (e.g., "NotFound").</param>
-    /// <param name="message">The message that describes the error.</param>
+    /// <param name="message">
+    /// The message that describes the error. When <see langword="null"/> or omitted,
+    /// <see cref="BaseResponseMessages.Error"/> is used.
+    /// </param>
     public RaBaseException(
         int errorCode,
         ResponseType errorType,
-        string message = BaseResponseMessages.Error
-    ) : base(message)
+        string? message = null
+    ) : base(message ?? BaseResponseMessages.Error)
     {
         ErrorCode = errorCode;
         ResponseType = errorType;

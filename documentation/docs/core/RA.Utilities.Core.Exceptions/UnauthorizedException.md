@@ -1,68 +1,66 @@
 ---
 title: UnauthorizedException
+sidebar_position: 6
 ---
 
 ```bash
 Namespace: RA.Utilities.Core.Exceptions
 ```
 
-The `UnauthorizedException` class is a semantic exception designed to represent a specific, predictable business-level failure: an authorization error.
+`UnauthorizedException` signals that authentication is missing or failed. The API layer maps it to **HTTP 401 Unauthorized**.
 
-Its primary purpose is to provide a clear, standardized way for your application and domain layers to signal that a user attempted an action they are not permitted to perform.
+## 🎯 Purpose
 
-## Here’s a breakdown of its key roles:
+Use this exception when the server cannot identify the caller: no token, an expired token, invalid credentials, or a failed signature check. The meaning is *"I don't know who you are."*
 
-#### 1. Semantic Clarity:
-Instead of throwing a generic `Exception` with the message "Unauthorized," throwing an `UnauthorizedException` makes the code's intent explicit.
-Anyone reading the code immediately understands the nature of the error.
+When the caller *is* authenticated but lacks permission, use [`ForbiddenException`](./ForbiddenException.md) (403) instead. Choosing the right one lets clients decide between re-authenticating and requesting more access.
 
-#### 2. Standardized Error Code:
-As seen in its constructors, it always calls the base constructor with `BaseResponseCode.Unauthorized` (which is 401). 
-This hard-codes the link between this exception type and the HTTP 401 Unauthorized status code.
+## Constructors
 
-#### 3. Enables Automated API Responses: 
-This is the most critical part. Your API's error handling infrastructure, specifically the `ErrorResultResponse` class, is built to recognize this specific exception type.
+| Constructor | `ErrorCode` | `Message` |
+|---|---|---|
+| `UnauthorizedException()` | `401` | `BaseResponseMessages.Unauthorized` (`"Authentication failed or is missing."`) |
+| `UnauthorizedException(string message)` | `401` | supplied |
+| `UnauthorizedException(int errorCode, string? message = null)` | supplied | supplied, or `BaseResponseMessages.Unauthorized` when `null`/omitted |
 
-```csharp showLineNumbers
-public static IResult Result(Exception exception) => exception switch
-{
-    // ... other cases
-    // highlight-next-line
-    UnauthorizedException baseException => Microsoft.AspNetCore.Http.Results.Json(
-        data: ErrorResultMapper.MapToUnauthorizedResponse(baseException),
-        statusCode: baseException.ErrorCode
-    ),
-    // ... other cases
-};
-```
+The type always sets `ResponseType.Unauthorized`. The two-argument constructor is the only one that changes `ErrorCode`.
 
-When `UnauthorizedException` is thrown anywhere in your application, the global exception handler catches it and uses this mapping logic to automatically generate a consistent, structured **HTTP 401 Unauthorized** response.
+## Properties
 
-## ⚙️ How It's Used in Practice
-This creates a clean separation of concerns:
+| Property | Type | Description |
+|---|---|---|
+| `ErrorCode` | `int` | Inherited. `401` unless supplied explicitly. |
+| `ResponseType` | `ResponseType` | Inherited. `ResponseType.Unauthorized`. |
+| `Message` | `string` | Inherited. See the constructor table. |
 
-* **Your Business Logic** doesn't need to know anything about HTTP.
-It just needs to signal that an authorization rule was violated.
+## 🚀 How to Use
 
 ```csharp showLineNumbers
-// In a service or feature handler
-public Result UpdateProduct(int productId, User currentUser)
-{
-    var product = _productRepository.GetById(productId);
+using RA.Utilities.Core.Results;
+using RA.Utilities.Core.Exceptions;
 
-    // Business rule: Only the product's creator can update it.
-    if (product.CreatedBy != currentUser.Id)
+public async Task<Result> AuthenticateAsync(string? token)
+{
+    if (string.IsNullOrWhiteSpace(token))
     {
-        // Signal the failure. The API layer will handle the rest.
-        return new UnauthorizedException("You are not permitted to update this product.");
+        // highlight-next-line
+        return new UnauthorizedException("No authentication token was provided.");
     }
 
-    // ... proceed with update logic
+    if (!await _tokenValidator.IsValidAsync(token))
+    {
+        // highlight-next-line
+        return new UnauthorizedException("The token is invalid or has expired.");
+    }
+
     return Result.Success();
 }
 ```
-* **Your API Layer** doesn't need to know the specific business rules.
-It just knows how to translate an `UnauthorizedException` into the correct HTTP response.
 
-## 🧠 Summary
-In summary, `UnauthorizedException` acts as a contract between your business logic and your API layer, enabling robust, predictable, and maintainable error handling for authorization failures.
+## 🔗 HTTP mapping
+
+`ErrorResultResponse` recognizes `UnauthorizedException` and returns **HTTP 401** with an `UnauthorizedResponse`. The envelope carries `responseCode` from `ErrorCode` and `responseMessage` from `Message`; there is no nested `result` payload.
+
+Because the mapper selects the status from the exception type, overriding `ErrorCode` does not change the 401 status.
+
+See [`UnauthorizedResponse`](../../api/RA.Utilities.Api.Response/UnauthorizedResponse.md) for the JSON shape, or [`ForbiddenException`](./ForbiddenException.md) when the caller is known but not permitted.

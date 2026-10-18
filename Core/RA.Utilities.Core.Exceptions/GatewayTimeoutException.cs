@@ -28,9 +28,15 @@ public class GatewayTimeoutException : RaBaseException
     /// Initializes a new instance of the <see cref="GatewayTimeoutException"/> class with a custom error code and message.
     /// </summary>
     /// <param name="errorCode">A specific error code associated with the error.</param>
-    /// <param name="message">The message that describes the error.</param>
-    public GatewayTimeoutException(int errorCode, string message = BaseResponseMessages.GatewayTimeout)
-        : base(errorCode, ResponseType.GatewayTimeout, message)
+    /// <param name="message">
+    /// The message that describes the error. When <see langword="null"/> or omitted,
+    /// <see cref="BaseResponseMessages.GatewayTimeout"/> is used.
+    /// </param>
+    public GatewayTimeoutException(
+        int errorCode,
+        string? message = null
+    )
+        : base(errorCode, ResponseType.GatewayTimeout, message ?? BaseResponseMessages.GatewayTimeout)
     {
     }
 }

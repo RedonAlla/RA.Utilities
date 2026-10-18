@@ -1,46 +1,64 @@
 ---
 title: UnprocessableException
+sidebar_position: 8
 ---
 
 ```bash
 Namespace: RA.Utilities.Core.Exceptions
 ```
 
-The `UnprocessableException` is a semantic exception used to signal that a requested action cannot be performed because of the current state of a resource.
-It is designed to be translated into a standardized **HTTP 422 Unprocessable Entity** response. 
+`UnprocessableException` signals that a request is syntactically valid but cannot be processed because of the resource's current state. The API layer maps it to **HTTP 422 Unprocessable Entity**.
 
 ## 🎯 Purpose
-This exception represents a "State Conflict."
-It is used when the client's request is technically valid (correct format and types), but the server's current data state makes the operation impossible.
+
+This exception represents a *state conflict*. The client sent well-formed data, but the server's current state makes the operation impossible.
 
 Common scenarios include:
-- Attempting to delete a resource that is currently "In Use."
-- Attempting to transition an entity to a status that is not allowed from its current status (e.g., Shipped → Cancelled).
-- Modifying a record that has been "Locked" or "Archived."
-- Trying to withdraw $100 when the daily limit is $50 (Business Rule violation).
+
+- Deleting a resource that is currently in use.
+- An invalid status transition (for example, cancelling a shipped order).
+- Modifying a locked or archived record.
+- A business-rule limit (withdrawing more than the daily limit).
+
+Use [`BadRequestException`](./BadRequestException.md) when the input itself is invalid, and [`ConflictException`](./ConflictException.md) when the conflict is a uniqueness or concurrency violation.
+
+## Constructors
+
+| Constructor | `ErrorCode` | `Message` |
+|---|---|---|
+| `UnprocessableException()` | `422` | `BaseResponseMessages.Unprocessable` (`"Unprocessable entity."`) |
+| `UnprocessableException(string message)` | `422` | supplied |
+| `UnprocessableException(int errorCode, string? message = null)` | supplied | supplied, or `BaseResponseMessages.Unprocessable` when `null`/omitted |
+
+## Properties
+
+| Property | Type | Description |
+|---|---|---|
+| `ErrorCode` | `int` | Inherited. `422` unless supplied explicitly. |
+| `ResponseType` | `ResponseType` | Inherited. `ResponseType.Unprocessable`. |
+| `Message` | `string` | Inherited. See the constructor table. |
 
 ## 🚀 How to Use
-Throw this exception from your domain services or application handlers when a business rule transition is violated.
 
-### Example: Invalid Status Transition
+### Example: Invalid status transition
 
-```csharp
+```csharp showLineNumbers
+using RA.Utilities.Core.Results;
+using RA.Utilities.Core.Exceptions;
+
 public async Task<Result> CancelOrderAsync(Guid orderId)
 {
-    var order = await _orderRepository.GetByIdAsync(orderId);
+    Order? order = await _orderRepository.GetByIdAsync(orderId);
 
-    if (order == null)
+    if (order is null)
     {
         return new NotFoundException(nameof(Order), orderId);
     }
 
-    // Business Rule: Shipped orders cannot be cancelled.
     if (order.Status == OrderStatus.Shipped)
     {
-        return new UnprocessableException(
-            422,
-            "Cannot cancel an order that has already been shipped."
-        );
+        // highlight-next-line
+        return new UnprocessableException("Cannot cancel an order that has already been shipped.");
     }
 
     order.Status = OrderStatus.Cancelled;
@@ -49,17 +67,14 @@ public async Task<Result> CancelOrderAsync(Guid orderId)
 }
 ```
 
-### Example JSON Output
-When the API layer handles a Failure Result containing an `UnprocessableException`, it will automatically generate a 422 response with a body like this:
+### Example: A custom code with the default message
 
-```json
-{
-    "responseCode": 422,
-    "responseType": "Unprocessable",
-    "responseMessage": "Cannot cancel an order that has already been shipped.",
-    "result": {
-        "errorCode": "422",
-        "errorMessage": "Cannot cancel an order that has already been shipped."
-    }
-}
+```csharp showLineNumbers
+throw new UnprocessableException(errorCode: 4221);
 ```
+
+## 🔗 HTTP mapping
+
+`ErrorResultResponse` maps `UnprocessableException` to **HTTP 422** with an `UnprocessableResponse`. The envelope carries `responseCode` from `ErrorCode` and `responseMessage` from `Message`; there is no nested `result` payload.
+
+See [`UnprocessableResponse`](../../api/RA.Utilities.Api.Response/UnprocessableResponse.md) for the JSON shape.

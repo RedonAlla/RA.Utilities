@@ -7,50 +7,56 @@ sidebar_position: 3
 Namespace: RA.Utilities.Core.Exceptions
 ```
 
-The `ConflictException` is a semantic exception used to indicate that a request could not be processed because of a conflict with the current state of the target resource. It is designed to be translated into an **HTTP 409 Conflict** response.
+`ConflictException` signals that a request cannot be processed because it conflicts with the current state of the target resource. The API layer maps it to **HTTP 409 Conflict**.
 
 ## 🎯 Purpose
 
-This exception is used for predictable business-level failures where an operation violates a unique constraint or a concurrency check. The most common scenario is attempting to create a resource that already exists (e.g., a user with a duplicate email address).
-
-When used with the `Result` pattern, a `ConflictException` is returned inside a `Failure` result. The API layer can then inspect this exception and automatically generate a standardized 409 response, providing clear feedback to the client about the nature of the conflict.
+Use this exception for predictable failures that violate a uniqueness constraint or a concurrency check. The most common case is creating a resource that already exists (for example, a user with a duplicate email address).
 
 Common scenarios include:
--  Trying to delete a user who has active orders (State Conflict).
--  Trying to "Activate" a subscription that is already "Active" or -  "Terminated" (Invalid State Transition).
--  Optimistic Concurrency failures (Version mismatch).
 
-**The Client's Perspective**: It implies that the client might be able to resolve the issue by inspecting the current state of the resource and trying again with different data or at a different time.
+- Creating an entity whose unique key already exists.
+- Deleting a user who still has active orders (state conflict).
+- Optimistic concurrency failures (version mismatch).
+
+The client may be able to resolve a conflict by inspecting the current state and retrying with different data.
 
 ## Properties
 
-| Property      | Type     | Description                                                          |
-|---------------|----------|----------------------------------------------------------------------|
-| **EntityName**  | `string` | The name of the entity type that caused the conflict (e.g., "User"). |
-| **EntityValue** | `object` | The value or identifier of the conflicting entity (e.g., the email address). |
+| Property | Type | Description |
+|---|---|---|
+| **`EntityName`** | `string` | Name of the entity that caused the conflict (e.g., `"User"`). Set only by the entity/value constructors. |
+| **`EntityValue`** | `object` | Value or identifier of the conflicting entity (e.g., the email address). Set only by the entity/value constructors. |
+| `ErrorCode` | `int` | Inherited. `409` unless supplied explicitly. |
+| `ResponseType` | `ResponseType` | Inherited. `ResponseType.Conflict`. |
+| `Message` | `string` | Inherited. The supplied message when one is given, the entity template for entity/value constructors, otherwise `BaseResponseMessages.Conflict`. |
+
+## Constructors
+
+| Constructor | `ErrorCode` | `Message` |
+|---|---|---|
+| `ConflictException()` | `409` | `BaseResponseMessages.Conflict` |
+| `ConflictException(int errorCode, string? message = null)` | supplied | supplied, or `BaseResponseMessages.Conflict` when `null`/omitted |
+| `ConflictException(string entity, object value)` | `409` | `"{entity} with value '{value}' already exists."` |
+| `ConflictException(string entity, object value, string? message)` | `409` | supplied, or the entity template when `null` |
+| `ConflictException(string entity, object value, int errorCode, string? message = null)` | supplied | supplied, or the entity template when `null`/omitted |
+
+The entity/value constructors set `EntityName` and `EntityValue`; the others leave both unset.
 
 ## 🚀 How to Use
 
-You will typically create and return a `ConflictException` from a service or handler when a business rule for uniqueness is violated.
-
-### Example: Creating a Duplicate Resource
-
-In this example, a service attempts to create a new user but finds that a user with the same email already exists.
+### Example: Creating a duplicate resource
 
 ```csharp showLineNumbers
-// In a CQRS handler or application service
-using RA.Utilities.Core;
-// highlight-next-line
+using RA.Utilities.Core.Results;
 using RA.Utilities.Core.Exceptions;
 
 public async Task<Result<UserDto>> CreateUserAsync(CreateUserCommand command)
 {
-    // Check if a user with this email already exists in the database
     bool userExists = await _userRepository.ExistsAsync(command.Email);
 
     if (userExists)
     {
-        // Return a failure Result containing a ConflictException
         // highlight-next-line
         return new ConflictException(nameof(User), command.Email);
     }
@@ -59,20 +65,30 @@ public async Task<Result<UserDto>> CreateUserAsync(CreateUserCommand command)
 }
 ```
 
-### Example JSON Output
+### Example: A generic conflict
 
-When the API layer (using `ErrorResultResponse`) handles the `Failure` `Result` from the example above, it will automatically generate a `409 Conflict` response with a body like this:
+```csharp showLineNumbers
+// 409 / ResponseType.Conflict / BaseResponseMessages.Conflict
+return new ConflictException();
 
-```json showLineNumbers
-{
-  "responseCode": 409,
-  "responseType": "Conflict",
-  "responseMessage": "User with value 'test@example.com' already exists.",
-  "result": {
-    "entity": "User",
-    "value": "test@example.com",
-    "errorCode": "Conflict",
-    "errorMessage": "User with value 'test@example.com' already exists."
-  }
-}
+// 409 / custom code / default message
+return new ConflictException(errorCode: 4090);
 ```
+
+### Example: Custom message with entity details
+
+Passing a message keeps `EntityName` and `EntityValue` populated:
+
+```csharp showLineNumbers
+return new ConflictException(
+    entity: nameof(User),
+    value: command.Email,
+    message: "An account with this email is already active."
+);
+```
+
+## 🔗 HTTP mapping
+
+`ErrorResultResponse` maps `ConflictException` to **HTTP 409** with a `ConflictResponse` body containing `entity` and `value` from the exception. The `ErrorCode` is echoed into `responseCode`; it does not change the HTTP status.
+
+See [`ErrorResultResponse`](../../api/RA.Utilities.Api/mapper/ErrorResultResponse.md) for the response shapes and [`UnprocessableException`](./UnprocessableException.md) when the request is valid but the resource's *state* prevents the operation.
