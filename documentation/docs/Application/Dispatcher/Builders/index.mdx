@@ -1,0 +1,36 @@
+---
+title: Builders
+sidebar_position: 4
+---
+
+```powershell
+Namespace: RA.Utilities.Dispatcher.Builders
+```
+
+The `RA.Utilities.Dispatcher.Builders` namespace holds the fluent builders returned by [`AddDispatcher` / `AddNotification`](../Extensions/DispatcherBuilderExtensions.md). They implement the Builder Pattern: each configuration call returns the builder, so you define an entire vertical slice in a single, coherent block of code.
+
+## 🏗️ Available Builders
+
+| Builder | Returned By | Configures |
+|---|---|---|
+| [`DispatcherBuilder<TRequest>`](DispatcherBuilder.md) | `AddDispatcher<TRequest, THandler>()` | Behaviors and validators for a request without a response |
+| [`DispatcherBuilder<TRequest, TResponse>`](DispatcherBuilder.md) | `AddDispatcher<TRequest, TResponse, THandler>()` | Behaviors and validators for a request with a response |
+| [`NotificationDispatcherBuilder<TNotification>`](NotificationDispatcherBuilder.md) | `AddNotification<TNotification>()` | Handlers and behaviors for a notification |
+
+All three implement [`IDispatcherBuilder`](../Abstractions/IDispatcherBuilder.md) and expose the `IServiceCollection` being configured.
+
+## 🚀 Example
+
+```csharp showLineNumbers
+_ = services
+      .AddDispatcher<CreateProductCommand, int, CreateProductHandler>() // 1. Starts with the extension method
+      .AddDecoration<LoggingBehavior<CreateProductCommand, int>>()      // 2. Chains a behavior from the returned builder
+      .AddValidator<CreateProductCommandValidator>();                   // 3. Chains a validator from the builder
+```
+
+<br />
+<br />
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />

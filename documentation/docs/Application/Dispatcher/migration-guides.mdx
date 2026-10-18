@@ -1,0 +1,226 @@
+---
+title: Migration Guides
+---
+
+# Migration Guides
+
+## RA.Utilities.Feature v10.x → RA.Utilities.Dispatcher v11.0.0
+
+The `RA.Utilities.Dispatcher` package is the successor of `RA.Utilities.Feature`. It keeps the source-generated mediator, auto-registration, pipeline behaviors, and notification system — and **returns to Result-based dispatch**: handlers and `IDispatcher` return `ValueTask<Result<T>>`, and expected failures are returned instead of thrown.
+
+### 💥 Breaking Change: the mediator contract is Result-based again — failures are returned, not thrown
+
+Feature v10.2.0 removed `Result` from the mediator contract: handlers returned plain `Task<TResponse>` / `Task`, and failures were thrown as typed exceptions. Dispatcher v11.0.0 reintroduces `Result` with a modern shape:
+
+- Handlers return `ValueTask<Result<TResponse>>` (`ValueTask<Result>` for void requests); `INotificationHandler<TNotification>` now returns `ValueTask<Result>` (it returned `Task` in Feature).
+- `IDispatcher.Send<TRequest, TResponse>` returns `ValueTask<Result<TResponse>>`; `Send<TRequest>` (void) returns `ValueTask<Result>`. Context overloads add an optional `PipelineContext<TContext>? context = null` parameter.
+- Expected failures are **returned** as `Result.Failure(exception)` — handlers `return Result.Failure(new ConflictException(...))` instead of `throw new ConflictException(...)`.
+- `ValidationBehavior` now **returns** a failed result containing a `BadRequestException` instead of throwing it.
+- Truly exceptional cases still throw, and those exceptions propagate to the caller.
+
+### Package and namespace rename
+
+| Feature (v10.x) | Dispatcher (v11.0.0) |
+|---|---|
+| Package `RA.Utilities.Feature` | Package `RA.Utilities.Dispatcher` |
+| Namespace `RA.Utilities.Feature.Abstractions` | `RA.Utilities.Dispatcher.Abstractions` |
+| Namespace `RA.Utilities.Feature.Handlers` | `RA.Utilities.Dispatcher.Handlers` |
+| Namespace `RA.Utilities.Feature.Behaviors` | `RA.Utilities.Dispatcher.Behaviors` |
+| Namespace `RA.Utilities.Feature.Exceptions` | `RA.Utilities.Dispatcher.Exceptions` |
+| Namespace `RA.Utilities.Feature.Extensions` | `RA.Utilities.Dispatcher.Extensions` |
+| Namespace `RA.Utilities.Feature.Generated` | `RA.Utilities.Dispatcher.Generated` |
+| Namespace `RA.Utilities.Feature.Models` | `RA.Utilities.Dispatcher.Models` |
+| `IMediator` | `IDispatcher` (same `Send`/`Publish` shapes, `Result`-based) |
+| `AddFeature<...>()` | `AddDispatcher<...>()` |
+| `FeatureBuilder<...>` | `DispatcherBuilder<...>` |
+| `NotificationFeatureBuilder<...>` | `NotificationDispatcherBuilder<...>` |
+| Diagnostics `FEAG001`–`FEAG010` | `DSAG001`–`DSAG010` (same meanings) |
+| `AddMediator()` | `AddMediator()` (unchanged bootstrap, now implemented as a C# 14 extension block) |
+
+### Signature changes at a glance
+
+| Member | Before (Feature 10.2.0) | After (Dispatcher 11.0.0) |
+|---|---|---|
+| `IRequestHandler<TRequest, TResponse>.HandleAsync` | `Task<TResponse>` | `ValueTask<Result<TResponse>>` |
+| `IRequestHandler<TRequest>.HandleAsync` (void) | `Task` | `ValueTask<Result>` |
+| `INotificationHandler<TNotification>.HandleAsync` | `Task` | `ValueTask<Result>` |
+| `IDispatcher.Send<TRequest, TResponse>` | `Task<TResponse>` | `ValueTask<Result<TResponse>>` |
+| `IDispatcher.Send<TRequest>` (void) | `Task` | `ValueTask<Result>` |
+| `RequestHandlerDelegate<TResponse>` | `Task<TResponse>` | `ValueTask<Result<TResponse>>` |
+| `RequestHandlerDelegate` | `Task` | `ValueTask<Result>` |
+| `RequestHandler<TRequest, TResponse>` abstract member | `Task<TResponse> HandleAsync(...)` | `ValueTask<Result<TResponse>> HandleAsync(...)` |
+| `RequestHandler<TRequest>` abstract member | `Task HandleAsync(...)` | `ValueTask<Result> HandleAsync(...)` |
+| `ValidationBehavior` on failure | **Throws** `BadRequestException` | **Returns** `Result.Failure(BadRequestException)` |
+
+### Step 1: Switch the package reference
+
+```bash
+dotnet remove package RA.Utilities.Feature
+dotnet add package RA.Utilities.Dispatcher
+```
+
+Replace `using RA.Utilities.Feature.*;` with `using RA.Utilities.Dispatcher.*;` in your handlers, behaviors, and startup code.
+
+### Step 2: Change request/response types back to `Result<T>`
+
+Feature 10.2.0 used plain response types and thrown exceptions; Dispatcher returns results:
+
+**Before (Feature 10.2.0):**
+
+```csharp
+public record CreateProductCommand(string Name, decimal Price) : IRequest<int>;
+
+public class CreateProductHandler : RequestHandler<CreateProductCommand, int>
+{
+    public override async Task<int> HandleAsync(
+        CreateProductCommand command, CancellationToken ct)
+    {
+        if (await _productRepository.DoesProductExistAsync(command.Name))
+            throw new ConflictException(nameof(Product), command.Name);
+
+        var product = new Product { Name = command.Name, Price = command.Price };
+        return await _productRepository.AddAsync(product);
+    }
+}
+```
+
+**After (Dispatcher 11.0.0):**
+
+```csharp
+using RA.Utilities.Core.Exceptions;
+using RA.Utilities.Core.Results;
+using RA.Utilities.Dispatcher.Handlers;
+
+public record CreateProductCommand(string Name, decimal Price) : IRequest<int>;
+
+public class CreateProductHandler : RequestHandler<CreateProductCommand, int>
+{
+    public override async ValueTask<Result<int>> HandleAsync(
+        CreateProductCommand command, CancellationToken ct)
+    {
+        if (await _productRepository.DoesProductExistAsync(command.Name))
+            return Result.Failure<int>(new ConflictException(nameof(Product), command.Name));
+
+        var product = new Product { Name = command.Name, Price = command.Price };
+        return Result.Success(await _productRepository.AddAsync(product));
+    }
+}
+```
+
+`TResponse` is the plain payload type — `IRequest<int>` stays `IRequest<int>`; the `Result<TResponse>` wrapper lives on the handler's return type.
+
+### Step 3: Return failures instead of throwing them
+
+Every `throw new NotFoundException(...)`-style failure path becomes `return Result.Failure(...)`:
+
+**Before (Feature 10.2.0):**
+
+```csharp
+var product = await _repository.FindByIdAsync(query.ProductId, ct);
+if (product is null)
+    throw new NotFoundException(nameof(Product), query.ProductId);
+```
+
+**After (Dispatcher 11.0.0):**
+
+```csharp
+var product = await _repository.FindByIdAsync(query.ProductId, ct);
+if (product is null)
+    return Result.Failure<Product>(new NotFoundException(nameof(Product), query.ProductId));
+```
+
+Keep throwing only for truly exceptional cases — those still propagate to the caller (the API layer's `GlobalExceptionHandler` maps both failed results and thrown `RaBaseException`s to HTTP responses).
+
+### Step 4: Update call sites that use plain values
+
+Callers that consumed the returned value directly must unwrap the result again:
+
+**Before (Feature 10.2.0):**
+
+```csharp
+var product = await mediator.Send<GetProductQuery, Product>(query);
+return Results.Ok(product);
+```
+
+**After (Dispatcher 11.0.0):**
+
+```csharp
+Result<Product> result = await dispatcher.Send<GetProductQuery, Product>(query);
+return result.Match(
+    success: product => Results.Ok(product),
+    failure: exception => Results.Problem(exception.Message));
+```
+
+Or with the property-based API:
+
+```csharp
+Result<Product> result = await dispatcher.Send<GetProductQuery, Product>(query);
+if (result.IsFailure)
+    return Results.BadRequest(result.Exception.Message);
+return Results.Ok(result.Value);
+```
+
+The `Result` monad from `RA.Utilities.Core.Results` offers `Map`, `Bind`, `Match`, `OnSuccess`, `OnFailure`, and implicit conversions from `T` and `Exception` — see the [Core.Results docs](../../core/RA.Utilities.Core.Results/index.mdx).
+
+### Step 5: `ValidationBehavior` returns a failed result instead of throwing
+
+Nothing changes in how you register validators — `.AddValidator<TValidator>()` still wires the `ValidationBehavior` into the pipeline — but on failure the behavior now **returns** `Result.Failure` containing a `BadRequestException` (built from the collected `ValidationFailure` entries via `ValidationUtilities.CreateValidationErrorResult`) instead of throwing. Map the failed result to `400 Bad Request` at the call site (or in a central response mapper).
+
+### Step 6: Rename the registration calls
+
+**Before (Feature 10.2.0):**
+
+```csharp
+builder.Services.AddMediator();
+
+builder.Services
+    .AddFeature<CreateProductCommand, int, CreateProductHandler>()
+    .AddValidator<CreateProductCommandValidator>()
+    .AddDecoration<LoggingBehavior<CreateProductCommand, int>>();
+
+builder.Services
+    .AddNotification<OrderPlaced>()
+    .AddDecoration<NotificationRetryBehavior<OrderPlaced>>();
+```
+
+**After (Dispatcher 11.0.0):**
+
+```csharp
+builder.Services.AddMediator(); // registers IDispatcher + all auto-discovered handlers
+
+builder.Services
+    .AddDispatcher<CreateProductCommand, int, CreateProductHandler>()
+    .AddValidator<CreateProductCommandValidator>()
+    .AddDecoration<LoggingBehavior<CreateProductCommand, int>>();
+
+builder.Services
+    .AddNotification<OrderPlaced>()
+    .AddDecoration<NotificationRetryBehavior<OrderPlaced>>();
+```
+
+As in Feature v10.2.0+, plain handlers and closed behaviors are auto-registered by the source generator — `AddDispatcher` re-registers the handler (harmless, same scoped registration), so you only need it when the feature also has behaviors or validators to add.
+
+### Step 7: `Publish` now returns a result
+
+`INotificationHandler<TNotification>.HandleAsync` returns `ValueTask<Result>`; `Publish` runs **every** handler and aggregates failures into the returned `Result` — a single exception when one handler fails, an `AggregateException` when several fail:
+
+```csharp
+Result publishResult = await dispatcher.Publish(new OrderPlaced(orderId, customerEmail), ct);
+if (publishResult.IsFailure)
+    _logger.LogError(publishResult.Exception, "One or more OrderPlaced handlers failed");
+```
+
+### What is unchanged
+
+- `AddMediator()` — still the single bootstrap call, and it still applies the auto-registrations.
+- The generated `Mediator` design — concrete handler injection, monomorphized `Send` overloads, no delegate chain without behaviors, object dispatch with the dictionary threshold above 8 messages.
+- The typed `PipelineContext<T>` design and its behavior — context type parameters remain entirely opt-in.
+- Behavior ordering — registration order, outermost first, for both request and notification pipelines.
+- The notification behavior set — logging, metrics, and retry with the same configuration knobs.
+- The assembly-loading guarantee for auto-registration (entry assembly plus anything loaded before `AddMediator()`).
+
+---
+
+## Full Changelog
+
+See the [package release notes](https://github.com/RedonAlla/RA.Utilities/blob/main/Application/RA.Utilities.Dispatcher/releasenotes.md) and the [site changelog](/changelogs/dispatcher) for a complete version history.

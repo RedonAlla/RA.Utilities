@@ -1,0 +1,65 @@
+---
+title: Extensions
+sidebar_position: 5
+---
+
+```powershell
+Namespace: RA.Utilities.Dispatcher.Extensions
+```
+
+The primary purpose of this namespace is to provide a **fluent and discoverable API for registering your CQRS features**
+(commands, queries, notifications, and their associated behaviors/validators) with the .NET dependency injection container.
+
+It acts as the main entry point for wiring up the components of the `RA.Utilities.Dispatcher` library — from the one-line [`AddMediator()`](./MediatorServiceCollectionExtensions.md) bootstrap to the fluent [`AddDispatcher`](./DispatcherBuilderExtensions.md) builders.
+
+Both classes are written with **C# 14 extension blocks** — the extension methods live inside `extension(IServiceCollection services)` blocks, so they appear on `IServiceCollection` exactly like classic `this`-parameter extension methods.
+
+## 🔑 Key Purpose and Design
+
+The `DispatcherBuilderExtensions` class uses the **Builder Pattern** to create a clean, readable, and chainable configuration experience.
+Let's break down how it works:
+
+#### 1. Bootstrapping the Dispatch:
+The process starts with an extension method on [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection),
+such as `AddDispatcher` or `AddNotification`.
+
+```csharp showLineNumbers
+// From: /RA.Utilities/Application/RA.Utilities.Dispatcher/Extensions/DispatcherBuilderExtensions.cs
+
+extension(IServiceCollection services)
+{
+    public DispatcherBuilder<TRequest, TResponse> AddDispatcher<TRequest, TResponse, THandler>()
+        where TRequest : IRequest<TResponse>
+        where THandler : class, IRequestHandler<TRequest, TResponse>
+    {
+        // Step 1: It registers the core handler for the request.
+        services.AddScoped<IRequestHandler<TRequest, TResponse>, THandler>();
+
+        // Step 2: It returns a new builder object.
+        return new DispatcherBuilder<TRequest, TResponse>(services);
+    }
+}
+```
+
+#### 2. Enabling Fluent Chaining:
+The key is that these methods return a `DispatcherBuilder` or `NotificationDispatcherBuilder` object.
+This builder object holds a reference to the [`IServiceCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection)
+and provides its own methods for adding related components, like validators or pipeline behaviors.
+
+#### 3. Creating a Vertical Slice Configuration:
+This design allows you to define an entire vertical slice in a single, coherent block of code
+
+**example:**
+```csharp showLineNumbers
+_ = services
+      .AddDispatcher<CreateProductCommand, int, CreateProductHandler>() // 1. Starts with the extension method
+      .AddDecoration<LoggingBehavior<CreateProductCommand, int>>()      // 2. Chains a behavior from the returned builder
+      .AddValidator<CreateProductCommandValidator>();                   // 3. Chains a validator from the builder
+```
+
+<br />
+<br />
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />

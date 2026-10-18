@@ -1,0 +1,35 @@
+---
+title: Abstractions
+sidebar_position: 1
+---
+
+```powershell
+Namespace: RA.Utilities.Dispatcher.Abstractions
+```
+
+The classes within the `RA.Utilities.Dispatcher.Abstractions` namespace define the core interfaces for the CQRS pattern and the custom dispatcher.
+
+## ✨ Purpose and Function
+
+These interfaces form the contract between the dispatcher, your requests/notifications, and their handlers. They are the foundation upon which the Vertical Slice Architecture is built.
+
+The primary abstractions are:
+
+* **[`IRequest` / `IRequest<TResponse>`](../Abstractions/IRequest.md)**: Marker interfaces for commands (no response) and queries (with response). Implement these on your request DTOs.
+* **[`IRequestHandler<TRequest>` / `IRequestHandler<TRequest, TResponse>`](../Abstractions/IRequestHandler.md)**: Interfaces your handlers implement. For a more convenient experience, inherit from the abstract [`RequestHandler`](../Handlers/RequestHandler.md) base classes in the [`Handlers`](../Handlers/index.mdx) namespace — they implement the interface plumbing so you only override one `HandleAsync` method.
+* **[`IPipelineBehavior<TRequest>` / `IPipelineBehavior<TRequest, TResponse>`](../Abstractions/IPipelineBehavior.md)**: Cross-cutting concerns that wrap request handler execution (validation, logging, etc.).
+* **[`INotification`](../Abstractions/INotification.md)**: Marker interface for events/notifications in the publish/subscribe system.
+* **[`INotificationHandler<TNotification>`](../Abstractions/INotificationHandler.md)**: Interface for notification subscribers.
+* **[`INotificationBehavior<TNotification>`](../Abstractions/INotificationBehavior.md)**: Cross-cutting concerns that wrap notification handler execution (retry, metrics, logging).
+* **[`IDispatcher`](../Abstractions/IDispatcher.md)**: The central dispatcher — sends requests and publishes notifications, returning `Result`-based values.
+* **[`IDispatcherBuilder`](../Abstractions/IDispatcherBuilder.md)**: The shared contract behind the fluent builders in the [`Builders`](../Builders/index.mdx) namespace.
+
+## 🧠 Summary
+In summary, the `RA.Utilities.Dispatcher.Abstractions` interfaces are the cornerstone of the CQRS pattern in this framework. For concrete handler implementations, see the [`Handlers`](../Handlers/index.mdx) namespace, which provides abstract base classes that handle the interface plumbing for you.
+
+<br />
+<br />
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />

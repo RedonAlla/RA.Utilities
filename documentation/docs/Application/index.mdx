@@ -3,14 +3,17 @@ title: Application
 sidebar_position: 5
 ---
 
-The Application layer sits between Core and Api, implementing your business logic through the CQRS pattern. It contains two packages:
+The Application layer sits between Core and Api, implementing your business logic through the CQRS pattern. It contains three packages:
 
-- **`RA.Utilities.Feature`** — A custom mediator (not MediatR) that dispatches requests to handlers and composes pipeline behaviors. Start here.
+- **`RA.Utilities.Dispatcher`** — A custom mediator (not MediatR) that dispatches requests to handlers and composes pipeline behaviors, with Result-based dispatch and a source-generated mediator. Start here.
+- **`RA.Utilities.Feature`** — The predecessor package: the same mediator concept with exception-based dispatch and a source-generated mediator.
 - **`RA.Utilities.Application.Validation`** — FluentValidation integration utilities for request validation.
 
 ### Where to Start
 
-**[RA.Utilities.Feature →](/nuget-packages/Application/Feature)** — Learn the mediator, CQRS handlers, and pipeline behaviors that form the backbone of your application logic.
+**[RA.Utilities.Dispatcher →](/nuget-packages/Application/Dispatcher)** — Learn the mediator, CQRS handlers, and pipeline behaviors that form the backbone of your application logic.
+
+**[Migrating from RA.Utilities.Feature →](/nuget-packages/Application/Dispatcher/migration-guides)** — The step-by-step guide covering the package rename and the return to Result-based dispatch.
 
 import DocCardList from '@theme/DocCardList';
 

@@ -29,6 +29,7 @@ const packagesList: Array<PackageListType> = [
     category: 'Application',
     packages: [
       'RA.Utilities.Application.Validation',
+      'RA.Utilities.Dispatcher',
       'RA.Utilities.Feature',
     ]
   },

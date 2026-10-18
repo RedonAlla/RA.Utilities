@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <!-- The benchmark handlers are generic and registered explicitly, so both shipped generators
+         report the expected "generic handler / generic behavior / no discoverable handler"
+         diagnostics (DSAG/FEAG 002, 007, 010). BDN1605 is BenchmarkDotNet's informational
+         async-benchmark suggestion. -->
+    <NoWarn>$(NoWarn);CS1591;BDN1605;DSAG002;DSAG007;DSAG010;FEAG002;FEAG007;FEAG010</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" />
+    <PackageReference Include="MediatR" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../Application/RA.Utilities.Dispatcher/RA.Utilities.Dispatcher.csproj" />
+    <ProjectReference Include="../../Application/RA.Utilities.Feature/RA.Utilities.Feature.csproj" />
+    <!-- Both generators emit their own Mediator implementation into this assembly, so the
+         Dispatcher and Feature benchmarks exercise the real source-generated dispatch. -->
+    <ProjectReference Include="../../Application/RA.Utilities.Dispatcher.Generators/RA.Utilities.Dispatcher.Generators.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false"
+                      SetTargetFramework="TargetFramework=netstandard2.0" />
+    <ProjectReference Include="../../Application/RA.Utilities.Feature.Generators/RA.Utilities.Feature.Generators.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false"
+                      SetTargetFramework="TargetFramework=netstandard2.0" />
+  </ItemGroup>
+
+</Project>

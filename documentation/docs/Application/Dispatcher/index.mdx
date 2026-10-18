@@ -1,0 +1,122 @@
+---
+title: RA.Utilities.Dispatcher
+sidebar_position: 1
+sidebar_class_name: nav_session ra_utilities_dispatcher
+---
+
+import LogoSvg from '../../../../Assets/Images/dispatch.svg';
+
+<p align="center">
+<LogoSvg width={'15rem'} height={'15rem'} className="header_icon_stroke header_ico_stroke" />
+</p>
+
+[![NuGet version](https://img.shields.io/nuget/v/RA.Utilities.Dispatcher.svg?logo=nuget&label=NuGet)](https://www.nuget.org/packages/RA.Utilities.Dispatcher/)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RA.Utilities.Dispatcher.svg?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Dispatcher/)
+[![Codecov](https://codecov.io/github/RedonAlla/RA.Utilities/graph/badge.svg)](https://codecov.io/github/RedonAlla/RA.Utilities)
+[![Publish NuGet](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml/badge.svg)](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml)
+[![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities)](https://github.com/RedonAlla/RA.Utilities/blob/main/LICENSE)
+
+The main goal of this package is to help you organize your application's business logic into self-contained "features" or "slices."
+Instead of having logic for a single operation scattered across multiple layers (e.g., a controller, a service, a repository), all the code for one use case—from the incoming request to the final response—is located together.
+
+This solves a common problem with traditional layered architectures where classes can become bloated and tightly coupled, making the codebase difficult to navigate and maintain.
+
+## ✨ Key Features and How They Help
+
+The package provides several key components to achieve this clean architecture:
+
+1. **Source-Generated Dispatcher ([`IDispatcher`](./Abstractions/IDispatcher.md))**:
+  * **Purpose**: A lightweight, reflection-free mediator — no external MediatR dependency. The `IDispatcher` implementation itself is emitted by a source generator shipped inside the package and registered by `AddMediator()`.
+  * **Benefit**: Strongly-typed dispatch for both request/response (`Send`) and publish/subscribe (`Publish`) patterns. Inject `IDispatcher` or the concrete generated `Mediator` for the fastest path — see [Generated Mediator](./generated-mediator).
+
+2. **Result-Based Dispatch ([`Result` monad](../../core/RA.Utilities.Core.Results/index.mdx))**:
+  * **Purpose**: Handlers and `IDispatcher` return `ValueTask<Result<TResponse>>` / `ValueTask<Result>`. Expected failures are **returned** as `Result.Failure` instead of being thrown.
+  * **Benefit**: Failure is an explicit part of the contract — no hidden control flow, no try/catch at call sites. The `Result` monad comes from [`RA.Utilities.Core.Results`](../../core/RA.Utilities.Core.Results/index.mdx) and is chainable with `Map`, `Bind`, `Match`, `OnSuccess`, `OnFailure`.
+
+3. **Zero-Configuration Handler Registration ([`Auto Registration`](./auto-registration))**:
+  * **Purpose**: A source generator shipped in the package discovers all `IRequestHandler<,>` / `IRequestHandler<>` / `INotificationHandler<>` implementations **and closed pipeline behaviors**, and registers them when `AddMediator()` is called.
+  * **Benefit**: Plain handlers and closed behaviors need no explicit `AddDispatcher` / `AddNotification` / `AddDecoration` calls — only validators and generic behaviors still require explicit registration.
+
+4. **Base Handlers ([`RequestHandler<TRequest, TResponse>`](./Handlers/RequestHandler.md))**:
+  * **Purpose**: Abstract base classes for your CQRS command and query handlers.
+  * **Benefit**: They remove boilerplate: implement the single abstract `HandleAsync` method and return `Result` values directly — no explicit interface plumbing.
+
+5. **Validation Pipeline Behavior ([`ValidationBehavior<TRequest, TResponse>`](./Behaviors/ValidationBehavior.md))**:
+  * **Purpose**: A pipeline behavior that automatically validates incoming commands and queries before they reach your business logic.
+  * **Benefit**: Uses [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/). If validation fails, it short-circuits by **returning a failed result** containing a `BadRequestException` carrying the structured validation errors. Your handlers only ever deal with valid data.
+
+6. **Notification System ([`INotification`](./Abstractions/INotification.md))**:
+  * **Purpose**: Publish/subscribe eventing — notifications handled by zero or more subscribers, each wrapped in its own behavior pipeline.
+  * **Benefit**: Built-in notification behaviors for logging, metrics, and retry. `Publish` runs every handler and aggregates failures into the returned `Result` — one failing handler doesn't prevent others from executing.
+
+7. **Typed Pipeline Context ([`PipelineContext<T>`](./Models/PipelineContext.md))**:
+  * **Purpose**: Pass strongly-typed data through the entire pipeline — no dictionaries, no magic strings, no boxing.
+  * **Benefit**: Behaviors and handlers read/write properties on a user-defined `T`. Each call gets its own isolated instance. Fully opt-in — existing `Send`/`Publish` calls compile unchanged.
+
+8. **Fluent Validation Integration ([`AddValidator`](./Builders/DispatcherBuilder.md))**:
+  * **Purpose**: `.AddValidator<TValidator>()` registers the validator **and** wires the `ValidationBehavior` into the pipeline in one call.
+  * **Benefit**: `ValidationBehavior` runs all registered `IValidator<TRequest>` implementations; failures never reach the handler and the caller receives a failed `Result` carrying a `BadRequestException` to map to a `400 Bad Request`.
+
+9. **Benchmarked against MediatR ([`Benchmarks`](./benchmarks))**:
+  * **Purpose**: A BenchmarkDotNet harness comparing the generated mediator against MediatR 14.2 at equal scoped lifetimes, scenario for scenario.
+  * **Benefit**: Published numbers for the send and publish shapes — the concrete mediator is **12–39% faster with 11–31% fewer allocations** — plus the harness to reproduce them locally.
+
+## 🌟 Benefits
+
+The package has been fully rewritten to avoid reflection; handlers are discovered by a source generator and resolved through strongly-typed generic DI registration instead of dynamic type lookups or runtime assembly scanning.
+
+  * ✅ No runtime reflection
+  * ✅ Purely generic and compile-time safe
+  * ✅ Zero-config handler registration via the in-package source generator — plain handlers need no registration code
+  * ✅ Result-based dispatch — expected failures are returned as `Result.Failure`, never thrown
+  * ✅ Simplified DI registration via fluent builders ([`DispatcherBuilderExtensions`](./Extensions/DispatcherBuilderExtensions.md)) for behaviors and validators
+  * ✅ Custom dispatcher supports both request/response and publish/subscribe
+  * ✅ Multiple notification handlers per notification type
+  * ✅ Multiple notification pipeline behaviors (logging, metrics, retry)
+  * ✅ Fluent builder style consistent across requests and notifications
+  * ✅ Abstract [`RequestHandler`](./Handlers/RequestHandler.md) base classes — one `HandleAsync` override per handler
+  * ✅ Typed [`PipelineContext<T>`](./Models/PipelineContext.md) for passing data through the pipeline — no dictionaries
+
+## 🔧 Design Overview
+
+| Namespace | Purpose |
+|---|---|
+| [`Abstractions`](./Abstractions/index.mdx) | Core interfaces: `IDispatcher`, `IRequest`, `IRequestHandler`, `INotification`, `IPipelineBehavior`, `INotificationBehavior` |
+| [`Handlers`](./Handlers/index.mdx) | Abstract base classes: `RequestHandler<TRequest>`, `RequestHandler<TRequest, TResponse>` |
+| [`Behaviors`](./Behaviors/index.mdx) | Built-in pipeline and notification behaviors: logging, validation, metrics, retry |
+| [`Builders`](./Builders/index.mdx) | Fluent builders: `DispatcherBuilder<TRequest[, TResponse]>`, `NotificationDispatcherBuilder<TNotification>` |
+| [`Extensions`](./Extensions/index.mdx) | DI registration extensions: `AddMediator()`, `AddDispatcher()`, `AddNotification()` |
+| [`Models`](./Models/index.mdx) | Delegates: `RequestHandlerDelegate`, `NotificationHandlerDelegate`; context carrier `PipelineContext<T>` |
+| [`Generated`](./Generated/index.mdx) | Registration queues fed by the in-package source generator |
+| [`Exceptions`](./Exceptions/index.mdx) | `HandlerNotFoundException` — typed failure for undispatchable object-based messages |
+
+## 🛠️ Installation
+
+You can install the package via the .NET CLI:
+
+```bash
+dotnet add package RA.Utilities.Dispatcher
+```
+
+Or through the NuGet Package Manager console:
+
+```powershell
+Install-Package RA.Utilities.Dispatcher
+```
+
+## 🔗 Dependencies
+
+-  [`RA.Utilities.Core.Results`](../../core/RA.Utilities.Core.Results/index.mdx)
+-  [`RA.Utilities.Core.Exceptions`](../../core/RA.Utilities.Core.Exceptions/index.mdx)
+-  [`RA.Utilities.Application.Validation`](../FeatureValidation/index.mdx)
+-  [`FluentValidation`](https://docs.fluentvalidation.net/en/latest/)
+-  [`Microsoft.Extensions.DependencyInjection.Abstractions`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection)
+-  [`Microsoft.Extensions.Logging.Abstractions`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.logging.abstractions)
+
+
+<br />
+<br />
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />

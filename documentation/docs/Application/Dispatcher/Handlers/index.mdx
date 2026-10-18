@@ -1,0 +1,77 @@
+---
+title: Handlers
+sidebar_position: 3
+---
+
+```powershell
+Namespace: RA.Utilities.Dispatcher.Handlers
+```
+
+The `RA.Utilities.Dispatcher.Handlers` namespace provides abstract base classes that implement the [`IRequestHandler`](../Abstractions/IRequestHandler.md) interfaces. These base classes handle the interface plumbing for you, so your handlers only override one `HandleAsync` method with business logic.
+
+## ✨ Why Use Base Handlers?
+
+Inheriting from these base classes instead of implementing the interfaces directly gives you:
+
+- **No interface plumbing** — implement a single abstract `HandleAsync` method; the interface members are implemented explicitly
+- **Result-based returns** — return `ValueTask<Result<TResponse>>` / `ValueTask<Result>`; expected failures are returned as `Result.Failure(...)`, never thrown
+- **Context support for free** — a protected virtual context-aware `HandleAsync` overload lets you consume [`PipelineContext<T>`](../Models/PipelineContext.md) data when you need it
+
+:::note
+The base classes are **pure passthroughs**: they take no `ILogger`, log nothing, and wrap nothing. Expected failures are reported by **returning** `Result.Failure(...)` with a typed exception from `RA.Utilities.Core.Exceptions`. For request-level logging, register the [`LoggingBehavior`](../Behaviors/LoggingBehavior.md).
+:::
+
+## 📦 Available Base Classes
+
+| Base Class | Implements | Use Case |
+|---|---|---|
+| `RequestHandler<TRequest>` | `IRequestHandler<TRequest>` | Commands with no return value |
+| `RequestHandler<TRequest, TResponse>` | `IRequestHandler<TRequest, TResponse>` | Commands/queries that return data |
+
+## 🚀 Usage
+
+```csharp
+using RA.Utilities.Core.Exceptions;
+using RA.Utilities.Core.Results;
+using RA.Utilities.Dispatcher.Handlers;
+
+public class CreateProductHandler : RequestHandler<CreateProductCommand, int>
+{
+    private readonly IProductRepository _productRepository;
+
+    public CreateProductHandler(IProductRepository productRepository)
+    {
+        _productRepository = productRepository;
+    }
+
+    public override async ValueTask<Result<int>> HandleAsync(
+        CreateProductCommand command, CancellationToken cancellationToken)
+    {
+        if (await _productRepository.DoesProductExistAsync(command.Name))
+            return Result.Failure<int>(new ConflictException(nameof(Product), command.Name));
+
+        // Business logic here — return the result directly
+        var product = new Product { Name = command.Name, Price = command.Price };
+        var id = await _productRepository.AddAsync(product);
+        return Result.Success(id);
+    }
+}
+```
+
+## ⚙️ How It Works
+
+The base class implements the `IRequestHandler` interface **explicitly**, forwarding both the plain and the context-aware `HandleAsync` overloads to your overrides:
+
+1. `HandleAsync(request, ct)` — the **public abstract** member you override with business logic.
+2. `HandleAsync<TContext>(request, context, ct)` — a **protected virtual** member that delegates to the abstract one by default; override it to read or write [`PipelineContext<T>`](../Models/PipelineContext.md) data.
+
+There is no try-catch wrapper — exceptions you throw propagate to the caller; expected failures should be returned as `Result.Failure(...)`.
+
+Handlers are auto-registered: the source generator shipped in the package discovers every concrete `IRequestHandler<,>` / `IRequestHandler<>` implementation and `AddMediator()` applies the registrations (scoped). See the [Auto Registration](../auto-registration) guide for details.
+
+<br />
+<br />
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />

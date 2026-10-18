@@ -1,0 +1,71 @@
+using System.Threading;
+using System.Threading.Tasks;
+using RA.Utilities.Core.Results;
+using RA.Utilities.Dispatcher.Models;
+
+namespace RA.Utilities.Dispatcher.Abstractions;
+
+/// <summary>
+/// Represents a pipeline behavior for a request.
+/// </summary>
+/// <typeparam name="TRequest">The type of the request.</typeparam>
+public interface IPipelineBehavior<TRequest>
+    where TRequest : IRequest
+{
+    /// <summary>
+    /// Handles the request and invokes the next delegate in the pipeline.
+    /// </summary>
+    /// <param name="request">The request being handled.</param>
+    /// <param name="next">The delegate to invoke the next handler in the pipeline.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A value task representing the asynchronous operation, with a result.</returns>
+    ValueTask<Result> HandleAsync(TRequest request, RequestHandlerDelegate next, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Handles the request with a typed pipeline context and invokes the next context-aware delegate.
+    /// The default implementation adapts to the non-context method.
+    /// Override this method to read or write <see cref="PipelineContext{T}"/> data.
+    /// </summary>
+    /// <typeparam name="TContext">The user-defined context data type.</typeparam>
+    /// <param name="request">The request being handled.</param>
+    /// <param name="next">The delegate to invoke the next handler in the pipeline.</param>
+    /// <param name="context">The pipeline context for this execution.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A value task representing the asynchronous operation, with a result.</returns>
+    ValueTask<Result> HandleAsync<TContext>(TRequest request, RequestHandlerContextDelegate<TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
+        where TContext : class, new()
+        => HandleAsync(request, () => next(context), cancellationToken);
+}
+
+/// <summary>
+/// Represents a pipeline behavior for a request with a response.
+/// </summary>
+/// <typeparam name="TRequest">The type of the request.</typeparam>
+/// <typeparam name="TResponse">The type of the response.</typeparam>
+public interface IPipelineBehavior<TRequest, TResponse>
+    where TRequest : IRequest<TResponse>
+{
+    /// <summary>
+    /// Handles the request and invokes the next delegate in the pipeline.
+    /// </summary>
+    /// <param name="request">The request being handled.</param>
+    /// <param name="next">The delegate to invoke the next handler in the pipeline.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A value task representing the asynchronous operation, with the result.</returns>
+    ValueTask<Result<TResponse>> HandleAsync(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Handles the request with a typed pipeline context and invokes the next context-aware delegate.
+    /// The default implementation adapts to the non-context method.
+    /// Override this method to read or write <see cref="PipelineContext{T}"/> data.
+    /// </summary>
+    /// <typeparam name="TContext">The user-defined context data type.</typeparam>
+    /// <param name="request">The request being handled.</param>
+    /// <param name="next">The delegate to invoke the next handler in the pipeline.</param>
+    /// <param name="context">The pipeline context for this execution.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A value task representing the asynchronous operation, with the result.</returns>
+    ValueTask<Result<TResponse>> HandleAsync<TContext>(TRequest request, RequestHandlerContextDelegate<TResponse, TContext> next, PipelineContext<TContext> context, CancellationToken cancellationToken)
+        where TContext : class, new()
+        => HandleAsync(request, () => next(context), cancellationToken);
+}

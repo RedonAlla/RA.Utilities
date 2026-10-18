@@ -1,0 +1,389 @@
+---
+title: Troubleshooting & FAQ
+sidebar_position: 99
+---
+
+# Troubleshooting & FAQ
+
+## Common Issues
+
+### `Send` returns a failed `Result` — but no exception was thrown
+
+**Cause**: This is by design. The dispatcher is **Result-based**: expected failures are returned as `Result.Failure(exception)` instead of being thrown. Handlers `return Result.Failure(new NotFoundException(...))`, `ValidationBehavior` returns a failed result containing a `BadRequestException`, and truly exceptional cases propagate as thrown exceptions.
+
+**Fix**: Inspect `result.IsFailure` and `result.Exception`, or use `Match`/`OnFailure`:
+
+```csharp
+Result<Product> result = await dispatcher.Send<GetProductQuery, Product>(query);
+return result.Match(
+    success: product => Results.Ok(product),
+    failure: exception => exception switch
+    {
+        NotFoundException => Results.NotFound(exception.Message),
+        _ => Results.Problem(exception.Message)
+    });
+```
+
+### My handler's `HandleAsync` override doesn't compile — "no suitable method found to override"
+
+**Cause**: The abstract method on `RequestHandler<TRequest, TResponse>` returns `ValueTask<Result<TResponse>>` where `TResponse` is the **plain payload type**. If you carried a Feature-era plain-`Task<T>` signature (or wrapped `TResponse` in `Result`), the signature no longer matches.
+
+**Fix**: Override `ValueTask<Result<TResponse>> HandleAsync(TRequest, CancellationToken)` and return `Result.Success(value)` / `Result.Failure(exception)`:
+
+```csharp
+// ❌ Wrong (Feature 10.2.0-era) — plain Task<T>, failures thrown
+public class CreateProductHandler : RequestHandler<CreateProductCommand, int>
+{
+    public override Task<int> HandleAsync(CreateProductCommand command, CancellationToken ct) { ... }
+}
+
+// ✅ Correct (Dispatcher v11) — Result-based, failures returned
+public class CreateProductHandler : RequestHandler<CreateProductCommand, int>
+{
+    public override ValueTask<Result<int>> HandleAsync(CreateProductCommand command, CancellationToken ct) { ... }
+}
+```
+
+The request declaration stays `IRequest<int>` — `TResponse` is never `Result<int>`.
+
+### `Publish` returns a failed result — is it swallowing my handler exceptions?
+
+**Cause**: No. `Publish` runs **every** notification handler (each wrapped in its own behavior pipeline) and aggregates failures into the returned `Result` — a single exception when one handler fails, an `AggregateException` when several fail. One failing handler never prevents the others from executing, and each failure is logged at `Error` level with the handler type, notification type, and payload.
+
+**Fix**: Inspect the returned result when the publisher must know about failures:
+
+```csharp
+Result publishResult = await dispatcher.Publish(new OrderPlaced(orderId, email), ct);
+if (publishResult.IsFailure)
+    _logger.LogError(publishResult.Exception, "One or more OrderPlaced handlers failed");
+```
+
+### My pipeline behaviors aren't executing in the order I expect
+
+**Cause**: Behaviors execute in **registration order** — the first registered behavior is outermost, the last registered is innermost (closest to the handler).
+
+```csharp
+builder.Services
+    .AddDispatcher<MyCommand, int, MyHandler>()
+    .AddDecoration<LoggingBehavior<MyCommand, int>>()     // Registered 1st → outermost
+    .AddValidator<MyCommandValidator>();                  // Registered 2nd → innermost
+
+// Execution order: Logging → Validation → Handler
+```
+
+**Fix**: Register behaviors from outermost to innermost. If you want validation to run before logging (so you don't log invalid requests), swap the order:
+
+```csharp
+builder.Services
+    .AddDispatcher<MyCommand, int, MyHandler>()
+    .AddValidator<MyCommandValidator>()                   // Registered 1st → outermost
+    .AddDecoration<LoggingBehavior<MyCommand, int>>();    // Registered 2nd → innermost
+
+// Execution order: Validation → Logging → Handler
+```
+
+### `AddValidator<T>()` is registering a behavior — why?
+
+**Cause**: `AddValidator<TValidator>()` is a **convenience method** that does two things:
+1. Registers the validator: `services.AddTransient<IValidator<TRequest>, TValidator>()`
+2. Registers the validation behavior: `services.AddTransient<IPipelineBehavior<TRequest, TResponse>, ValidationBehavior<TRequest, TResponse>>()`
+
+**Fix**: This is by design. If you only want to register the validator without the behavior, use `AddTransient` directly:
+
+```csharp
+// Register validator only (no automatic validation pipeline)
+builder.Services.AddTransient<IValidator<CreateProductCommand>, CreateProductCommandValidator>();
+
+// Then register the dispatch without calling AddValidator
+builder.Services
+    .AddDispatcher<CreateProductCommand, int, CreateProductHandler>()
+    .AddDecoration<LoggingBehavior<CreateProductCommand, int>>();
+```
+
+### My notification handlers are registered but `Publish` doesn't invoke them
+
+**Cause**: The dispatcher resolves handlers via `GetServices<INotificationHandler<TNotification>>()`, so the handler genuinely isn't registered when `Publish` runs. With auto-registration this usually means the handler's assembly was **loaded after** `AddMediator()` was called (module initializers run at assembly load), or the handler was skipped by the generator (`DSAG002` generic, `DSAG003` inaccessible).
+
+**Fix**: Register the handler explicitly so it is registered regardless of assembly-loading order:
+
+```csharp
+// ✅ Explicit builder registration — always applied when this code runs
+builder.Services
+    .AddNotification<OrderPlaced>()
+    .AddHandler<SendConfirmationEmail>()
+    .AddHandler<UpdateInventory>();
+```
+
+Direct DI registration works too — the dispatcher does not distinguish where a registration came from:
+
+```csharp
+builder.Services.AddTransient<INotificationHandler<OrderPlaced>, SendConfirmationEmail>();
+```
+
+Also verify that `AddMediator()` was called before publishing — it is the call that applies the auto-registered handlers.
+
+### No request logging appears — the `RequestHandler` base class doesn't log
+
+**Cause**: The `RequestHandler` base classes are pure passthroughs — they accept no `ILogger`, log nothing, and wrap nothing. Handlers communicate expected failures by returning failed results.
+
+**Fix**: Register the `LoggingBehavior` on the dispatch when you want request logging. It logs the request and the response (or just the request, for the no-response variant), including failed results:
+
+```csharp
+builder.Services
+    .AddDispatcher<MyCommand, int, MyHandler>()
+    .AddDecoration<LoggingBehavior<MyCommand, int>>();
+
+// Logs:
+// [Request Logging] Start. Request: {@Request}
+// [Request Logging] Finished. Response: {@Response}
+// [Request Logging] Failed.            ← logged at Warning with the exception, on failure
+```
+
+### I'm getting a compile-time error when two handlers implement the same request pair
+
+**Cause**: Each `IRequest` type can only have one handler. Two handlers implementing the same request handler pair in one assembly are a **compile-time error** (`DSAG005`, reported by the auto-registration generator). At runtime, the dispatcher resolves `IRequestHandler<TRequest, TResponse>` as a single service.
+
+**Fix**: A command or query should have exactly one handler. If you need multiple behaviors for the same request, chain them on the same builder:
+
+```csharp
+// ✅ One handler, multiple behaviors
+builder.Services
+    .AddDispatcher<CreateProductCommand, int, CreateProductHandler>()
+    .AddDecoration<LoggingBehavior<CreateProductCommand, int>>()
+    .AddValidator<CreateProductCommandValidator>();
+```
+
+If you genuinely need different behavior chains for the same request type, use a decorator pattern in your handler or split the logic into multiple requests.
+
+### `Mediator` is registered as Scoped but my notification handler is Singleton
+
+**Cause**: The `Mediator` class is registered as `Scoped`, which is the correct lifetime for resolving scoped services like `IServiceProvider` and `IRequestHandler` instances. Notification handlers are registered as `Transient` by `AddHandler<T>()`.
+
+**Fix**: If you need a notification handler with a longer lifetime, register it directly instead of using the fluent builder:
+
+```csharp
+// Singleton notification handler
+builder.Services.AddSingleton<INotificationHandler<OrderPlaced>, SendConfirmationEmail>();
+```
+
+But generally, keep handlers as `Transient` (the default) to avoid captive dependency issues.
+
+### My context-aware behavior doesn't see the data set by an earlier behavior
+
+**Cause**: Your behavior is overriding the non-context `HandleAsync` method, which creates a **new empty** `PipelineContext<MyContext>()` rather than forwarding the one received from the pipeline.
+
+**Fix**: Always call the context-aware overload from the non-context overload by forwarding the context:
+
+```csharp
+// ✅ Correct — forwards context from the pipeline
+public ValueTask<Result<TResponse>> HandleAsync(
+    TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken ct)
+    => HandleAsync(request, _ => next(), new PipelineContext<MyContext>(), ct);
+```
+
+The `new PipelineContext<MyContext>()` here is only used as the **initial** context when none exists. The actual context from upstream behaviors is passed to the context-aware overload.
+
+### How do I access `PipelineContext<T>` from a handler that uses `RequestHandler` base class?
+
+Override the protected virtual method instead of the abstract one:
+
+```csharp
+protected override async ValueTask<Result<Data>> HandleAsync<TContext>(
+    MyCommand request, PipelineContext<TContext> context, CancellationToken ct)
+    where TContext : class, new()
+{
+    if (context is PipelineContext<MyContext> ctx)
+        Console.WriteLine(ctx.Data.CorrelationId);
+    return await base.HandleAsync(request, context, ct);
+}
+```
+
+The default implementation delegates to the non-context `HandleAsync(request, ct)`, so calling `base.HandleAsync(request, context, ct)` preserves the chain.
+
+### `RequestHandlerDelegate` and `RequestHandlerDelegate<TResponse>` — which one should my behavior use?
+
+**Cause**: These are two separate delegate types for the two `IPipelineBehavior` variants.
+
+**Fix**:
+
+| Behavior Interface | Delegate Parameter Type | Return Type |
+|---|---|---|
+| `IPipelineBehavior<TRequest>` | `RequestHandlerDelegate` | `ValueTask<Result>` |
+| `IPipelineBehavior<TRequest, TResponse>` | `RequestHandlerDelegate<TResponse>` | `ValueTask<Result<TResponse>>` |
+
+The `next` delegate in `HandleAsync` always matches the behavior's interface. Use the non-generic variant for requests without a response, and the generic variant for requests with a response.
+
+---
+
+## FAQ
+
+### What's the difference between `Send` and `Publish`?
+
+- **`Send<TRequest, TResponse>()`** — Request/response pattern. One request → one handler → one response. Returns `ValueTask<Result<TResponse>>`. Use for commands and queries.
+- **`Send<TRequest>()`** — Request without a response. One request → one handler → completes when the handler finishes. Returns `ValueTask<Result>`.
+- **`Publish<TNotification>()`** — Publish/subscribe pattern. One notification → zero or more handlers. Returns `ValueTask<Result>` aggregating handler failures. Use for domain events and side effects.
+
+### When should I use `IRequest<TResponse>` vs `INotification`?
+
+| Use `IRequest<TResponse>` when... | Use `INotification` when... |
+|---|---|
+| You expect exactly one handler | You want zero or more handlers |
+| The caller needs a response | The caller doesn't care about the outcome |
+| The operation is a command or query | The operation is an event or side effect |
+| Example: "Create a product and return its ID" | Example: "A product was created — send email, update cache, write audit log" |
+
+### Can a request handler publish notifications?
+
+Yes. Inject `IDispatcher` into your handler and call `Publish`:
+
+```csharp
+public class CreateProductHandler : RequestHandler<CreateProductCommand, int>
+{
+    private readonly IDispatcher _dispatcher;
+    private readonly IProductRepository _repository;
+
+    public CreateProductHandler(IDispatcher dispatcher, IProductRepository repository)
+    {
+        _dispatcher = dispatcher;
+        _repository = repository;
+    }
+
+    public override async ValueTask<Result<int>> HandleAsync(
+        CreateProductCommand command, CancellationToken cancellationToken)
+    {
+        var product = new Product { Name = command.Name };
+        int id = await _repository.AddAsync(product);
+
+        Result publishResult = await _dispatcher.Publish(new ProductCreated(id, command.Name), cancellationToken);
+        if (publishResult.IsFailure)
+            _logger.LogError(publishResult.Exception, "ProductCreated handlers failed");
+
+        return Result.Success(id);
+    }
+}
+```
+
+### Do I need to call `AddMediator()` before `AddDispatcher()`?
+
+No — `AddMediator()` and the `AddDispatcher`/`AddNotification` registrations can be called in any order, because they all target the same `IServiceCollection`. But note that `AddMediator()` is the call that **applies the generator's auto-registrations**: module initializers only queue handler registrations, and `AddMediator()` applies the queue. If `AddMediator()` is never called, `Send` and `Publish` fail at runtime (no `IDispatcher`, and no auto-registered handlers).
+
+### Can I use this without the fluent builder?
+
+Yes, but it's more verbose — and plain handlers don't need the builder at all (the source generator registers them when `AddMediator()` is called). The fluent builder remains the convenient way to register behaviors and validators, and it is syntactic sugar over standard DI registrations:
+
+```csharp
+// Fluent builder (recommended)
+builder.Services
+    .AddDispatcher<CreateProductCommand, int, CreateProductHandler>()
+    .AddValidator<CreateProductCommandValidator>();
+
+// Equivalent manual registration
+builder.Services.AddScoped<IRequestHandler<CreateProductCommand, int>, CreateProductHandler>();
+builder.Services.AddTransient<IValidator<CreateProductCommand>, CreateProductCommandValidator>();
+builder.Services.AddTransient<IPipelineBehavior<CreateProductCommand, int>, ValidationBehavior<CreateProductCommand, int>>();
+```
+
+### How do I unit test a handler that inherits from `RequestHandler`?
+
+Test the public `HandleAsync` method directly — it's the one the mediator calls. It returns a `Result<T>`, so assert on the result (or on the failure exception) — the base class performs no logging or catching of its own:
+
+```csharp
+[Fact]
+public async Task HandleAsync_ValidCommand_ReturnsProductId()
+{
+    // Arrange
+    var repository = new Mock<IProductRepository>();
+    repository.Setup(r => r.AddAsync(It.IsAny<Product>())).ReturnsAsync(42);
+
+    var handler = new CreateProductHandler(repository.Object);
+    var command = new CreateProductCommand("Test", 9.99m);
+
+    // Act — call the public HandleAsync, which is what the mediator calls
+    Result<int> result = await handler.HandleAsync(command, CancellationToken.None);
+
+    // Assert
+    result.IsSuccess.Should().BeTrue();
+    result.Value.Should().Be(42);
+}
+
+[Fact]
+public async Task HandleAsync_DuplicateName_ReturnsConflictFailure()
+{
+    // Arrange
+    var repository = new Mock<IProductRepository>();
+    repository.Setup(r => r.DoesProductExistAsync(It.IsAny<string>())).ReturnsAsync(true);
+
+    var handler = new CreateProductHandler(repository.Object);
+    var command = new CreateProductCommand("Existing", 9.99m);
+
+    // Act
+    Result<int> result = await handler.HandleAsync(command, CancellationToken.None);
+
+    // Assert — failures are returned, not thrown
+    result.IsFailure.Should().BeTrue();
+    result.Exception.Should().BeOfType<ConflictException>();
+}
+```
+
+### Can I add multiple validators for the same request?
+
+Yes. The `ValidationBehavior` resolves `IEnumerable<IValidator<TRequest>>` and runs all validators. Register additional validators with `AddTransient`:
+
+```csharp
+builder.Services
+    .AddDispatcher<CreateProductCommand, int, CreateProductHandler>()
+    .AddValidator<CreateProductCommandValidator>();
+
+// Additional validators registered manually
+builder.Services.AddTransient<IValidator<CreateProductCommand>, PricingValidator>();
+builder.Services.AddTransient<IValidator<CreateProductCommand>, InventoryValidator>();
+```
+
+All three validators will run when the request is dispatched.
+
+### Can I use multiple different context types in the same application?
+
+Yes. Each `Send`/`Publish` call specifies its context type via the generic parameter. Different features can use different context types:
+
+```csharp
+var auditCtx = new PipelineContext<AuditContext>();
+Result<Data> auditResult = await dispatcher.Send<CommandA, Data, AuditContext>(cmd, auditCtx);
+
+var perfCtx = new PipelineContext<PerformanceContext>();
+Result<Data> perfResult = await dispatcher.Send<CommandB, Data, PerformanceContext>(cmd, perfCtx);
+```
+
+### How do notification behaviors compose?
+
+Each notification handler gets its own independent behavior pipeline. Behaviors are composed in registration order, outermost first:
+
+```csharp
+builder.Services
+    .AddNotification<OrderPlaced>()
+    .AddDecoration<NotificationRetryBehavior<OrderPlaced>>()     // outermost: retries the inner pipeline
+    .AddDecoration<NotificationLoggingBehavior<OrderPlaced>>();  // innermost: logs around the handler
+
+// For each handler: Retry → Logging → Handler
+```
+
+If the handler returns a failed result, `NotificationLoggingBehavior` sees it (it wraps the handler), then `NotificationRetryBehavior` catches it and retries the entire inner pipeline (including logging).
+
+---
+
+## Known Limitations
+
+- **Compile-time registration, not runtime scanning**: Handlers are discovered at compile time by the source generator, not at runtime. Auto-registration covers the assembly that calls `AddMediator()` plus any assembly loaded before that call; handlers in lazily-loaded class libraries may register too late (keep handlers in the entry assembly, touch the library at startup, or register explicitly).
+- **One handler per request type**: The dispatcher resolves `IRequestHandler<TRequest, TResponse>` as a single service. Two handlers for the same request pair in one assembly are a compile-time error (`DSAG005`) — use notifications for one-to-many dispatch.
+- **No built-in request timeout or cancellation token modification**: Pipeline behaviors receive the original `CancellationToken`. Behaviors cannot create linked tokens with timeouts without custom code.
+- **No built-in transaction behavior**: There is no `TransactionBehavior` in the box. Implement `IPipelineBehavior<TRequest, TResponse>` to wrap handlers in a transaction.
+- **Notification handler ordering**: Handlers are invoked in the order they appear in `GetServices<T>()` (registration order). There is no priority or ordering mechanism.
+
+---
+
+## Performance Tips
+
+- **Inject the concrete generated `Mediator`** instead of `IDispatcher` on hot paths — the monomorphized overloads are up to ~25% faster than the interface path (see the [Benchmarks](benchmarks)).
+- **Register behaviors as Transient**: The default `AddDecoration<T>()` and `AddValidator<T>()` register behaviors as `Transient`. This is correct — behaviors should not hold request-scoped state.
+- **Avoid expensive work in constructors**: Behaviors and handlers are resolved per-request (for Scoped handlers) or per-resolution (for Transient behaviors). Keep constructors cheap.
+- **`NotificationRetryBehavior` increases latency**: Each retry adds `baseDelayMilliseconds * attempt` delay. With 3 retries and 200ms base, worst-case latency is 200 + 400 + 600 = 1200ms extra. Tune these values for your workload.
+- **Structured logging has a cost**: `LoggingBehavior` serializes the full request and response objects (`{@Request}`, `{@Response}`). For high-throughput endpoints with large payloads, consider implementing a custom logging behavior that only captures essential fields.

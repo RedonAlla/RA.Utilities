@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Roslyn analyzers must target netstandard2.0 so they can run in the compiler process.
+         net10.0 is included so that builds passing a global TargetFramework=net10.0 (for example
+         IDE builds or `dotnet build -p:TargetFramework=net10.0`) still find restored assets
+         instead of failing with NETSDK1005. Consumers select the netstandard2.0 build explicitly
+         via SetTargetFramework on the ProjectReference. -->
+    <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <IsRoslynComponent>true</IsRoslynComponent>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <NoWarn>$(NoWarn);RS2008</NoWarn>
+    <!-- The net10.0 leg is a build-compatibility placeholder only (it exists so that global
+         TargetFramework=net10.0 builds find restored assets); the real analyzer is the
+         netstandard2.0 leg, so the extension-TFM rule is relaxed for it. -->
+    <NoWarn Condition="'$(TargetFramework)' == 'net10.0'">$(NoWarn);RS1041</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>

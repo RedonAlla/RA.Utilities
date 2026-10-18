@@ -1,0 +1,47 @@
+---
+title: Models
+sidebar_position: 1
+---
+
+```powershell
+Namespace: RA.Utilities.Dispatcher.Models
+```
+
+The `RA.Utilities.Dispatcher.Models` namespace defines delegates and the typed context carrier that are fundamental to the pipeline architecture.
+
+## ✨ Types in this namespace
+
+### 1. `PipelineContext<T>`
+
+A **strongly-typed** data carrier that flows through the entire dispatcher pipeline. Behaviors and handlers read/write properties on the user-defined `T` — no dictionaries, no magic strings.
+
+See: [`PipelineContext<T>`](PipelineContext.md)
+
+### 2. Context-Aware Delegates
+
+| Delegate | Purpose |
+|---|---|
+| `RequestHandlerContextDelegate<TContext>` | Context-aware request (no response) |
+| `RequestHandlerContextDelegate<TResponse, TContext>` | Context-aware request with response |
+| `NotificationHandlerContextDelegate<TContext>` | Context-aware notification |
+
+These are used by the context-aware overloads on [`IPipelineBehavior`](../Abstractions/IPipelineBehavior.md) and [`INotificationBehavior`](../Abstractions/INotificationBehavior.md).
+
+### 3. `NotificationHandlerDelegate`
+
+Delegate for notifying the next handler in the notification pipeline. Used by [`INotificationBehavior`](../Abstractions/INotificationBehavior.md).
+
+See: [`NotificationHandlerDelegate`](NotificationHandlerDelegate.md)
+
+### 4. `RequestHandlerDelegate` and `RequestHandlerDelegate<TResponse>`
+
+Delegates for invoking the next step in the request pipeline. Used by [`IPipelineBehavior`](../Abstractions/IPipelineBehavior.md).
+
+See: [`RequestHandlerDelegate`](RequestHandlerDelegate.md)
+
+<br />
+<br />
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />

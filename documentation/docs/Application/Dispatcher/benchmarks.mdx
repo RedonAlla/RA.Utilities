@@ -1,0 +1,82 @@
+---
+sidebar_position: 89
+title: Benchmarks
+---
+
+# Benchmarks
+
+The `RA.Utilities.Dispatcher.Benchmarks` project compares the generated mediator against **MediatR 14.2** using [BenchmarkDotNet](https://benchmarkdotnet.org/), scenario for scenario. The tables below are the current dataset, collected in a single session on 2026-10-18.
+
+## 🎯 Methodology
+
+- **Equal lifetimes.** Both sides register their request handlers **scoped**, matching this package's documented lifetime, so the comparison measures dispatch machinery, not DI lifetime bookkeeping.
+- **Fresh scope per iteration.** Each iteration resolves the mediator from a new `IServiceScope`, mirroring per-request semantics.
+- **Same payloads.** Both sides share the same `PongResponse` and request shapes; handlers are no-ops that return a canned response.
+- **Same pipeline depth.** Depth is modeled with distinct request types per depth on both sides (depth is fixed by the DI registrations).
+- **Null loggers everywhere.** The behavior scenarios log through null loggers on both sides, so each side measures its own behavior overhead, not a logging sink.
+- **Both dispatch paths measured.** The dispatcher side measures the interface-typed `IDispatcher.Send<TRequest, TResponse>(...)` path **and** the concrete generated `Mediator.Send(...)` path; MediatR exposes only the interface path.
+- **Hardware.** Apple M1, .NET 10.0.11 (SDK 10.0.400), BenchmarkDotNet 0.15.8, default job (≈15 warmup + ≈20 target iterations per benchmark). All classes ran in one session, so machine conditions are identical within a table; absolute numbers shift between sessions — compare **within** a run.
+
+## 📊 Results (send shapes)
+
+| Scenario | MediatR 14.2 | Dispatcher (interface) | Dispatcher `Mediator` (concrete) | Delta (concrete) |
+|---|---|---|---|---|
+| Send, 0 behaviors | 283.2 ns / 608 B | 284.3 ns / 464 B | **218.4 ns / 464 B** | −23% time, −24% alloc |
+| Send, 1 behavior | 363.5 ns / 848 B | 346.0 ns / 688 B | **271.7 ns / 688 B** | −25% time, −19% alloc |
+| Send, 3 behaviors | 419.2 ns / 1136 B | 418.5 ns / 960 B | **327.8 ns / 960 B** | −22% time, −15% alloc |
+| Send, void | 245.9 ns / 512 B | 291.9 ns / 432 B | **215.2 ns / 432 B** | −12% time, −16% alloc |
+| Send, void + 3 behaviors | 419.6 ns / 1040 B | 409.7 ns / 928 B | **317.8 ns / 928 B** | −24% time, −11% alloc |
+
+The interface-typed path is at parity with MediatR on the behavior-free shapes (1.00× send, 0.95× with one behavior) and slightly slower on the bare void send (1.19×, +46 ns — the `Result` wrapping shows up there); it still allocates 11–24% less in every shape.
+
+## 📊 Results (notification fan-out)
+
+| Scenario | MediatR 14.2 | Dispatcher (interface) | Dispatcher `Mediator` (concrete) | Delta (concrete) |
+|---|---|---|---|---|
+| Publish, 1 handler | 410.1 ns / 968 B | 396.7 ns / 672 B | **295.2 ns / 672 B** | −28% time, −31% alloc |
+| Publish, 3 handlers | 639.3 ns / 1448 B | 483.4 ns / 992 B | **390.2 ns / 992 B** | −39% time, −31% alloc |
+
+Notification fan-out is where the generated mediator pulls ahead the most — the generated `Publish` fans out to handlers resolved directly from the provider with a per-handler behavior wrap, with no dictionary dispatch or per-notification wrapper machinery.
+
+## 🔎 Reading the numbers
+
+- **The concrete generated `Mediator` is faster and lighter in every scenario** — 12–39% less time, 11–31% fewer allocations than MediatR at equal lifetimes.
+- **The gap grows with pipeline depth** — three behaviors cost the dispatcher ~110 ns over the bare send, while MediatR pays ~136 ns for the same depth.
+- **The interface path pays a small toll for generic dispatch** — injecting `IDispatcher` instead of the concrete `Mediator` costs 15–65 ns per call depending on shape, and is still lighter on allocations everywhere.
+- **Behavior ordering note** — behaviors execute in registration order, outermost first; the benchmark's three-behavior scenarios stack logging, metrics, and retry no-ops.
+
+## 🛠️ Running the benchmarks
+
+```bash
+# From the repository root — everything (long)
+dotnet run -c Release --project Benchmarks/RA.Utilities.Dispatcher.Benchmarks
+
+# Dispatcher vs MediatR only (excludes the RA.Utilities.Feature columns)
+dotnet run -c Release --project Benchmarks/RA.Utilities.Dispatcher.Benchmarks \
+  -- --filter "*SendComparisonBenchmarks.MediatR_*" "*SendComparisonBenchmarks.Dispatcher_*" \
+     "*PublishComparisonBenchmarks.MediatR_*" "*PublishComparisonBenchmarks.Dispatcher_*" --join
+
+# Quick sanity run
+dotnet run -c Release --project Benchmarks/RA.Utilities.Dispatcher.Benchmarks \
+  -- --filter "*SendComparisonBenchmarks*" --job dry
+```
+
+- `--filter '*SendComparisonBenchmarks*'` — the MediatR and generated-mediator send comparison.
+- `--filter '*PublishComparisonBenchmarks*'` — the notification fan-out comparison.
+- `--join` — one combined summary table across both classes.
+- `--job short` for a quick smoke run.
+
+The benchmark sources live in `Benchmarks/RA.Utilities.Dispatcher.Benchmarks/`:
+
+| Folder | Contents |
+|---|---|
+| `Shared/` | `DiHost` scope factory, the shared payload types, and the null-logger registration |
+| `Scenarios/Mediatr/` | MediatR requests, handlers, behaviors, and DI configuration |
+| `Scenarios/Dispatcher/` | The generated-mediator scenarios: requests, handlers, closed no-op behaviors, and DI configuration |
+| `Scenarios/Feature/` | The same scenarios against `RA.Utilities.Feature` (excluded from the tables above) |
+
+Both RA packages ship their source generator into the benchmark assembly, so every benchmark exercises a real generated `Mediator` and real DI registrations — nothing is stubbed. The benchmark handlers are generic (registered under their interfaces), so these measurements use the interface-resolution path — plain non-generic handlers get the faster concrete path.
+
+## 🧠 Summary
+
+At equal lifetimes against MediatR 14.2, the concrete generated `Mediator` is **12–39% faster with 11–31% fewer allocations** across the send and publish shapes, with the biggest wins on notification fan-out. The interface-typed `IDispatcher` path matches MediatR's speed on request dispatch while allocating less everywhere. See the [Generated Mediator](./generated-mediator) guide for the dispatch matrix behind these numbers.

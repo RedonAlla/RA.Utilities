@@ -1,0 +1,21 @@
+---
+title: Exceptions
+sidebar_position: 7
+---
+
+```powershell
+Namespace: RA.Utilities.Dispatcher.Exceptions
+```
+
+The `RA.Utilities.Dispatcher.Exceptions` namespace contains the exception types specific to dispatcher dispatch. **Expected** failures from your **handlers and pipeline behaviors** should be **returned** as failed results — `Result.Failure(...)` with a typed exception from [`RA.Utilities.Core.Exceptions`](../../../core/RA.Utilities.Core.Exceptions/index.mdx) (`NotFoundException`, `ConflictException`, `BadRequestException`, ...) so callers can map them consistently — the exceptions in this namespace are reserved for the dispatcher's own dispatch failures.
+
+The primary type is:
+
+* **[`HandlerNotFoundException`](./HandlerNotFoundException.md)**: Thrown when an object-based `Send`/`Publish` cannot be dispatched because the message's runtime type has no (or an ambiguous) handler contract.
+
+<br />
+<br />
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />
