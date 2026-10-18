@@ -4,7 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.OpenApi;
-using RA.Utilities.Api.Results;
+using RA.Utilities.Api.Response;
 using RA.Utilities.Core.Constants;
 using RA.Utilities.OpenApi.Models;
 
