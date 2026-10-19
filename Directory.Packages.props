@@ -2,37 +2,56 @@
   <PropertyGroup>
     <!-- Enable central package management, https://learn.microsoft.com/en-us/nuget/consume-packages/Central-Package-Management -->
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <!-- Required so the floating versions below are allowed under central package management (NU1011). -->
+    <CentralPackageFloatingVersionsEnabled>true</CentralPackageFloatingVersionsEnabled>
+    <!-- Floating versions resolve to the latest STABLE match at restore time (prereleases are
+         never picked). Shipped dependencies use floats so published packages are always built
+         against, and packed with, the latest stable .NET 10-compatible versions:
+           "10.0.*" -> latest patch of the .NET 10 servicing train
+           "12.*"   -> latest stable within the current major line
+         dotnet pack writes the resolved version as an open nuspec floor [resolved, ), so
+         consumers of RA.Utilities.* packages also float up to the newest allowed version.
+         NOTE: floats stay within the written major line; when a new major ships (e.g. .NET 11,
+         FluentValidation 13), bump the float explicitly. -->
   </PropertyGroup>
   <ItemGroup>
+    <!-- Shipped dependencies (flow into published nuspecs) - floating to latest stable -->
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
-    <PackageVersion Include="Destructurama.SystemTextJson" Version="0.1.0" />
-    <PackageVersion Include="FluentValidation" Version="12.1.1" />
-    <PackageVersion Include="MediatR" Version="14.2.0" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.12" />
-    <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
-    <PackageVersion Include="Serilog.Enrichers.Sensitive" Version="2.1.0" />
-    <PackageVersion Include="Serilog.Exceptions" Version="8.4.0" />
-    <PackageVersion Include="Serilog.Sinks.Async" Version="2.1.0" />
-    <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
-    <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
-    <PackageVersion Include="Scalar.AspNetCore" Version="2.17.3" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.IO.RecyclableMemoryStream" Version="3.0.1" />
-    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.401" />
-    <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.34.0.3385" />
-    <PackageVersion Include="coverlet.collector" Version="10.0.1" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
-    <PackageVersion Include="xunit" Version="2.9.3" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
-    <PackageVersion Include="FluentAssertions" Version="8.11.0" />
+    <PackageVersion Include="Destructurama.SystemTextJson" Version="0.*" />
+    <PackageVersion Include="FluentValidation" Version="12.*" />
+    <PackageVersion Include="MediatR" Version="14.*" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.*" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.*" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.*" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.*" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.*" />
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.*" />
+    <PackageVersion Include="Serilog.AspNetCore" Version="10.*" />
+    <PackageVersion Include="Serilog.Enrichers.Sensitive" Version="2.*" />
+    <PackageVersion Include="Serilog.Exceptions" Version="8.*" />
+    <PackageVersion Include="Serilog.Sinks.Async" Version="2.*" />
+    <PackageVersion Include="Serilog.Sinks.Console" Version="6.*" />
+    <PackageVersion Include="Serilog.Sinks.File" Version="7.*" />
+    <PackageVersion Include="Scalar.AspNetCore" Version="2.*" />
+    <PackageVersion Include="Microsoft.IO.RecyclableMemoryStream" Version="3.*" />
+    <!-- Must stay on the 2.x line: Microsoft.AspNetCore.OpenApi 10.x requires [2.12.0, 3.0.0).
+         "2.*" always resolves to the newest stable 2.x, so the CVE-2026-49451 / GHSA-v5pm-xwqc-g5wc
+         floor (>= 2.12.x) is preserved automatically. -->
+    <PackageVersion Include="Microsoft.OpenApi" Version="2.*" />
+
+    <!-- Build-only / private assets (never shipped) - pinned -->
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.402" />
+    <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.35.0.4138" />
+    <!-- Pinned: source generators must match the repo's Roslyn compiler 5.6 (~/global.json SDK
+         pins 10.0.400). Bumping past 5.6 risks CS9057 analyzer load failures. -->
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.9.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.6.0" />
-    <!-- Pin Microsoft.OpenApi to fix CVE-2026-49451 / GHSA-v5pm-xwqc-g5wc.
-         Must stay on the 2.x line: Microsoft.AspNetCore.OpenApi 10.x requires [2.12.0, 3.0.0). -->
-    <PackageVersion Include="Microsoft.OpenApi" Version="2.12.2" />
+
+    <!-- Test-only (never shipped) - pinned for reproducible test runs -->
+    <PackageVersion Include="coverlet.collector" Version="10.1.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.1" />
+    <PackageVersion Include="FluentAssertions" Version="8.11.0" />
   </ItemGroup>
 </Project>

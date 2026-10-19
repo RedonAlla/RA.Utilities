@@ -1,8 +1,22 @@
 ---
 title: RA.Utilities.OpenApi
 authors: [RedonAlla]
-date: 2026-10-18
+date: 2026-10-19
 ---
+
+## Version 10.2.1
+![Date Badge](https://img.shields.io/badge/Publish-19%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.2.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.OpenApi/10.2.1)
+
+Dependency updates only — no API or behavior changes.
+
+<!-- truncate -->
+
+### 📝 Improvements
+
+* **Microsoft.AspNetCore.OpenApi 10.0.12 → 10.0.13**.
+* **Microsoft.OpenApi 2.12.2 → 2.13.0** (stays on the 2.x line required by `Microsoft.AspNetCore.OpenApi` 10.x).
+* **FluentValidation 12.1.1 → 12.2.0**.
 
 ## Version 10.2.0
 ![Date Badge](https://img.shields.io/badge/Publish-18%20October%202026-lightblue?logo=fastly&logoColor=white)

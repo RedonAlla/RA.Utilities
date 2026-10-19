@@ -1,8 +1,21 @@
 ---
 title: RA.Utilities.Api
 authors: [RedonAlla]
-date: 2026-10-17
+date: 2026-10-19
 ---
+
+## Version 10.2.3
+![Date Badge](https://img.shields.io/badge/Publish-19%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.2.3-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api/10.2.3)
+
+Maintenance release completing the internal migration to the `RA.Utilities.Api.Response` namespace and updating FluentValidation to 12.2.0. No public API or behavior changes.
+
+<!-- truncate -->
+
+### 📝 Improvements
+
+* **Namespace migration completed**: the mapper helpers (`ErrorResultResponse`, `ErrorResultMapper`, `SuccessResult`) and `DefaultHeadersMiddleware` now import the response models from `RA.Utilities.Api.Response` instead of the transitional `RA.Utilities.Api.Results` namespace, and the verbose `Microsoft.AspNetCore.Http.Results.*` qualifications are simplified to `Results.*`. Call sites are unaffected.
+* **FluentValidation 12.1.1 → 12.2.0**.
 
 ## Version 10.2.2
 ![Date Badge](https://img.shields.io/badge/Publish-17%20October%202026-lightblue?logo=fastly&logoColor=white)

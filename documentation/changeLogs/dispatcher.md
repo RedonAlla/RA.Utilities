@@ -1,12 +1,24 @@
 ---
 title: RA.Utilities.Dispatcher
 authors: [RedonAlla]
-date: 2026-10-18
+date: 2026-10-19
 ---
 
-## Version 11.0.0
-![Date Badge](https://img.shields.io/badge/Publish-Unreleased-lightblue?logo=fastly&logoColor=white)
-[![NuGet version](https://img.shields.io/badge/NuGet-11.0.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Dispatcher/11.0.0)
+## Version 10.0.1
+![Date Badge](https://img.shields.io/badge/Publish-19%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-v10.0.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Dispatcher/10.0.1)
+
+Maintenance release updating the `Microsoft.Extensions.*` dependencies to the latest .NET 10 servicing patch. No API or behavior changes.
+
+<!-- truncate -->
+
+### 📝 Improvements
+
+*   **Dependency updates**: `Microsoft.Extensions.DependencyInjection.Abstractions` 10.0.12 → 10.0.13 and `Microsoft.Extensions.Logging.Abstractions` 10.0.12 → 10.0.13. Dependency versions are now managed as floating versions, so every release is built against — and ships with — the latest stable versions.
+
+## Version 10.0.0
+![Date Badge](https://img.shields.io/badge/Publish-18%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-v10.0.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Dispatcher/10.0.0)
 
 Initial release of the **`RA.Utilities.Dispatcher`** package — the successor of `RA.Utilities.Feature`. It keeps the source-generated mediator, auto-registration, pipeline behaviors, and notification system, and returns to **Result-based dispatch** with a modern shape.
 
@@ -49,5 +61,5 @@ The concrete generated mediator is **12–39% faster than MediatR with 11–31% 
 
 ### 📖 Documentation
 
-*   New Docusaurus section under `nuget-packages/Application/Dispatcher` following the project's documentation template: package index, auto-registration guide, generated-mediator guide, benchmarks, migration guide (`RA.Utilities.Feature` 10.x → `RA.Utilities.Dispatcher` 11.0.0), troubleshooting & FAQ, and per-type reference pages for `Abstractions`, `Behaviors`, `Builders`, `Exceptions`, `Extensions`, `Generated`, `Handlers`, and `Models`.
+*   New Docusaurus section under `nuget-packages/Application/Dispatcher` following the project's documentation template: package index, auto-registration guide, generated-mediator guide, benchmarks, migration guide (`RA.Utilities.Feature` 10.x → `RA.Utilities.Dispatcher` 10.0.0), troubleshooting & FAQ, and per-type reference pages for `Abstractions`, `Behaviors`, `Builders`, `Exceptions`, `Extensions`, `Generated`, `Handlers`, and `Models`.
 *   New `RA.Utilities.Dispatcher.Benchmarks` BenchmarkDotNet project comparing the generated mediator against MediatR 14.2 on identical send and publish scenarios, with per-scope resolution mirroring per-request semantics.

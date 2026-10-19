@@ -1,5 +1,45 @@
 # RA.Utilities.Integrations Release Notes
 
+## Version 10.2.1
+![Date Badge](https://img.shields.io/badge/Publish-19%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-v10.2.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Integrations/10.2.1)
+
+`ProxySettings` is removed entirely. v10.2.0 had already removed the built-in proxy pipeline (`ProxyMessageHandler`, `WithProxyFromSettings<TSettings>(...)`) and kept `ProxySettings` as a configuration-only POCO; the class itself is now gone.
+
+### ⚠️ Breaking Changes
+
+*   **`ProxySettings` removed**: the `RA.Utilities.Integrations.Options.ProxySettings` class is deleted. Applications that kept it as a bindable options POCO must define their own proxy options type and wire the primary handler explicitly. The `UseProxy` flag on `IIntegrationSettings`/`BaseApiSettings<T>` still exists but remains unconsumed by any package component. **Migration**:
+
+```csharp
+// Before (v10.2.0)
+public class MyApiSettings : BaseApiSettings<MyApiActions>
+{
+    public ProxySettings? Proxy { get; set; }
+}
+
+// After (v10.2.1) — own options POCO
+public sealed class ProxyOptions
+{
+    [Required, Url] public string Address { get; set; } = default!;
+    public string? Username { get; set; }
+    public string? Password { get; set; }
+    public bool BypassProxyOnLocal { get; set; }
+}
+
+public class MyApiSettings : BaseApiSettings<MyApiActions>
+{
+    public ProxyOptions? Proxy { get; set; }
+}
+
+// Wire the proxy yourself:
+builder.Services.AddHttpClient("MyApi")
+    .ConfigurePrimaryHttpMessageHandler(_ => new HttpClientHandler
+    {
+        Proxy = new WebProxy(proxyOptions.Address),
+        UseProxy = true
+    });
+```
+
 ## Version 10.2.0
 ![Date Badge](https://img.shields.io/badge/Publish-15%20October%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-v10.2.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Integrations/10.2.0)

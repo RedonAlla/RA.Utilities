@@ -4,13 +4,13 @@ title: Migration Guides
 
 # Migration Guides
 
-## RA.Utilities.Feature v10.x → RA.Utilities.Dispatcher v11.0.0
+## RA.Utilities.Feature v10.x → RA.Utilities.Dispatcher v10.0.0
 
 The `RA.Utilities.Dispatcher` package is the successor of `RA.Utilities.Feature`. It keeps the source-generated mediator, auto-registration, pipeline behaviors, and notification system — and **returns to Result-based dispatch**: handlers and `IDispatcher` return `ValueTask<Result<T>>`, and expected failures are returned instead of thrown.
 
 ### 💥 Breaking Change: the mediator contract is Result-based again — failures are returned, not thrown
 
-Feature v10.2.0 removed `Result` from the mediator contract: handlers returned plain `Task<TResponse>` / `Task`, and failures were thrown as typed exceptions. Dispatcher v11.0.0 reintroduces `Result` with a modern shape:
+Feature v10.2.0 removed `Result` from the mediator contract: handlers returned plain `Task<TResponse>` / `Task`, and failures were thrown as typed exceptions. Dispatcher v10.0.0 reintroduces `Result` with a modern shape:
 
 - Handlers return `ValueTask<Result<TResponse>>` (`ValueTask<Result>` for void requests); `INotificationHandler<TNotification>` now returns `ValueTask<Result>` (it returned `Task` in Feature).
 - `IDispatcher.Send<TRequest, TResponse>` returns `ValueTask<Result<TResponse>>`; `Send<TRequest>` (void) returns `ValueTask<Result>`. Context overloads add an optional `PipelineContext<TContext>? context = null` parameter.
@@ -20,7 +20,7 @@ Feature v10.2.0 removed `Result` from the mediator contract: handlers returned p
 
 ### Package and namespace rename
 
-| Feature (v10.x) | Dispatcher (v11.0.0) |
+| Feature (v10.x) | Dispatcher (v10.0.0) |
 |---|---|
 | Package `RA.Utilities.Feature` | Package `RA.Utilities.Dispatcher` |
 | Namespace `RA.Utilities.Feature.Abstractions` | `RA.Utilities.Dispatcher.Abstractions` |
@@ -39,7 +39,7 @@ Feature v10.2.0 removed `Result` from the mediator contract: handlers returned p
 
 ### Signature changes at a glance
 
-| Member | Before (Feature 10.2.0) | After (Dispatcher 11.0.0) |
+| Member | Before (Feature 10.2.0) | After (Dispatcher 10.0.0) |
 |---|---|---|
 | `IRequestHandler<TRequest, TResponse>.HandleAsync` | `Task<TResponse>` | `ValueTask<Result<TResponse>>` |
 | `IRequestHandler<TRequest>.HandleAsync` (void) | `Task` | `ValueTask<Result>` |
@@ -84,7 +84,7 @@ public class CreateProductHandler : RequestHandler<CreateProductCommand, int>
 }
 ```
 
-**After (Dispatcher 11.0.0):**
+**After (Dispatcher 10.0.0):**
 
 ```csharp
 using RA.Utilities.Core.Exceptions;
@@ -121,7 +121,7 @@ if (product is null)
     throw new NotFoundException(nameof(Product), query.ProductId);
 ```
 
-**After (Dispatcher 11.0.0):**
+**After (Dispatcher 10.0.0):**
 
 ```csharp
 var product = await _repository.FindByIdAsync(query.ProductId, ct);
@@ -142,7 +142,7 @@ var product = await mediator.Send<GetProductQuery, Product>(query);
 return Results.Ok(product);
 ```
 
-**After (Dispatcher 11.0.0):**
+**After (Dispatcher 10.0.0):**
 
 ```csharp
 Result<Product> result = await dispatcher.Send<GetProductQuery, Product>(query);
@@ -183,7 +183,7 @@ builder.Services
     .AddDecoration<NotificationRetryBehavior<OrderPlaced>>();
 ```
 
-**After (Dispatcher 11.0.0):**
+**After (Dispatcher 10.0.0):**
 
 ```csharp
 builder.Services.AddMediator(); // registers IDispatcher + all auto-discovered handlers

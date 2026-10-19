@@ -28,16 +28,6 @@ Its purpose is to provide a standardized, reusable foundation for any API integr
   * **Validation**:
   It uses Data Annotations (`[Required]`, `[Url]`, `[Range]`) to ensure that the configuration provided is valid at application startup, preventing runtime errors due to misconfiguration.
 
-## 2. [`ProxySettings`](./ProxySettings.md)
-This class is a focused options model whose sole purpose is to hold all the configuration details required to set up an HTTP proxy
-(the proxy address and optional credentials).
-
-  * **Clarity**:
-  It makes the configuration explicit.
-  A developer looking at `appsettings.json` can immediately understand what values are needed to configure the proxy.
-  * **v10.2.0 note**: the built-in proxy pipeline was removed in v10.2.0 — `ProxySettings` remains a bindable configuration POCO,
-  but no package component consumes it anymore. See the [migration guide](../migration-guides).
-
 ## 🧠 Summary
 In short, the classes in the `RA.Utilities.Integrations.Options` namespace are the "control panel" for your external API integrations.
 They provide a structured, validated, and reusable way to define *how* your application connects to the outside world, promoting clean architecture and making your configuration easy to manage.

@@ -70,7 +70,7 @@ Register it as a typed client with the package's helper, which binds a settings 
 ```csharp
 services.AddHttpClientIntegration<ICustomersClient, CustomersClient, CustomersApiSettings>(
         configuration.GetSection("Integrations:CustomersApi"))
-    .WithHttpLoggingHandler();
+    .AddLoggingHandler();
 ```
 
 ```jsonc
@@ -93,11 +93,10 @@ Settings classes implement `IIntegrationSettings` (`BaseUrl`, `UseProxy`, `Timeo
 
 | Helper | Effect |
 | :--- | :--- |
-| `WithHttpLoggingHandler()` | Attaches `RequestResponseLoggingHandler` to this client |
-| `WithInternalHeadersForwardingHandler()` | Attaches `InternalHeadersForwardHandler` — forwards the current access token and `x-request-id` on each call |
-| `WithApiKey(apiKey, headerName = "X-Api-Key")` | Adds a static API key header |
-| `WithApiKeyFromSettingsHandler<TSettings>()` | Attaches `ApiKeyAuthenticationHandler<TSettings>` — injects the key from settings implementing `IApiKeySettings` |
-| `WithProxyFromSettings<TSettings>(selector)` | Configures the primary handler to route through a proxy defined by `IProxySettings` |
+| `AddLoggingHandler()` | Attaches `LoggingHandler` to this client |
+| `AddInternalHeadersForwardingHandler()` | Attaches `InternalHeadersForwardHandler` — forwards the current access token and `x-request-id` on each call |
+
+Static API keys go through `ConfigureHttpClient` (default request headers) and proxies through `ConfigurePrimaryHttpMessageHandler`; the pre-v10.2 `WithApiKey*`/`WithProxyFromSettings` helpers were removed in v10.2.0.
 
 `AddTransientHttpMessageHandler<T>()` is also available for handlers that should not share a scope.
 
@@ -123,7 +122,7 @@ RaTemplate.Integration/
 Program.cs
   └─ AddInfrastructureServices(configuration)      (RaTemplate.Infrastructure)
        └─ AddIntegrationServices(configuration)    (RaTemplate.Integration, if enabled)
-            ├─ RequestResponseLoggingHandler       (scoped delegating handler)
+            ├─ LoggingHandler                      (scoped delegating handler)
             └─ your typed clients                  (AddHttpClientIntegration<...>)
 ```
 

@@ -1,5 +1,11 @@
 # Release Notes
 
+## Version 10.1.2
+![Date Badge](https://img.shields.io/badge/Publish-19%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.1.2-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Logging.Core/10.1.2)
+
+Maintenance release — no API, behavior, or dependency changes.
+
 ## Version 10.1.1
 ![Date Badge](https://img.shields.io/badge/Publish-15%20October%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.1.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Logging.Core/10.1.1)

@@ -1,5 +1,16 @@
 # Release Notes for RA.Utilities.Dispatcher
 
+## Version 10.0.1
+
+![Date Badge](https://img.shields.io/badge/Publish-19%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-v10.0.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Dispatcher/10.0.1)
+
+Maintenance release updating the `Microsoft.Extensions.*` dependencies to the latest .NET 10 servicing patch. No API or behavior changes.
+
+### 📝 Improvements
+
+*   **Dependency updates**: `Microsoft.Extensions.DependencyInjection.Abstractions` 10.0.12 → 10.0.13 and `Microsoft.Extensions.Logging.Abstractions` 10.0.12 → 10.0.13. Dependency versions are now managed as floating versions, so every release is built against — and ships with — the latest stable versions.
+
 ## Version 10.0.0
 
 ![Date Badge](https://img.shields.io/badge/Publish-18%20October%202026-lightblue?logo=fastly&logoColor=white)

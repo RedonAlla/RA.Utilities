@@ -5,6 +5,58 @@ sidebar_position: 8
 
 # Migration Guides
 
+## v10.2.0 → v10.2.1
+
+v10.2.1 removes the `ProxySettings` class. v10.2.0 had already removed the built-in proxy pipeline (`ProxyMessageHandler`, `WithProxyFromSettings<TSettings>(...)`); the `ProxySettings` POCO itself is now gone too.
+
+### What changed
+
+| Aspect | v10.2.0 | v10.2.1 |
+|---|---|---|
+| `ProxySettings` | configuration-only POCO (not consumed by the package) | **removed** — define your own options type |
+| `UseProxy` flag on `IIntegrationSettings`/`BaseApiSettings<T>` | unconsumed | still present, still unconsumed |
+
+### Migration Steps
+
+Replace the `ProxySettings` property on your settings class with your own options POCO and wire the primary handler explicitly.
+
+**Before (v10.2.0):**
+
+```csharp
+public class MyApiSettings : BaseApiSettings<MyApiActions>
+{
+    public ProxySettings? Proxy { get; set; }
+}
+```
+
+**After (v10.2.1):**
+
+```csharp
+public sealed class ProxyOptions
+{
+    [Required, Url] public string Address { get; set; } = default!;
+    public string? Username { get; set; }
+    public string? Password { get; set; }
+    public bool BypassProxyOnLocal { get; set; }
+}
+
+public class MyApiSettings : BaseApiSettings<MyApiActions>
+{
+    public ProxyOptions? Proxy { get; set; }
+}
+```
+
+```csharp
+builder.Services.AddHttpClient("MyApi")
+    .ConfigurePrimaryHttpMessageHandler(_ => new HttpClientHandler
+    {
+        Proxy = new WebProxy(proxyOptions.Address),
+        UseProxy = true
+    });
+```
+
+---
+
 ## v10.1.1 → v10.2.0
 
 v10.2.0 consolidates the registration API around C# 14 extension members — one extension class per receiver type — and removes the built-in API key and proxy machinery. Extension-method call sites (`services.AddHttpClientIntegration(...)`, `builder.AddLoggingHandler()`, ...) are unchanged; only class-name references and the removed members need attention.
