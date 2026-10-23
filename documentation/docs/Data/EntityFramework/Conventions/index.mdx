@@ -1,0 +1,82 @@
+---
+title: Conventions
+sidebar_position: 6
+---
+
+```bash
+Namespace: RA.Utilities.Data.EntityFramework.Conventions
+```
+
+The `RA.Utilities.Data.EntityFramework.Conventions` namespace contains the EF Core value converters that persist the value objects of [`RA.Utilities.Core.ValueObjects`](../../../core/RA.Utilities.Core.ValueObjects/index.mdx) in relational columns.
+
+Each converter is a parameterless `ValueConverter<TValueObject, string>`: the write expression stores the value object's normalized representation, and the read expression rebuilds it through its validating constructor (or, for `Money`, through `System.Text.Json`). Values that no longer satisfy the value object's rules fail during materialization instead of entering the domain unchecked.
+
+## 📦 Converters
+
+| Converter | Value object | Stored as | Maximum length |
+|---|---|---|---|
+| `EmailConverter` | [`Email`](../../../core/RA.Utilities.Core.ValueObjects/Email.md) | Trimmed, lower-cased address, e.g. `user@example.com` | 254 |
+| `CurrencyConverter` | [`Currency`](../../../core/RA.Utilities.Core.ValueObjects/Currency.md) | ISO 4217 code, e.g. `EUR` | 3 |
+| `SsnConverter` | [`SSN`](../../../core/RA.Utilities.Core.ValueObjects/SSN.md) | Trimmed, upper-cased SSN, e.g. `J01234567R` | 10 |
+| `IbanConverter` | [`IBAN`](../../../core/RA.Utilities.Core.ValueObjects/IBAN.md) | Separator-free, upper-cased IBAN, e.g. `GB82WEST12345698765432` | 34 |
+| `MoneyConverter` | [`Money`](../../../core/RA.Utilities.Core.ValueObjects/Money.md) | JSON, e.g. `{"Amount":19.99,"Currency":"EUR"}` | Provider default |
+
+`Money` is the only multi-property value object, so it is serialized as a single JSON string. When the amount must be filtered, sorted, indexed, or aggregated in SQL, map `Money` to two columns with [`HasMoney()`](../Extensions/MoneyConventionExtensions.md) instead. Do not apply both mappings to the same property.
+
+## 🚀 Apply the converters
+
+Per property, in an `IEntityTypeConfiguration<T>` or `OnModelCreating`:
+
+```csharp showLineNumbers
+using RA.Utilities.Data.EntityFramework.Conventions;
+
+public sealed class CustomerConfiguration : IEntityTypeConfiguration<Customer>
+{
+    public void Configure(EntityTypeBuilder<Customer> builder)
+    {
+        // highlight-next-line
+        builder.Property(c => c.Email).HasConversion(new EmailConverter()).HasMaxLength(254);
+        builder.Property(c => c.Iban).HasConversion(new IbanConverter()).HasMaxLength(34);
+        builder.Property(c => c.Ssn).HasConversion(new SsnConverter()).HasMaxLength(10);
+        builder.Property(c => c.PreferredCurrency).HasConversion(new CurrencyConverter()).HasMaxLength(3);
+    }
+}
+```
+
+Model-wide, when every property of a value-object type uses the same converter:
+
+```csharp showLineNumbers
+using RA.Utilities.Core.ValueObjects;
+using RA.Utilities.Data.EntityFramework.Conventions;
+
+protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+{
+    configurationBuilder.Properties<Email>().HaveConversion<EmailConverter>();
+    configurationBuilder.Properties<Currency>().HaveConversion<CurrencyConverter>();
+    configurationBuilder.Properties<SSN>().HaveConversion<SsnConverter>();
+    configurationBuilder.Properties<IBAN>().HaveConversion<IbanConverter>();
+    configurationBuilder.Properties<Money>().HaveConversion<MoneyConverter>();
+}
+```
+
+Per-property configuration takes precedence over the model-wide default, so individual columns can still override the converter or add facets such as `HasMaxLength`.
+
+## ⚠️ Things to know
+
+- **Size the string columns.** The converters do not configure facets. Set `HasMaxLength` explicitly (254, 3, 10, and 34 characters) instead of relying on the provider default.
+- **Reads validate.** A query that materializes a row with a malformed email, currency, SSN, IBAN, or `Money` JSON fails rather than producing an invalid value object. Clean legacy data before enabling a converter on an existing column.
+- **`Money` has no amount validation.** The `Money` constructor accepts any `decimal`; only the embedded `Currency` is validated during JSON deserialization. Use [`Money.PositiveMoney()`](../../../core/RA.Utilities.Core.ValueObjects/Money.md) in domain code when negative amounts are not allowed.
+- **Values are normalized on write.** Input such as `GB82 WEST 1234 5698 7654 32` or `  EUR  ` is stored in its canonical form, so consumers always read the same representation.
+
+## 🧠 Summary
+
+Use this namespace to map validated value objects onto single columns without leaking persistence concerns into the domain. Choose the converter that matches the value object, size the column, and use `HasMoney()` instead of `MoneyConverter` when SQL needs to work with the amount directly.
+
+Detailed configuration options, `Money` mapping trade-offs, and examples are on the [Value Object Converters](./ValueObjectConverters.md) page.
+
+<br />
+<br />
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />
