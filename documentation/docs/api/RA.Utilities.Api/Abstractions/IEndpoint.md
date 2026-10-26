@@ -21,10 +21,11 @@ The workflow is straightforward:
 You create a class for a specific endpoint (e.g., `GetProductsEndpoint`) and implement the `IEndpoint` interface with two static members:
 
 * `GroupName` — the name of the [`IEndpointGroup`](./IEndpointGroup.md) this endpoint belongs to.
-* `MapEndpoint` — receives the group's `RouteGroupBuilder` and defines the routes, just as you would in `Program.cs`.
+* `MapEndpoint` — receives the group's `RouteGroupBuilder` and the optional `ApiVersionSet` passed to `MapEndpoints`, and defines the routes, just as you would in `Program.cs`. Groups usually apply the version set themselves; the parameter lets an endpoint apply or override its own.
 
 ```csharp
 // Features/Products/GetProductsEndpoint.cs
+using Asp.Versioning.Builder;
 using Microsoft.AspNetCore.Routing;
 using RA.Utilities.Api.Abstractions;
 
@@ -32,7 +33,7 @@ internal sealed class GetProductsEndpoint : IEndpoint
 {
     public static string GroupName => "Products";
 
-    public static void MapEndpoint(RouteGroupBuilder group)
+    public static void MapEndpoint(RouteGroupBuilder group, ApiVersionSet? apiVersionSet = null)
     {
         group.MapGet("/", () =>
         {
@@ -52,20 +53,31 @@ internal sealed class GetProductsEndpoint : IEndpoint
 ### 2. Map the Routes
 
 After building the web application (`var app = builder.Build();`), you call the generated `app.MapEndpoints()` extension method.
-The source generator that ships with this package discovers your `IEndpoint` implementations at compile time and invokes each `MapEndpoint` with the `RouteGroupBuilder` of the group matching its `GroupName`.
+The source generator that ships with this package discovers your `IEndpoint` implementations at compile time and invokes each `MapEndpoint` with the `RouteGroupBuilder` of the group matching its `GroupName`, forwarding the `ApiVersionSet` passed to `MapEndpoints`.
 
 ```csharp
 // Program.cs
 
+using Asp.Versioning;
+using Asp.Versioning.Builder;
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Required when endpoints apply an ApiVersionSet.
+builder.Services.AddApiVersioning();
 
 var app = builder.Build();
 
 // Maps all groups and endpoints discovered at compile time
-app.MapEndpoints();
+app.MapEndpoints(app.NewApiVersionSet()
+    .HasApiVersion(new ApiVersion(1))
+    .ReportApiVersions()
+    .Build());
 
 app.Run();
 ```
+
+Call `app.MapEndpoints()` without arguments when the API does not use versioning.
 
 By following this pattern, you keep your `Program.cs` file clean and maintainable, while your endpoint definitions remain neatly organized by feature.
 

@@ -1,3 +1,4 @@
+using Asp.Versioning.Builder;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -21,10 +22,11 @@ internal sealed class TestTodosGroup : IEndpointGroup
     public static string GroupName => "Todos";
 
     /// <inheritdoc/>
-    public static RouteGroupBuilder MapGroup(IEndpointRouteBuilder app)
+    public static RouteGroupBuilder MapGroup(IEndpointRouteBuilder app, ApiVersionSet? apiVersionSet = null)
     {
         MapGroupCallCount++;
-        return app.MapGroup("api/todos").WithTags("Todos");
+        RouteGroupBuilder group = app.MapGroup("api/todos").WithTags("Todos");
+        return apiVersionSet is null ? group : group.WithApiVersionSet(apiVersionSet);
     }
 }
 
@@ -37,7 +39,8 @@ internal sealed class TestUsersGroup : IEndpointGroup
     public static string GroupName => "Users";
 
     /// <inheritdoc/>
-    public static RouteGroupBuilder MapGroup(IEndpointRouteBuilder app) => app.MapGroup("api/users").WithTags("Users");
+    public static RouteGroupBuilder MapGroup(IEndpointRouteBuilder app, ApiVersionSet? apiVersionSet = null) =>
+        app.MapGroup("api/users").WithTags("Users");
 }
 
 /// <summary>
@@ -49,7 +52,7 @@ internal sealed class GetTestTodosEndpoint : IEndpoint
     public static string GroupName => "Todos";
 
     /// <inheritdoc/>
-    public static void MapEndpoint(RouteGroupBuilder group) => group.MapGet("/", () => "[]");
+    public static void MapEndpoint(RouteGroupBuilder group, ApiVersionSet? apiVersionSet = null) => group.MapGet("/", () => "[]");
 }
 
 /// <summary>
@@ -61,7 +64,7 @@ internal sealed class GetTestTodoByIdEndpoint : IEndpoint
     public static string GroupName => "Todos";
 
     /// <inheritdoc/>
-    public static void MapEndpoint(RouteGroupBuilder group) => group.MapGet("/{id:int}", (int id) => $"todo-{id}");
+    public static void MapEndpoint(RouteGroupBuilder group, ApiVersionSet? apiVersionSet = null) => group.MapGet("/{id:int}", (int id) => $"todo-{id}");
 }
 
 /// <summary>
@@ -73,5 +76,5 @@ internal sealed class GetTestUsersEndpoint : IEndpoint
     public static string GroupName => "Users";
 
     /// <inheritdoc/>
-    public static void MapEndpoint(RouteGroupBuilder group) => group.MapGet("/", () => "[]");
+    public static void MapEndpoint(RouteGroupBuilder group, ApiVersionSet? apiVersionSet = null) => group.MapGet("/", () => "[]");
 }

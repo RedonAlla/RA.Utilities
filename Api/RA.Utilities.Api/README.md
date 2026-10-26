@@ -163,6 +163,7 @@ Group names are validated at compile time: a duplicate `GroupName` (`EPMG001`) o
 ```csharp
 // Features/Products/ProductsGroup.cs
 
+using Asp.Versioning.Builder;
 using Microsoft.AspNetCore.Routing;
 using RA.Utilities.Api.Abstractions;
 
@@ -170,9 +171,12 @@ internal sealed class ProductsGroup : IEndpointGroup
 {
     public static string GroupName => "Products";
 
-    public static RouteGroupBuilder MapGroup(IEndpointRouteBuilder app)
+    public static RouteGroupBuilder MapGroup(IEndpointRouteBuilder app, ApiVersionSet? apiVersionSet = null)
     {
-        return app.MapGroup("api/products").WithTags("Products");
+        RouteGroupBuilder group = app.MapGroup("api/v{version:apiVersion}/products").WithTags("Products");
+
+        // Applies the version set registered in Program.cs to every endpoint in the group.
+        return apiVersionSet is null ? group : group.WithApiVersionSet(apiVersionSet);
     }
 }
 ```
@@ -182,6 +186,7 @@ internal sealed class ProductsGroup : IEndpointGroup
 ```csharp
 // Features/Products/GetProductsEndpoint.cs
 
+using Asp.Versioning.Builder;
 using Microsoft.AspNetCore.Routing;
 using RA.Utilities.Api.Abstractions;
 
@@ -189,7 +194,7 @@ internal sealed class GetProductsEndpoint : IEndpoint
 {
     public static string GroupName => "Products";
 
-    public static void MapEndpoint(RouteGroupBuilder group)
+    public static void MapEndpoint(RouteGroupBuilder group, ApiVersionSet? apiVersionSet = null)
     {
         group.MapGet("/", () =>
         {
@@ -211,15 +216,29 @@ internal sealed class GetProductsEndpoint : IEndpoint
 ```csharp
 // Program.cs
 
+using Asp.Versioning;
+using Asp.Versioning.Builder;
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Required when endpoints apply an ApiVersionSet.
+builder.Services.AddApiVersioning();
 
 var app = builder.Build();
 
-// Maps all groups and endpoints discovered at compile time
-app.MapEndpoints();
+// Maps all groups and endpoints discovered at compile time.
+// The optional ApiVersionSet is forwarded to every MapGroup and MapEndpoint implementation.
+ApiVersionSet apiVersionSet = app.NewApiVersionSet()
+    .HasApiVersion(new ApiVersion(1))
+    .ReportApiVersions()
+    .Build();
+
+app.MapEndpoints(apiVersionSet);
 
 app.Run();
 ```
+
+Call `app.MapEndpoints()` without arguments when your API does not use versioning; the parameter is optional.
 
 This keeps your `Program.cs` clean and your endpoint definitions organized by feature.
 
@@ -485,6 +504,7 @@ In your `IEndpoint` implementation, call the service and use the `Match` method 
 ```csharp
 // Features/Products/GetProductByIdEndpoint.cs
 
+using Asp.Versioning.Builder;
 using Microsoft.AspNetCore.Routing;
 using RA.Utilities.Api.Abstractions;
 
@@ -492,7 +512,7 @@ internal sealed class GetProductByIdEndpoint : IEndpoint
 {
     public static string GroupName => "Products";
 
-    public static void MapEndpoint(RouteGroupBuilder group)
+    public static void MapEndpoint(RouteGroupBuilder group, ApiVersionSet? apiVersionSet = null)
     {
         group.MapGet("/{id}", (int id, ProductService service) => 
         {

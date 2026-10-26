@@ -9,7 +9,7 @@ This is a core pattern for implementing a clean Vertical Slice Architecture.
 Unlike the previous reflection-based registration, the discovery happens entirely at **compile time**:
 
 * The `RA.Utilities.Api.Generators` source generator (shipped inside this package as a build-time analyzer) scans your assembly for every [`IEndpointGroup`](../Abstractions/IEndpointGroup.md) and [`IEndpoint`](../Abstractions/IEndpoint.md) implementation and extends this partial class with the `MapEndpoints()` method.
-* `MapEndpoints()` creates every group exactly once (before any endpoint is mapped) and then maps every endpoint into the group matching its `GroupName`.
+* `MapEndpoints(ApiVersionSet? apiVersionSet = null)` creates every group exactly once (before any endpoint is mapped) and then maps every endpoint into the group matching its `GroupName`, forwarding the optional `ApiVersionSet` to every `MapGroup` and `MapEndpoint` implementation.
 * No reflection, no DI scanning, and no manual registration list.
 
 ## 🚀 Usage Guide
@@ -26,8 +26,11 @@ internal sealed class ProductsGroup : IEndpointGroup
 {
   public static string GroupName => "Products";
 
-  public static RouteGroupBuilder MapGroup(IEndpointRouteBuilder app)
-    => app.MapGroup("api/products").WithTags("Products");
+  public static RouteGroupBuilder MapGroup(IEndpointRouteBuilder app, ApiVersionSet? apiVersionSet = null)
+  {
+    RouteGroupBuilder group = app.MapGroup("api/v{version:apiVersion}/products").WithTags("Products");
+    return apiVersionSet is null ? group : group.WithApiVersionSet(apiVersionSet);
+  }
 }
 ```
 
@@ -43,7 +46,7 @@ internal sealed class GetProductsEndpoint : IEndpoint
 {
   public static string GroupName => "Products";
 
-  public static void MapEndpoint(RouteGroupBuilder group)
+  public static void MapEndpoint(RouteGroupBuilder group, ApiVersionSet? apiVersionSet = null)
   {
     group.MapGet("/", () =>
     {
@@ -62,13 +65,23 @@ internal sealed class GetProductsEndpoint : IEndpoint
 WebApplicationBuilder builder =
   WebApplication.CreateBuilder(args);
 
+// Required when endpoints apply an ApiVersionSet.
+builder.Services.AddApiVersioning();
+
 var app = builder.Build();
-// Maps all groups and endpoints discovered at compile time
+
+// Maps all groups and endpoints discovered at compile time.
+// The optional ApiVersionSet is forwarded to every MapGroup and MapEndpoint implementation.
 // highlight-next-line
-app.MapEndpoints();
+app.MapEndpoints(app.NewApiVersionSet()
+  .HasApiVersion(new ApiVersion(1))
+  .ReportApiVersions()
+  .Build());
 
 app.Run();
 ```
+
+Call `app.MapEndpoints()` without arguments when the API does not use versioning.
 
 This keeps your `Program.cs` clean and your endpoint definitions organized by feature.
 

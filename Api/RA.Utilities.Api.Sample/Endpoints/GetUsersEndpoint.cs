@@ -1,3 +1,4 @@
+using Asp.Versioning.Builder;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using HttpResults = Microsoft.AspNetCore.Http.Results;
@@ -8,13 +9,14 @@ using RA.Utilities.Api.Sample.Models;
 namespace RA.Utilities.Api.Sample.Endpoints;
 
 /// <summary>
-/// Lists all users. Mapped into the "Users" group, so the full route is <c>GET api/users</c>.
+/// Lists all users. Mapped into the "Users" group, so the full route is
+/// <c>GET api/v{version:apiVersion}/users</c>.
 /// </summary>
 internal sealed class GetUsersEndpoint : IEndpoint
 {
     public static string GroupName => "Users";
 
-    public static void MapEndpoint(RouteGroupBuilder group)
+    public static void MapEndpoint(RouteGroupBuilder group, ApiVersionSet? apiVersionSet = null)
     {
         User[] users =
         [

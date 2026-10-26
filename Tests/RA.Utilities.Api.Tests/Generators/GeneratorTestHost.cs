@@ -25,13 +25,13 @@ internal static class GeneratorTestHost
             public interface IEndpointGroup
             {
                 static abstract string GroupName { get; }
-                static abstract Microsoft.AspNetCore.Routing.RouteGroupBuilder MapGroup(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app);
+                static abstract Microsoft.AspNetCore.Routing.RouteGroupBuilder MapGroup(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app, Asp.Versioning.Builder.ApiVersionSet? apiVersionSet = null);
             }
 
             public interface IEndpoint
             {
                 static abstract string GroupName { get; }
-                static abstract void MapEndpoint(Microsoft.AspNetCore.Routing.RouteGroupBuilder group);
+                static abstract void MapEndpoint(Microsoft.AspNetCore.Routing.RouteGroupBuilder group, Asp.Versioning.Builder.ApiVersionSet? apiVersionSet = null);
             }
         }
 

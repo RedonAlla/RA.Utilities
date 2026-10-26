@@ -1,3 +1,4 @@
+using Asp.Versioning.Builder;
 using Microsoft.AspNetCore.Routing;
 
 namespace RA.Utilities.Api.Abstractions;
@@ -27,6 +28,10 @@ public interface IEndpointGroup
     /// <c>MapEndpoints</c> registration method is called, before any endpoint is mapped.
     /// </summary>
     /// <param name="app">The application's endpoint route builder to create the group on.</param>
+    /// <param name="apiVersionSet">The API version set passed to <c>MapEndpoints</c>, or
+    /// <see langword="null"/> when the application did not provide one. Apply it with
+    /// <c>group.WithApiVersionSet(apiVersionSet)</c> to version every endpoint mapped into the group.
+    /// </param>
     /// <returns>The configured route group builder.</returns>
-    static abstract RouteGroupBuilder MapGroup(IEndpointRouteBuilder app);
+    static abstract RouteGroupBuilder MapGroup(IEndpointRouteBuilder app, ApiVersionSet? apiVersionSet = null);
 }

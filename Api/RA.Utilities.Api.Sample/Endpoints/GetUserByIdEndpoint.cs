@@ -1,3 +1,4 @@
+using Asp.Versioning.Builder;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using HttpResults = Microsoft.AspNetCore.Http.Results;
@@ -9,13 +10,13 @@ namespace RA.Utilities.Api.Sample.Endpoints;
 
 /// <summary>
 /// Gets a single user by id. Mapped into the "Users" group, so the full route is
-/// <c>GET api/users/{id:int}</c>.
+/// <c>GET api/v{version:apiVersion}/users/{id:int}</c>.
 /// </summary>
 internal sealed class GetUserByIdEndpoint : IEndpoint
 {
     public static string GroupName => "Users";
 
-    public static void MapEndpoint(RouteGroupBuilder group)
+    public static void MapEndpoint(RouteGroupBuilder group, ApiVersionSet? apiVersionSet = null)
     {
         group.MapGet("/{id:int}", (int id) =>
         {

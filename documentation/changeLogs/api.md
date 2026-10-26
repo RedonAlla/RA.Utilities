@@ -4,6 +4,22 @@ authors: [RedonAlla]
 date: 2026-10-26
 ---
 
+## Version 10.4.0
+![Date Badge](https://img.shields.io/badge/Publish-26%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.4.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api/10.4.0)
+
+`IEndpointGroup.MapGroup` and `IEndpoint.MapEndpoint` now receive the API version set as an optional second parameter, and the generated `MapEndpoints` method takes an optional `ApiVersionSet? apiVersionSet = null` that it forwards to every implementation — apply it with `WithApiVersionSet` to version whole groups or individual endpoints.
+
+<!-- truncate -->
+
+### ✨ New Features
+
+* **`ApiVersionSet` threading**: `app.MapEndpoints(apiVersionSet)` forwards the version set to every `MapGroup(IEndpointRouteBuilder, ApiVersionSet?)` and `MapEndpoint(RouteGroupBuilder, ApiVersionSet?)` implementation, matching the standard `app.MapGroup(...).WithApiVersionSet(apiVersionSet)` pattern. The package now references `Asp.Versioning.Http` (10.x), which flows to consumers transitively; the parameter is optional, so unversioned APIs just call `app.MapEndpoints()`.
+
+### ⚠️ Breaking Changes
+
+* **`IEndpointGroup`/`IEndpoint` signatures**: `MapGroup` and `MapEndpoint` implementations must declare the new optional `ApiVersionSet? apiVersionSet = null` parameter (the interface declares it with a default value, but implementations must accept it). The generated registration code always passes the value.
+
 ## Version 10.3.0
 ![Date Badge](https://img.shields.io/badge/Publish-26%20October%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.3.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api/10.3.0)

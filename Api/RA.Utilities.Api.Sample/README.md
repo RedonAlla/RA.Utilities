@@ -119,8 +119,15 @@ The whole `Program.cs` is:
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddApiVersioning();
 var app = builder.Build();
-app.MapEndpoints();
+
+ApiVersionSet apiVersionSet = app.NewApiVersionSet()
+    .HasApiVersion(new ApiVersion(1))
+    .ReportApiVersions()
+    .Build();
+
+app.MapEndpoints(apiVersionSet);
 app.Run();
 ```
 
@@ -129,7 +136,8 @@ Everything else is discovered at **compile time** by the
 NuGet package):
 
 * `Endpoints/TodosGroup.cs` and `Endpoints/UsersGroup.cs` implement `IEndpointGroup`
-  and build the shared `RouteGroupBuilder` (prefix + tags) for their feature.
+  and build the shared `RouteGroupBuilder` (versioned prefix + tags) for their feature,
+  applying the version set with `WithApiVersionSet`.
 * `Endpoints/GetTodosEndpoint.cs`, `Endpoints/CreateTodoEndpoint.cs`,
   `Endpoints/GetUsersEndpoint.cs`, and `Endpoints/GetUserByIdEndpoint.cs` implement
   `IEndpoint` and map their routes into the group identified by their `GroupName`.

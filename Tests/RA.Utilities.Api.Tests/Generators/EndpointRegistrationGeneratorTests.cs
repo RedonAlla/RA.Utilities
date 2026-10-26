@@ -22,37 +22,37 @@ public class EndpointRegistrationGeneratorTests
         internal sealed class TodosGroup : RA.Utilities.Api.Abstractions.IEndpointGroup
         {
             public static string GroupName => "Todos";
-            public static Microsoft.AspNetCore.Routing.RouteGroupBuilder MapGroup(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app) => app.MapGroup("api/todos");
+            public static Microsoft.AspNetCore.Routing.RouteGroupBuilder MapGroup(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app, Asp.Versioning.Builder.ApiVersionSet? apiVersionSet = null) => app.MapGroup("api/todos");
         }
 
         internal sealed class UsersGroup : RA.Utilities.Api.Abstractions.IEndpointGroup
         {
             public static string GroupName => "Users";
-            public static Microsoft.AspNetCore.Routing.RouteGroupBuilder MapGroup(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app) => app.MapGroup("api/users");
+            public static Microsoft.AspNetCore.Routing.RouteGroupBuilder MapGroup(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app, Asp.Versioning.Builder.ApiVersionSet? apiVersionSet = null) => app.MapGroup("api/users");
         }
 
         internal sealed class GetTodosEndpoint : RA.Utilities.Api.Abstractions.IEndpoint
         {
             public static string GroupName => "Todos";
-            public static void MapEndpoint(Microsoft.AspNetCore.Routing.RouteGroupBuilder group) => group.MapGet("/", () => "[]");
+            public static void MapEndpoint(Microsoft.AspNetCore.Routing.RouteGroupBuilder group, Asp.Versioning.Builder.ApiVersionSet? apiVersionSet = null) => group.MapGet("/", () => "[]");
         }
 
         internal sealed class CreateTodoEndpoint : RA.Utilities.Api.Abstractions.IEndpoint
         {
             public static string GroupName => "Todos";
-            public static void MapEndpoint(Microsoft.AspNetCore.Routing.RouteGroupBuilder group) => group.MapPost("/", () => "created");
+            public static void MapEndpoint(Microsoft.AspNetCore.Routing.RouteGroupBuilder group, Asp.Versioning.Builder.ApiVersionSet? apiVersionSet = null) => group.MapPost("/", () => "created");
         }
 
         internal sealed class GetUsersEndpoint : RA.Utilities.Api.Abstractions.IEndpoint
         {
             public static string GroupName => "Users";
-            public static void MapEndpoint(Microsoft.AspNetCore.Routing.RouteGroupBuilder group) => group.MapGet("/", () => "[]");
+            public static void MapEndpoint(Microsoft.AspNetCore.Routing.RouteGroupBuilder group, Asp.Versioning.Builder.ApiVersionSet? apiVersionSet = null) => group.MapGet("/", () => "[]");
         }
 
         internal sealed class GetUserByIdEndpoint : RA.Utilities.Api.Abstractions.IEndpoint
         {
             public static string GroupName => "Users";
-            public static void MapEndpoint(Microsoft.AspNetCore.Routing.RouteGroupBuilder group) => group.MapGet("/{id:int}", (int id) => $"user-{id}");
+            public static void MapEndpoint(Microsoft.AspNetCore.Routing.RouteGroupBuilder group, Asp.Versioning.Builder.ApiVersionSet? apiVersionSet = null) => group.MapGet("/{id:int}", (int id) => $"user-{id}");
         }
         """;
 
@@ -68,17 +68,17 @@ public class EndpointRegistrationGeneratorTests
         {
             public static partial class HttpEndpointServiceCollectionExtensions
             {
-                public static global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder MapEndpoints(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder builder)
+                public static global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder MapEndpoints(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder builder, global::Asp.Versioning.Builder.ApiVersionSet? apiVersionSet = null)
                 {
                     global::System.Collections.Generic.Dictionary<string, global::Microsoft.AspNetCore.Routing.RouteGroupBuilder> groups = new global::System.Collections.Generic.Dictionary<string, global::Microsoft.AspNetCore.Routing.RouteGroupBuilder>();
 
-                    AddGroup(groups, global::Sample.TodosGroup.GroupName, global::Sample.TodosGroup.MapGroup(builder));
-                    AddGroup(groups, global::Sample.UsersGroup.GroupName, global::Sample.UsersGroup.MapGroup(builder));
+                    AddGroup(groups, global::Sample.TodosGroup.GroupName, global::Sample.TodosGroup.MapGroup(builder, apiVersionSet));
+                    AddGroup(groups, global::Sample.UsersGroup.GroupName, global::Sample.UsersGroup.MapGroup(builder, apiVersionSet));
 
-                    global::Sample.CreateTodoEndpoint.MapEndpoint(GetGroup(groups, "CreateTodoEndpoint", global::Sample.CreateTodoEndpoint.GroupName));
-                    global::Sample.GetTodosEndpoint.MapEndpoint(GetGroup(groups, "GetTodosEndpoint", global::Sample.GetTodosEndpoint.GroupName));
-                    global::Sample.GetUserByIdEndpoint.MapEndpoint(GetGroup(groups, "GetUserByIdEndpoint", global::Sample.GetUserByIdEndpoint.GroupName));
-                    global::Sample.GetUsersEndpoint.MapEndpoint(GetGroup(groups, "GetUsersEndpoint", global::Sample.GetUsersEndpoint.GroupName));
+                    global::Sample.CreateTodoEndpoint.MapEndpoint(GetGroup(groups, "CreateTodoEndpoint", global::Sample.CreateTodoEndpoint.GroupName), apiVersionSet);
+                    global::Sample.GetTodosEndpoint.MapEndpoint(GetGroup(groups, "GetTodosEndpoint", global::Sample.GetTodosEndpoint.GroupName), apiVersionSet);
+                    global::Sample.GetUserByIdEndpoint.MapEndpoint(GetGroup(groups, "GetUserByIdEndpoint", global::Sample.GetUserByIdEndpoint.GroupName), apiVersionSet);
+                    global::Sample.GetUsersEndpoint.MapEndpoint(GetGroup(groups, "GetUsersEndpoint", global::Sample.GetUsersEndpoint.GroupName), apiVersionSet);
                     return builder;
                 }
 
@@ -168,13 +168,13 @@ public class EndpointRegistrationGeneratorTests
                 internal sealed class TodosGroup : RA.Utilities.Api.Abstractions.IEndpointGroup
                 {
                     public static string GroupName => "Todos";
-                    public static Microsoft.AspNetCore.Routing.RouteGroupBuilder MapGroup(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app) => app.MapGroup("api/todos");
+                    public static Microsoft.AspNetCore.Routing.RouteGroupBuilder MapGroup(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app, Asp.Versioning.Builder.ApiVersionSet? apiVersionSet = null) => app.MapGroup("api/todos");
                 }
 
                 internal sealed class GetTodosEndpoint : RA.Utilities.Api.Abstractions.IEndpoint
                 {
                     public static string GroupName => "Todos";
-                    public static void MapEndpoint(Microsoft.AspNetCore.Routing.RouteGroupBuilder group) => group.MapGet("/", () => "[]");
+                    public static void MapEndpoint(Microsoft.AspNetCore.Routing.RouteGroupBuilder group, Asp.Versioning.Builder.ApiVersionSet? apiVersionSet = null) => group.MapGet("/", () => "[]");
                 }
             }
             """;
@@ -187,8 +187,8 @@ public class EndpointRegistrationGeneratorTests
         // Assert
         string generatedSource = runResult.Results[0].GeneratedSources[0].SourceText.ToString();
 
-        generatedSource.Should().Contain("AddGroup(groups, global::Sample.Api.TodosGroup.GroupName, global::Sample.Api.TodosGroup.MapGroup(builder));");
-        generatedSource.Should().Contain("global::Sample.Api.GetTodosEndpoint.MapEndpoint(GetGroup(groups, \"GetTodosEndpoint\", global::Sample.Api.GetTodosEndpoint.GroupName));");
+        generatedSource.Should().Contain("AddGroup(groups, global::Sample.Api.TodosGroup.GroupName, global::Sample.Api.TodosGroup.MapGroup(builder, apiVersionSet));");
+        generatedSource.Should().Contain("global::Sample.Api.GetTodosEndpoint.MapEndpoint(GetGroup(groups, \"GetTodosEndpoint\", global::Sample.Api.GetTodosEndpoint.GroupName), apiVersionSet);");
 
         runResult.Results[0].Diagnostics.Should().BeEmpty();
         outputCompilation.GetDiagnostics().Should().NotContain(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -210,7 +210,7 @@ public class EndpointRegistrationGeneratorTests
             internal class BaseGroup : RA.Utilities.Api.Abstractions.IEndpointGroup
             {
                 public static string GroupName => "Base";
-                public static Microsoft.AspNetCore.Routing.RouteGroupBuilder MapGroup(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app) => app.MapGroup("api/base");
+                public static Microsoft.AspNetCore.Routing.RouteGroupBuilder MapGroup(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app, Asp.Versioning.Builder.ApiVersionSet? apiVersionSet = null) => app.MapGroup("api/base");
             }
 
             internal sealed class DerivedGroup : BaseGroup
@@ -226,7 +226,7 @@ public class EndpointRegistrationGeneratorTests
         // Assert
         string generatedSource = runResult.Results[0].GeneratedSources[0].SourceText.ToString();
 
-        generatedSource.Should().Contain("global::Sample.BaseGroup.MapGroup(builder)");
+        generatedSource.Should().Contain("global::Sample.BaseGroup.MapGroup(builder, apiVersionSet)");
         generatedSource.Should().NotContain("DerivedGroup");
     }
 
@@ -245,13 +245,13 @@ public class EndpointRegistrationGeneratorTests
             internal sealed class FirstTodosGroup : RA.Utilities.Api.Abstractions.IEndpointGroup
             {
                 public static string GroupName => "Todos";
-                public static Microsoft.AspNetCore.Routing.RouteGroupBuilder MapGroup(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app) => app.MapGroup("api/todos");
+                public static Microsoft.AspNetCore.Routing.RouteGroupBuilder MapGroup(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app, Asp.Versioning.Builder.ApiVersionSet? apiVersionSet = null) => app.MapGroup("api/todos");
             }
 
             internal sealed class SecondTodosGroup : RA.Utilities.Api.Abstractions.IEndpointGroup
             {
                 public static string GroupName => "Todos";
-                public static Microsoft.AspNetCore.Routing.RouteGroupBuilder MapGroup(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app) => app.MapGroup("api/todos");
+                public static Microsoft.AspNetCore.Routing.RouteGroupBuilder MapGroup(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app, Asp.Versioning.Builder.ApiVersionSet? apiVersionSet = null) => app.MapGroup("api/todos");
             }
             """;
 
@@ -287,7 +287,7 @@ public class EndpointRegistrationGeneratorTests
             internal sealed class GetTodosEndpoint : RA.Utilities.Api.Abstractions.IEndpoint
             {
                 public static string GroupName => "Missing";
-                public static void MapEndpoint(Microsoft.AspNetCore.Routing.RouteGroupBuilder group) => group.MapGet("/", () => "[]");
+                public static void MapEndpoint(Microsoft.AspNetCore.Routing.RouteGroupBuilder group, Asp.Versioning.Builder.ApiVersionSet? apiVersionSet = null) => group.MapGet("/", () => "[]");
             }
             """;
 
@@ -318,7 +318,7 @@ public class EndpointRegistrationGeneratorTests
             internal sealed class GenericGroup<T> : RA.Utilities.Api.Abstractions.IEndpointGroup
             {
                 public static string GroupName => "Todos";
-                public static Microsoft.AspNetCore.Routing.RouteGroupBuilder MapGroup(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app) => app.MapGroup("api/todos");
+                public static Microsoft.AspNetCore.Routing.RouteGroupBuilder MapGroup(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app, Asp.Versioning.Builder.ApiVersionSet? apiVersionSet = null) => app.MapGroup("api/todos");
             }
             """;
 
@@ -349,7 +349,7 @@ public class EndpointRegistrationGeneratorTests
                 private sealed class HiddenGroup : RA.Utilities.Api.Abstractions.IEndpointGroup
                 {
                     public static string GroupName => "Todos";
-                    public static Microsoft.AspNetCore.Routing.RouteGroupBuilder MapGroup(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app) => app.MapGroup("api/todos");
+                    public static Microsoft.AspNetCore.Routing.RouteGroupBuilder MapGroup(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app, Asp.Versioning.Builder.ApiVersionSet? apiVersionSet = null) => app.MapGroup("api/todos");
                 }
             }
             """;
@@ -380,7 +380,7 @@ public class EndpointRegistrationGeneratorTests
             internal sealed class ExplicitGroup : RA.Utilities.Api.Abstractions.IEndpointGroup
             {
                 static string RA.Utilities.Api.Abstractions.IEndpointGroup.GroupName => "Todos";
-                static Microsoft.AspNetCore.Routing.RouteGroupBuilder RA.Utilities.Api.Abstractions.IEndpointGroup.MapGroup(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app) => app.MapGroup("api/todos");
+                static Microsoft.AspNetCore.Routing.RouteGroupBuilder RA.Utilities.Api.Abstractions.IEndpointGroup.MapGroup(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app, Asp.Versioning.Builder.ApiVersionSet? apiVersionSet) => app.MapGroup("api/todos");
             }
             """;
 
@@ -410,13 +410,13 @@ public class EndpointRegistrationGeneratorTests
             internal sealed class TodosGroup : RA.Utilities.Api.Abstractions.IEndpointGroup
             {
                 public static string GroupName => typeof(TodosGroup).Name;
-                public static Microsoft.AspNetCore.Routing.RouteGroupBuilder MapGroup(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app) => app.MapGroup("api/todos");
+                public static Microsoft.AspNetCore.Routing.RouteGroupBuilder MapGroup(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app, Asp.Versioning.Builder.ApiVersionSet? apiVersionSet = null) => app.MapGroup("api/todos");
             }
 
             internal sealed class GetTodosEndpoint : RA.Utilities.Api.Abstractions.IEndpoint
             {
                 public static string GroupName => typeof(TodosGroup).Name;
-                public static void MapEndpoint(Microsoft.AspNetCore.Routing.RouteGroupBuilder group) => group.MapGet("/", () => "[]");
+                public static void MapEndpoint(Microsoft.AspNetCore.Routing.RouteGroupBuilder group, Asp.Versioning.Builder.ApiVersionSet? apiVersionSet = null) => group.MapGet("/", () => "[]");
             }
             """;
 

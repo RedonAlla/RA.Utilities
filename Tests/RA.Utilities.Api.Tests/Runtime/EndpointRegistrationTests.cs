@@ -2,11 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Asp.Versioning;
+using Asp.Versioning.Builder;
 using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using RA.Utilities.Api.Extensions;
 
 namespace RA.Utilities.Api.Tests.Runtime;
@@ -89,7 +92,7 @@ public class EndpointRegistrationTests
             internal sealed class LoggedGroup : RA.Utilities.Api.Abstractions.IEndpointGroup
             {
                 public static string GroupName => "Logged";
-                public static Microsoft.AspNetCore.Routing.RouteGroupBuilder MapGroup(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app)
+                public static Microsoft.AspNetCore.Routing.RouteGroupBuilder MapGroup(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app, Asp.Versioning.Builder.ApiVersionSet? apiVersionSet = null)
                 {
                     CallLog.Calls.Add("group");
                     return app.MapGroup("api/logged");
@@ -99,7 +102,7 @@ public class EndpointRegistrationTests
             internal sealed class GetLoggedEndpoint : RA.Utilities.Api.Abstractions.IEndpoint
             {
                 public static string GroupName => "Logged";
-                public static void MapEndpoint(Microsoft.AspNetCore.Routing.RouteGroupBuilder group) => CallLog.Calls.Add("endpoint");
+                public static void MapEndpoint(Microsoft.AspNetCore.Routing.RouteGroupBuilder group, Asp.Versioning.Builder.ApiVersionSet? apiVersionSet = null) => CallLog.Calls.Add("endpoint");
             }
             """;
 
@@ -131,13 +134,13 @@ public class EndpointRegistrationTests
             internal sealed class ComputedGroup : RA.Utilities.Api.Abstractions.IEndpointGroup
             {
                 public static string GroupName => typeof(ComputedGroup).Name;
-                public static Microsoft.AspNetCore.Routing.RouteGroupBuilder MapGroup(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app) => app.MapGroup("api/computed");
+                public static Microsoft.AspNetCore.Routing.RouteGroupBuilder MapGroup(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app, Asp.Versioning.Builder.ApiVersionSet? apiVersionSet = null) => app.MapGroup("api/computed");
             }
 
             internal sealed class GetComputedEndpoint : RA.Utilities.Api.Abstractions.IEndpoint
             {
                 public static string GroupName => typeof(ComputedGroup).Name;
-                public static void MapEndpoint(Microsoft.AspNetCore.Routing.RouteGroupBuilder group) => group.MapGet("/", () => "ok");
+                public static void MapEndpoint(Microsoft.AspNetCore.Routing.RouteGroupBuilder group, Asp.Versioning.Builder.ApiVersionSet? apiVersionSet = null) => group.MapGet("/", () => "ok");
             }
             """;
 
@@ -171,7 +174,7 @@ public class EndpointRegistrationTests
             internal sealed class GetOrphanEndpoint : RA.Utilities.Api.Abstractions.IEndpoint
             {
                 public static string GroupName => typeof(GetOrphanEndpoint).Name;
-                public static void MapEndpoint(Microsoft.AspNetCore.Routing.RouteGroupBuilder group) => group.MapGet("/", () => "ok");
+                public static void MapEndpoint(Microsoft.AspNetCore.Routing.RouteGroupBuilder group, Asp.Versioning.Builder.ApiVersionSet? apiVersionSet = null) => group.MapGet("/", () => "ok");
             }
             """;
 
@@ -204,13 +207,13 @@ public class EndpointRegistrationTests
             internal sealed class FirstGroup : RA.Utilities.Api.Abstractions.IEndpointGroup
             {
                 public static string GroupName => "Same";
-                public static Microsoft.AspNetCore.Routing.RouteGroupBuilder MapGroup(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app) => app.MapGroup("api/first");
+                public static Microsoft.AspNetCore.Routing.RouteGroupBuilder MapGroup(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app, Asp.Versioning.Builder.ApiVersionSet? apiVersionSet = null) => app.MapGroup("api/first");
             }
 
             internal sealed class SecondGroup : RA.Utilities.Api.Abstractions.IEndpointGroup
             {
                 public static string GroupName => "Same";
-                public static Microsoft.AspNetCore.Routing.RouteGroupBuilder MapGroup(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app) => app.MapGroup("api/second");
+                public static Microsoft.AspNetCore.Routing.RouteGroupBuilder MapGroup(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app, Asp.Versioning.Builder.ApiVersionSet? apiVersionSet = null) => app.MapGroup("api/second");
             }
             """;
 
@@ -228,6 +231,41 @@ public class EndpointRegistrationTests
     }
 
     /// <summary>
+    /// Verifies that an <see cref="ApiVersionSet"/> passed to <c>MapEndpoints</c> is forwarded to the
+    /// group factories and applied via <c>WithApiVersionSet</c>, versioning every endpoint mapped
+    /// into the group.
+    /// </summary>
+    [Fact]
+    public void MapEndpoints_WithApiVersionSet_ShouldVersionGroupEndpoints()
+    {
+        // Arrange
+        WebApplicationBuilder builder = WebApplication.CreateBuilder([]);
+        builder.Services.AddApiVersioning();
+        WebApplication app = builder.Build();
+
+        ApiVersionSet apiVersionSet = app.NewApiVersionSet()
+            .HasApiVersion(new ApiVersion(1))
+            .Build();
+
+        // Act
+        app.MapEndpoints(apiVersionSet);
+
+        // Assert
+        var todoEndpoints = ((IEndpointRouteBuilder)app).DataSources
+            .SelectMany(dataSource => dataSource.Endpoints)
+            .Where(endpoint => ((RouteEndpoint)endpoint).RoutePattern.RawText?.StartsWith("api/todos", StringComparison.Ordinal) == true)
+            .ToList();
+
+        todoEndpoints.Should().NotBeEmpty();
+        int versionedCount = todoEndpoints.Count(endpoint =>
+        {
+            ApiVersionMetadata? metadata = endpoint.Metadata.GetMetadata<ApiVersionMetadata>();
+            return metadata != null && metadata.IsMappedTo(new ApiVersion(1));
+        });
+        versionedCount.Should().Be(todoEndpoints.Count);
+    }
+
+    /// <summary>
     /// Invokes the generated <c>MapEndpoints</c> method from a loaded in-memory compilation against
     /// a real <see cref="WebApplication"/>.
     /// </summary>
@@ -237,6 +275,6 @@ public class EndpointRegistrationTests
     {
         Type registrationType = assembly.GetType("RA.Utilities.Api.Extensions.HttpEndpointServiceCollectionExtensions", throwOnError: true)!;
         MethodInfo mapEndpoints = registrationType.GetMethod("MapEndpoints")!;
-        mapEndpoints.Invoke(null, [app]);
+        mapEndpoints.Invoke(null, [app, null]);
     }
 }

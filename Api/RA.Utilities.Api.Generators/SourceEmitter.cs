@@ -139,7 +139,7 @@ internal static class SourceEmitter
         // have its implementing declaration in the same compilation as the defining declaration, but
         // the defining declaration lives in the RA.Utilities.Api assembly while this implementation
         // is generated into the consuming assembly.
-        AppendLine(builder, 2, $"public static global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder {KnownMetadataNames.MapEndpointsMethod}(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder builder)");
+        AppendLine(builder, 2, $"public static global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder {KnownMetadataNames.MapEndpointsMethod}(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder builder, global::Asp.Versioning.Builder.ApiVersionSet? apiVersionSet = null)");
         AppendLine(builder, 2, "{");
 
         if (!groups.IsDefaultOrEmpty)
@@ -149,7 +149,7 @@ internal static class SourceEmitter
 
             foreach (EndpointModel group in groups)
             {
-                AppendLine(builder, 3, $"AddGroup(groups, {group.FullyQualifiedName}.{KnownMetadataNames.GroupNameMember}, {group.FullyQualifiedName}.{KnownMetadataNames.MapGroupMember}(builder));");
+                AppendLine(builder, 3, $"AddGroup(groups, {group.FullyQualifiedName}.{KnownMetadataNames.GroupNameMember}, {group.FullyQualifiedName}.{KnownMetadataNames.MapGroupMember}(builder, apiVersionSet));");
             }
 
             builder.Append('\n');
@@ -159,11 +159,11 @@ internal static class SourceEmitter
         {
             if (groups.IsDefaultOrEmpty)
             {
-                AppendLine(builder, 3, $"{endpoint.FullyQualifiedName}.{KnownMetadataNames.MapEndpointMember}(GetGroupOrThrow(\"{endpoint.TypeName}\", {endpoint.FullyQualifiedName}.{KnownMetadataNames.GroupNameMember}));");
+                AppendLine(builder, 3, $"{endpoint.FullyQualifiedName}.{KnownMetadataNames.MapEndpointMember}(GetGroupOrThrow(\"{endpoint.TypeName}\", {endpoint.FullyQualifiedName}.{KnownMetadataNames.GroupNameMember}), apiVersionSet);");
             }
             else
             {
-                AppendLine(builder, 3, $"{endpoint.FullyQualifiedName}.{KnownMetadataNames.MapEndpointMember}(GetGroup(groups, \"{endpoint.TypeName}\", {endpoint.FullyQualifiedName}.{KnownMetadataNames.GroupNameMember}));");
+                AppendLine(builder, 3, $"{endpoint.FullyQualifiedName}.{KnownMetadataNames.MapEndpointMember}(GetGroup(groups, \"{endpoint.TypeName}\", {endpoint.FullyQualifiedName}.{KnownMetadataNames.GroupNameMember}), apiVersionSet);");
             }
         }
 

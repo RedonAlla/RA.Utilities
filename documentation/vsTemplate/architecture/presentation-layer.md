@@ -65,12 +65,13 @@ Service registration cascades outward-in: `AddApplicationServices()` (Applicatio
 
 Routing is built on the `RA.Utilities.Api` package's **source-generated endpoint pipeline**. Two abstractions drive it:
 
-- **`IEndpointGroup`** — declares a shared `RouteGroupBuilder` (prefix, tags, versioning, conventions) via a static `GroupName` and `MapGroup(IEndpointRouteBuilder)`. Mapped once, before its endpoints.
-- **`IEndpoint`** — declares a static `GroupName` that matches a group, plus `MapEndpoint(RouteGroupBuilder)` defining one or more routes.
+- **`IEndpointGroup`** — declares a shared `RouteGroupBuilder` (prefix, tags, versioning, conventions) via a static `GroupName` and `MapGroup(IEndpointRouteBuilder, ApiVersionSet?)`. Mapped once, before its endpoints.
+- **`IEndpoint`** — declares a static `GroupName` that matches a group, plus `MapEndpoint(RouteGroupBuilder, ApiVersionSet?)` defining one or more routes. Both methods receive the optional `ApiVersionSet` passed to `MapEndpoints`; groups typically apply it with `WithApiVersionSet`.
 
-A source generator discovers every implementation at compile time and emits the `MapEndpoints()` extension called at the end of `Program.cs` — there is no runtime assembly scanning and no manual route registration. The template ships with no endpoints; you add your own, typically under an `Endpoints/` folder:
+A source generator discovers every implementation at compile time and emits the `MapEndpoints(ApiVersionSet?)` extension called at the end of `Program.cs` — there is no runtime assembly scanning and no manual route registration. The template ships with no endpoints; you add your own, typically under an `Endpoints/` folder:
 
 ```csharp
+using Asp.Versioning.Builder;
 using Microsoft.AspNetCore.Routing;
 using RA.Utilities.Api.Abstractions;
 using RA.Utilities.Feature.Abstractions;
@@ -80,15 +81,18 @@ namespace RaTemplate.Api.Endpoints.Customers;
 public sealed class CustomersGroup : IEndpointGroup
 {
     public static string GroupName => "Customers";
-    public static RouteGroupBuilder MapGroup(IEndpointRouteBuilder app) =>
-        app.MapGroup("/api/customers").WithTags(GroupName);
+    public static RouteGroupBuilder MapGroup(IEndpointRouteBuilder app, ApiVersionSet? apiVersionSet = null)
+    {
+        RouteGroupBuilder group = app.MapGroup("/api/customers").WithTags(GroupName);
+        return apiVersionSet is null ? group : group.WithApiVersionSet(apiVersionSet);
+    }
 }
 
 public sealed class GetCustomerEndpoint : IEndpoint
 {
     public static string GroupName => CustomersGroup.GroupName;
 
-    public static void MapEndpoint(RouteGroupBuilder group) =>
+    public static void MapEndpoint(RouteGroupBuilder group, ApiVersionSet? apiVersionSet = null) =>
         group.MapGet("/{id}", GetAsync);
 
     public static async Task<Ok<CustomerResponse>> GetAsync(Guid id, IMediator mediator, CancellationToken cancellationToken)
