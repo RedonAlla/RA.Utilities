@@ -4,6 +4,50 @@ title: Migration Guides
 
 # Migration Guides
 
+## v10.1.0 → v10.2.0
+
+v10.2.0 is additive: it introduces [`PaymentRequiredResponse`](./PaymentRequiredResponse.md) for HTTP 402 and raises the `RA.Utilities.Core.Constants` dependency to 10.1.1. No existing type, constructor, or property changed.
+
+### What changed
+
+| Aspect | v10.1.0 | v10.2.0 |
+|---|---|---|
+| Supported responses | success, 400, 401, 403, 404, 409, 422, 429, 500, 503, 504 | adds 402 (`PaymentRequiredResponse`) |
+| `ResponseType` | up to `GatewayTimeout` (17) | adds `PaymentRequired` (18) |
+| Constants dependency | `RA.Utilities.Core.Constants` 10.0.4 | 10.1.1 |
+
+### Migration Steps
+
+#### 1. No code changes required
+
+Existing constructors and envelope properties are unchanged. Reference `RA.Utilities.Api.Response` 10.2.0 to get the new type.
+
+#### 2. Replace custom 402 models
+
+If you derived from `Response<T>` to model HTTP 402, replace it with the built-in response to get the standard code, message, and `ResponseType`:
+
+```csharp
+// Before — custom 402 envelope
+public sealed class PaymentRequiredEnvelope : Response<ErrorResult>
+{
+    public PaymentRequiredEnvelope()
+    {
+        ResponseCode = 402;
+        ResponseType = ResponseType.Error; // no payment-required member existed
+        ResponseMessage = "Payment required.";
+    }
+}
+
+// After
+return StatusCode(402, new PaymentRequiredResponse());
+```
+
+#### 3. Review numeric `responseType` consumers
+
+`PaymentRequired` is `18`. Clients that switch on the numeric enum or maintain a hand-written mapping table need the new member; clients comparing against names get `"PaymentRequired"` once `JsonStringEnumConverter` is registered.
+
+---
+
 ## v10.0.0 → v10.1.0
 
 v10.1.0 aligns the namespace with the package name, redesigns the constructor overloads, and changes how `responseType` is serialized. The envelope shape — `responseCode`, `responseType`, `responseMessage`, `result` — is unchanged.

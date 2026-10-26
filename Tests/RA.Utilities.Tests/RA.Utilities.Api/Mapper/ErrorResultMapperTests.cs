@@ -227,6 +227,39 @@ public class ErrorResultMapperTests
     /// Tests the expected behavior for this scenario.
     /// </summary>
     [Fact]
+    public void ToResponse_WithPaymentRequiredException_ShouldReturnPaymentRequiredResponse()
+    {
+        // Arrange
+        var exception = new PaymentRequiredException("An active subscription is required.");
+
+        // Act
+        PaymentRequiredResponse result = ErrorResultMapper.ToResponse(exception);
+
+        // Assert
+        result.Should().BeOfType<PaymentRequiredResponse>();
+        result.ResponseCode.Should().Be(BaseResponseCode.PaymentRequired);
+        result.ResponseType.Should().Be(ResponseType.PaymentRequired);
+        result.ResponseMessage.Should().Be("An active subscription is required.");
+    }
+
+    /// <summary>
+    /// Tests the expected behavior for this scenario.
+    /// </summary>
+    [Fact]
+    public void ToResponse_WithNullPaymentRequiredException_ShouldThrowArgumentNullException()
+    {
+        // Act
+        Func<PaymentRequiredResponse> act = () =>
+            ErrorResultMapper.ToResponse((PaymentRequiredException)null!);
+
+        // Assert
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    /// <summary>
+    /// Tests the expected behavior for this scenario.
+    /// </summary>
+    [Fact]
     public void ToResponse_WithTooManyRequestsException_ShouldReturnTooManyRequestsResponse()
     {
         // Arrange

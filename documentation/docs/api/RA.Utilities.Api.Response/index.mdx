@@ -35,16 +35,16 @@ Hand-built API responses drift: one endpoint returns `{ "error": "..." }`, anoth
 ### ✨ Key Features
 
 - **One envelope** — `Response<T>` defines `ResponseCode`, `ResponseType`, `ResponseMessage`, and `Result`
-- **11 pre-configured responses** — success, 400, 401, 403, 404, 409, 422, 429, 500, 503, and 504
+- **12 pre-configured responses** — success, 400, 401, 402, 403, 404, 409, 422, 429, 500, 503, and 504
 - **Typed error payloads** — `BadRequestResult`, `NotFoundResult`, `ConflictResult`, and `ErrorResult`
 - **Convenience constructors** — single-argument constructors apply the standard code and message
 - **Custom overloads** — override the response code and message when a domain needs it
 - **Immutable after construction** — all `Response<T>` properties use `init` accessors
 - **Zero configuration** — no DI registration, no options, no setup
 
-:::warning[Upgrading from v10.0.0?]
+:::warning[Upgrading from v10.0.0 or earlier?]
 
-v10.1.0 changes the namespace from `RA.Utilities.Api.Results` to `RA.Utilities.Api.Response`, redesigns the constructor overloads, and — through `RA.Utilities.Core.Constants` v10.0.4 — writes `responseType` as a number by default. See the [Migration Guides](./migration-guides.mdx).
+v10.1.0 changes the namespace from `RA.Utilities.Api.Results` to `RA.Utilities.Api.Response`, redesigns the constructor overloads, and — through `RA.Utilities.Core.Constants` v10.0.4 — writes `responseType` as a number by default. v10.2.0 adds `PaymentRequiredResponse` (HTTP 402) and raises the `RA.Utilities.Core.Constants` dependency to 10.1.1. See the [Migration Guides](./migration-guides.mdx).
 
 :::
 
@@ -73,7 +73,7 @@ Install-Package RA.Utilities.Api.Response
 **PackageReference (csproj)**
 
 ```xml
-<PackageReference Include="RA.Utilities.Api.Response" Version="10.1.0" />
+<PackageReference Include="RA.Utilities.Api.Response" Version="10.2.0" />
 ```
 
 ### Hello World
@@ -118,6 +118,7 @@ No DI registration or configuration is required. Add the `using` directive and r
 | [`SuccessResponse<T>`](./SuccessResponse.md) | 200 | `Success` (JSON `0`) | `T` |
 | [`BadRequestResponse`](./BadRequestResponse.md) | 400 | `BadRequest` (JSON `12`) | `BadRequestResult[]` |
 | [`UnauthorizedResponse`](./UnauthorizedResponse.md) | 401 | `Unauthorized` (JSON `10`) | `ErrorResult` |
+| [`PaymentRequiredResponse`](./PaymentRequiredResponse.md) | 402 | `PaymentRequired` (JSON `18`) | `ErrorResult` |
 | [`ForbiddenResponse`](./ForbiddenResponse.md) | 403 | `Forbidden` (JSON `14`) | `ErrorResult` |
 | [`NotFoundResponse`](./NotFoundResponse.md) | 404 | `NotFound` (JSON `8`) | `NotFoundResult` |
 | [`ConflictResponse`](./ConflictResponse.md) | 409 | `Conflict` (JSON `9`) | `ConflictResult` |
@@ -247,6 +248,22 @@ return Conflict(new ConflictResponse(conflict));
 ```
 
 `ConflictResult` defaults `ErrorCode` to `null` (omitted from JSON) and `ErrorMessage` to an empty string.
+
+### Return a 402 when payment is required
+
+```csharp showLineNumbers
+// highlight-next-line
+return StatusCode(402, new PaymentRequiredResponse());
+```
+
+The parameterless constructor sets `ResponseCode = 402`, `ResponseType = ResponseType.PaymentRequired`, `ResponseMessage = "Payment is required to access this resource."`, and leaves `Result` null. Pass a code and message when the reason is domain-specific:
+
+```csharp showLineNumbers
+return StatusCode(402, new PaymentRequiredResponse(
+    // highlight-next-line
+    402,
+    "This report is available on paid plans."));
+```
 
 ### Return a 500 without leaking details
 

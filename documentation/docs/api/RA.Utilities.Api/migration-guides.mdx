@@ -3,6 +3,45 @@ title: Migration Guides
 ---
 
 
+## v10.2.3 → v10.3.0
+
+### Additive changes:
+
+* `PaymentRequiredException` maps to the new `PaymentRequiredResponse` (HTTP 402)
+* `ErrorResultMapper.ToResponse(PaymentRequiredException)` overload added
+* `GlobalExceptionHandler` logs `PaymentRequiredException` and `TooManyRequestsException` at `Warning`
+
+No public signatures were removed or changed, so existing call sites compile without modification. The behavior change is in the exception dispatcher: before this release a `PaymentRequiredException` fell through to the `RaBaseException` arm and produced an HTTP 500 `ErrorResponse`; it now produces an HTTP 402 envelope.
+
+### Dependency changes
+
+v10.3.0 depends on `RA.Utilities.Api.Response` 10.2.0 (new [`PaymentRequiredResponse`](../RA.Utilities.Api.Response/PaymentRequiredResponse.md)), `RA.Utilities.Core.Exceptions` 10.2.0 (new [`PaymentRequiredException`](../../core/RA.Utilities.Core.Exceptions/PaymentRequiredException.md)), and `RA.Utilities.Core.Constants` 10.1.1 (`BaseResponseCode.PaymentRequired`, `BaseResponseMessages.PaymentRequired`, `ResponseType.PaymentRequired`).
+
+### What changed
+
+| Aspect | v10.2.3 | v10.3.0 |
+|---|---|---|
+| `PaymentRequiredException` mapping | HTTP 500 `ErrorResponse` (generic `RaBaseException` arm) | HTTP 402 `PaymentRequiredResponse` |
+| `ErrorResultMapper` | — | New `ToResponse(PaymentRequiredException)` overload |
+| 402/429 log level | `Error` | `Warning` |
+| Success/error envelope | — | unchanged |
+
+### Migration Steps
+
+#### 1. No code changes required
+
+`ErrorResultResponse.Result` handles the new exception type internally, and the new mapper overload is additive. `GlobalExceptionHandler` picks up the mapping automatically.
+
+#### 2. Update clients that treated 402 as a server error
+
+If a client, retry policy, or alert currently classifies every 5xx as a server failure, review the paths that throw `PaymentRequiredException`: they now return `402` with `responseType` `18`. Clients should treat 402 as a client/business outcome (paywall, exhausted quota) rather than an outage.
+
+#### 3. Align package versions
+
+Reference `RA.Utilities.Api` 10.3.0 so the transitive `RA.Utilities.Api.Response` 10.2.0 and `RA.Utilities.Core.Exceptions` 10.2.0 dependencies are resolved together.
+
+---
+
 ## v10.2.1 → v10.2.2
 
 ### Breaking Changes:

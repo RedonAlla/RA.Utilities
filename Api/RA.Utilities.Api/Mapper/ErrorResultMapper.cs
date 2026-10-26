@@ -123,6 +123,21 @@ public static class ErrorResultMapper
     }
 
     /// <summary>
+    /// Maps a <see cref="PaymentRequiredException"/> to a <see cref="PaymentRequiredResponse"/>.
+    /// </summary>
+    /// <param name="exception">The <see cref="PaymentRequiredException"/> instance to map from.</param>
+    /// <returns>A <see cref="PaymentRequiredResponse"/> representing the mapped exception.</returns>
+    public static PaymentRequiredResponse ToResponse(PaymentRequiredException exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+
+        return new PaymentRequiredResponse(
+            exception.ErrorCode,
+            exception.Message
+        );
+    }
+
+    /// <summary>
     /// Maps a <see cref="TooManyRequestsException"/> to a <see cref="TooManyRequestsResponse"/>.
     /// </summary>
     /// <param name="exception">The <see cref="TooManyRequestsException"/> instance to map from.</param>

@@ -135,6 +135,25 @@ public class GlobalExceptionHandlerTests
     /// Tests the expected behavior for this scenario.
     /// </summary>
     [Fact]
+    public async Task TryHandleAsync_WithPaymentRequiredException_ShouldSet402StatusCode()
+    {
+        // Arrange
+        GlobalExceptionHandler handler = CreateHandler();
+        DefaultHttpContext context = CreateHttpContext();
+        var exception = new PaymentRequiredException();
+
+        // Act
+        bool handled = await handler.TryHandleAsync(context, exception, default);
+
+        // Assert
+        handled.Should().BeTrue();
+        context.Response.StatusCode.Should().Be(BaseResponseCode.PaymentRequired);
+    }
+
+    /// <summary>
+    /// Tests the expected behavior for this scenario.
+    /// </summary>
+    [Fact]
     public async Task TryHandleAsync_WithTooManyRequestsException_ShouldSet429StatusCode()
     {
         // Arrange

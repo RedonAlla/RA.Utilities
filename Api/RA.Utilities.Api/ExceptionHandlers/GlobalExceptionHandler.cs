@@ -71,7 +71,9 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
             or UnprocessableException
             or NotFoundException
             or UnauthorizedException
-            or ForbiddenException => true,
+            or ForbiddenException
+            or PaymentRequiredException
+            or TooManyRequestsException => true,
         _ => false,
     };
 }

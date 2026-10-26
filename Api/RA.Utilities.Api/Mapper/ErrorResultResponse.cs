@@ -46,6 +46,10 @@ public static class ErrorResultResponse
             data: ErrorResultMapper.ToResponse(forbiddenException),
             statusCode: BaseResponseCode.Forbidden
         ),
+        PaymentRequiredException paymentRequiredException => Results.Json(
+            data: ErrorResultMapper.ToResponse(paymentRequiredException),
+            statusCode: BaseResponseCode.PaymentRequired
+        ),
         TooManyRequestsException tooManyRequestsException => Results.Json(
             data: ErrorResultMapper.ToResponse(tooManyRequestsException),
             statusCode: BaseResponseCode.TooManyRequests

@@ -10,6 +10,8 @@
 This package includes generic wrappers for success, error, and domain-specific failure scenarios, helping to streamline API development and improve client-side handling.
 
 > **v10.1.0 changes**: The namespace is now `RA.Utilities.Api.Response` (previously `RA.Utilities.Api.Results`), constructor overloads were split into convenience and all-argument forms, and `responseType` is numeric by default. See the [migration guide](https://redonalla.github.io/RA.Utilities/nuget-packages/api/RA.Utilities.Api.Response/migration-guides).
+>
+> **v10.2.0 changes**: Adds `PaymentRequiredResponse` for HTTP 402 and raises the `RA.Utilities.Core.Constants` dependency to 10.1.1, which introduces `BaseResponseCode.PaymentRequired`, `BaseResponseMessages.PaymentRequired`, and `ResponseType.PaymentRequired` (`18`).
 
 ## Purpose
 
@@ -353,6 +355,43 @@ Used when the request requires user authentication.
 
 ---
 
+### `PaymentRequiredResponse`
+
+Namespace: RA.Utilities.Api.Response<br>
+Package: RA.Utilities.Api.Response<br>
+Source: [RA.Utilities.Api.Response](https://github.com/RedonAlla/RA.Utilities.git)
+
+```csharp
+public sealed class PaymentRequiredResponse : Response<ErrorResult>
+```
+
+Creates a `Response<ErrorResult>` object for a payment required error (HTTP 402).
+Used when an authenticated caller must pay before accessing the resource — a paywall, an exhausted prepaid balance, or a quota that only a paid plan unlocks.
+
+Constructors: `(ErrorResult? result = null)` applies the standard 402 code, message, and type; `(int responseCode, string responseMessage)` accepts custom values with a `null` result; `(ErrorResult result, int? responseCode, string responseMessage = "")` accepts an explicit payload (`responseCode: null` falls back to 402, and an empty message is kept as `""`).
+
+#### Defaults
+
+| Property          | Value                                                     |
+| ----------------- | --------------------------------------------------------- |
+| `ResponseCode`    | `402` (from `BaseResponseCode.PaymentRequired`)           |
+| `ResponseMessage` | `"Payment is required to access this resource."`          |
+| `ResponseType`    | `ResponseType.PaymentRequired`                            |
+| `Result`          | [`ErrorResult`](#errorresult)                             |
+
+#### Example response:
+
+```json
+{
+  "responseCode": 402,
+  "responseType": 18,
+  "responseMessage": "Payment is required to access this resource.",
+  "result": null
+}
+```
+
+---
+
 ### `ForbiddenResponse`
 
 Namespace: RA.Utilities.Api.Response<br>
@@ -550,6 +589,7 @@ All response types and their defaults:
 | `SuccessResponse<T>`          | 200       | `Success`               | `T`                    |
 | `BadRequestResponse`          | 400       | `BadRequest`            | `BadRequestResult[]`   |
 | `UnauthorizedResponse`        | 401       | `Unauthorized`          | `ErrorResult`          |
+| `PaymentRequiredResponse`     | 402       | `PaymentRequired`       | `ErrorResult`          |
 | `ForbiddenResponse`           | 403       | `Forbidden`             | `ErrorResult`          |
 | `NotFoundResponse`            | 404       | `NotFound`              | `NotFoundResult`       |
 | `ConflictResponse`            | 409       | `Conflict`              | `ConflictResult`       |

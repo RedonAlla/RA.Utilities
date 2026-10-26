@@ -35,7 +35,7 @@ Hand-written APIs drift: one endpoint returns a bare string, another throws a ra
 
 ### ✨ Key Features
 
-- **Global exception handler** — implements `IExceptionHandler`; maps semantic exceptions to HTTP 400/401/403/404/409/422/429/500/503/504
+- **Global exception handler** — implements `IExceptionHandler`; maps semantic exceptions to HTTP 400/401/402/403/404/409/422/429/500/503/504
 - **Exception mappers** — `ErrorResultResponse.Result(exception)` returns an `IResult`; `ErrorResultMapper` builds the response body
 - **Success helpers** — `SuccessResult.Ok`, `Created`, `CreatedAtRoute`, `Accepted`, and `NoContent`
 - **Compile-time endpoints** — `IEndpointGroup` + `IEndpoint` discovered by `RA.Utilities.Api.Generators`, invoked from `app.MapEndpoints()`
@@ -45,9 +45,11 @@ Hand-written APIs drift: one endpoint returns a bare string, another throws a ra
 - **Log scopes** — `ContextLoggingMiddleware` / `LoggingMiddleware` attach the request correlation ID
 - **Options pattern** — `DefaultHeadersOptions` and `HttpLoggingOptions` configure middleware through `Add*` overloads
 
-:::warning[Upgrading from v10.2.1?]
+:::warning[Upgrading from v10.2.1 or earlier?]
 
 v10.2.2 splits the monolithic `MiddlewareExtensions` class into `ServiceCollectionExtensions` (`Add*`) and `ApplicationBuilderExtensions` (`Use*`). Extension-method call sites are unchanged; only direct class-name references break. The package also now depends on `RA.Utilities.Api.Response` 10.1.0, whose models moved to the `RA.Utilities.Api.Response` namespace. See the [Migration Guides](./migration-guides.mdx).
+
+v10.3.0 adds HTTP 402 support: `PaymentRequiredException` maps to `PaymentRequiredResponse` instead of the generic `ErrorResponse`, and both 402 and 429 throws are logged at `Warning`.
 
 :::
 
@@ -78,7 +80,7 @@ Install-Package RA.Utilities.Api
 **PackageReference (csproj)**
 
 ```xml
-<PackageReference Include="RA.Utilities.Api" Version="10.2.2" />
+<PackageReference Include="RA.Utilities.Api" Version="10.3.0" />
 ```
 
 ### Hello World
@@ -315,7 +317,7 @@ var app = builder.Build();
 app.UseRaExceptionHandling();
 ```
 
-`GlobalExceptionHandler` logs 4xx semantic exceptions as warnings and everything else as errors, then writes the mapped response. See [`GlobalExceptionHandler`](./GlobalExceptionHandler.mdx).
+`GlobalExceptionHandler` logs 4xx semantic exceptions as warnings and everything else as errors, then writes the mapped response. A `PaymentRequiredException` produces an HTTP 402 with a `PaymentRequiredResponse` body. See [`GlobalExceptionHandler`](./GlobalExceptionHandler.mdx).
 
 ---
 

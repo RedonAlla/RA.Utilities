@@ -151,6 +151,29 @@ public class ErrorResultResponseTests
     }
 
     // =================================================================
+    // PaymentRequiredException → 402
+    // =================================================================
+
+    /// <summary>
+    /// Tests the expected behavior for this scenario.
+    /// </summary>
+    [Fact]
+    public void Result_WithPaymentRequiredException_ShouldReturnJsonResultWith402()
+    {
+        // Arrange
+        var exception = new PaymentRequiredException();
+
+        // Act
+        IResult result = ErrorResultResponse.Result(exception);
+
+        // Assert
+        IStatusCodeHttpResult jsonResult =
+            result.Should().BeAssignableTo<IStatusCodeHttpResult>().Subject;
+
+        jsonResult.StatusCode.Should().Be(BaseResponseCode.PaymentRequired);
+    }
+
+    // =================================================================
     // TooManyRequestsException → 429
     // =================================================================
 

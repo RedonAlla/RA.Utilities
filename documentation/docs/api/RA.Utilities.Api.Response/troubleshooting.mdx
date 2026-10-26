@@ -134,7 +134,7 @@ To vary the code, use a constructor overload or derive from `Response<T>`.
 return StatusCode(403, new ForbiddenResponse(null));
 ```
 
-`UnauthorizedResponse`, `TooManyRequestsResponse`, `ServiceUnavailableResponse`, and `GatewayTimeoutResponse` do allow parameterless calls because their `result` parameter defaults to `null`.
+`UnauthorizedResponse`, `PaymentRequiredResponse`, `TooManyRequestsResponse`, `ServiceUnavailableResponse`, and `GatewayTimeoutResponse` do allow parameterless calls because their `result` parameter defaults to `null`.
 
 ### Why is the HTTP response still 200 when I return an `ErrorResponse`?
 

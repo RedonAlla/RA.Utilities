@@ -67,6 +67,9 @@ The class provides a dedicated mapping method for each custom exception type:
 - **`ToResponse(ForbiddenException ex)`**:
   Maps a `ForbiddenException` to a `ForbiddenResponse`, populating the `ErrorResult` with the error code and message.
 
+- **`ToResponse(PaymentRequiredException ex)`**:
+  Maps a [`PaymentRequiredException`](../../../core/RA.Utilities.Core.Exceptions/PaymentRequiredException.md) to a [`PaymentRequiredResponse`](../../RA.Utilities.Api.Response/PaymentRequiredResponse.md) (HTTP 402), copying the exception's code and message to the envelope and leaving `Result` as `null`.
+
 - **`ToResponse(UnprocessableException ex)`**:
   Maps an `UnprocessableException` to an `UnprocessableResponse`, populating the `ErrorResult` with the error code and message.
 
@@ -93,6 +96,7 @@ The mapper does not populate the same payload for every exception. The table bel
 | `NotFoundException` | `NotFoundResponse` | `NotFoundResult` with `Entity` and `Value` |
 | `UnauthorizedException` | `UnauthorizedResponse` | `null` — the envelope carries the code and message |
 | `ForbiddenException` | `ForbiddenResponse` | `null` — the envelope carries the code and message |
+| `PaymentRequiredException` | `PaymentRequiredResponse` | `null` — the envelope carries the code and message |
 | `UnprocessableException` | `UnprocessableResponse` | `null` — the envelope carries the code and message |
 | `TooManyRequestsException` | `TooManyRequestsResponse` | `null` — the envelope carries the code and message |
 | `ServiceUnavailableException` | `ServiceUnavailableResponse` | `null` — the envelope carries the code and message |

@@ -11,6 +11,8 @@
 By using this package, you can significantly reduce boilerplate code, enforce consistency across all your API endpoints, and keep your `Program.cs` file clean and maintainable.
 
 > **v10.2.2 note**: `MiddlewareExtensions` was split into `ServiceCollectionExtensions` (`Add*`) and `ApplicationBuilderExtensions` (`Use*`); call sites are unchanged. The package now depends on `RA.Utilities.Api.Response` 10.1.0, whose models live in the `RA.Utilities.Api.Response` namespace.
+>
+> **v10.3.0 note**: `PaymentRequiredException` is now mapped to the new `PaymentRequiredResponse` (HTTP 402) instead of the generic `ErrorResponse`. Both `PaymentRequiredException` and `TooManyRequestsException` are treated as client errors and logged at `Warning`.
 
 ## 📚 Table of Contents
 
@@ -63,10 +65,10 @@ The `GlobalExceptionHandler` intercepts any unhandled exceptions thrown within y
 
 **How it works:**
 
-- It catches the semantic exceptions from `RA.Utilities.Core.Exceptions` — `BadRequestException`, `UnauthorizedException`, `ForbiddenException`, `NotFoundException`, `ConflictException`, `UnprocessableException`, `TooManyRequestsException`, `ServiceUnavailableException`, and `GatewayTimeoutException` — plus any other `RaBaseException`.
-- It maps them to the built-in response models (namespace `RA.Utilities.Api.Response`) provided by the `RA.Utilities.Api.Response` package, which this package references transitively.
+- It catches the semantic exceptions from `RA.Utilities.Core.Exceptions` — `BadRequestException`, `UnauthorizedException`, `PaymentRequiredException`, `ForbiddenException`, `NotFoundException`, `ConflictException`, `UnprocessableException`, `TooManyRequestsException`, `ServiceUnavailableException`, and `GatewayTimeoutException` — plus any other `RaBaseException`.
+- It maps them to the built-in response models (namespace `RA.Utilities.Api.Response`) provided by the `RA.Utilities.Api.Response` package, which this package references transitively. `PaymentRequiredException` maps to `PaymentRequiredResponse` (HTTP 402).
 - For any other unhandled exception, it returns a generic `ErrorResponse` (HTTP 500) to avoid leaking sensitive information.
-- It logs every exception for debugging purposes.
+- It logs every exception for debugging purposes: client errors (`BadRequestException`, `UnauthorizedException`, `PaymentRequiredException`, `ForbiddenException`, `NotFoundException`, `ConflictException`, `UnprocessableException`, and `TooManyRequestsException`) at `Warning`; everything else at `Error`.
 
 #### Usage
 
@@ -117,6 +119,30 @@ A request to `/products/0` would automatically return a 404 response with the fo
 ```
 
 > **Known issue**: `ErrorResultMapper.ToResponse(NotFoundException)` currently passes the exception message as `NotFoundResult.ErrorCode`, so the nested `errorCode` contains the message and `errorMessage` is empty. The envelope is correct; a fix is pending.
+
+A `PaymentRequiredException` thrown from an endpoint is returned as HTTP 402 with a `PaymentRequiredResponse` envelope. The exception's code and message are copied to the envelope; `result` stays `null`:
+
+```csharp
+app.MapGet("/reports/{id}", (int id) =>
+{
+    if (!HasPaidPlan())
+    {
+        // Transformed into an HTTP 402 PaymentRequiredResponse
+        throw new PaymentRequiredException("This report is available on paid plans.");
+    }
+
+    return Results.Ok(new { Id = id });
+});
+```
+
+```json
+{
+  "responseCode": 402,
+  "responseType": 18,
+  "responseMessage": "This report is available on paid plans.",
+  "result": null
+}
+```
 
 ### 2. Endpoint Registration Helpers
 

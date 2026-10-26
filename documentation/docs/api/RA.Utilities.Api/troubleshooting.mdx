@@ -252,7 +252,7 @@ The envelope is correct. A source fix is pending; until then, do not rely on the
 
 ### Why is `result` null for some error responses?
 
-**Cause**: `ErrorResultMapper` maps `Unauthorized`, `Forbidden`, `Unprocessable`, `TooManyRequests`, `ServiceUnavailable`, `GatewayTimeout`, and generic `RaBaseException` through the `(int responseCode, string responseMessage)` constructors. Those constructors set `Result = null`, so the error code and message exist only on the envelope.
+**Cause**: `ErrorResultMapper` maps `Unauthorized`, `PaymentRequired`, `Forbidden`, `Unprocessable`, `TooManyRequests`, `ServiceUnavailable`, `GatewayTimeout`, and generic `RaBaseException` through the `(int responseCode, string responseMessage)` constructors. Those constructors set `Result = null`, so the error code and message exist only on the envelope.
 
 Only `BadRequestException`, `ConflictException`, and `NotFoundException` produce a structured `Result` payload. See [ErrorResultMapper](./mapper/ErrorResultMapper.md#-response-payload-shapes).
 
@@ -288,6 +288,7 @@ All response model types are provided by the `RA.Utilities.Api.Response` package
 - `SuccessResponse<T>` — HTTP 200
 - `BadRequestResponse` — HTTP 400
 - `UnauthorizedResponse` — HTTP 401
+- `PaymentRequiredResponse` — HTTP 402
 - `ForbiddenResponse` — HTTP 403
 - `NotFoundResponse` — HTTP 404
 - `ConflictResponse` — HTTP 409
@@ -355,4 +356,4 @@ builder.Services.AddLoggingMiddleware(options =>
 - **`DefaultHeadersMiddleware` error body casing**: its 400 payload uses PascalCase and numeric `ResponseType` values, unlike the camelCase responses produced by Minimal API/controller JSON options.
 - **Mapper payloads are inconsistent**: only `BadRequestException`, `ConflictException`, and `NotFoundException` produce a structured `Result`; the other mapped exception types return `result: null` with the details on the envelope. `NotFoundException`'s nested `errorCode`/`errorMessage` are currently reversed/empty.
 - **`LoggingMiddleware` buffers full request/response bodies**: Large payloads will be fully read into memory. Use `MaxBodyLogLength` to truncate large bodies and `PathsToIgnore` to skip specific endpoints.
-- **`TooManyRequestsException` is logged at Error level**: `GlobalExceptionHandler` treats 400/401/403/404/409/422 as client errors; the 429 mapping is not in that list.
+- **`TooManyRequestsException` log level**: `GlobalExceptionHandler` treats `BadRequestException`, `UnauthorizedException`, `PaymentRequiredException`, `ForbiddenException`, `NotFoundException`, `ConflictException`, `UnprocessableException`, and `TooManyRequestsException` as client errors and logs them at `Warning`. `ServiceUnavailableException`, `GatewayTimeoutException`, and other `RaBaseException` types are logged at `Error`.

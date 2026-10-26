@@ -21,6 +21,7 @@ The `Result(Exception)` method uses a switch expression to map each supported ex
 | --- | --- | --- |
 | `BadRequestException` | [`BadRequestResponse`](../../RA.Utilities.Api.Response/BadRequestResponse.md) | 400 Bad Request |
 | `UnauthorizedException` | [`UnauthorizedResponse`](../../RA.Utilities.Api.Response/UnauthorizedResponse.md) | 401 Unauthorized |
+| `PaymentRequiredException` | [`PaymentRequiredResponse`](../../RA.Utilities.Api.Response/PaymentRequiredResponse.md) | 402 Payment Required |
 | `ForbiddenException` | [`ForbiddenResponse`](../../RA.Utilities.Api.Response/ForbiddenResponse.md) | 403 Forbidden |
 | `NotFoundException` | [`NotFoundResponse`](../../RA.Utilities.Api.Response/NotFoundResponse.md) | 404 Not Found |
 | `ConflictException` | [`ConflictResponse`](../../RA.Utilities.Api.Response/ConflictResponse.md) | 409 Conflict |

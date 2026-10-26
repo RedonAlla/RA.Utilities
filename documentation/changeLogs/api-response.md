@@ -1,8 +1,25 @@
 ---
 title: RA.Utilities.Api.Response
 authors: [RedonAlla]
-date: 2026-10-17
+date: 2026-10-26
 ---
+
+## Version 10.2.0
+![Date Badge](https://img.shields.io/badge/Publish-26%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-v10.2.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api.Response/10.2.0)
+
+Adds `PaymentRequiredResponse` for HTTP 402 and raises the `RA.Utilities.Core.Constants` dependency to 10.1.1, which introduces the matching code, message, and `ResponseType` member.
+
+<!-- truncate -->
+
+### ✨ New Features
+
+*   **`PaymentRequiredResponse`**: A new `Response<ErrorResult>` model for HTTP 402 responses, with `ResponseCode = 402`, `ResponseType = ResponseType.PaymentRequired`, and `ResponseMessage = "Payment is required to access this resource."`. It ships with three constructors: `(ErrorResult? result = null)` for the standard envelope, `(int responseCode, string responseMessage)` for custom values with a `null` result, and `(ErrorResult result, int? responseCode, string responseMessage = "")` for an explicit payload.
+*   **`RA.Utilities.Core.Constants` 10.1.1**: `BaseResponseCode.PaymentRequired` (`402`), `BaseResponseMessages.PaymentRequired`, and `ResponseType.PaymentRequired` (enum value `18`) are now available. The new member is appended, so existing numeric wire values are unchanged.
+
+### 📝 Notes
+
+*   With default `System.Text.Json` options the new type serializes as `"responseType": 18`; register `JsonStringEnumConverter` to emit `"PaymentRequired"`.
 
 ## Version 10.1.0
 ![Date Badge](https://img.shields.io/badge/Publish-17%20October%202026-lightblue?logo=fastly&logoColor=white)

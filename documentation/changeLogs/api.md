@@ -1,8 +1,24 @@
 ---
 title: RA.Utilities.Api
 authors: [RedonAlla]
-date: 2026-10-19
+date: 2026-10-26
 ---
+
+## Version 10.3.0
+![Date Badge](https://img.shields.io/badge/Publish-26%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.3.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Api/10.3.0)
+
+`PaymentRequiredException` is now mapped to the dedicated `PaymentRequiredResponse` (HTTP 402) instead of the generic `ErrorResponse`, and the exception handler classifies 402 and 429 throws as client errors.
+
+<!-- truncate -->
+
+### ✨ New Features
+
+* **HTTP 402 mapping**: `ErrorResultResponse.Result(PaymentRequiredException)` returns a `Results.Json` result with status code 402, and the new `ErrorResultMapper.ToResponse(PaymentRequiredException)` overload builds a `PaymentRequiredResponse` from the exception's code and message (`result` stays `null`). Previously the exception fell through to the `RaBaseException` arm and produced an HTTP 500 `ErrorResponse`. Requires `RA.Utilities.Api.Response` 10.2.0, `RA.Utilities.Core.Exceptions` 10.2.0, and `RA.Utilities.Core.Constants` 10.1.1.
+
+### 📝 Improvements
+
+* **Client-error logging**: `GlobalExceptionHandler` treats `PaymentRequiredException` and `TooManyRequestsException` as client errors, so both are logged at `Warning` instead of `Error`. `ServiceUnavailableException`, `GatewayTimeoutException`, and other `RaBaseException` types remain at `Error`.
 
 ## Version 10.2.3
 ![Date Badge](https://img.shields.io/badge/Publish-19%20October%202026-lightblue?logo=fastly&logoColor=white)

@@ -91,6 +91,7 @@ The package ships these derived response classes:
 | [`SuccessResponse<T>`](./SuccessResponse) | 200 | `T` |
 | [`BadRequestResponse`](./BadRequestResponse) | 400 | `BadRequestResult[]` |
 | [`UnauthorizedResponse`](./UnauthorizedResponse) | 401 | `ErrorResult` |
+| [`PaymentRequiredResponse`](./PaymentRequiredResponse) | 402 | `ErrorResult` |
 | [`ForbiddenResponse`](./ForbiddenResponse) | 403 | `ErrorResult` |
 | [`NotFoundResponse`](./NotFoundResponse) | 404 | `NotFoundResult` |
 | [`ConflictResponse`](./ConflictResponse) | 409 | `ConflictResult` |

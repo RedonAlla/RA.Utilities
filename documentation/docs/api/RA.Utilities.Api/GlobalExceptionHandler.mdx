@@ -14,14 +14,15 @@ Its primary purpose is to catch any unhandled exceptions that occur during the p
 It performs three key actions:
 
 * **1. Logs the Error**: It uses the standard `ILogger` to log the full exception details.
-Client errors (4xx) — such as `BadRequestException`, `NotFoundException`, or `ConflictException` — are logged as **warnings**,
-while server errors (5xx) and unrecognized exceptions are logged as **errors**.
+Client errors (4xx) — such as `BadRequestException`, `NotFoundException`, `ConflictException`, `PaymentRequiredException`, or `TooManyRequestsException` —
+are logged as **warnings**, while server errors (5xx) and unrecognized exceptions are logged as **errors**.
 This keeps expected client mistakes out of the error logs while surfacing genuine server failures, which is critical for developers to diagnose and fix bugs.
 * **2. Maps the Exception**: It calls [`ErrorResultResponse.Result(exception)`](./mapper/ErrorResultResponse.md).
 This is a smart mapper that inspects the type of exception.
 If it's a known, semantic exception from your [`RA.Utilities.Core.Exceptions`](../../core/RA.Utilities.Core.Exceptions/index.mdx) library
 (like [`NotFoundException`](../../core/RA.Utilities.Core.Exceptions/NotFoundException.md) or [`BadRequestException`](../../core/RA.Utilities.Core.Exceptions/BadRequestException.md)),
 it creates a specific, structured JSON response with the appropriate HTTP status code (e.g., 404 or 400).
+For example, a [`PaymentRequiredException`](../../core/RA.Utilities.Core.Exceptions/PaymentRequiredException.md) becomes an HTTP 402 response with a `PaymentRequiredResponse` body.
 For any other unexpected exception, it generates a generic "Internal Server Error" (500) response to avoid leaking sensitive implementation details.
 * **3. Writes the Response**: It takes the generated error response and writes it to the HTTP response stream, completing the request gracefully from the client's perspective.
 

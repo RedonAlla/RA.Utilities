@@ -7,7 +7,7 @@ sidebar_position: 13
 Namespace: RA.Utilities.Api.Response
 ```
 
-The `ErrorResult` class is the base payload for structured errors. It is used directly by [`ErrorResponse`](./ErrorResponse), [`UnauthorizedResponse`](./UnauthorizedResponse), [`ForbiddenResponse`](./ForbiddenResponse), [`UnprocessableResponse`](./UnprocessableResponse), [`TooManyRequestsResponse`](./TooManyRequestsResponse), [`ServiceUnavailableResponse`](./ServiceUnavailableResponse), and [`GatewayTimeoutResponse`](./GatewayTimeoutResponse), and it is the base class for [`BadRequestResult`](./BadRequestResponse#badrequestresult), [`NotFoundResult`](./NotFoundResponse#notfoundresult), and [`ConflictResult`](./ConflictResponse#conflictresult).
+The `ErrorResult` class is the base payload for structured errors. It is used directly by [`ErrorResponse`](./ErrorResponse), [`UnauthorizedResponse`](./UnauthorizedResponse), [`PaymentRequiredResponse`](./PaymentRequiredResponse), [`ForbiddenResponse`](./ForbiddenResponse), [`UnprocessableResponse`](./UnprocessableResponse), [`TooManyRequestsResponse`](./TooManyRequestsResponse), [`ServiceUnavailableResponse`](./ServiceUnavailableResponse), and [`GatewayTimeoutResponse`](./GatewayTimeoutResponse), and it is the base class for [`BadRequestResult`](./BadRequestResponse#badrequestresult), [`NotFoundResult`](./NotFoundResponse#notfoundresult), and [`ConflictResult`](./ConflictResponse#conflictresult).
 
 ### 🎯 Purpose
 
