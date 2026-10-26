@@ -25,6 +25,7 @@ This practice offers several key advantages:
 | **NoContent**           | 204   | The request succeeded with no content to return. |
 | **BadRequest**          | 400   | The request is invalid.                        |
 | **Unauthorized**        | 401   | Authentication is missing or failed.           |
+| **PaymentRequired**     | 402   | Payment is required to access the resource.    |
 | **Forbidden**           | 403   | The caller lacks permission.                   |
 | **NotFound**            | 404   | The requested resource was not found.          |
 | **Conflict**            | 409   | The request conflicts with the current state.  |

@@ -44,6 +44,7 @@ public class ResponseTypeTests
             { ResponseType.TooManyRequests, 15, "TooManyRequests" },
             { ResponseType.ServiceUnavailable, 16, "ServiceUnavailable" },
             { ResponseType.GatewayTimeout, 17, "GatewayTimeout" },
+            { ResponseType.PaymentRequired, 18, "PaymentRequired" },
         };
 
     // =================================================================
@@ -103,7 +104,7 @@ public class ResponseTypeTests
     [InlineData("null")]
     [InlineData("\"\"")]
     [InlineData("\"   \"")]
-    [InlineData("\"PaymentRequired\"")]
+    [InlineData("\"UnknownResponseType\"")]
     public void Deserialize_WithStringEnumConverter_InvalidInput_ShouldThrow(string json)
     {
         // Act

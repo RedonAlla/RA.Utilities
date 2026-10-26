@@ -111,4 +111,10 @@ public enum ResponseType
     /// Gateway timeout. Corresponds to HTTP 504.
     /// </summary>
     GatewayTimeout,
+
+    /// <summary>
+    /// Payment is required to access the resource.
+    /// Corresponds to HTTP 402.
+    /// </summary>
+    PaymentRequired,
 }

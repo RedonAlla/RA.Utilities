@@ -253,6 +253,60 @@ public class ExceptionTests
     }
 
     // =================================================================
+    // Tests for PaymentRequiredException
+    // =================================================================
+
+    /// <summary>
+    /// Tests the default constructor of PaymentRequiredException.
+    /// </summary>
+    [Fact]
+    public void PaymentRequiredException_DefaultConstructor_ShouldSetDefaultValues()
+    {
+        // Act
+        var ex = new PaymentRequiredException();
+
+        // Assert
+        ex.Message.Should().Be(BaseResponseMessages.PaymentRequired);
+        ex.ErrorCode.Should().Be(BaseResponseCode.PaymentRequired);
+        ex.ResponseType.Should().Be(ResponseType.PaymentRequired);
+    }
+
+    /// <summary>
+    /// Tests the constructor of PaymentRequiredException with a custom message.
+    /// </summary>
+    [Fact]
+    public void PaymentRequiredException_WithMessage_ShouldSetCustomMessage()
+    {
+        // Arrange
+        const string message = "An active subscription is required.";
+
+        // Act
+        var ex = new PaymentRequiredException(message);
+
+        // Assert
+        ex.Message.Should().Be(message);
+        ex.ErrorCode.Should().Be(BaseResponseCode.PaymentRequired);
+    }
+
+    /// <summary>
+    /// Tests the constructor of PaymentRequiredException with a custom error code and message.
+    /// </summary>
+    [Fact]
+    public void PaymentRequiredException_WithErrorCodeAndMessage_ShouldSetProperties()
+    {
+        // Arrange
+        const int errorCode = 402;
+        const string message = "Tenant quota exhausted. Upgrade your plan.";
+
+        // Act
+        var ex = new PaymentRequiredException(errorCode, message);
+
+        // Assert
+        ex.ErrorCode.Should().Be(errorCode);
+        ex.Message.Should().Be(message);
+    }
+
+    // =================================================================
     // Tests for ServiceUnavailableException
     // =================================================================
 

@@ -202,7 +202,7 @@ See [Validate an IBAN and pick the right error code](./index.mdx#validate-an-iba
 
 ## Known Limitations
 
-- **Closed set of values**: Consuming projects cannot add new `ResponseType` members. For an outcome without a dedicated member (e.g., `PaymentRequired`), use the closest built-in member (typically `Error` or `Problem`) and communicate the specifics through the error code and message.
+- **Closed set of values**: Consuming projects cannot add new `ResponseType` members. For an outcome without a dedicated member (e.g., `BadGateway`), use the closest built-in member (typically `Error` or `Problem`) and communicate the specifics through the error code and message.
 - **Numeric JSON by default**: Without `JsonStringEnumConverter`, `responseType` is serialized as a number. Register the converter if your clients depend on names such as `"NotFound"`.
 - **Strict string deserialization with the converter**: `JsonStringEnumConverter` throws `JsonException` for unknown names and for `null` when the target enum is non-nullable. Validate first if you need tolerant input.
 - **`default` is `Success`**: `default(ResponseType)` and uninitialized fields are `ResponseType.Success` (value `0`). Use explicit members in models where `Success` is not the right default.

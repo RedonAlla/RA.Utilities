@@ -7,6 +7,32 @@ sidebar_class_name: nav_session ra_utilities_core_exceptions
 
 > **Note**: `ResponseType` has changed shape twice. It was a plain enum through Core.Constants v10.0.1, a `record` in v10.0.2–v10.0.3, and is a plain enum again from Core.Constants v10.0.4 onward. With the current enum, read the semantic label with `ex.ResponseType.ToString()`, not `ex.ResponseType.Value`.
 
+## v10.1.0 → v10.2.0
+
+This release is **additive for call sites**. It adds `PaymentRequiredException` for HTTP 402 and depends on `RA.Utilities.Core.Constants` 10.1.1.
+
+### Breaking Change: None
+
+Existing exception types, constructors, and default messages are unchanged, so an upgrade requires no code changes.
+
+### New exception
+
+| Type | Constructors | `ResponseType` |
+|---|---|---|
+| `PaymentRequiredException` | `()` · `(string message)` · `(int errorCode, string? message = null)` | `ResponseType.PaymentRequired` |
+
+Use it when the caller is authenticated but the resource requires payment. Do not use it for authentication (401), permission (403), or rate limiting (429).
+
+```csharp
+throw new PaymentRequiredException("This report is available on paid plans.");
+```
+
+### Dependency
+
+`RA.Utilities.Core.Exceptions` 10.2.0 ships with a dependency on `RA.Utilities.Core.Constants` 10.1.1, which provides `BaseResponseCode.PaymentRequired` (402), `BaseResponseMessages.PaymentRequired`, and the `ResponseType.PaymentRequired` member. If your project pins the Constants package directly, use 10.1.1 or later.
+
+---
+
 ## v10.0.4 → v10.1.0
 
 This release is **additive for call sites**. It adapts the package to `RA.Utilities.Core.Constants` v10.0.4+, adds convenience constructors, and makes the default-message behavior explicit.

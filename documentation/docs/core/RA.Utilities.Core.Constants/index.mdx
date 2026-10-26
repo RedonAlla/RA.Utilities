@@ -44,7 +44,7 @@ The primary goal of this package is to ensure consistency across different proje
 
 :::warning[Upgrading from v10.0.3 or earlier?]
 
-v10.0.4 made two breaking changes: every field moved from `const` to `static readonly`, and `ResponseType` became a plain `enum`. The values themselves are unchanged. v10.0.5 is purely additive — it adds four IBAN validation codes and messages. See the [Migration Guides](./migration-guides.mdx) before upgrading.
+v10.0.4 made two breaking changes: every field moved from `const` to `static readonly`, and `ResponseType` became a plain `enum`. The values themselves are unchanged. Later releases are purely additive: v10.0.5 adds four IBAN validation codes and messages, and v10.1.1 adds `PaymentRequired` (402) to `BaseResponseCode`, `BaseResponseMessages`, and `ResponseType`. See the [Migration Guides](./migration-guides.mdx) before upgrading.
 
 :::
 
@@ -73,7 +73,7 @@ Install-Package RA.Utilities.Core.Constants
 **PackageReference (csproj)**
 
 ```xml
-<PackageReference Include="RA.Utilities.Core.Constants" Version="10.0.5" />
+<PackageReference Include="RA.Utilities.Core.Constants" Version="10.1.1" />
 ```
 
 ### Hello World
@@ -298,11 +298,11 @@ Verify the behavior your clients depend on: with `JsonStringEnumConverter`, name
 
 ### Handle an outcome that has no dedicated `ResponseType` member
 
-The set of `ResponseType` values is closed. For an outcome without a dedicated member (e.g., HTTP 402 Payment Required), use the closest built-in member and communicate the specifics through the error code and message:
+The set of `ResponseType` values is closed. For an outcome without a dedicated member (e.g., HTTP 502 Bad Gateway), use the closest built-in member and communicate the specifics through the error code and message:
 
 ```csharp showLineNumbers
 // highlight-next-line
-throw new RaBaseException(402, ResponseType.Error, "Premium subscription required.");
+throw new RaBaseException(502, ResponseType.Error, "The upstream service failed.");
 ```
 
 ---

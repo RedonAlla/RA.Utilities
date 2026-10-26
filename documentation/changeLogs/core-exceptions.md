@@ -1,7 +1,35 @@
 ---
 title: RA.Utilities.Core.Exceptions
 authors: [RedonAlla]
-date: 2026-10-18
+date: 2026-10-26
+---
+
+## Version 10.2.0
+![Date Badge](https://img.shields.io/badge/Publish-26%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-v10.2.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Exceptions/10.2.0)
+
+This release adds `PaymentRequiredException` for HTTP 402, adding the missing status to the package's 4xx family so paid resources can be rejected with a dedicated type instead of reusing `ForbiddenException` or `RaBaseException`. The release is additive: no existing type, constructor, or default message changed.
+
+<!-- truncate -->
+
+### ✨ New Features
+
+*   **`PaymentRequiredException`**: Signals that an authenticated caller must pay before accessing the resource. It maps to **HTTP 402 Payment Required** with `ResponseType.PaymentRequired`.
+*   **Three constructors**: `PaymentRequiredException()`, `PaymentRequiredException(string message)`, and `PaymentRequiredException(int errorCode, string? message = null)`, following the same shapes as the other semantic exceptions.
+
+### 📝 Improvements
+
+*   **Documentation**: Added a `PaymentRequiredException` page, updated the constructor and default-message tables, and added 401/402/403 guidance to the troubleshooting matrix.
+
+### 🔗 Dependency Update
+
+*   **`RA.Utilities.Core.Constants` 10.1.1**: Provides `BaseResponseCode.PaymentRequired` (402), `BaseResponseMessages.PaymentRequired`, and the `ResponseType.PaymentRequired` member used by the new exception.
+
+### 📝 Notes
+
+*   In `RA.Utilities.Api`, `ErrorResultResponse` maps the exception to a `PaymentRequiredResponse` envelope with `responseCode` from `ErrorCode` and the exception message; `result` is `null`.
+*   `GlobalExceptionHandler` logs `PaymentRequiredException` at `Warning` as a client error. `TooManyRequestsException` is now also logged at `Warning`; 503 and 504 remain `Error`.
+
 ---
 
 ## Version 10.1.0

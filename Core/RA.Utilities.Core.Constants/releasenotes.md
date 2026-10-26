@@ -1,5 +1,25 @@
 # Release Notes 
 
+## Version 10.1.1
+![Date Badge](https://img.shields.io/badge/Publish-26%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-v10.1.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Constants/10.1.1)
+
+This release adds HTTP 402 Payment Required to the shared response vocabulary, so paid resources can use a dedicated status code, message, and semantic response type instead of overloading `Forbidden` or `Error`. The release is additive: no existing field, type, or value changed.
+
+### ✨ New Features
+
+*   **`BaseResponseCode.PaymentRequired`**: `402` for resources that require payment before access is granted.
+*   **`BaseResponseMessages.PaymentRequired`**: `"Payment is required to access this resource."` as the default message.
+*   **`ResponseType.PaymentRequired`**: A new enum member (value `18`) that labels 402 responses in the JSON body. The member is appended, so the numeric values of existing members are unchanged.
+
+### 📝 Notes
+
+*   `ResponseType.PaymentRequired` serializes as `18` with default `System.Text.Json` options, or `"PaymentRequired"` when `JsonStringEnumConverter` is registered.
+*   `RA.Utilities.Core.Exceptions` 10.2.0 adds `PaymentRequiredException`, and `RA.Utilities.Api` maps it to HTTP 402 with a `PaymentRequiredResponse`.
+*   Existing code is unaffected; the new fields and member are additive.
+
+---
+
 ## Version 10.1.0
 ![Date Badge](https://img.shields.io/badge/Publish-17%20October%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-v10.1.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Core.Constants/10.1.0)

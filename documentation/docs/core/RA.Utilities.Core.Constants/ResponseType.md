@@ -41,6 +41,9 @@ The primary purpose is to create a consistent contract for your APIs. A client a
 | **TooManyRequests**   | 15    | The client has sent too many requests in a given amount of time.                | 429 Too Many Requests |
 | **ServiceUnavailable** | 16   | The service is temporarily unavailable.                                         | 503 Service Unavailable |
 | **GatewayTimeout**    | 17    | The server, acting as a gateway, did not receive a timely response.             | 504 Gateway Timeout |
+| **PaymentRequired**   | 18    | Payment is required to access the resource.                                     | 402 Payment Required |
+
+`PaymentRequired` (value `18`) was added in v10.1.1; earlier versions have no dedicated member, so they use `Error` with a `402` error code.
 
 ## JSON serialization
 
@@ -148,18 +151,18 @@ There is no implicit conversion between `ResponseType` and `string`.
 
 ### No custom members
 
-The set of values is closed — consuming projects cannot add new members. For an outcome that has no dedicated member (e.g., HTTP 402 Payment Required), use the closest built-in member and communicate the specifics through `ErrorCode`/`ResponseCode` and the message:
+The set of values is closed — consuming projects cannot add new members. For an outcome that has no dedicated member (e.g., HTTP 502 Bad Gateway), use the closest built-in member and communicate the specifics through `ErrorCode`/`ResponseCode` and the message:
 
 ```csharp showLineNumbers
-throw new RaBaseException(402, ResponseType.Error, "Premium subscription required.");
+throw new RaBaseException(502, ResponseType.Error, "The upstream service failed.");
 ```
 
 This serializes as (with `JsonStringEnumConverter` configured):
 
 ```json showLineNumbers
 {
-  "responseCode": 402,
+  "responseCode": 502,
   "responseType": "Error",
-  "responseMessage": "Premium subscription required."
+  "responseMessage": "The upstream service failed."
 }
 ```

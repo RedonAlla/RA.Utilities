@@ -153,10 +153,21 @@ public record PaymentRequiredResponseType : ResponseType
 throw new RaBaseException(402, PaymentRequiredResponseType.Instance, "Premium subscription required.");
 ```
 
-**After (v10.0.4):**
+**After (v10.0.4 – v10.1.0):**
 
 ```csharp
+// v10.0.4 – v10.1.0 — no dedicated member yet
 throw new RaBaseException(402, ResponseType.Error, "Premium subscription required.");
+```
+
+From v10.1.1, `ResponseType` has a dedicated `PaymentRequired` member, so new code can use the typed values:
+
+```csharp
+throw new RaBaseException(
+    BaseResponseCode.PaymentRequired,
+    ResponseType.PaymentRequired,
+    BaseResponseMessages.PaymentRequired
+);
 ```
 
 #### 5. Decide how `ResponseType` is serialized

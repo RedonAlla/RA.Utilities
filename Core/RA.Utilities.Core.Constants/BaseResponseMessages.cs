@@ -56,6 +56,11 @@ public abstract partial class BaseResponseMessages
     public static readonly string Forbidden = "You do not have permission to access this resource.";
 
     /// <summary>
+    /// Default message for a payment required response (HTTP 402).
+    /// </summary>
+    public static readonly string PaymentRequired = "Payment is required to access this resource.";
+
+    /// <summary>
     /// Default message for a conflict response.
     /// </summary>
     public static readonly string Conflict = "A conflict occurred with the current state of the resource.";

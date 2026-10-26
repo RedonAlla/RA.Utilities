@@ -36,6 +36,11 @@ public abstract partial class BaseResponseCode
     public static readonly int Unauthorized = 401;
 
     /// <summary>
+    /// Represents the HTTP status code 402 (Payment Required).
+    /// </summary>
+    public static readonly int PaymentRequired = 402;
+
+    /// <summary>
     /// Represents the HTTP status code 403 (Forbidden).
     /// </summary>
     public static readonly int Forbidden = 403;

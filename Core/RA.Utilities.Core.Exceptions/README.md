@@ -10,7 +10,7 @@
 
 By throwing exceptions that describe *what* went wrong (e.g., a resource was not found), you can create cleaner, more maintainable code. This allows other parts of your system, like API middleware, to catch specific exception types and produce standardized, meaningful error responses automatically.
 - **Clear Intent**: Throwing a `NotFoundException` is more descriptive than a generic exception with a "not found" message.
-- **Standardized Error Handling**: Middleware (like in `RA.Utilities.Api`) can catch these specific exception types and automatically map them to the correct HTTP status codes and structured error responses (e.g., 404 Not Found, 409 Conflict).
+- **Standardized Error Handling**: Middleware (like in `RA.Utilities.Api`) can catch these specific exception types and automatically map them to the correct HTTP status codes and structured error responses (e.g., 402 Payment Required, 404 Not Found, 409 Conflict).
 - **Decoupled Logic**: Your domain or application layer can focus on business rules and throw semantic exceptions without needing to know about HTTP details. The web layer handles the translation.
 - **Reduced Boilerplate**: Eliminates the need for repetitive `try-catch` blocks in your controllers for common error scenarios.
 
@@ -26,6 +26,7 @@ By throwing exceptions that describe *what* went wrong (e.g., a resource was not
   - `BadRequestException`
   - `UnprocessableException`
   - `UnauthorizedException`
+  - `PaymentRequiredException`
   - `ForbiddenException`
   - `GatewayTimeoutException`
   - `TooManyRequestsException`
@@ -64,7 +65,7 @@ Every exception follows the same constructor conventions:
 | Shape | Available on | Example |
 |---|---|---|
 | Default | All exceptions | `new NotFoundException()` |
-| Message | `Unauthorized`, `Forbidden`, `Unprocessable`, `GatewayTimeout`, `TooManyRequests`, `ServiceUnavailable` | `new ForbiddenException("Not the owner.")` |
+| Message | `Unauthorized`, `PaymentRequired`, `Forbidden`, `Unprocessable`, `GatewayTimeout`, `TooManyRequests`, `ServiceUnavailable` | `new ForbiddenException("Not the owner.")` |
 | Error code + message | All exceptions (pass a `ValidationError` first for `BadRequestException`) | `new ForbiddenException(4030, "Not the owner.")` |
 | Entity aware | `NotFoundException`, `ConflictException` | `new NotFoundException("Product", 99)` |
 | Validation aware | `BadRequestException` | `new BadRequestException(error)` |
@@ -218,6 +219,33 @@ public async Task<Result> AuthenticateUserAsync(string token)
     return Result.Success();
 }
 ```
+
+---
+
+### PaymentRequiredException
+Inherits from `RaBaseException`.
+Use this when an authenticated caller must pay before accessing the resource (HTTP 402) — a paywall, an exhausted prepaid balance, or a quota that only a paid plan unlocks.
+
+**Usage:**
+
+```csharp
+public async Task<Result<Report>> GenerateReportAsync(Guid userId)
+{
+    var subscription = await _subscriptionService.GetAsync(userId);
+
+    if (subscription.Plan == Plan.Free)
+    {
+        // The caller is authenticated, but the report requires a paid plan.
+        return new PaymentRequiredException("This report is available on paid plans.");
+    }
+
+    return await _reportService.GenerateAsync(userId);
+}
+```
+
+This will typically be translated into an **HTTP 402 Payment Required** response.
+
+Do not use it for authentication failures (401), missing permissions (403), or rate limits (429) — those have dedicated exception types.
 
 ---
 

@@ -36,6 +36,7 @@ Contains `public static readonly int` fields for common HTTP status codes, align
 | `NoContent`           | 204   | Success (2xx)      |
 | `BadRequest`          | 400   | Client Error (4xx) |
 | `Unauthorized`        | 401   | Client Error (4xx) |
+| `PaymentRequired`     | 402   | Client Error (4xx) |
 | `Forbidden`           | 403   | Client Error (4xx) |
 | `NotFound`            | 404   | Client Error (4xx) |
 | `Conflict`            | 409   | Client Error (4xx) |
@@ -60,6 +61,7 @@ Contains default string messages for common API responses. This helps maintain a
 | `NoContent`         | "No content."                                          | Success  |
 | `BadRequest`        | "The request is invalid."                              | Error    |
 | `Unauthorized`      | "Authentication failed or is missing."                 | Error    |
+| `PaymentRequired`   | "Payment is required to access this resource."         | Error    |
 | `Forbidden`         | "You do not have permission to access this resource."  | Error    |
 | `NotFound`          | "The requested resource was not found."                | Error    |
 | `Conflict`          | "A conflict occurred with the current state of the resource." | Error    |
@@ -150,6 +152,7 @@ The `ResponseType` is a C# `enum` that provides a strongly-typed, descriptive vo
 | `TooManyRequests`  | 15    | The client has sent too many requests in a given amount of time.                | 429 Too Many Requests |
 | `ServiceUnavailable` | 16   | The service is temporarily unavailable.                                         | 503 Service Unavailable |
 | `GatewayTimeout`   | 17    | The server, acting as a gateway, did not receive a timely response.             | 504 Gateway Timeout |
+| `PaymentRequired`  | 18    | Payment is required to access the resource.                                     | 402 Payment Required |
 
 #### Example JSON Response
 

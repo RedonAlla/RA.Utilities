@@ -116,18 +116,20 @@ It never did: `""` is a real string, and the fallback operator only reacts to `n
 | Duplicate / uniqueness violation | `ConflictException` | 409 |
 | Invalid input / validation | `BadRequestException` | 400 |
 | Missing or invalid authentication | `UnauthorizedException` | 401 |
+| Authenticated but payment is required | `PaymentRequiredException` | 402 |
 | Authenticated but not permitted | `ForbiddenException` | 403 |
 | Valid request but invalid state | `UnprocessableException` | 422 |
 | Rate limit exceeded | `TooManyRequestsException` | 429 |
 | Temporary outage / maintenance | `ServiceUnavailableException` | 503 |
 | Upstream timeout | `GatewayTimeoutException` | 504 |
 
-### 401 or 403?
+### 401, 402, or 403?
 
 - **401 `UnauthorizedException`** — the server cannot identify the caller: missing token, expired token, invalid credentials.
+- **402 `PaymentRequiredException`** — the caller is identified but the resource requires payment (subscription, credits, paid plan). The request can succeed after payment.
 - **403 `ForbiddenException`** — the caller is identified but lacks the role, claim, ownership, or permission.
 
-Using 401 for a permission failure tells clients to re-authenticate, which will not help.
+Using 401 for a permission failure tells clients to re-authenticate, which will not help. Using 403 for a paywall hides the fact that the client can resolve the failure by paying.
 
 ### When should I `throw` vs `return` an exception?
 
@@ -175,9 +177,9 @@ public sealed class UpstreamFailedException : RaBaseException
 
 No. They are plain exception classes with no serialization contract. The API layer projects them into response DTOs (`NotFoundResponse`, `ConflictResponse`, …) via `ErrorResultMapper`. Use `ErrorResultResponse.Result(exception)` or the global handler rather than `JsonSerializer.Serialize(exception)`.
 
-### Why are 429, 503, and 504 logged as errors?
+### Why are 503 and 504 logged as errors?
 
-`GlobalExceptionHandler.IsClientError` treats `BadRequestException`, `ConflictException`, `UnprocessableException`, `NotFoundException`, `UnauthorizedException`, and `ForbiddenException` as client errors (logged at `Warning`). `TooManyRequestsException`, `ServiceUnavailableException`, `GatewayTimeoutException`, and generic `RaBaseException` are logged at `Error`. If those are routine in your system, filter the log level or add your own handler.
+`GlobalExceptionHandler.IsClientError` treats `BadRequestException`, `ConflictException`, `UnprocessableException`, `NotFoundException`, `UnauthorizedException`, `PaymentRequiredException`, `ForbiddenException`, and `TooManyRequestsException` as client errors (logged at `Warning`). `ServiceUnavailableException`, `GatewayTimeoutException`, and generic `RaBaseException` are logged at `Error`. If those are routine in your system, filter the log level or add your own handler.
 
 ---
 
@@ -187,10 +189,10 @@ No. They are plain exception classes with no serialization contract. The API lay
 - **No localization support**: Messages are English-only. For multi-language support, use the error code for lookup and implement your own localization layer.
 - **`EntityName` / `EntityValue` are unset for generic constructors**: the parameterless and error-code-only constructors leave them `null`, even though the properties are declared non-nullable. Use an entity/value overload when the response needs them.
 - **`ErrorCode` is not the HTTP status**: the API mapper selects the status from the exception type; `ErrorCode` is echoed into the JSON `responseCode`.
-- **Closed exception set for mapping**: `ErrorResultResponse` recognizes the nine built-in types. A custom derived exception falls through to `RaBaseException` and returns HTTP 500.
+- **Closed exception set for mapping**: `ErrorResultResponse` recognizes the ten built-in types. A custom derived exception falls through to `RaBaseException` and returns HTTP 500.
 - **`ResponseType` is a closed enum**: there is no way to add a member. Use the closest built-in value and carry domain detail in the message or a validation error code.
 - **Exceptions are not serialized**: the API layer maps them to response DTOs; there is no `[JsonConverter]` on the exception types.
-- **Log levels for 429/503/504**: these are logged at `Error` by the default handler, not `Warning`.
+- **Log levels for 503/504**: these are logged at `Error` by the default handler, not `Warning`.
 
 ---
 

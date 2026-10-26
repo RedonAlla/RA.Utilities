@@ -19,7 +19,7 @@ import LogoSvg from '../../../../Assets/Images/error.svg';
 [![Publish NuGet](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml/badge.svg)](https://github.com/RedonAlla/RA.Utilities/actions/workflows/publish-nuget.yml)
 [![GitHub license](https://img.shields.io/github/license/RedonAlla/RA.Utilities?label=License&logo=googledocs&logoColor=fff)](https://github.com/RedonAlla/RA.Utilities?tab=MIT-1-ov-file)
 
-`RA.Utilities.Core.Exceptions` provides nine standardized, semantic exceptions such as [`NotFoundException`](./NotFoundException.md) and [`ConflictException`](./ConflictException.md). Each carries an HTTP error code, a semantic `ResponseType`, and a consistent message, so predictable business failures no longer need generic `Exception` or `ArgumentException` types.
+`RA.Utilities.Core.Exceptions` provides ten standardized, semantic exceptions such as [`NotFoundException`](./NotFoundException.md) and [`ConflictException`](./ConflictException.md). Each carries an HTTP error code, a semantic `ResponseType`, and a consistent message, so predictable business failures no longer need generic `Exception` or `ArgumentException` types.
 
 The package is the error vocabulary of the RA.Utilities ecosystem: the application layer throws these types without knowing about HTTP, and the API layer maps them to standardized responses.
 
@@ -35,7 +35,7 @@ Instead of throwing a generic `Exception` with a message string, this package le
 
 ### ✨ Key Features
 
-- **9 semantic exception types** — `NotFoundException`, `ConflictException`, `BadRequestException`, `UnauthorizedException`, `ForbiddenException`, `UnprocessableException`, `GatewayTimeoutException`, `TooManyRequestsException`, `ServiceUnavailableException`
+- **10 semantic exception types** — `NotFoundException`, `ConflictException`, `BadRequestException`, `UnauthorizedException`, `PaymentRequiredException`, `ForbiddenException`, `UnprocessableException`, `GatewayTimeoutException`, `TooManyRequestsException`, `ServiceUnavailableException`
 - **Defaults that always apply** — omitting `message` (or passing `null`) resolves to the package default at runtime; an explicit `""` is preserved
 - **Entity-aware constructors** — `NotFoundException` and `ConflictException` build messages such as `"Product with value '99' was not found."` and expose `EntityName` / `EntityValue`
 - **Structured validation errors** — [`ValidationError`](./ValidationError.md) carries property name, message, attempted value, expected value, and a custom error code
@@ -43,6 +43,12 @@ Instead of throwing a generic `Exception` with a message string, this package le
 - **Immutable after construction** — all properties are `init`-only or read-only
 - **Result-pattern ready** — any exception implicitly converts to `Result.Failure` through `RA.Utilities.Core.Results`
 - **No configuration** — no DI registration, no options, no `appsettings.json`; just throw the right type
+
+:::info[Version 10.2.0]
+
+Adds [`PaymentRequiredException`](./PaymentRequiredException.md) for HTTP 402. The release is additive: the existing exception types are unchanged, and it depends on `RA.Utilities.Core.Constants` 10.1.1 for the new `PaymentRequired` code, message, and `ResponseType` member.
+
+:::
 
 :::info[Version 10.1.0]
 
@@ -124,6 +130,7 @@ System.Exception
       ├─ ConflictException               ← EntityName + EntityValue
       ├─ BadRequestException             ← ValidationError[]
       ├─ UnauthorizedException           ← HTTP 401
+      ├─ PaymentRequiredException        ← HTTP 402
       ├─ ForbiddenException              ← HTTP 403
       ├─ UnprocessableException          ← HTTP 422
       ├─ GatewayTimeoutException         ← HTTP 504
@@ -139,8 +146,8 @@ Every exception follows the same constructor conventions, so switching types rar
 
 | Family | Available on | Example |
 |---|---|---|
-| **Default** — package code, type, and message | All 9 exceptions | `new NotFoundException()` |
-| **Message only** — package code and type, custom text | `Unauthorized`, `Forbidden`, `Unprocessable`, `GatewayTimeout`, `TooManyRequests`, `ServiceUnavailable` | `new ForbiddenException("Not the owner.")` |
+| **Default** — package code, type, and message | All 10 exceptions | `new NotFoundException()` |
+| **Message only** — package code and type, custom text | `Unauthorized`, `PaymentRequired`, `Forbidden`, `Unprocessable`, `GatewayTimeout`, `TooManyRequests`, `ServiceUnavailable` | `new ForbiddenException("Not the owner.")` |
 | **Error code + message** | All exceptions except `BadRequestException`, which needs a `ValidationError` first | `new ForbiddenException(4030, "Not the owner.")` |
 | **Entity aware** — builds the message and populates `EntityName` / `EntityValue` | `NotFoundException`, `ConflictException` | `new NotFoundException("Product", 99)` |
 | **Validation aware** — accepts one or many `ValidationError` items | `BadRequestException` | `new BadRequestException(error)` |
@@ -158,6 +165,7 @@ Every overload that accepts a message declares it as `string? message = null`. W
 | `NotFoundException()` | `404` | `NotFound` | `The requested resource was not found.` |
 | `ConflictException()` | `409` | `Conflict` | `A conflict occurred with the current state of the resource.` |
 | `UnauthorizedException()` | `401` | `Unauthorized` | `Authentication failed or is missing.` |
+| `PaymentRequiredException()` | `402` | `PaymentRequired` | `Payment is required to access this resource.` |
 | `ForbiddenException()` | `403` | `Forbidden` | `You do not have permission to access this resource.` |
 | `UnprocessableException()` | `422` | `Unprocessable` | `Unprocessable entity.` |
 | `TooManyRequestsException()` | `429` | `TooManyRequests` | `Too many requests. Please try again later.` |
@@ -367,6 +375,25 @@ if (resource.OwnerId != currentUser.Id)
 {
     // highlight-next-line
     return new ForbiddenException("You do not have permission to modify this resource.");
+}
+```
+
+### Require payment with a 402
+
+Reserve 402 for resources the caller can unlock by paying. It is not a substitute for 403 (insufficient permission) or 429 (rate limit):
+
+```csharp showLineNumbers
+public async Task<Result<Report>> GenerateReportAsync(Guid userId)
+{
+    Subscription subscription = await _subscriptions.GetAsync(userId);
+
+    if (subscription.Plan == Plan.Free)
+    {
+        // highlight-next-line
+        return new PaymentRequiredException("This report is available on paid plans.");
+    }
+
+    return await _reports.GenerateAsync(userId);
 }
 ```
 

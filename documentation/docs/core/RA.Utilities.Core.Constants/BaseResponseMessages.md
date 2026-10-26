@@ -28,6 +28,7 @@ This approach offers several significant benefits:
 | **NoContent**           | "No content."                                          |
 | **BadRequest**          | "The request is invalid."                              |
 | **Unauthorized**        | "Authentication failed or is missing."                 |
+| **PaymentRequired**     | "Payment is required to access this resource."         |
 | **Forbidden**           | "You do not have permission to access this resource."  |
 | **NotFound**            | "The requested resource was not found."                |
 | **Conflict**            | "A conflict occurred with the current state of the resource." |
