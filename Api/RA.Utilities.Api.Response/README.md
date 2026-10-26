@@ -9,7 +9,7 @@
 `RA.Utilities.Api.Response` provides a standardized set of models for creating consistent API responses within the RA.Utilities ecosystem.
 This package includes generic wrappers for success, error, and domain-specific failure scenarios, helping to streamline API development and improve client-side handling.
 
-> **v10.1.0 changes**: The namespace is now `RA.Utilities.Api.Response` (previously `RA.Utilities.Api.Results`), constructor overloads were split into convenience and all-argument forms, and `responseType` is numeric by default. See the [migration guide](https://redonalla.github.io/RA.Utilities/nuget-packages/api/RA.Utilities.Api.Response/migration-guides).
+> **v10.2.0 changes**: The namespace is now `RA.Utilities.Api.Response` (previously `RA.Utilities.Api.Results`), constructor overloads were split into convenience and all-argument forms, and `responseType` is numeric by default. See the [migration guide](https://redonalla.github.io/RA.Utilities/nuget-packages/api/RA.Utilities.Api.Response/migration-guides).
 >
 > **v10.2.0 changes**: Adds `PaymentRequiredResponse` for HTTP 402 and raises the `RA.Utilities.Core.Constants` dependency to 10.1.1, which introduces `BaseResponseCode.PaymentRequired`, `BaseResponseMessages.PaymentRequired`, and `ResponseType.PaymentRequired` (`18`).
 
