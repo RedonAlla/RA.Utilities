@@ -26,6 +26,7 @@ The primary goals are to:
   - [`HealthChecksDocumentTransformer`](#healthchecksdocumenttransformer)
   - [`PolymorphismDocumentTransformer`](#polymorphismdocumenttransformer)
   - [`TagOperationTransformer`](#tagoperationtransformer)
+  - [`GroupTagsDocumentTransformer`](#grouptagsdocumenttransformer)
 - [Operation Transformers](#operation-transformers)
   - [`DefaultResponsesOperationTransformer`](#defaultresponsesoperationtransformer)
 - [Schema Transformers](#schema-transformers)
@@ -102,7 +103,7 @@ This document transformer adds your service's health check endpoints to the Open
 
 It is registered automatically by `AddDefaultsDocumentTransformer()`.
 
-> ⚠️ **Known issue (v10.1.0, still present in v10.2.0)**: The standalone `AddHealthChecksDocumentTransformer(IDictionary<string, string> tags)` extension method currently registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and the `tags` argument is ignored. Use `AddDefaultsDocumentTransformer()` until this is corrected.
+> ⚠️ **Known issue (v10.1.0, still present in v10.3.0)**: The standalone `AddHealthChecksDocumentTransformer(IDictionary<string, string> tags)` extension method currently registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and the `tags` argument is ignored. Use `AddDefaultsDocumentTransformer()` until this is corrected.
 
 ---
 
@@ -223,6 +224,23 @@ builder.Services.AddOpenApi(options =>
     });
 });
 ```
+
+### `GroupTagsDocumentTransformer`
+
+Writes group-level documentation declared with `WithGroupSummary()` / `WithGroupDescription()` into the OpenAPI tags of a route group. Endpoint-level `WithSummary()` / `WithDescription()` metadata is left untouched, so the group text and the endpoint text never fight over the same field.
+
+```csharp
+using RA.Utilities.OpenApi.Extensions;
+
+var orders = app.MapGroup("/orders")
+    .WithTags("Orders")
+    .WithGroupSummary("Order management")
+    .WithGroupDescription("Create, update, and track customer orders.");
+```
+
+The composed description is `**Summary**` + a blank line + `Description` when both are set, or the summary/description alone when only one is set. Group text is written only to tags the endpoints actually carry, and an existing tag description is never overwritten. `AddDefaultsDocumentTransformer()` registers the transformer automatically.
+
+> ⚠️ **Known issue (v10.3.0)**: The standalone `AddGroupTagsDocumentTransformer(IDictionary<string, string> tags)` method requires a `tags` argument but ignores it — group text comes from the route group's metadata. Use `AddDefaultsDocumentTransformer()` until this is corrected.
 
 ## Configuration
 
@@ -348,8 +366,8 @@ builder.Services.Configure<HeadersParameterSettings>(builder.Configuration.GetSe
 // 2. Add OpenAPI services and register the transformers.
 builder.Services.AddOpenApi(options =>
 {
-    // Default transformers (DocumentInfo, BearerSecurity, Headers, HealthChecks) and the
-    // value object schema definitions.
+    // Default transformers (DocumentInfo, BearerSecurity, Headers, HealthChecks, GroupTags)
+    // and the value object schema definitions.
     options.AddDefaultsDocumentTransformer();
 
     // 3. Register operation transformers for more granular control.

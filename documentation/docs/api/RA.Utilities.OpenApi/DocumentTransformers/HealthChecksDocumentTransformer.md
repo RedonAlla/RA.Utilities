@@ -68,6 +68,6 @@ app.Run();
 
 With this setup, the generated document contains both health check operations under the `Health` tag, including their response schemas.
 
-:::caution[v10.1.0 standalone extension, still present in v10.2.0]
+:::caution[v10.1.0 standalone extension, still present in v10.3.0]
 `AddHealthChecksDocumentTransformer(IDictionary<string, string> tags)` currently registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and the `tags` argument is ignored. Use `AddDefaultsDocumentTransformer()` until this is corrected.
 :::

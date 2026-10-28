@@ -25,6 +25,7 @@ This is the recommended starting point. It registers a sensible default set of d
 *   **`HeadersParameterTransformer`**: Adds common request and response headers (like `x-request-id`) to all API operations based on configuration.
 *   **`HealthChecksDocumentTransformer`**: Documents the `GET /health` (JSON health report) and `GET /alive` (plain-text liveness) endpoints and adds the `Health` tag, without applying the Bearer security scheme to them.
 *   **`ValueObjectSchemaTransformer`**: Documents the constraints of the value objects from `RA.Utilities.Core.ValueObjects` (`Email`, `Currency`, `SSN`, `IBAN`, and `Money`).
+*   **`GroupTagsDocumentTransformer`**: Writes group-level documentation declared with `WithGroupSummary()` / `WithGroupDescription()` on a route group into the OpenAPI tags of the group.
 
 #### Usage
 ```csharp
@@ -149,7 +150,7 @@ builder.Services.AddOpenApi(options =>
 
 This extension is intended to register the [`HealthChecksDocumentTransformer`](../DocumentTransformers/HealthChecksDocumentTransformer.md), which documents the health check endpoints in the OpenAPI document.
 
-:::caution[v10.1.0, still present in v10.2.0]
+:::caution[v10.1.0, still present in v10.3.0]
 As implemented, this method registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and the `tags` argument is not used. Use [`AddDefaultsDocumentTransformer()`](#adddefaultsdocumenttransformer) to document health check endpoints until this is corrected.
 :::
 
@@ -167,6 +168,28 @@ builder.Services.AddOpenApi(options =>
 
 ---
 
+### `AddGroupTagsDocumentTransformer(IDictionary<string, string> tags)`
+
+This extension registers the [`GroupTagsDocumentTransformer`](../OperationTransformers/GroupTagsDocumentTransformer.md), which writes group-level documentation declared with [`WithGroupSummary()` and `WithGroupDescription()`](./RouteGroupBuilderExtensions.md) into the OpenAPI tags that the group's endpoints carry.
+
+:::caution[v10.3.0]
+The `tags` argument is required by the current signature but is ignored. Group documentation is read from the route group's metadata, not from this dictionary.
+:::
+
+#### Usage
+```csharp
+// In Program.cs
+builder.Services.AddOpenApi(options =>
+{
+    // The argument is required by the current signature but is not used.
+    options.AddGroupTagsDocumentTransformer(new Dictionary<string, string>());
+});
+```
+
+Prefer [`AddDefaultsDocumentTransformer()`](#adddefaultsdocumenttransformer), which already registers this transformer.
+
+---
+
 ### Individual Transformer Extensions
 
 For more granular control, you can also register each of the default transformers individually.
@@ -175,6 +198,7 @@ For more granular control, you can also register each of the default transformer
 *   **`AddBearerSecurityDocumentTransformer()`**: Registers only the [`BearerSecurityDocumentTransformer`](../DocumentTransformers/BearerSecurityDocumentTransformer.md).
 *   **`AddHeadersParameterTransformer()`**: Registers only the [`HeadersParameterTransformer`](../DocumentTransformers/HeadersParameterTransformer.md).
 *   **`AddHealthChecksDocumentTransformer(tags)`**: Intended to register only the [`HealthChecksDocumentTransformer`](../DocumentTransformers/HealthChecksDocumentTransformer.md) — see the [caution](#addhealthchecksdocumenttransformeridictionarystring-string-tags) above.
+*   **`AddGroupTagsDocumentTransformer(tags)`**: Registers only the [`GroupTagsDocumentTransformer`](../OperationTransformers/GroupTagsDocumentTransformer.md) — the `tags` argument is ignored; see the [caution](#addgrouptagsdocumenttransformeridictionarystring-string-tags) above.
 
 #### Usage
 ```csharp

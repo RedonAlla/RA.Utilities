@@ -27,6 +27,7 @@ public static class OpenApiOptionsExtensions
         ///         <item><description><see cref="BearerSecurityDocumentTransformer"/>: Adds a Bearer token security scheme if JWT authentication is present.</description></item>
         ///         <item><description><see cref="HeadersParameterTransformer"/>: Adds configured request and response headers to all operations.</description></item>
         ///         <item><description><see cref="HealthChecksDocumentTransformer"/>: Documents the health check endpoints.</description></item>
+        ///         <item><description><see cref="GroupTagsDocumentTransformer"/>: Writes group-level documentation.</description></item>
         ///       </list>
         ///     </description>
         ///   </item>
@@ -46,6 +47,7 @@ public static class OpenApiOptionsExtensions
             options.AddDocumentTransformer<HeadersParameterTransformer>();
             options.AddDocumentTransformer<HealthChecksDocumentTransformer>();
             options.AddSchemaTransformer<ValueObjectSchemaTransformer>();
+            options.AddDocumentTransformer<GroupTagsDocumentTransformer>();
             return options;
         }
 
@@ -142,5 +144,14 @@ public static class OpenApiOptionsExtensions
         /// <returns>The configured <see cref="OpenApiOptions"/> for chaining.</returns>
         public OpenApiOptions AddHealthChecksDocumentTransformer(IDictionary<string, string> tags) =>
             options.AddDocumentTransformer<HealthChecksDocumentTransformer>();
+
+        /// <summary>
+        /// Writes group-level documentation, declared with <c>WithGroupSummary</c> and
+        /// <c>WithGroupDescription</c> on a route group, into the OpenAPI tags of the group.
+        /// </summary>
+        /// <param name="tags">The tags to associate with health check endpoints.</param>
+        /// <returns>The configured <see cref="OpenApiOptions"/> for chaining.</returns>
+        public OpenApiOptions AddGroupTagsDocumentTransformer(IDictionary<string, string> tags) =>
+            options.AddDocumentTransformer<GroupTagsDocumentTransformer>();
     }
 }

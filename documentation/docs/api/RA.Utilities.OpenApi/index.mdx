@@ -44,7 +44,8 @@ The primary goals are:
 
 ### ✨ Key Features
 
-- **Document Transformers** — 6 transformers: `DocumentInfo`, `BearerSecurity`, `HeadersParameter`, `HealthChecks`, `Polymorphism`, `TagOperation`, plus a combined `AddDefaultsDocumentTransformer()` convenience method
+- **Document Transformers** — 7 transformers: `DocumentInfo`, `BearerSecurity`, `HeadersParameter`, `HealthChecks`, `Polymorphism`, `TagOperation`, `GroupTags`, plus a combined `AddDefaultsDocumentTransformer()` convenience method
+- **Group-level documentation** — `WithGroupSummary()` / `WithGroupDescription()` document a whole route group once, and `GroupTagsDocumentTransformer` writes that text into the group's OpenAPI tag
 - **Operation Transformers** — `DefaultResponsesOperationTransformer` adds standardized 500 error responses
 - **Schema Transformers** — `FluentValidationSchemaTransformer` enriches schemas from validators, `ValueObjectSchemaTransformer` documents the constraints of the value objects, `EnumXmlSchemaTransformer` appends XML doc descriptions
 - **Configuration-driven** — `OpenApiInfoSettings` and `HeadersParameterSettings` bind from `appsettings.json`
@@ -76,7 +77,7 @@ Install-Package RA.Utilities.OpenApi
 **PackageReference (csproj)**
 
 ```xml
-<PackageReference Include="RA.Utilities.OpenApi" Version="10.2.0" />
+<PackageReference Include="RA.Utilities.OpenApi" Version="10.3.0" />
 ```
 
 ### Hello World
@@ -120,7 +121,7 @@ The package provides three kinds of transformers, matching the ASP.NET Core Open
 
 | Type | Interface | Applied to | Examples |
 |---|---|---|---|
-| **Document Transformer** | `IOpenApiDocumentTransformer` | Entire OpenAPI document | Info population, security schemes, header injection, polymorphism |
+| **Document Transformer** | `IOpenApiDocumentTransformer` | Entire OpenAPI document | Info population, security schemes, header injection, polymorphism, group tag descriptions |
 | **Operation Transformer** | `IOpenApiOperationTransformer` | Individual API operations | Default error responses |
 | **Schema Transformer** | `IOpenApiSchemaTransformer` | Individual schema objects | FluentValidation rules, value object constraints, enum descriptions |
 
@@ -164,7 +165,7 @@ This release adds a dependency on `RA.Utilities.Core.ValueObjects` 10.2.0 for th
 
 | Method | Registers |
 |---|---|
-| `AddDefaultsDocumentTransformer()` | `DocumentInfo` + `BearerSecurity` + `HeadersParameter` + `HealthChecks` document transformers, plus the `ValueObjectSchemaTransformer` |
+| `AddDefaultsDocumentTransformer()` | `DocumentInfo` + `BearerSecurity` + `HeadersParameter` + `HealthChecks` + `GroupTags` document transformers, plus the `ValueObjectSchemaTransformer` |
 | `AddFluentValidationRules()` | `FluentValidationSchemaTransformer` |
 | `AddValueObjectSchemaTransformer()` | `ValueObjectSchemaTransformer` |
 | `AddEnumXmlDescriptionTransformer(path)` | `EnumXmlSchemaTransformer` |
@@ -175,10 +176,19 @@ This release adds a dependency on `RA.Utilities.Core.ValueObjects` 10.2.0 for th
 | `AddPolymorphismDocumentTransformer<T>(types, discriminatorPropertyName = "Type")` | `PolymorphismDocumentTransformer` |
 | `AddTagOperationTransformer(tags)` | `TagOperationTransformer` |
 | `AddHealthChecksDocumentTransformer(tags)` | ⚠️ Currently registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer` — see the caution below |
+| `AddGroupTagsDocumentTransformer(tags)` | `GroupTagsDocumentTransformer`; the `tags` argument is currently ignored — see the caution below |
 
-:::caution[v10.1.0, still present in v10.2.0]
+:::caution[v10.1.0, still present in v10.3.0]
 `AddHealthChecksDocumentTransformer(tags)` currently registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and the `tags` argument is ignored. Use `AddDefaultsDocumentTransformer()` to document health check endpoints until this is corrected.
 :::
+
+:::caution[v10.3.0]
+`AddGroupTagsDocumentTransformer(tags)` requires a `tags` argument but ignores it. Group documentation is read from the `GroupOpenApiMetadata` declared by `WithGroupSummary()` / `WithGroupDescription()` on the route group, not from this dictionary. `AddDefaultsDocumentTransformer()` already registers the transformer.
+:::
+
+### Group-level documentation
+
+`WithGroupSummary()` and `WithGroupDescription()` are route-group conventions, not endpoint annotations. They store `GroupOpenApiMetadata` in the metadata of every endpoint in the group (nested groups inherit it), and `GroupTagsDocumentTransformer` projects the composed text onto the OpenAPI tags carried by those endpoints. This documents a group once instead of repeating `WithSummary`/`WithDescription` on every operation.
 
 ---
 
@@ -323,6 +333,25 @@ builder.Services.AddOpenApi(options =>
     });
 });
 ```
+
+### Document a route group once
+
+`WithGroupSummary()` and `WithGroupDescription()` attach documentation to a route group. Every endpoint in the group (including nested groups) inherits it, and `GroupTagsDocumentTransformer` writes it into each tag the group's endpoints carry.
+
+```csharp showLineNumbers
+using RA.Utilities.OpenApi.Extensions;
+
+var orders = app.MapGroup("/orders")
+    .WithTags("Orders")                      // the tag that receives the description
+    .WithGroupSummary("Order management")    // rendered as the bold heading
+    .WithGroupDescription("Create, update, and track customer orders.");
+
+orders.MapGet("/{id:int}", (int id) => Results.Ok(new { Id = id }));
+```
+
+The tag description is composed as `**Summary**` + a blank line + the description when both are set, or as the summary/description alone when only one is set. Group text is only written to tags the endpoints actually carry (add `.WithTags(...)` to the group), and it never replaces a tag description that is already present — for example one configured with `AddTagOperationTransformer()`.
+
+`AddDefaultsDocumentTransformer()` registers the transformer automatically. When registering transformers individually, call `options.AddGroupTagsDocumentTransformer(...)`; see [`RouteGroupBuilderExtensions`](./Extensions/RouteGroupBuilderExtensions.md) and [`GroupTagsDocumentTransformer`](./OperationTransformers/GroupTagsDocumentTransformer.md).
 
 ### Document health check endpoints
 

@@ -1,5 +1,22 @@
 # Release Notes for RA.Utilities.OpenApi
 
+## Version 10.3.0
+![Date Badge](https://img.shields.io/badge/Publish-28%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.3.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.OpenApi/10.3.0)
+
+### ✨ New Features
+
+* **Added `WithGroupSummary()` and `WithGroupDescription()` on `RouteGroupBuilder`**: Group-level documentation conventions. Every endpoint in the group (including nested groups) inherits the metadata, so a group is described once instead of repeating `WithSummary()` / `WithDescription()` on every operation. The summary is rendered as the bold heading of the tag description, the description as its body.
+* **Added `GroupTagsDocumentTransformer`**: Projects the group metadata onto the OpenAPI tags carried by the group's endpoints. Tags without a description are populated; existing tag descriptions are never overwritten, and endpoint-level summary/description metadata is left untouched.
+* **Added `AddGroupTagsDocumentTransformer(IDictionary<string, string> tags)`**: Registers the transformer standalone.
+* **`AddDefaultsDocumentTransformer()` now registers `GroupTagsDocumentTransformer`**, so the default setup writes group documentation without additional configuration.
+
+### 📝 Notes
+
+* Group text is written only to tags the endpoints actually carry (via `WithTags(...)`). A group without tags produces no tag description.
+* The `tags` argument of `AddGroupTagsDocumentTransformer` is required by the current signature but ignored — group text comes from the route group's metadata.
+* No breaking changes; output is unchanged for APIs that do not use `WithGroupSummary()` / `WithGroupDescription()`.
+
 ## Version 10.2.1
 ![Date Badge](https://img.shields.io/badge/Publish-19%20October%202026-lightblue?logo=fastly&logoColor=white)
 [![NuGet version](https://img.shields.io/badge/NuGet-10.2.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.OpenApi/10.2.1)

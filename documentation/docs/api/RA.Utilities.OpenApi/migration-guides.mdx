@@ -4,6 +4,36 @@ title: Migration Guides
 
 # Migration Guides
 
+## v10.2.1 → v10.3.0
+
+### No breaking changes
+
+This release is additive. Route groups can now be documented once instead of annotating every endpoint:
+
+```csharp
+using RA.Utilities.OpenApi.Extensions;
+
+var orders = app.MapGroup("/orders")
+    .WithTags("Orders")
+    .WithGroupSummary("Order management")
+    .WithGroupDescription("Create, update, and track customer orders.");
+```
+
+`GroupTagsDocumentTransformer` writes the composed text into the OpenAPI tags the group's endpoints carry, and `AddDefaultsDocumentTransformer()` registers it automatically. If you register transformers individually, call `options.AddGroupTagsDocumentTransformer(...)`.
+
+No source changes are required. Existing output is unchanged for APIs that do not use `WithGroupSummary()` / `WithGroupDescription()`.
+
+### Notes
+
+- Group documentation is written only to tags the endpoints actually carry (via `.WithTags(...)`), and an existing tag description is never overwritten.
+- `AddGroupTagsDocumentTransformer(IDictionary<string, string> tags)` requires a `tags` argument but currently ignores it.
+
+### Known issue (unchanged)
+
+`AddHealthChecksDocumentTransformer(IDictionary<string, string> tags)` still registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and the `tags` argument is ignored. Use `AddDefaultsDocumentTransformer()` until this is corrected.
+
+---
+
 ## v10.1.1 → v10.2.0
 
 ### No breaking changes

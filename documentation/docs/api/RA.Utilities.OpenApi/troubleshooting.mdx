@@ -50,7 +50,7 @@ using RA.Utilities.Api.Response;
 
 ### `AddHealthChecksDocumentTransformer(tags)` doesn't add the health check endpoints
 
-**Cause**: Known bug in v10.1.0 through v10.2.0 — the method registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and ignores `tags`.
+**Cause**: Known bug in v10.1.0 through v10.3.0 — the method registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and ignores `tags`.
 
 **Fix**: Register the default pipeline instead:
 
@@ -63,6 +63,31 @@ builder.Services.AddOpenApi(options =>
 ```
 
 `AddDefaultsDocumentTransformer()` registers `HealthChecksDocumentTransformer` after the Bearer security transformer, so `/health` and `/alive` stay anonymous.
+
+### Group summary or description doesn't appear on the tag
+
+**Cause**: One of the following:
+
+- `GroupTagsDocumentTransformer` isn't registered. `AddDefaultsDocumentTransformer()` registers it automatically; if you register transformers individually, call `options.AddGroupTagsDocumentTransformer(...)`.
+- The route group and its endpoints carry no tags. Group text is written only to the tags returned by `WithTags(...)`.
+- The tag already has a non-empty description. Group text only fills empty descriptions — an explicit `AddTagOperationTransformer()` description always wins.
+
+**Fix**: Register the transformer and tag the group:
+
+```csharp
+builder.Services.AddOpenApi(options =>
+{
+    // highlight-next-line
+    options.AddDefaultsDocumentTransformer(); // includes GroupTagsDocumentTransformer
+});
+
+var orders = app.MapGroup("/orders")
+    // highlight-start
+    .WithTags("Orders")
+    .WithGroupSummary("Order management")
+    .WithGroupDescription("Create, update, and track customer orders.");
+    // highlight-end
+```
 
 ### `AddResponseExamples` ignores my `MediaType`
 
@@ -219,7 +244,7 @@ Transformers are `internal sealed` to enforce registration through the provided 
 
 ### Does `AddDefaultsDocumentTransformer()` include everything?
 
-No. It registers the four document transformers: `DocumentInfoTransformer`, `BearerSecurityDocumentTransformer`, `HeadersParameterTransformer`, and `HealthChecksDocumentTransformer`. Operation and schema transformers must be registered separately.
+No. It registers five document transformers — `DocumentInfoTransformer`, `BearerSecurityDocumentTransformer`, `HeadersParameterTransformer`, `HealthChecksDocumentTransformer`, and `GroupTagsDocumentTransformer` — plus the `ValueObjectSchemaTransformer`. The operation transformer (`DefaultResponsesOperationTransformer`) and the remaining schema transformers must be registered separately.
 
 ### How do I exclude specific endpoints from a transformer?
 
@@ -229,7 +254,9 @@ Document transformers apply globally. To exclude specific endpoints, use a custo
 
 ## Known Limitations
 
-- **`AddHealthChecksDocumentTransformer(tags)` is broken in v10.1.1**: it registers `HeadersParameterTransformer` and ignores `tags`. Use `AddDefaultsDocumentTransformer()`.
+- **`AddHealthChecksDocumentTransformer(tags)` is broken in v10.1.0 through v10.3.0**: it registers `HeadersParameterTransformer` and ignores `tags`. Use `AddDefaultsDocumentTransformer()`.
+- **`AddGroupTagsDocumentTransformer(tags)` ignores `tags`**: the argument is required by the current signature but unused; group text comes from `WithGroupSummary()` / `WithGroupDescription()`. Use `AddDefaultsDocumentTransformer()`, which registers the transformer automatically.
+- **Group documentation requires tags**: `WithGroupSummary()` / `WithGroupDescription()` write to the tags the group's endpoints carry; without `.WithTags(...)` there is no tag to describe. Existing tag descriptions are never overwritten.
 - **`AddResponseExamples` ignores per-item `MediaType`**: batched response examples always use `application/json`; use `AddResponseExample` for custom media types.
 - **No endpoint exclusion**: Document transformers apply to all operations. Use custom transformers for per-endpoint behavior.
 - **Single XML file**: `EnumXmlSchemaTransformer` currently supports only one XML documentation file.
