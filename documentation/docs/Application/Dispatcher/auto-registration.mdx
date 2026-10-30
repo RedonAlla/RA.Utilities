@@ -6,7 +6,7 @@ sidebar_position: 91
 # Auto Registration
 
 Handlers do not need to be registered one by one.
-A **source generator** shipped inside the `RA.Utilities.Dispatcher` NuGet package discovers handler and behavior implementations at compile time and emits the registration code for you — plain handlers and closed pipeline behaviors are wired up with nothing more than `services.AddMediator()`.
+A **source generator** shipped inside the `RA.Utilities.Dispatcher` NuGet package discovers handler and behavior implementations at compile time and emits the registration code for you — plain handlers and closed pipeline behaviors are wired up with nothing more than the parameterless `services.AddDispatcher()` (distinct from the fluent `AddDispatcher<TRequest, TResponse, THandler>()` overloads).
 
 ## 🎯 How It Works
 
@@ -21,15 +21,15 @@ For each assembly that references the package, the generator:
    - `IPipelineBehavior<TRequest, TResponse>` / `IPipelineBehavior<TRequest>` (request pipeline behaviors)
    - `INotificationBehavior<TNotification>` (notification pipeline behaviors)
 2. **Validates** each candidate (see [diagnostics](#diagnostics) below).
-3. **Emits** a module initializer into that assembly that queues the registrations on a static queue in the `RA.Utilities.Dispatcher` runtime (`RA.Utilities.Dispatcher.Generated.HandlerRegistrations`): handlers under their interfaces **and as themselves** (so the generated mediator can inject them by concrete type), behaviors under their behavior interfaces.
-4. When your startup code calls `services.AddMediator()`, all queued registrations are **applied to the service collection** in one pass.
+3. **Emits** a module initializer into that assembly that queues the registrations on a static queue in the `RA.Utilities.Dispatcher` runtime (`RA.Utilities.Dispatcher.Generated.HandlerRegistrations`): handlers under their interfaces **and as themselves** (so the generated dispatcher can inject them by concrete type), behaviors under their behavior interfaces.
+4. When your startup code calls `services.AddDispatcher()`, all queued registrations are **applied to the service collection** in one pass.
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
 
 // Registers IDispatcher AND applies every compile-time handler registration
 // queued by the source generator.
-builder.Services.AddMediator();
+builder.Services.AddDispatcher();
 ```
 
 No `AddDispatcher<...>()` or `AddNotification<...>()` calls are needed for plain handlers.
@@ -50,9 +50,9 @@ The generator inspects the whole class hierarchy: matching interfaces are detect
 | `struct` handler | `DSAG004` error |
 | Two handlers for the same request pair in one assembly | `DSAG005` error |
 | Multiple notification handlers for the same notification | Allowed — fan-out is their purpose |
-| Closed (non-generic) behavior class | Auto-registered under its behavior interface (transient) — resolved by the generated mediator through DI |
+| Closed (non-generic) behavior class | Auto-registered under its behavior interface (transient) — resolved by the generated dispatcher through DI |
 | Generic behavior class (`MyBehavior<TRequest, TResponse>`) | `DSAG010` warning — skipped; register explicitly with `AddDecoration` |
-| Multiple behaviors for the same message | Allowed — composed in registration order |
+| Multiple behaviors for the same message | Allowed — composed in registration order; use [`[PipelineBehaviorOrder]`](./Attributes/PipelineBehaviorOrderAttribute.md) to pin the position |
 
 ## 🛠️ Diagnostics {#diagnostics}
 
@@ -65,9 +65,9 @@ All diagnostics use the category `RA.Utilities.Dispatcher.Generators`:
 | `DSAG003` | Error | Handler (or one of its containing types) is **private or file-local**, so the generated code cannot reference it. Make it `internal`/`public` (or register explicitly). |
 | `DSAG004` | Error | Handler is a **struct**. Handlers are registered and resolved as class services. |
 | `DSAG005` | Error | **Two or more handlers** implement the same request handler pair (`IRequestHandler<TRequest, TResponse>` or `IRequestHandler<TRequest>`) in one assembly — the winning registration would be load-order dependent. A request may have exactly one handler; remove one of the implementations. |
-| `DSAG010` | Warning | Pipeline behavior is **generic** — it is not auto-registered. Register it explicitly with `AddDecoration`; the generated mediator resolves explicitly registered behaviors from DI. |
+| `DSAG010` | Warning | Pipeline behavior is **generic** — it is not auto-registered. Register it explicitly with `AddDecoration`; the generated dispatcher resolves explicitly registered behaviors from DI. |
 
-The generator reports additional message and handler diagnostics — `DSAG006`–`DSAG009` — see [Generated Mediator diagnostics](./generated-mediator#message-and-handler-diagnostics).
+The generator reports additional message and handler diagnostics — `DSAG006`–`DSAG009` — see [Generated Dispatcher diagnostics](./generated-dispatcher#message-and-handler-diagnostics).
 
 ## ⏳ Lifetimes
 
@@ -78,36 +78,65 @@ Generated registrations use the same lifetimes as the explicit fluent builders:
 | `IRequestHandler<TRequest, TResponse>` → handler | Scoped |
 | `IRequestHandler<TRequest>` → handler | Scoped |
 | `INotificationHandler<TNotification>` → handler | Transient |
-| Handler as its concrete type (for the generated mediator's direct injection) | Same as the interface registration |
+| Handler as its concrete type (for the generated dispatcher's direct injection) | Same as the interface registration |
 | Behavior under its interface (`IPipelineBehavior<,>` / `IPipelineBehavior<>` / `INotificationBehavior<>`) | Transient |
 
-Registering handlers as themselves is what lets the generated `Send` resolve `PingHandler` directly and call it without interface dispatch — see [Generated Mediator](./generated-mediator).
+Registering handlers as themselves is what lets the generated `Send` resolve `PingHandler` directly and call it without interface dispatch — see [Generated Dispatcher](./generated-dispatcher).
+
+## 🎛️ Filtering Auto-Registered Handlers {#filtering-auto-registered-handlers}
+
+`AddDispatcher` has an options overload that filters **which discovered handlers — and the pipeline/notification behaviors related to the messages they handle — are registered**:
+
+```csharp
+using RA.Utilities.Dispatcher.Options;
+
+builder.Services.AddDispatcher(options =>
+{
+    // If null, ignored. If set, only these handlers (and their related behaviors) register.
+    options.IncludeHandlers = [typeof(CreateOrderHandler)];
+
+    // If null, ignored. If set, these handlers (and their related behaviors) do not register.
+    options.ExcludeHandlers = [typeof(LegacyImportHandler)];
+});
+```
+
+| Rule | Behavior |
+|---|---|
+| `IncludeHandlers` | `null` — ignored. Set — only the listed types register, plus the behaviors related to the messages they handle. |
+| `ExcludeHandlers` | `null` — ignored. Set — the listed types do not register, nor do the behaviors related to their messages once no registered handler handles them. |
+| Behavior types | Both lists also accept behavior types: a listed behavior is kept or removed directly. |
+| Precedence | Exclusions win over inclusions. |
+| Request behaviors | Removed together with the handler of their request (a behavior whose request has no handler at all is left alone unless `IncludeHandlers` is set). |
+| Notification behaviors | Kept while at least one handler for the notification remains. |
+| Scope | Filters the **source-generated** registrations only. Explicit `AddDispatcher<TRequest, TResponse, THandler>()` / `AddNotification<TNotification>()` / `AddDecoration<TBehavior>()` registrations are untouched. |
+
+The filter runs at startup, right after the queued registrations are applied: the descriptors added by `HandlerRegistrations.ApplyAll` are examined, and the ones that belong to filtered-out handlers (and their behaviors) are removed from the service collection. See [`DispatcherOptions`](./Options/DispatcherOptions.md) for the property reference.
 
 ## 📥 Assembly-Loading Guarantee
 
-Module initializers run **when their assembly is loaded by the CLR**. The registrations are queued at that moment and applied later, when `AddMediator()` executes.
+Module initializers run **when their assembly is loaded by the CLR**. The registrations are queued at that moment and applied later, when `AddDispatcher()` executes.
 
 The practical guarantee is:
 
-> Auto-registration covers the assembly that calls `AddMediator()` **plus any assembly that was already loaded before that call**.
+> Auto-registration covers the assembly that calls `AddDispatcher()` **plus any assembly that was already loaded before that call**.
 
 ```csharp
 // Program.cs — entry assembly: handlers here are always registered ✓
-builder.Services.AddMediator();
+builder.Services.AddDispatcher();
 ```
 
-Referenced class libraries load **lazily** on the CLR — a library's module initializer does not run just because the library is referenced. If a handler lives in a library whose types are first touched only when a request arrives (i.e., after `AddMediator()` has already applied the queue), that handler **may be registered too late**.
+Referenced class libraries load **lazily** on the CLR — a library's module initializer does not run just because the library is referenced. If a handler lives in a library whose types are first touched only when a request arrives (i.e., after `AddDispatcher()` has already applied the queue), that handler **may be registered too late**.
 
 ### Escape hatches
 
 Keep handlers where they are guaranteed to be registered, or force the assembly to load early:
 
-1. **Keep handlers in the entry / composition assembly** — the assembly that calls `AddMediator()`. This is the simplest and recommended layout.
-2. **Touch the handler assembly at startup** — reference one of its types before (or when) calling `AddMediator()`, forcing the CLR to load it:
+1. **Keep handlers in the entry / composition assembly** — the assembly that calls `AddDispatcher()`. This is the simplest and recommended layout.
+2. **Touch the handler assembly at startup** — reference one of its types before (or when) calling `AddDispatcher()`, forcing the CLR to load it:
 
 ```csharp
 _ = typeof(SomeHandlerInTheLibrary).Assembly; // force assembly load
-builder.Services.AddMediator();
+builder.Services.AddDispatcher();
 ```
 
 3. **Register explicitly** — handlers in lazily-loaded libraries can always be registered the classic way:
@@ -125,7 +154,7 @@ The generator discovers **handlers and closed behaviors**. Everything else is re
 |---|---|
 | Request handlers (plain, non-generic, in an early-loaded assembly) | Automatic |
 | Notification handlers (plain, non-generic, in an early-loaded assembly) | Automatic |
-| Closed pipeline behaviors (`IPipelineBehavior<,>` / `IPipelineBehavior<>` / `INotificationBehavior<>`) | Automatic — under their interfaces, resolved by the generated mediator through DI |
+| Closed pipeline behaviors (`IPipelineBehavior<,>` / `IPipelineBehavior<>` / `INotificationBehavior<>`) | Automatic — under their interfaces, resolved by the generated dispatcher through DI |
 | Generic handlers | `AddDispatcher<TRequest, TResponse, THandler>()` / `AddNotification<TNotification>().AddHandler<THandler>()` (generator emits `DSAG002`) |
 | Generic behaviors | `.AddDecoration<TBehavior>()` (generator emits `DSAG010`) |
 | Validators (`IValidator<T>`) | `.AddValidator<TValidator>()` (also wires the `ValidationBehavior`) |

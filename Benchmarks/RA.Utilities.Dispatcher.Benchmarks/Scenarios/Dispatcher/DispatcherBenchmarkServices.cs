@@ -13,7 +13,7 @@ internal static class DispatcherBenchmarkServices
     public static IServiceCollection ConfigureSend(IServiceCollection services)
     {
         services.AddNullLogging();
-        services.AddMediator();
+        services.AddDispatcher();
 
         services.AddDispatcher<DispatcherPingZeroRequest, PongResponse, DispatcherPingResponseHandler<DispatcherPingZeroRequest>>();
 
@@ -38,7 +38,7 @@ internal static class DispatcherBenchmarkServices
     public static IServiceCollection ConfigurePublish(IServiceCollection services)
     {
         services.AddNullLogging();
-        services.AddMediator();
+        services.AddDispatcher();
         return services;
     }
 }

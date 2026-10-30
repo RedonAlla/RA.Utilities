@@ -103,9 +103,15 @@ internal static class SourceEmitter
         }
     }
 
+    /// <summary>
+    /// Orders the registrations deterministically: by message interface, then by the
+    /// <c>PipelineBehaviorOrderAttribute</c> value (so the first registered behavior is the
+    /// outermost in the chain), then by type name for stable output.
+    /// </summary>
     private static EquatableArray<HandlerModel> Sort(IEnumerable<HandlerModel> models) =>
         models
             .OrderBy(model => model.InterfaceFullyQualifiedName, StringComparer.Ordinal)
+            .ThenBy(model => model.Order)
             .ThenBy(model => model.HandlerFullyQualifiedName, StringComparer.Ordinal)
             .ToImmutableArray();
 

@@ -91,7 +91,7 @@ public class ValidationBehaviorTests
     {
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddMediator();
+        services.AddDispatcher();
         services.AddTransient<IValidator<MultiValidatedCommand>, MultiValidatedFirstValidator>();
         services.AddTransient<IValidator<MultiValidatedCommand>, MultiValidatedSecondValidator>();
         services.AddTransient<IPipelineBehavior<MultiValidatedCommand, string>, ValidationBehavior<MultiValidatedCommand, string>>();
@@ -112,7 +112,7 @@ public class ValidationBehaviorTests
     {
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddMediator();
+        services.AddDispatcher();
         services.AddTransient<IValidator<CreateOrderCommand>, CreateOrderValidator>();
         services.AddTransient<IPipelineBehavior<CreateOrderCommand, CreateOrderResult>, ValidationBehavior<CreateOrderCommand, CreateOrderResult>>();
         services.AddTransient<IValidator<DeleteOrderCommand>, DeleteOrderValidator>();

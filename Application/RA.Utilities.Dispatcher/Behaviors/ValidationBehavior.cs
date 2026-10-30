@@ -6,6 +6,7 @@ using FluentValidation.Results;
 using RA.Utilities.Application.Validation.Utilities;
 using RA.Utilities.Core.Results;
 using RA.Utilities.Dispatcher.Abstractions;
+using RA.Utilities.Dispatcher.Attributes;
 using RA.Utilities.Dispatcher.Models;
 
 namespace RA.Utilities.Dispatcher.Behaviors;
@@ -17,6 +18,7 @@ namespace RA.Utilities.Dispatcher.Behaviors;
 /// </summary>
 /// <typeparam name="TRequest">The type of the request.</typeparam>
 /// <typeparam name="TResponse">The type of the response.</typeparam>
+[PipelineBehaviorOrder(0)]
 public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {

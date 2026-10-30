@@ -10,23 +10,23 @@ using RA.Utilities.Dispatcher.Generated;
 namespace RA.Utilities.Dispatcher.Tests;
 
 /// <summary>
-/// Verifies the end-to-end mediator wiring: the test assembly's own generated registration
-/// initializer feeds the real <c>RA.Utilities.Dispatcher.Generated.MediatorRegistrations</c>
-/// queue, so <c>AddMediator()</c> resolves <c>IDispatcher</c> to the generated implementation
-/// and the concrete <c>Mediator</c> can be injected directly.
+/// Verifies the end-to-end dispatcher wiring: the test assembly's own generated registration
+/// initializer feeds the real <c>RA.Utilities.Dispatcher.Generated.DispatcherRegistrations</c>
+/// queue, so <c>AddDispatcher()</c> resolves <c>IDispatcher</c> to the generated implementation
+/// and the concrete <c>Dispatcher</c> can be injected directly.
 /// </summary>
-public class MediatorRegistrationTests
+public class DispatcherRegistrationTests
 {
     [Fact]
-    public void AddMediator_ResolvesGeneratedImplementation()
+    public void AddDispatcher_ResolvesGeneratedImplementation()
     {
         using ServiceProvider provider = CreateProvider();
 
-        provider.GetRequiredService<IDispatcher>().GetType().Name.Should().Be("Mediator");
+        provider.GetRequiredService<IDispatcher>().GetType().Name.Should().Be("Dispatcher");
     }
 
     [Fact]
-    public async Task AddMediator_GeneratedImplementation_DispatchesRequest()
+    public async Task AddDispatcher_GeneratedImplementation_DispatchesRequest()
     {
         using ServiceProvider provider = CreateProvider();
 
@@ -40,13 +40,14 @@ public class MediatorRegistrationTests
     }
 
     [Fact]
-    public async Task ConcreteMediator_IsResolvable_AndDispatchesRequest()
+    public async Task ConcreteDispatcher_IsResolvable_AndDispatchesRequest()
     {
         using ServiceProvider provider = CreateProvider();
 
-        Mediator mediator = provider.GetRequiredService<Mediator>();
+        RA.Utilities.Dispatcher.Generated.Dispatcher dispatcher =
+            provider.GetRequiredService<RA.Utilities.Dispatcher.Generated.Dispatcher>();
 
-        Result<string> result = await mediator.Send(new RegistrationTestRequest("ping"));
+        Result<string> result = await dispatcher.Send(new RegistrationTestRequest("ping"));
 
         result.Value.Should().Be("pong:ping");
     }
@@ -55,7 +56,7 @@ public class MediatorRegistrationTests
     {
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddMediator();
+        services.AddDispatcher();
         return services.BuildServiceProvider();
     }
 }

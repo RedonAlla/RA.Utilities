@@ -8,13 +8,13 @@ namespace RA.Utilities.Dispatcher.Tests;
 
 /// <summary>
 /// Verifies the zero-config registration: the source generator runs on this test assembly,
-/// so <see cref="MediatorServiceCollectionExtensions.AddMediator(IServiceCollection)"/> alone must
+/// so <see cref="DispatcherServiceCollectionExtensions.AddDispatcher(IServiceCollection)"/> alone must
 /// register every handler and closed behavior implemented in the assembly.
 /// </summary>
 public class AutoRegistrationTests
 {
     [Fact]
-    public void AddMediator_AutoRegistersRequestHandlersFromThisAssembly()
+    public void AddDispatcher_AutoRegistersRequestHandlersFromThisAssembly()
     {
         using ServiceProvider provider = CreateProvider();
 
@@ -28,7 +28,7 @@ public class AutoRegistrationTests
     }
 
     [Fact]
-    public void AddMediator_AutoRegistersNotificationHandlersFromThisAssembly()
+    public void AddDispatcher_AutoRegistersNotificationHandlersFromThisAssembly()
     {
         using ServiceProvider provider = CreateProvider();
 
@@ -39,7 +39,7 @@ public class AutoRegistrationTests
     }
 
     [Fact]
-    public void AddMediator_AutoRegistersClosedPipelineBehaviors_UnderTheirInterface()
+    public void AddDispatcher_AutoRegistersClosedPipelineBehaviors_UnderTheirInterface()
     {
         using ServiceProvider provider = CreateProvider();
 
@@ -50,7 +50,7 @@ public class AutoRegistrationTests
     }
 
     [Fact]
-    public void AddMediator_RegistersHandlersAsTheirConcreteType()
+    public void AddDispatcher_RegistersHandlersAsTheirConcreteType()
     {
         using ServiceProvider provider = CreateProvider();
 
@@ -63,7 +63,7 @@ public class AutoRegistrationTests
     {
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddMediator();
+        services.AddDispatcher();
         return services.BuildServiceProvider();
     }
 }

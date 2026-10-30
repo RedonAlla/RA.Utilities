@@ -85,7 +85,7 @@ public class PublishTests
     {
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddMediator();
+        services.AddDispatcher();
         return services.BuildServiceProvider();
     }
 }

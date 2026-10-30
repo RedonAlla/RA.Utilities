@@ -52,7 +52,7 @@ public class LoggingBehaviorTests
     {
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddMediator();
+        services.AddDispatcher();
         services.AddSingleton<ILogger<LoggingBehavior<LoggingRequest, string>>>(logger);
         services.AddTransient<IPipelineBehavior<LoggingRequest, string>, LoggingBehavior<LoggingRequest, string>>();
         return services.BuildServiceProvider();
@@ -62,7 +62,7 @@ public class LoggingBehaviorTests
     {
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddMediator();
+        services.AddDispatcher();
         services.AddSingleton<ILogger<LoggingBehavior<FailingLoggingRequest, string>>>(logger);
         services.AddTransient<IPipelineBehavior<FailingLoggingRequest, string>, LoggingBehavior<FailingLoggingRequest, string>>();
         return services.BuildServiceProvider();

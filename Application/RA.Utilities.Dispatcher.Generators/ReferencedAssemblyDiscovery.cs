@@ -139,6 +139,7 @@ internal static class ReferencedAssemblyDiscovery
         INamedTypeSymbol? requestResponseBehaviorInterface = compilation.GetTypeByMetadataName(KnownMetadataNames.RequestResponsePipelineBehaviorInterfaceMetadataName);
         INamedTypeSymbol? voidRequestBehaviorInterface = compilation.GetTypeByMetadataName(KnownMetadataNames.VoidRequestPipelineBehaviorInterfaceMetadataName);
         INamedTypeSymbol? notificationBehaviorInterface = compilation.GetTypeByMetadataName(KnownMetadataNames.NotificationBehaviorInterfaceMetadataName);
+        INamedTypeSymbol? behaviorOrderAttribute = compilation.GetTypeByMetadataName(KnownMetadataNames.PipelineBehaviorOrderAttributeMetadataName);
 
         if (requestResponseHandlerInterface is null
             || voidRequestHandlerInterface is null
@@ -186,12 +187,17 @@ internal static class ReferencedAssemblyDiscovery
                 ? string.Empty
                 : @interface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
+            int order = matchedKind is HandlerKind.PipelineBehavior or HandlerKind.NotificationBehavior
+                ? SymbolUtilities.GetPipelineBehaviorOrder(typeSymbol, behaviorOrderAttribute)
+                : 0;
+
             handlers.Add(HandlerModel.Create(
                 matchedKind,
                 SymbolUtilities.GetFullyQualifiedName(typeSymbol),
                 @interface.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 requestFullyQualifiedName,
                 typeSymbol.Name,
+                order,
                 Location.None));
         }
     }

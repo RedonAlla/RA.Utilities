@@ -64,7 +64,7 @@ public class NotificationBehaviorsTests
     {
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddMediator();
+        services.AddDispatcher();
         services.AddTransient<INotificationBehavior<MeasuredNotification>, NotificationLoggingBehavior<MeasuredNotification>>();
         services.AddTransient<INotificationBehavior<MeasuredNotification>, NotificationMetricsBehavior<MeasuredNotification>>();
         using ServiceProvider provider = services.BuildServiceProvider();
@@ -81,7 +81,7 @@ public class NotificationBehaviorsTests
     {
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddMediator();
+        services.AddDispatcher();
         // Zero backoff so the tests measure the retry machinery, not a delay loop.
         services.AddTransient<INotificationBehavior<TNotification>>(sp =>
             new NotificationRetryBehavior<TNotification>(

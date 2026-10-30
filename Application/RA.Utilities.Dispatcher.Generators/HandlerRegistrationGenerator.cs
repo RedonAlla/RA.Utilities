@@ -11,7 +11,7 @@ namespace RA.Utilities.Dispatcher.Generators;
 /// An incremental source generator that discovers every non-abstract class implementing
 /// <c>IRequestHandler&lt;TRequest, TResponse&gt;</c>, <c>IRequestHandler&lt;TRequest&gt;</c>, or
 /// <c>INotificationHandler&lt;TNotification&gt;</c> in the referencing assembly and emits a module
-/// initializer that queues their DI registrations, so <c>services.AddMediator()</c> registers them
+/// initializer that queues their DI registrations, so <c>services.AddDispatcher()</c> registers them
 /// without explicit configuration.
 /// </summary>
 [Generator]

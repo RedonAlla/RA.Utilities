@@ -93,6 +93,7 @@ internal readonly struct HandlerModel : IEquatable<HandlerModel>
         string interfaceFullyQualifiedName,
         string requestFullyQualifiedName,
         string typeName,
+        int order,
         Location location,
         DiagnosticModel? diagnostic)
     {
@@ -101,6 +102,7 @@ internal readonly struct HandlerModel : IEquatable<HandlerModel>
         InterfaceFullyQualifiedName = interfaceFullyQualifiedName;
         RequestFullyQualifiedName = requestFullyQualifiedName;
         TypeName = typeName;
+        Order = order;
         Location = location;
         Diagnostic = diagnostic;
     }
@@ -113,6 +115,10 @@ internal readonly struct HandlerModel : IEquatable<HandlerModel>
     /// <param name="interfaceFullyQualifiedName">The fully qualified name of the closed handler interface, including <c>global::</c>.</param>
     /// <param name="requestFullyQualifiedName">The fully qualified name of the handled message type, including <c>global::</c>; empty for notifications.</param>
     /// <param name="typeName">The simple name of the handler class, used in messages.</param>
+    /// <param name="order">
+    /// The position of a behavior in the chain, read from <c>PipelineBehaviorOrderAttribute</c>;
+    /// zero for handlers and for behaviors without the attribute.
+    /// </param>
     /// <param name="location">The location of the type declaration, used to anchor diagnostics.</param>
     /// <returns>The created model.</returns>
     public static HandlerModel Create(
@@ -121,8 +127,9 @@ internal readonly struct HandlerModel : IEquatable<HandlerModel>
         string interfaceFullyQualifiedName,
         string requestFullyQualifiedName,
         string typeName,
+        int order,
         Location location) =>
-        new(kind, handlerFullyQualifiedName, interfaceFullyQualifiedName, requestFullyQualifiedName, typeName, location, null);
+        new(kind, handlerFullyQualifiedName, interfaceFullyQualifiedName, requestFullyQualifiedName, typeName, order, location, null);
 
     /// <summary>
     /// Creates a model that produces a diagnostic instead of source.
@@ -131,7 +138,7 @@ internal readonly struct HandlerModel : IEquatable<HandlerModel>
     /// <param name="typeName">The simple name of the type, used in messages.</param>
     /// <returns>The created model.</returns>
     public static HandlerModel CreateDiagnostic(DiagnosticModel diagnostic, string typeName) =>
-        new(HandlerKind.RequestResponse, string.Empty, string.Empty, string.Empty, typeName, diagnostic.Location, diagnostic);
+        new(HandlerKind.RequestResponse, string.Empty, string.Empty, string.Empty, typeName, 0, diagnostic.Location, diagnostic);
 
     /// <summary>
     /// Gets the kind of handler contract the type implements.
@@ -161,6 +168,12 @@ internal readonly struct HandlerModel : IEquatable<HandlerModel>
     public string TypeName { get; }
 
     /// <summary>
+    /// Gets the position of a behavior in the chain; lower values run closer to the outside of the
+    /// chain. Zero for handlers and for behaviors without <c>PipelineBehaviorOrderAttribute</c>.
+    /// </summary>
+    public int Order { get; }
+
+    /// <summary>
     /// Gets the location of the type declaration, used to anchor diagnostics.
     /// </summary>
     public Location Location { get; }
@@ -183,6 +196,7 @@ internal readonly struct HandlerModel : IEquatable<HandlerModel>
         && string.Equals(InterfaceFullyQualifiedName, other.InterfaceFullyQualifiedName, StringComparison.Ordinal)
         && string.Equals(RequestFullyQualifiedName, other.RequestFullyQualifiedName, StringComparison.Ordinal)
         && string.Equals(TypeName, other.TypeName, StringComparison.Ordinal)
+        && Order == other.Order
         && Diagnostic.Equals(other.Diagnostic);
 
     /// <inheritdoc/>
@@ -196,6 +210,7 @@ internal readonly struct HandlerModel : IEquatable<HandlerModel>
         hash = (hash * 397) ^ InterfaceFullyQualifiedName.GetHashCode();
         hash = (hash * 397) ^ RequestFullyQualifiedName.GetHashCode();
         hash = (hash * 397) ^ TypeName.GetHashCode();
+        hash = (hash * 397) ^ Order;
         return (hash * 397) ^ Diagnostic.GetHashCode();
     }
 }

@@ -10,7 +10,7 @@ Namespace: RA.Utilities.Dispatcher.Extensions
 The primary purpose of this namespace is to provide a **fluent and discoverable API for registering your CQRS features**
 (commands, queries, notifications, and their associated behaviors/validators) with the .NET dependency injection container.
 
-It acts as the main entry point for wiring up the components of the `RA.Utilities.Dispatcher` library — from the one-line [`AddMediator()`](./MediatorServiceCollectionExtensions.md) bootstrap to the fluent [`AddDispatcher`](./DispatcherBuilderExtensions.md) builders.
+It acts as the main entry point for wiring up the components of the `RA.Utilities.Dispatcher` library — from the one-line [`AddDispatcher()`](./DispatcherServiceCollectionExtensions.md) bootstrap (optionally with [handler filtering](../Options/DispatcherOptions.md)) to the fluent [`AddDispatcher`](./DispatcherBuilderExtensions.md) builders.
 
 Both classes are written with **C# 14 extension blocks** — the extension methods live inside `extension(IServiceCollection services)` blocks, so they appear on `IServiceCollection` exactly like classic `this`-parameter extension methods.
 

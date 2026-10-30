@@ -38,6 +38,7 @@ internal static class HandlerDiscovery
         INamedTypeSymbol? requestResponseBehaviorInterface = compilation.GetTypeByMetadataName(KnownMetadataNames.RequestResponsePipelineBehaviorInterfaceMetadataName);
         INamedTypeSymbol? voidRequestBehaviorInterface = compilation.GetTypeByMetadataName(KnownMetadataNames.VoidRequestPipelineBehaviorInterfaceMetadataName);
         INamedTypeSymbol? notificationBehaviorInterface = compilation.GetTypeByMetadataName(KnownMetadataNames.NotificationBehaviorInterfaceMetadataName);
+        INamedTypeSymbol? behaviorOrderAttribute = compilation.GetTypeByMetadataName(KnownMetadataNames.PipelineBehaviorOrderAttributeMetadataName);
 
         if (requestResponseHandlerInterface is null
             || voidRequestHandlerInterface is null
@@ -141,6 +142,13 @@ internal static class HandlerDiscovery
 
         ImmutableArray<HandlerModel>.Builder models = ImmutableArray.CreateBuilder<HandlerModel>();
 
+        // The order attribute only positions behaviors in the chain; handlers are resolved by
+        // type and their registration order is irrelevant.
+        int behaviorOrder = matched.Any(static pair =>
+                pair.Kind is HandlerKind.PipelineBehavior or HandlerKind.NotificationBehavior)
+            ? SymbolUtilities.GetPipelineBehaviorOrder(typeSymbol, behaviorOrderAttribute)
+            : 0;
+
         foreach ((HandlerKind kind, INamedTypeSymbol @interface) in matched)
         {
             // Notification handlers carry no request type in the registration model; every other
@@ -155,6 +163,7 @@ internal static class HandlerDiscovery
                 @interface.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 requestFullyQualifiedName,
                 typeSymbol.Name,
+                behaviorOrder,
                 context.Node.GetLocation()));
         }
 

@@ -1,0 +1,19 @@
+---
+title: Options
+sidebar_position: 6
+---
+
+```powershell
+Namespace: RA.Utilities.Dispatcher.Options
+```
+
+The `RA.Utilities.Dispatcher.Options` namespace holds the configuration objects accepted by the dispatcher registration API. Today it contains a single type, [`DispatcherOptions`](DispatcherOptions.md), which filters **which auto-registered handlers and related behaviors** the `AddDispatcher(Action<DispatcherOptions>)` overload applies.
+
+Use it when an assembly contains more slices than a given host should expose, or when a legacy handler must stay registered for one host but not another.
+
+<br />
+<br />
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />

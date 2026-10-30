@@ -8,13 +8,13 @@ using RA.Utilities.Core.Results;
 using RA.Utilities.Dispatcher.Abstractions;
 using RA.Utilities.Dispatcher.Exceptions;
 using RA.Utilities.Dispatcher.Extensions;
-using RA.Utilities.Dispatcher.Generated;
 using RA.Utilities.Dispatcher.Models;
+using GeneratedDispatcher = RA.Utilities.Dispatcher.Generated.Dispatcher;
 
 namespace RA.Utilities.Dispatcher.Tests;
 
 /// <summary>
-/// Locks in the Result-based contract of the generated mediator: successes and expected
+/// Locks in the Result-based contract of the generated dispatcher: successes and expected
 /// failures come back as <see cref="Result"/> values, truly exceptional cases propagate,
 /// and object-based dispatch maps runtime types with a typed failure for unknown messages.
 /// </summary>
@@ -110,9 +110,9 @@ public class DispatcherTests
     public async Task ObjectSend_KnownMessage_DispatchesByRuntimeType()
     {
         using ServiceProvider provider = CreateProvider();
-        Mediator mediator = provider.GetRequiredService<Mediator>();
+        GeneratedDispatcher dispatcher = provider.GetRequiredService<GeneratedDispatcher>();
 
-        Result<object?> result = await mediator.Send((object)new SuccessRequest("ping"));
+        Result<object?> result = await dispatcher.Send((object)new SuccessRequest("ping"));
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().Be("pong:ping");
@@ -122,9 +122,9 @@ public class DispatcherTests
     public async Task ObjectSend_UnknownMessage_ThrowsHandlerNotFoundException()
     {
         using ServiceProvider provider = CreateProvider();
-        Mediator mediator = provider.GetRequiredService<Mediator>();
+        GeneratedDispatcher dispatcher = provider.GetRequiredService<GeneratedDispatcher>();
 
-        Func<Task> act = () => mediator.Send((object)new NotAMessage()).AsTask();
+        Func<Task> act = () => dispatcher.Send((object)new NotAMessage()).AsTask();
 
         HandlerNotFoundException exception = (await act.Should().ThrowAsync<HandlerNotFoundException>()).Which;
         exception.MessageType.Should().Be<NotAMessage>();
@@ -134,7 +134,7 @@ public class DispatcherTests
     {
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddMediator();
+        services.AddDispatcher();
         return services.BuildServiceProvider();
     }
 }

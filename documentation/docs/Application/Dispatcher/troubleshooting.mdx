@@ -37,7 +37,7 @@ public class CreateProductHandler : RequestHandler<CreateProductCommand, int>
     public override Task<int> HandleAsync(CreateProductCommand command, CancellationToken ct) { ... }
 }
 
-// ✅ Correct (Dispatcher v11) — Result-based, failures returned
+// ✅ Correct (Dispatcher v10.1) — Result-based, failures returned
 public class CreateProductHandler : RequestHandler<CreateProductCommand, int>
 {
     public override ValueTask<Result<int>> HandleAsync(CreateProductCommand command, CancellationToken ct) { ... }
@@ -60,7 +60,10 @@ if (publishResult.IsFailure)
 
 ### My pipeline behaviors aren't executing in the order I expect
 
-**Cause**: Behaviors execute in **registration order** — the first registered behavior is outermost, the last registered is innermost (closest to the handler).
+**Cause**: Two different orders apply, depending on how the behavior was registered.
+
+- **Explicit `AddDecoration<T>()` calls** execute in **registration order** — the first registered behavior is outermost, the last registered is innermost (closest to the handler).
+- **Auto-registered closed behaviors** execute by message interface, then by [`[PipelineBehaviorOrder]`](./Attributes/PipelineBehaviorOrderAttribute.md), then by type name. Without the attribute they all sit at order `0` and the type name decides.
 
 ```csharp
 builder.Services
@@ -71,7 +74,7 @@ builder.Services
 // Execution order: Logging → Validation → Handler
 ```
 
-**Fix**: Register behaviors from outermost to innermost. If you want validation to run before logging (so you don't log invalid requests), swap the order:
+**Fix**: Register explicit behaviors from outermost to innermost. If you want validation to run before logging (so you don't log invalid requests), swap the order:
 
 ```csharp
 builder.Services
@@ -81,6 +84,62 @@ builder.Services
 
 // Execution order: Validation → Logging → Handler
 ```
+
+For auto-registered behaviors, declare the position instead of relying on type names:
+
+```csharp
+[PipelineBehaviorOrder(-100)]   // outermost, even if another behavior is named "AaaBehavior"
+public sealed class MetricsBehavior : IPipelineBehavior<MyCommand, int> { /* ... */ }
+
+[PipelineBehaviorOrder(100)]    // innermost
+public sealed class CachingBehavior : IPipelineBehavior<MyCommand, int> { /* ... */ }
+```
+
+Explicit decorations land in the generator's window according to **when they are registered**: decorations added *before* `AddDispatcher()` sit outside the auto-registered behaviors, decorations added *after* it sit inside. See [Behavior registration](./generated-dispatcher#behavior-registration) for the full model.
+
+### A handler I need is missing from DI after adding `AddDispatcher(options => ...)`
+
+**Cause**: [`IncludeHandlers`](./Options/DispatcherOptions.md) is exclusive — when it is set, only the listed handlers are kept — and [`ExcludeHandlers`](./Options/DispatcherOptions.md) wins over `IncludeHandlers`. The filter also removes request/notification **behaviors** whose message no longer has any registered handler.
+
+**Fix**: Check both lists, then inspect what actually landed in DI:
+
+```csharp
+var handlerTypes = builder.Services
+    .Where(d => d.ServiceType.IsGenericType
+                && d.ServiceType.GetGenericTypeDefinition() == typeof(IRequestHandler<,>))
+    .Select(d => d.ImplementationType!.FullName);
+
+Console.WriteLine(string.Join(Environment.NewLine, handlerTypes));
+```
+
+Filtering applies to source-generated registrations only — a handler you register by hand or through the fluent builder is never removed. If the same handler is also registered explicitly, it stays active even when it appears in `ExcludeHandlers`.
+
+### `[PipelineBehaviorOrder]` has no effect on my behavior
+
+**Cause**: There are three likely reasons:
+
+1. The behavior is **generic** (`IPipelineBehavior<TRequest, TResponse>` without concrete type arguments) — generic behaviors are not auto-registered (`DSAG010`), so the attribute is never read. Register it with `AddDecoration`; explicit behaviors ignore the attribute and keep call order.
+2. The behavior was registered **explicitly** with `AddDecoration` — the attribute is read at compile time by the generator and only orders auto-registered behaviors.
+3. The attribute sits on a **base class** — it is declared with `Inherited = false`, so it must be applied to the concrete behavior type.
+
+**Fix**: Put the attribute on the concrete, closed behavior class, or control the position with the order of `AddDecoration` calls if the behavior is generic.
+
+### `CS0118: 'Dispatcher' is a namespace but is used like a type`
+
+**Cause**: The generated class `RA.Utilities.Dispatcher.Generated.Dispatcher` shares its simple name with the `RA.Utilities.Dispatcher` namespace. Inside any `RA.Utilities.*` namespace — for example when your own utilities live under the same root — `Dispatcher` binds to the namespace.
+
+**Fix**: Alias the generated type or qualify it:
+
+```csharp
+using GeneratedDispatcher = RA.Utilities.Dispatcher.Generated.Dispatcher;
+
+public sealed class OrderService(GeneratedDispatcher dispatcher)
+{
+    // ...
+}
+```
+
+Applications outside `RA.Utilities.*` are unaffected. Library code should inject [`IDispatcher`](./Abstractions/IDispatcher.md) instead of the concrete class.
 
 ### `AddValidator<T>()` is registering a behavior — why?
 
@@ -102,7 +161,7 @@ builder.Services
 
 ### My notification handlers are registered but `Publish` doesn't invoke them
 
-**Cause**: The dispatcher resolves handlers via `GetServices<INotificationHandler<TNotification>>()`, so the handler genuinely isn't registered when `Publish` runs. With auto-registration this usually means the handler's assembly was **loaded after** `AddMediator()` was called (module initializers run at assembly load), or the handler was skipped by the generator (`DSAG002` generic, `DSAG003` inaccessible).
+**Cause**: The dispatcher resolves handlers via `GetServices<INotificationHandler<TNotification>>()`, so the handler genuinely isn't registered when `Publish` runs. With auto-registration this usually means the handler's assembly was **loaded after** `AddDispatcher()` was called (module initializers run at assembly load), or the handler was skipped by the generator (`DSAG002` generic, `DSAG003` inaccessible).
 
 **Fix**: Register the handler explicitly so it is registered regardless of assembly-loading order:
 
@@ -120,7 +179,7 @@ Direct DI registration works too — the dispatcher does not distinguish where a
 builder.Services.AddTransient<INotificationHandler<OrderPlaced>, SendConfirmationEmail>();
 ```
 
-Also verify that `AddMediator()` was called before publishing — it is the call that applies the auto-registered handlers.
+Also verify that `AddDispatcher()` was called before publishing — it is the call that applies the auto-registered handlers.
 
 ### No request logging appears — the `RequestHandler` base class doesn't log
 
@@ -155,9 +214,9 @@ builder.Services
 
 If you genuinely need different behavior chains for the same request type, use a decorator pattern in your handler or split the logic into multiple requests.
 
-### `Mediator` is registered as Scoped but my notification handler is Singleton
+### `Dispatcher` is registered as Scoped but my notification handler is Singleton
 
-**Cause**: The `Mediator` class is registered as `Scoped`, which is the correct lifetime for resolving scoped services like `IServiceProvider` and `IRequestHandler` instances. Notification handlers are registered as `Transient` by `AddHandler<T>()`.
+**Cause**: The `Dispatcher` class is registered as `Scoped`, which is the correct lifetime for resolving scoped services like `IServiceProvider` and `IRequestHandler` instances. Notification handlers are registered as `Transient` by `AddHandler<T>()`.
 
 **Fix**: If you need a notification handler with a longer lifetime, register it directly instead of using the fluent builder:
 
@@ -263,13 +322,13 @@ public class CreateProductHandler : RequestHandler<CreateProductCommand, int>
 }
 ```
 
-### Do I need to call `AddMediator()` before `AddDispatcher()`?
+### Do I need to call the parameterless `AddDispatcher()` before the builder calls?
 
-No — `AddMediator()` and the `AddDispatcher`/`AddNotification` registrations can be called in any order, because they all target the same `IServiceCollection`. But note that `AddMediator()` is the call that **applies the generator's auto-registrations**: module initializers only queue handler registrations, and `AddMediator()` applies the queue. If `AddMediator()` is never called, `Send` and `Publish` fail at runtime (no `IDispatcher`, and no auto-registered handlers).
+No — the parameterless `AddDispatcher()` and the `AddDispatcher<...>` / `AddNotification` registrations can be called in any order, because they all target the same `IServiceCollection`. But note that the **parameterless** `AddDispatcher()` is the call that **applies the generator's auto-registrations**: module initializers only queue handler registrations, and `AddDispatcher()` applies the queue. If it is never called, `Send` and `Publish` fail at runtime (no `IDispatcher`, and no auto-registered handlers). The fluent builders alone do not drain the queue.
 
 ### Can I use this without the fluent builder?
 
-Yes, but it's more verbose — and plain handlers don't need the builder at all (the source generator registers them when `AddMediator()` is called). The fluent builder remains the convenient way to register behaviors and validators, and it is syntactic sugar over standard DI registrations:
+Yes, but it's more verbose — and plain handlers don't need the builder at all (the source generator registers them when `AddDispatcher()` is called). The fluent builder remains the convenient way to register behaviors and validators, and it is syntactic sugar over standard DI registrations:
 
 ```csharp
 // Fluent builder (recommended)
@@ -285,7 +344,7 @@ builder.Services.AddTransient<IPipelineBehavior<CreateProductCommand, int>, Vali
 
 ### How do I unit test a handler that inherits from `RequestHandler`?
 
-Test the public `HandleAsync` method directly — it's the one the mediator calls. It returns a `Result<T>`, so assert on the result (or on the failure exception) — the base class performs no logging or catching of its own:
+Test the public `HandleAsync` method directly — it's the one the dispatcher calls. It returns a `Result<T>`, so assert on the result (or on the failure exception) — the base class performs no logging or catching of its own:
 
 ```csharp
 [Fact]
@@ -298,7 +357,7 @@ public async Task HandleAsync_ValidCommand_ReturnsProductId()
     var handler = new CreateProductHandler(repository.Object);
     var command = new CreateProductCommand("Test", 9.99m);
 
-    // Act — call the public HandleAsync, which is what the mediator calls
+    // Act — call the public HandleAsync, which is what the dispatcher calls
     Result<int> result = await handler.HandleAsync(command, CancellationToken.None);
 
     // Assert
@@ -372,17 +431,18 @@ If the handler returns a failed result, `NotificationLoggingBehavior` sees it (i
 
 ## Known Limitations
 
-- **Compile-time registration, not runtime scanning**: Handlers are discovered at compile time by the source generator, not at runtime. Auto-registration covers the assembly that calls `AddMediator()` plus any assembly loaded before that call; handlers in lazily-loaded class libraries may register too late (keep handlers in the entry assembly, touch the library at startup, or register explicitly).
+- **Compile-time registration, not runtime scanning**: Handlers are discovered at compile time by the source generator, not at runtime. Auto-registration covers the assembly that calls `AddDispatcher()` plus any assembly loaded before that call; handlers in lazily-loaded class libraries may register too late (keep handlers in the entry assembly, touch the library at startup, or register explicitly).
 - **One handler per request type**: The dispatcher resolves `IRequestHandler<TRequest, TResponse>` as a single service. Two handlers for the same request pair in one assembly are a compile-time error (`DSAG005`) — use notifications for one-to-many dispatch.
 - **No built-in request timeout or cancellation token modification**: Pipeline behaviors receive the original `CancellationToken`. Behaviors cannot create linked tokens with timeouts without custom code.
 - **No built-in transaction behavior**: There is no `TransactionBehavior` in the box. Implement `IPipelineBehavior<TRequest, TResponse>` to wrap handlers in a transaction.
-- **Notification handler ordering**: Handlers are invoked in the order they appear in `GetServices<T>()` (registration order). There is no priority or ordering mechanism.
+- **Notification handler ordering**: Handlers are invoked in the order they appear in `GetServices<T>()` (registration order). There is no priority or ordering mechanism — [`[PipelineBehaviorOrder]`](./Attributes/PipelineBehaviorOrderAttribute.md) orders behaviors, not notification handlers.
+- **Behavior order attribute scope**: `[PipelineBehaviorOrder]` only affects **auto-registered closed behaviors**. Generic behaviors (registered with `AddDecoration`) and explicit registrations keep call order.
 
 ---
 
 ## Performance Tips
 
-- **Inject the concrete generated `Mediator`** instead of `IDispatcher` on hot paths — the monomorphized overloads are up to ~25% faster than the interface path (see the [Benchmarks](benchmarks)).
+- **Inject the concrete generated `Dispatcher`** instead of `IDispatcher` on hot paths — the monomorphized overloads are up to ~25% faster than the interface path (see the [Benchmarks](benchmarks)).
 - **Register behaviors as Transient**: The default `AddDecoration<T>()` and `AddValidator<T>()` register behaviors as `Transient`. This is correct — behaviors should not hold request-scoped state.
 - **Avoid expensive work in constructors**: Behaviors and handlers are resolved per-request (for Scoped handlers) or per-resolution (for Transient behaviors). Keep constructors cheap.
 - **`NotificationRetryBehavior` increases latency**: Each retry adds `baseDelayMilliseconds * attempt` delay. With 3 retries and 200ms base, worst-case latency is 200 + 400 + 600 = 1200ms extra. Tune these values for your workload.

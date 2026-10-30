@@ -6,7 +6,7 @@ using RA.Utilities.Dispatcher.Benchmarks.Scenarios.Dispatcher;
 using RA.Utilities.Dispatcher.Benchmarks.Scenarios.Feature;
 using RA.Utilities.Dispatcher.Benchmarks.Scenarios.Mediatr;
 using RA.Utilities.Dispatcher.Benchmarks.Shared;
-using DispatcherGeneratedMediator = RA.Utilities.Dispatcher.Generated.Mediator;
+using GeneratedDispatcher = RA.Utilities.Dispatcher.Generated.Dispatcher;
 using DispatcherInterface = RA.Utilities.Dispatcher.Abstractions.IDispatcher;
 using FeatureGeneratedMediator = RA.Utilities.Feature.Generated.Mediator;
 using FeatureMediator = RA.Utilities.Feature.Abstractions.IMediator;
@@ -17,7 +17,7 @@ namespace RA.Utilities.Dispatcher.Benchmarks;
 /// Compares request dispatch across the three implementations scenario for scenario: the new
 /// <c>RA.Utilities.Dispatcher</c> package, the original <c>RA.Utilities.Feature</c> package, and
 /// MediatR. For the RA packages both the interface-typed <c>IDispatcher</c>/<c>IMediator</c> path and the concrete
-/// source-generated <c>Mediator</c> path are measured; MediatR exposes only the interface path.
+/// source-generated type path are measured; MediatR exposes only the interface path.
 /// Every iteration resolves the mediator from a fresh scope to mirror per-request semantics.
 /// </summary>
 [MemoryDiagnoser]
@@ -73,7 +73,7 @@ public class SendComparisonBenchmarks
     public async Task Dispatcher_Concrete_Send_ZeroBehaviors()
     {
         using IServiceScope scope = _dispatcherScopeFactory.CreateScope();
-        DispatcherGeneratedMediator mediator = scope.ServiceProvider.GetRequiredService<DispatcherGeneratedMediator>();
+        GeneratedDispatcher mediator = scope.ServiceProvider.GetRequiredService<GeneratedDispatcher>();
         await mediator.Send(_dispatcherPingZero, CancellationToken.None);
     }
 
@@ -113,7 +113,7 @@ public class SendComparisonBenchmarks
     public async Task Dispatcher_Concrete_Send_OneBehavior()
     {
         using IServiceScope scope = _dispatcherScopeFactory.CreateScope();
-        DispatcherGeneratedMediator mediator = scope.ServiceProvider.GetRequiredService<DispatcherGeneratedMediator>();
+        GeneratedDispatcher mediator = scope.ServiceProvider.GetRequiredService<GeneratedDispatcher>();
         await mediator.Send(_dispatcherPingOne, CancellationToken.None);
     }
 
@@ -153,7 +153,7 @@ public class SendComparisonBenchmarks
     public async Task Dispatcher_Concrete_Send_ThreeBehaviors()
     {
         using IServiceScope scope = _dispatcherScopeFactory.CreateScope();
-        DispatcherGeneratedMediator mediator = scope.ServiceProvider.GetRequiredService<DispatcherGeneratedMediator>();
+        GeneratedDispatcher mediator = scope.ServiceProvider.GetRequiredService<GeneratedDispatcher>();
         await mediator.Send(_dispatcherPingThree, CancellationToken.None);
     }
 
@@ -193,7 +193,7 @@ public class SendComparisonBenchmarks
     public async Task Dispatcher_Concrete_Send_Void()
     {
         using IServiceScope scope = _dispatcherScopeFactory.CreateScope();
-        DispatcherGeneratedMediator mediator = scope.ServiceProvider.GetRequiredService<DispatcherGeneratedMediator>();
+        GeneratedDispatcher mediator = scope.ServiceProvider.GetRequiredService<GeneratedDispatcher>();
         await mediator.Send(_dispatcherVoidPing, CancellationToken.None);
     }
 
@@ -233,7 +233,7 @@ public class SendComparisonBenchmarks
     public async Task Dispatcher_Concrete_Send_Void_ThreeBehaviors()
     {
         using IServiceScope scope = _dispatcherScopeFactory.CreateScope();
-        DispatcherGeneratedMediator mediator = scope.ServiceProvider.GetRequiredService<DispatcherGeneratedMediator>();
+        GeneratedDispatcher mediator = scope.ServiceProvider.GetRequiredService<GeneratedDispatcher>();
         await mediator.Send(_dispatcherVoidPingThree, CancellationToken.None);
     }
 

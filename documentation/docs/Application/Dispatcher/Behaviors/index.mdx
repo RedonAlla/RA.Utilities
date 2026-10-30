@@ -9,6 +9,10 @@ Namespace: RA.Utilities.Dispatcher.Behaviors
 
 `RA.Utilities.Dispatcher.Behaviors` provides built-in `IPipelineBehavior` and `INotificationBehavior` implementations for common cross-cutting concerns.
 
+:::note
+Every built-in behavior is a **generic open type**, so the source generator does not auto-register it (`DSAG010`) — add it explicitly with `AddDecoration<TBehavior>()` on the request or notification dispatch. Explicit decorations compose in call order; see [`PipelineBehaviorOrderAttribute`](../Attributes/PipelineBehaviorOrderAttribute.md) for the ordering of auto-registered closed behaviors.
+:::
+
 ## 📦 Request Pipeline Behaviors
 
 | Behavior | Interface | Purpose |

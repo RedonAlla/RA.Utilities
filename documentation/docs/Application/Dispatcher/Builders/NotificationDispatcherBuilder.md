@@ -55,7 +55,7 @@ builder.Services
 ```
 
 :::note
-Plain (non-generic) notification handlers are already auto-registered by the source generator when `AddMediator()` is called — `AddHandler` is only needed for generic handlers or handlers in lazily-loaded assemblies. Behaviors (generic or closed) are always registered explicitly with `AddDecoration`.
+Plain (non-generic) notification handlers are already auto-registered by the source generator when `AddDispatcher()` is called — `AddHandler` is only needed for generic handlers or handlers in lazily-loaded assemblies. Behaviors (generic or closed) are always registered explicitly with `AddDecoration`.
 :::
 
 ## 🔗 Related

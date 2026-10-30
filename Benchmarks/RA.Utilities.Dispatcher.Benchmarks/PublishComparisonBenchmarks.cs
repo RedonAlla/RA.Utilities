@@ -6,7 +6,7 @@ using RA.Utilities.Dispatcher.Benchmarks.Scenarios.Dispatcher;
 using RA.Utilities.Dispatcher.Benchmarks.Scenarios.Feature;
 using RA.Utilities.Dispatcher.Benchmarks.Scenarios.Mediatr;
 using RA.Utilities.Dispatcher.Benchmarks.Shared;
-using DispatcherGeneratedMediator = RA.Utilities.Dispatcher.Generated.Mediator;
+using GeneratedDispatcher = RA.Utilities.Dispatcher.Generated.Dispatcher;
 using DispatcherInterface = RA.Utilities.Dispatcher.Abstractions.IDispatcher;
 using FeatureGeneratedMediator = RA.Utilities.Feature.Generated.Mediator;
 using FeatureMediator = RA.Utilities.Feature.Abstractions.IMediator;
@@ -17,7 +17,7 @@ namespace RA.Utilities.Dispatcher.Benchmarks;
 /// Compares notification fan-out across the three implementations: the new
 /// <c>RA.Utilities.Dispatcher</c> package, the original <c>RA.Utilities.Feature</c> package, and
 /// MediatR, with one handler and with three handlers. For the RA packages both the
-/// interface-typed <c>IDispatcher</c>/<c>IMediator</c> path and the concrete source-generated <c>Mediator</c> path
+/// interface-typed <c>IDispatcher</c>/<c>IMediator</c> path and the concrete source-generated type path
 /// are measured; MediatR exposes only the interface path.
 /// </summary>
 [MemoryDiagnoser]
@@ -64,7 +64,7 @@ public class PublishComparisonBenchmarks
     public async Task Dispatcher_Concrete_Publish_OneHandler()
     {
         using IServiceScope scope = _dispatcherScopeFactory.CreateScope();
-        DispatcherGeneratedMediator mediator = scope.ServiceProvider.GetRequiredService<DispatcherGeneratedMediator>();
+        GeneratedDispatcher mediator = scope.ServiceProvider.GetRequiredService<GeneratedDispatcher>();
         await mediator.Publish(_dispatcherOrderPlaced, CancellationToken.None);
     }
 
@@ -104,7 +104,7 @@ public class PublishComparisonBenchmarks
     public async Task Dispatcher_Concrete_Publish_ThreeHandlers()
     {
         using IServiceScope scope = _dispatcherScopeFactory.CreateScope();
-        DispatcherGeneratedMediator mediator = scope.ServiceProvider.GetRequiredService<DispatcherGeneratedMediator>();
+        GeneratedDispatcher mediator = scope.ServiceProvider.GetRequiredService<GeneratedDispatcher>();
         await mediator.Publish(_dispatcherOrderFanned, CancellationToken.None);
     }
 

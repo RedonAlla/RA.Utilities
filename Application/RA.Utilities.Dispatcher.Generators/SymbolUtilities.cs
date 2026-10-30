@@ -82,4 +82,33 @@ internal static class SymbolUtilities
 
         return true;
     }
+
+    /// <summary>
+    /// Reads the behavior order declared with <c>PipelineBehaviorOrderAttribute</c>.
+    /// </summary>
+    /// <param name="typeSymbol">The behavior type.</param>
+    /// <param name="attributeSymbol">
+    /// The attribute symbol resolved from the compilation, or <see langword="null"/> when the
+    /// runtime does not expose the attribute.
+    /// </param>
+    /// <returns>The declared order, or zero when the attribute is absent.</returns>
+    public static int GetPipelineBehaviorOrder(INamedTypeSymbol typeSymbol, INamedTypeSymbol? attributeSymbol)
+    {
+        if (attributeSymbol is null)
+        {
+            return 0;
+        }
+
+        foreach (AttributeData attribute in typeSymbol.GetAttributes())
+        {
+            if (SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, attributeSymbol)
+                && attribute.ConstructorArguments.Length == 1
+                && attribute.ConstructorArguments[0].Value is int order)
+            {
+                return order;
+            }
+        }
+
+        return 0;
+    }
 }

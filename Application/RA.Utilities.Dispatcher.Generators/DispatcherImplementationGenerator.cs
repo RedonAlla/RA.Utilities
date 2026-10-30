@@ -10,9 +10,9 @@ namespace RA.Utilities.Dispatcher.Generators;
 /// <summary>
 /// The combined inputs of the mediator implementation generator.
 /// </summary>
-internal readonly struct MediatorInputs : IEquatable<MediatorInputs>
+internal readonly struct DispatcherInputs : IEquatable<DispatcherInputs>
 {
-    public MediatorInputs(
+    public DispatcherInputs(
         EquatableArray<MessageModel> sourceMessages,
         EquatableArray<HandlerModel> sourceHandlers,
         ReferencedAssemblyModels referenced,
@@ -41,7 +41,7 @@ internal readonly struct MediatorInputs : IEquatable<MediatorInputs>
     public bool InitializerDisabled { get; }
 
     /// <inheritdoc/>
-    public bool Equals(MediatorInputs other) =>
+    public bool Equals(DispatcherInputs other) =>
         SourceMessages.Equals(other.SourceMessages)
         && SourceHandlers.Equals(other.SourceHandlers)
         && Referenced.Equals(other.Referenced)
@@ -50,7 +50,7 @@ internal readonly struct MediatorInputs : IEquatable<MediatorInputs>
         && InitializerDisabled == other.InitializerDisabled;
 
     /// <inheritdoc/>
-    public override bool Equals(object? obj) => obj is MediatorInputs other && Equals(other);
+    public override bool Equals(object? obj) => obj is DispatcherInputs other && Equals(other);
 
     /// <inheritdoc/>
     public override int GetHashCode()
@@ -68,12 +68,12 @@ internal readonly struct MediatorInputs : IEquatable<MediatorInputs>
 /// An incremental source generator that discovers the message types
 /// (<c>IRequest</c>, <c>IRequest&lt;TResponse&gt;</c>, and <c>INotification</c> implementations)
 /// visible to the compilation — including those declared in referenced class libraries — and
-/// emits a <c>Mediator</c> class implementing <c>IDispatcher</c> with monomorphized per-message
+/// emits a <c>Dispatcher</c> class implementing <c>IDispatcher</c> with monomorphized per-message
 /// dispatch methods. A module initializer queues the DI registration so that
-/// <c>services.AddMediator()</c> resolves <c>IDispatcher</c> to the generated implementation.
+/// <c>services.AddDispatcher()</c> resolves <c>IDispatcher</c> to the generated implementation.
 /// </summary>
 [Generator]
-public sealed class MediatorImplementationGenerator : IIncrementalGenerator
+public sealed class DispatcherImplementationGenerator : IIncrementalGenerator
 {
     /// <inheritdoc/>
     public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -113,14 +113,14 @@ public sealed class MediatorImplementationGenerator : IIncrementalGenerator
         IncrementalValueProvider<ReferencedAssemblyModels> referenced = context.CompilationProvider
             .Select(static (compilation, _) => ReferencedAssemblyDiscovery.Discover(compilation));
 
-        IncrementalValueProvider<MediatorInputs> inputs = sourceMessages.Collect()
+        IncrementalValueProvider<DispatcherInputs> inputs = sourceMessages.Collect()
             .Combine(sourceHandlers.Collect())
             .Combine(referenced)
             .Combine(runtimeContractsPresent)
             .Combine(moduleInitializersSupported)
             .Combine(initializerDisabled)
             .Select(static (data, _) =>
-                new MediatorInputs(
+                new DispatcherInputs(
                     data.Left.Left.Left.Left.Left,
                     data.Left.Left.Left.Left.Right,
                     data.Left.Left.Left.Right,
@@ -130,7 +130,7 @@ public sealed class MediatorImplementationGenerator : IIncrementalGenerator
 
         context.RegisterSourceOutput(
             inputs,
-            static (productionContext, data) => MediatorEmitter.Emit(
+            static (productionContext, data) => DispatcherEmitter.Emit(
                 productionContext,
                 data.SourceMessages,
                 data.SourceHandlers,
@@ -142,7 +142,7 @@ public sealed class MediatorImplementationGenerator : IIncrementalGenerator
 
     private static bool HasRuntimeContracts(Compilation compilation) =>
         compilation.GetTypeByMetadataName(KnownMetadataNames.IDispatcherMetadataName) is not null
-        && compilation.GetTypeByMetadataName(KnownMetadataNames.MediatorRegistrationsMetadataName) is not null
+        && compilation.GetTypeByMetadataName(KnownMetadataNames.DispatcherRegistrationsMetadataName) is not null
         && compilation.GetTypeByMetadataName(KnownMetadataNames.IRequestMetadataName) is not null
         && compilation.GetTypeByMetadataName(KnownMetadataNames.IRequestOfTMetadataName) is not null
         && compilation.GetTypeByMetadataName(KnownMetadataNames.INotificationMetadataName) is not null

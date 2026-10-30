@@ -9,7 +9,7 @@ Namespace: RA.Utilities.Dispatcher.Abstractions
 The `IDispatcher` interface is the central abstraction for dispatching requests and publishing notifications within your CQRS (Command Query Responsibility Segregation) architecture.
 It serves as the primary entry point for triggering business logic from your presentation layer (e.g., an API endpoint).
 
-The implementation is **source-generated** — the package's generator emits the `Mediator` class into your assembly, and `AddMediator()` registers it as the `IDispatcher` implementation. See [Generated Mediator](../generated-mediator) for the dispatch strategy.
+The implementation is **source-generated** — the package's generator emits the `Dispatcher` class into your assembly, and `AddDispatcher()` registers it as the `IDispatcher` implementation. See [Generated Dispatcher](../generated-dispatcher) for the dispatch strategy.
 
 ## 🎯 Purpose and Function
 
@@ -56,5 +56,5 @@ app.MapPost("todos", static async (
 
 ## 🔗 Related
 
-- [Examples](../examples) — complete end-to-end usage of `IDispatcher` and the concrete `Mediator`.
-- [Generated Mediator](../generated-mediator) — how the `IDispatcher` implementation is generated and registered.
+- [Examples](../examples) — complete end-to-end usage of `IDispatcher` and the concrete `Dispatcher`.
+- [Generated Dispatcher](../generated-dispatcher) — how the `IDispatcher` implementation is generated and registered.

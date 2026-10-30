@@ -10,13 +10,13 @@ using RA.Utilities.Dispatcher.Generators.Models;
 namespace RA.Utilities.Dispatcher.Generators;
 
 /// <summary>
-/// Builds the generated <c>Mediator</c> class — the sole <c>IDispatcher</c> implementation —
+/// Builds the generated <c>Dispatcher</c> class — the sole <c>IDispatcher</c> implementation —
 /// with monomorphized per-message dispatch: the known handler is injected by concrete type and
 /// called directly, behaviors resolve through DI (picking up both auto-registered and explicitly
 /// registered pipeline behaviors), and the zero-behavior path calls the handler with no delegate
 /// chain at all. The generic interface methods carry the same bodies, monomorphized by the JIT.
 /// </summary>
-internal static class MediatorEmitter
+internal static class DispatcherEmitter
 {
     /// <summary>
     /// The standard header for generated files. The <c>auto-generated</c> marker makes analyzers skip
@@ -28,7 +28,7 @@ internal static class MediatorEmitter
     /// <summary>
     /// The hint name of the generated source file.
     /// </summary>
-    private const string HintName = "RA.Utilities.Dispatcher.Mediator.g.cs";
+    private const string HintName = "RA.Utilities.Dispatcher.Dispatcher.g.cs";
 
     /// <summary>
     /// The project-size threshold above which the object-based dispatch switches from
@@ -249,10 +249,10 @@ internal static class MediatorEmitter
         builder.Append("namespace ").Append(KnownMetadataNames.GeneratedNamespace).Append('\n');
         builder.Append("{\n");
 
-        AppendLine(builder, 1, "internal sealed class Mediator : global::RA.Utilities.Dispatcher.Abstractions.IDispatcher");
+        AppendLine(builder, 1, "internal sealed class Dispatcher : global::RA.Utilities.Dispatcher.Abstractions.IDispatcher");
         AppendLine(builder, 1, "{");
         AppendLine(builder, 2, "private readonly global::System.IServiceProvider _provider;");
-        AppendLine(builder, 2, "private readonly global::Microsoft.Extensions.Logging.ILogger<Mediator> _logger;");
+        AppendLine(builder, 2, "private readonly global::Microsoft.Extensions.Logging.ILogger<Dispatcher> _logger;");
         AppendConstructor(builder);
 
         foreach (MessageModel message in responseMessages)
@@ -307,7 +307,7 @@ internal static class MediatorEmitter
 
     private static void AppendConstructor(StringBuilder builder)
     {
-        AppendLine(builder, 2, "public Mediator(global::System.IServiceProvider provider, global::Microsoft.Extensions.Logging.ILogger<Mediator> logger)");
+        AppendLine(builder, 2, "public Dispatcher(global::System.IServiceProvider provider, global::Microsoft.Extensions.Logging.ILogger<Dispatcher> logger)");
         AppendLine(builder, 2, "{");
         AppendLine(builder, 3, "if (provider is null) { throw new global::System.ArgumentNullException(nameof(provider)); }");
         AppendLine(builder, 3, "if (logger is null) { throw new global::System.ArgumentNullException(nameof(logger)); }");
@@ -655,7 +655,7 @@ internal static class MediatorEmitter
 
         if (useDictionaries)
         {
-            AppendLine(builder, 3, "if (s_sendObject.TryGetValue(requestType, out global::System.Func<Mediator, object, global::System.Threading.CancellationToken, global::System.Threading.Tasks.ValueTask<global::RA.Utilities.Core.Results.Result<object?>>> sender))");
+            AppendLine(builder, 3, "if (s_sendObject.TryGetValue(requestType, out global::System.Func<Dispatcher, object, global::System.Threading.CancellationToken, global::System.Threading.Tasks.ValueTask<global::RA.Utilities.Core.Results.Result<object?>>> sender))");
             AppendLine(builder, 3, "{");
             AppendLine(builder, 4, "return sender(this, request, cancellationToken);");
             AppendLine(builder, 3, "}");
@@ -692,7 +692,7 @@ internal static class MediatorEmitter
 
         if (useDictionaries)
         {
-            AppendLine(builder, 3, "if (s_publish.TryGetValue(notificationType, out global::System.Func<Mediator, object, global::System.Threading.CancellationToken, global::System.Threading.Tasks.ValueTask<global::RA.Utilities.Core.Results.Result>> publisher))");
+            AppendLine(builder, 3, "if (s_publish.TryGetValue(notificationType, out global::System.Func<Dispatcher, object, global::System.Threading.CancellationToken, global::System.Threading.Tasks.ValueTask<global::RA.Utilities.Core.Results.Result>> publisher))");
             AppendLine(builder, 3, "{");
             AppendLine(builder, 4, "return publisher(this, notification, cancellationToken);");
             AppendLine(builder, 3, "}");
@@ -769,8 +769,8 @@ internal static class MediatorEmitter
 
     private static void AppendObjectSendDictionary(StringBuilder builder, EquatableArray<MessageModel> responseMessages, EquatableArray<MessageModel> voidMessages)
     {
-        AppendLine(builder, 2, "private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Func<Mediator, object, global::System.Threading.CancellationToken, global::System.Threading.Tasks.ValueTask<global::RA.Utilities.Core.Results.Result<object?>>>> s_sendObject =");
-        AppendLine(builder, 3, "new global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Func<Mediator, object, global::System.Threading.CancellationToken, global::System.Threading.Tasks.ValueTask<global::RA.Utilities.Core.Results.Result<object?>>>>()");
+        AppendLine(builder, 2, "private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Func<Dispatcher, object, global::System.Threading.CancellationToken, global::System.Threading.Tasks.ValueTask<global::RA.Utilities.Core.Results.Result<object?>>>> s_sendObject =");
+        AppendLine(builder, 3, "new global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Func<Dispatcher, object, global::System.Threading.CancellationToken, global::System.Threading.Tasks.ValueTask<global::RA.Utilities.Core.Results.Result<object?>>>>()");
         AppendLine(builder, 2, "{");
 
         foreach (MessageModel message in responseMessages)
@@ -788,8 +788,8 @@ internal static class MediatorEmitter
 
     private static void AppendPublishDictionary(StringBuilder builder, EquatableArray<MessageModel> notifications)
     {
-        AppendLine(builder, 2, "private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Func<Mediator, object, global::System.Threading.CancellationToken, global::System.Threading.Tasks.ValueTask<global::RA.Utilities.Core.Results.Result>>> s_publish =");
-        AppendLine(builder, 3, "new global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Func<Mediator, object, global::System.Threading.CancellationToken, global::System.Threading.Tasks.ValueTask<global::RA.Utilities.Core.Results.Result>>>()");
+        AppendLine(builder, 2, "private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Func<Dispatcher, object, global::System.Threading.CancellationToken, global::System.Threading.Tasks.ValueTask<global::RA.Utilities.Core.Results.Result>>> s_publish =");
+        AppendLine(builder, 3, "new global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Func<Dispatcher, object, global::System.Threading.CancellationToken, global::System.Threading.Tasks.ValueTask<global::RA.Utilities.Core.Results.Result>>>()");
         AppendLine(builder, 2, "{");
 
         foreach (MessageModel message in notifications)
@@ -832,15 +832,15 @@ internal static class MediatorEmitter
 
     private static void AppendInitializer(StringBuilder builder)
     {
-        AppendLine(builder, 1, "internal static class MediatorRegistrationInitializer");
+        AppendLine(builder, 1, "internal static class DispatcherRegistrationInitializer");
         AppendLine(builder, 1, "{");
         AppendLine(builder, 2, "[global::System.Runtime.CompilerServices.ModuleInitializer]");
         AppendLine(builder, 2, "internal static void Initialize()");
         AppendLine(builder, 2, "{");
-        AppendLine(builder, 3, $"global::{KnownMetadataNames.MediatorRegistrationsMetadataName}.{KnownMetadataNames.AddMethod}(static services =>");
+        AppendLine(builder, 3, $"global::{KnownMetadataNames.DispatcherRegistrationsMetadataName}.{KnownMetadataNames.AddMethod}(static services =>");
         AppendLine(builder, 3, "{");
-        AppendLine(builder, 4, "global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddScoped<Mediator>(services);");
-        AppendLine(builder, 4, "global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddScoped<global::RA.Utilities.Dispatcher.Abstractions.IDispatcher>(services, static provider => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Mediator>(provider));");
+        AppendLine(builder, 4, "global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddScoped<Dispatcher>(services);");
+        AppendLine(builder, 4, "global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddScoped<global::RA.Utilities.Dispatcher.Abstractions.IDispatcher>(services, static provider => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Dispatcher>(provider));");
         AppendLine(builder, 3, "});");
         AppendLine(builder, 2, "}");
         AppendLine(builder, 1, "}");

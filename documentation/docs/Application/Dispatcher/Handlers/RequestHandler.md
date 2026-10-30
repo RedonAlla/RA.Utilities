@@ -85,4 +85,4 @@ public class DeleteProductHandler : RequestHandler<DeleteProductCommand>
 
 ## 🧠 Summary
 
-`RequestHandler` removes the interface-implementation boilerplate from your handlers — override one `HandleAsync` method, return results, and express expected failures as `Result.Failure(...)`. Handlers are auto-registered by the source generator when `AddMediator()` is called. For request-level logging, register the [`LoggingBehavior`](../Behaviors/LoggingBehavior.md) on the dispatch instead.
+`RequestHandler` removes the interface-implementation boilerplate from your handlers — override one `HandleAsync` method, return results, and express expected failures as `Result.Failure(...)`. Handlers are auto-registered by the source generator when `AddDispatcher()` is called. For request-level logging, register the [`LoggingBehavior`](../Behaviors/LoggingBehavior.md) on the dispatch instead.

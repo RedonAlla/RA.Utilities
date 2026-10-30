@@ -1,5 +1,28 @@
 # Release Notes for RA.Utilities.Dispatcher
 
+## Version 10.1.0
+
+![Date Badge](https://img.shields.io/badge/Publish-31%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-v10.1.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Dispatcher/10.1.0)
+
+The generated implementation and the bootstrap call now carry the package name — `Dispatcher` and `AddDispatcher()` — and the package gains registration filtering and deterministic behavior ordering. Most applications change one startup line.
+
+### ⚠️ Breaking Changes
+
+*   **`AddMediator()` → `AddDispatcher()`.** The parameterless bootstrap was renamed. The fluent `AddDispatcher<TRequest, TResponse, THandler>()`, `AddNotification<TNotification>()`, `AddDecoration<TBehavior>()`, and `AddValidator<TValidator>()` APIs are unchanged.
+*   **Generated `Mediator` → generated `Dispatcher`.** Code that injects the concrete class must rename the type. Inside a `RA.Utilities.*` namespace, qualify it or alias it (`using GeneratedDispatcher = RA.Utilities.Dispatcher.Generated.Dispatcher;`) — the simple name resolves to the namespace (`CS0118`).
+*   **`MediatorRegistrations` → `DispatcherRegistrations`** and **`MediatorServiceCollectionExtensions` → `DispatcherServiceCollectionExtensions`.** Internal plumbing; only relevant if referenced by name.
+
+### ✨ New Features
+
+*   **Handler filtering.** `AddDispatcher(options => ...)` accepts `DispatcherOptions` with `IncludeHandlers` / `ExcludeHandlers` (`List<Type>?`). Filtering applies to source-generated registrations only, both lists accept behavior types, exclusions win over inclusions, and behaviors related to a filtered-out message are removed with it.
+*   **Deterministic behavior ordering.** `[PipelineBehaviorOrder(int)]` on a closed behavior pins its position: lower values run closer to the outside, the default is `0`, and ties fall back to the type name. The attribute is read at compile time and only affects auto-registered behaviors; generic behaviors and explicit `AddDecoration` calls keep call order.
+
+### 📝 Improvements
+
+*   Behavior registrations are emitted by message interface, then order, then type name — the chain no longer depends on incidental emission order.
+*   Documentation rebuilt around the project template, with new `Options` and `Attributes` reference pages, filtering/ordering guides, name-shadowing guidance, and a v10.0.x → v10.1.0 migration guide.
+
 ## Version 10.0.1
 
 ![Date Badge](https://img.shields.io/badge/Publish-19%20October%202026-lightblue?logo=fastly&logoColor=white)

@@ -61,7 +61,7 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, int>
 
 ## 🔧 Auto-Registration
 
-Concrete, non-generic `IRequestHandler` implementations are discovered by the package's source generator and registered automatically when `AddMediator()` is called (request handlers **scoped**) — no explicit `AddDispatcher` call needed. See the [Auto Registration](../auto-registration) guide for the discovery rules and diagnostics.
+Concrete, non-generic `IRequestHandler` implementations are discovered by the package's source generator and registered automatically when the parameterless `AddDispatcher()` is called (request handlers **scoped**) — no explicit `AddDispatcher<...>` builder call needed. See the [Auto Registration](../auto-registration) guide for the discovery rules and diagnostics.
 
 ## 🔗 Related
 

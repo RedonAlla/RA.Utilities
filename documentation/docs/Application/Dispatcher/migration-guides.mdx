@@ -4,13 +4,84 @@ title: Migration Guides
 
 # Migration Guides
 
+## RA.Utilities.Dispatcher v10.0.x → v10.1.0
+
+v10.1.0 finishes the package rename: the generated dispatcher implementation and the bootstrap call now use the **Dispatcher** name throughout. Most applications only change one line of startup code.
+
+### 💥 Breaking Changes
+
+| v10.0.x | v10.1.0 |
+|---|---|
+| `AddMediator()` (bootstrap) | `AddDispatcher()` |
+| Generated class `Mediator` | Generated class `Dispatcher` |
+| `MediatorRegistrations` | [`DispatcherRegistrations`](./Generated/DispatcherRegistrations.md) |
+| `MediatorServiceCollectionExtensions` | [`DispatcherServiceCollectionExtensions`](./Extensions/DispatcherServiceCollectionExtensions.md) |
+| Docs page *Generated Mediator* | [Generated Dispatcher](./generated-dispatcher) |
+
+`IDispatcher`, the message and handler interfaces, `RequestHandler` base classes, the builders (`AddDispatcher<TRequest, TResponse, THandler>()`, `AddNotification<TNotification>()`, `AddDecoration<TBehavior>()`, `AddValidator<TValidator>()`), behaviors, `PipelineContext<T>`, and the diagnostics keep their names. Only the concrete implementation type and the bootstrap method changed.
+
+### Step 1: Replace the bootstrap call
+
+```csharp
+// v10.0.x
+builder.Services.AddMediator();
+
+// v10.1.0
+builder.Services.AddDispatcher();
+```
+
+`AddDispatcher()` still applies every auto-registration queued by the source generator, and it now also accepts [filtering options](./Options/DispatcherOptions.md). The fluent builders are unchanged — `AddDispatcher<TRequest, TResponse, THandler>()` and the parameterless `AddDispatcher()` are distinct overloads, so call sites keep compiling either way.
+
+### Step 2: Update code that injects the concrete dispatcher
+
+The generated class is `internal` to your assembly, so only your own application code can reference it:
+
+```csharp
+// v10.0.x
+using RA.Utilities.Dispatcher.Generated;
+public OrderService(Mediator mediator) => _mediator = mediator;
+
+// v10.1.0
+using RA.Utilities.Dispatcher.Generated;
+public OrderService(Dispatcher dispatcher) => _dispatcher = dispatcher;
+```
+
+Inside any `RA.Utilities.*` namespace, the simple name `Dispatcher` resolves to the **namespace** `RA.Utilities.Dispatcher`, not to the generated class (`CS0118`). Use an alias, or the fully qualified name, in that case:
+
+```csharp
+using GeneratedDispatcher = RA.Utilities.Dispatcher.Generated.Dispatcher;
+
+public sealed class OrderService(GeneratedDispatcher dispatcher)
+{
+    // ...
+}
+```
+
+Cloud and library code should keep injecting [`IDispatcher`](./Abstractions/IDispatcher.md); the concrete class is an implementation detail.
+
+### ✨ New in v10.1.0
+
+- **Handler filtering** — `AddDispatcher(options => options.ExcludeHandlers = [...])` registers only the handlers you want, together with the behaviors that belong to their messages. See [Filtering auto-registered handlers](./auto-registration#filtering-auto-registered-handlers).
+- **Deterministic behavior ordering** — mark a behavior with [`[PipelineBehaviorOrder(int)]`](./Attributes/PipelineBehaviorOrderAttribute.md) to pin its position in the chain instead of relying on the order the generator happens to emit. Lower values run further out; ties fall back to the type name.
+
+```csharp
+builder.Services.AddDispatcher(options =>
+{
+    options.ExcludeHandlers = [typeof(LegacyImportJobHandler)];
+});
+```
+
+Nothing else changes: the Result-based contract, lifetimes, `PipelineContext<T>`, and diagnostics are identical to v10.0.x.
+
+---
+
 ## RA.Utilities.Feature v10.x → RA.Utilities.Dispatcher v10.0.0
 
-The `RA.Utilities.Dispatcher` package is the successor of `RA.Utilities.Feature`. It keeps the source-generated mediator, auto-registration, pipeline behaviors, and notification system — and **returns to Result-based dispatch**: handlers and `IDispatcher` return `ValueTask<Result<T>>`, and expected failures are returned instead of thrown.
+The `RA.Utilities.Dispatcher` package is the successor of `RA.Utilities.Feature`. It keeps the source-generated dispatcher, auto-registration, pipeline behaviors, and notification system — and **returns to Result-based dispatch**: handlers and `IDispatcher` return `ValueTask<Result<T>>`, and expected failures are returned instead of thrown.
 
-### 💥 Breaking Change: the mediator contract is Result-based again — failures are returned, not thrown
+### 💥 Breaking Change: the dispatcher contract is Result-based again — failures are returned, not thrown
 
-Feature v10.2.0 removed `Result` from the mediator contract: handlers returned plain `Task<TResponse>` / `Task`, and failures were thrown as typed exceptions. Dispatcher v10.0.0 reintroduces `Result` with a modern shape:
+Feature v10.2.0 removed `Result` from the dispatcher contract: handlers returned plain `Task<TResponse>` / `Task`, and failures were thrown as typed exceptions. Dispatcher v10.0.0 reintroduces `Result` with a modern shape:
 
 - Handlers return `ValueTask<Result<TResponse>>` (`ValueTask<Result>` for void requests); `INotificationHandler<TNotification>` now returns `ValueTask<Result>` (it returned `Task` in Feature).
 - `IDispatcher.Send<TRequest, TResponse>` returns `ValueTask<Result<TResponse>>`; `Send<TRequest>` (void) returns `ValueTask<Result>`. Context overloads add an optional `PipelineContext<TContext>? context = null` parameter.
@@ -36,6 +107,10 @@ Feature v10.2.0 removed `Result` from the mediator contract: handlers returned p
 | `NotificationFeatureBuilder<...>` | `NotificationDispatcherBuilder<...>` |
 | Diagnostics `FEAG001`–`FEAG010` | `DSAG001`–`DSAG010` (same meanings) |
 | `AddMediator()` | `AddMediator()` (unchanged bootstrap, now implemented as a C# 14 extension block) |
+
+:::note
+Everything in this section describes the state of **v10.0.0**. If you are already on v10.0.x, the bootstrap call and the generated type were renamed in v10.1.0 — see the v10.0.x → v10.1.0 section above.
+:::
 
 ### Signature changes at a glance
 

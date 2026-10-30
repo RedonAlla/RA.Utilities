@@ -6,11 +6,11 @@ sidebar_position: 1
 Namespace: RA.Utilities.Dispatcher.Exceptions
 ```
 
-`HandlerNotFoundException` is thrown when an **object-based** `Send` or `Publish` call cannot be dispatched because the runtime type of the message is unknown to the generated mediator's dispatch — the type implements no message contract the mediator knows.
+`HandlerNotFoundException` is thrown when an **object-based** `Send` or `Publish` call cannot be dispatched because the runtime type of the message is unknown to the generated dispatcher — the type implements no message contract the dispatcher knows.
 
 ## 🎯 Purpose
 
-The object-based dispatch (`Mediator.Send(object)` / `Mediator.Publish(object)`) maps a message's runtime type to its closed handler contract. When the type implements none of the message contracts — or implements an ambiguous one — there is nothing to dispatch, and `HandlerNotFoundException` reports the offending type instead of failing with a generic `InvalidOperationException`.
+The object-based dispatch (`Dispatcher.Send(object)` / `Dispatcher.Publish(object)`) maps a message's runtime type to its closed handler contract. When the type implements none of the message contracts — or implements an ambiguous one — there is nothing to dispatch, and `HandlerNotFoundException` reports the offending type instead of failing with a generic `InvalidOperationException`.
 
 Common causes:
 
@@ -37,7 +37,7 @@ The exception message names the message type and — for the ambiguity case — 
 ```csharp showLineNumbers
 try
 {
-    Result<object?> result = await mediator.Send((object)someUnknownMessage);
+    Result<object?> result = await dispatcher.Send((object)someUnknownMessage);
 }
 catch (HandlerNotFoundException ex)
 {

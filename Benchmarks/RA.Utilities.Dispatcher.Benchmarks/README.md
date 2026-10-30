@@ -4,21 +4,21 @@ BenchmarkDotNet suite comparing the new **`RA.Utilities.Dispatcher`** package ag
 original **`RA.Utilities.Feature`** package and **MediatR** on identical scenarios.
 
 Both RA packages ship their source generator into this assembly, so every benchmark exercises a
-real generated `Mediator` and real DI registrations — nothing is stubbed.
+real generated dispatch implementation and real DI registrations — nothing is stubbed.
 
 ## Scenarios
 
 | Scenario | Dispatcher | Feature | MediatR |
 |---|---|---|---|
-| Send, no behaviors | `IDispatcher` + concrete `Mediator` | `IMediator` + concrete `Mediator` | `IMediator` |
-| Send, one behavior | `IDispatcher` + concrete `Mediator` | `IMediator` + concrete `Mediator` | `IMediator` |
-| Send, three behaviors | `IDispatcher` + concrete `Mediator` | `IMediator` + concrete `Mediator` | `IMediator` |
-| Void send | `IDispatcher` + concrete `Mediator` | `IMediator` + concrete `Mediator` | `IMediator` (Unit) |
-| Void send, three behaviors | `IDispatcher` + concrete `Mediator` | `IMediator` + concrete `Mediator` | `IMediator` (Unit) |
-| Publish, one handler | `IDispatcher` + concrete `Mediator` | `IMediator` + concrete `Mediator` | `IMediator` |
-| Publish, three handlers | `IDispatcher` + concrete `Mediator` | `IMediator` + concrete `Mediator` | `IMediator` |
+| Send, no behaviors | `IDispatcher` + concrete `Dispatcher` | `IMediator` + concrete `Mediator` | `IMediator` |
+| Send, one behavior | `IDispatcher` + concrete `Dispatcher` | `IMediator` + concrete `Mediator` | `IMediator` |
+| Send, three behaviors | `IDispatcher` + concrete `Dispatcher` | `IMediator` + concrete `Mediator` | `IMediator` |
+| Void send | `IDispatcher` + concrete `Dispatcher` | `IMediator` + concrete `Mediator` | `IMediator` (Unit) |
+| Void send, three behaviors | `IDispatcher` + concrete `Dispatcher` | `IMediator` + concrete `Mediator` | `IMediator` (Unit) |
+| Publish, one handler | `IDispatcher` + concrete `Dispatcher` | `IMediator` + concrete `Mediator` | `IMediator` |
+| Publish, three handlers | `IDispatcher` + concrete `Dispatcher` | `IMediator` + concrete `Mediator` | `IMediator` |
 
-Every iteration creates a DI scope and resolves the mediator from it, mirroring per-request
+Every iteration creates a DI scope and resolves the dispatcher from it, mirroring per-request
 semantics. Handlers are no-ops and loggers are null loggers, so the measurements isolate the
 dispatch machinery. MediatR is the baseline (`Baseline = true`) in each table.
 

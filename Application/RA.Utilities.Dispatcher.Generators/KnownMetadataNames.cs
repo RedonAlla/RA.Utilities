@@ -30,7 +30,7 @@ internal static class KnownMetadataNames
     /// <summary>
     /// The metadata name of the mediator registration queue the generated mediator initializers feed.
     /// </summary>
-    public const string MediatorRegistrationsMetadataName = "RA.Utilities.Dispatcher.Generated.MediatorRegistrations";
+    public const string DispatcherRegistrationsMetadataName = "RA.Utilities.Dispatcher.Generated.DispatcherRegistrations";
 
     /// <summary>
     /// The metadata name of the mediator interface implemented by the generated class.
@@ -51,6 +51,11 @@ internal static class KnownMetadataNames
     /// The metadata name of the notification behavior interface.
     /// </summary>
     public const string NotificationBehaviorInterfaceMetadataName = "RA.Utilities.Dispatcher.Abstractions.INotificationBehavior`1";
+
+    /// <summary>
+    /// The metadata name of the attribute that specifies the position of a behavior in the chain.
+    /// </summary>
+    public const string PipelineBehaviorOrderAttributeMetadataName = "RA.Utilities.Dispatcher.Attributes.PipelineBehaviorOrderAttribute";
 
     /// <summary>
     /// The metadata name of the void request marker interface.
@@ -76,7 +81,7 @@ internal static class KnownMetadataNames
 
     /// <summary>
     /// The preprocessor symbol that, when defined in the consuming compilation, makes the mediator
-    /// generator emit the <c>Mediator</c> class without the module initializer that registers
+    /// generator emit the <c>Dispatcher</c> class without the module initializer that registers
     /// it. Used by test hosts to avoid polluting the process-wide registration queues.
     /// </summary>
     public const string DisableModuleInitializerDefine = "RA_UTILITIES_DISPATCHER_DISABLE_MODULE_INITIALIZER";

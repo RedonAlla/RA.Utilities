@@ -56,7 +56,7 @@ public class TimingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, T
 
 ## 🧠 Notes
 
-- **No delegate chain without behaviors** — when a request has no pipeline behaviors, the generated mediator invokes the handler directly and no delegate is allocated at all.
+- **No delegate chain without behaviors** — when a request has no pipeline behaviors, the generated dispatcher invokes the handler directly and no delegate is allocated at all.
 - The delegate is what lets a behavior **short-circuit**: return a failed `Result` without calling `next()`.
 
 ## 🔗 Related

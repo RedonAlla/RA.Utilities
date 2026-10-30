@@ -5,10 +5,10 @@ sidebar_position: 2
 
 # Examples
 
-The package exposes two ways to dispatch a message, and both are registered by the same `AddMediator()` call:
+The package exposes two ways to dispatch a message, and both are registered by the same `AddDispatcher()` call:
 
 - **[`IDispatcher`](./Abstractions/IDispatcher.md)** — inject the abstraction. Use it in application services, endpoints, and libraries; it is easy to fake in tests.
-- **[`Mediator`](./generated-mediator)** — inject the generated concrete class. It exposes one monomorphized overload per message plus object-based dispatch, and is the fastest path.
+- **[`Dispatcher`](./generated-dispatcher)** — inject the generated concrete class. It exposes one monomorphized overload per message plus object-based dispatch, and is the fastest path.
 
 The examples below use the same small set of messages, handlers, and notifications so you can compare the two styles directly.
 
@@ -119,14 +119,14 @@ public sealed class SendOrderConfirmationHandler : INotificationHandler<OrderCre
 
 ## ⚙️ Registration
 
-One call registers the generated mediator, every request handler, every notification handler, and every closed pipeline behavior:
+One call registers the generated dispatcher, every request handler, every notification handler, and every closed pipeline behavior:
 
 ```csharp
 using RA.Utilities.Dispatcher.Extensions;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddMediator();
+builder.Services.AddDispatcher();
 ```
 
 If the feature also has validators or generic behaviors, add them through the builder:
@@ -141,6 +141,53 @@ builder.Services
 ```
 
 See [Auto Registration](./auto-registration) and [`DispatcherBuilder`](./Builders/DispatcherBuilder.md) for the full registration model.
+
+### Filtering auto-registered handlers
+
+`AddDispatcher` also accepts options that control which discovered handlers are kept. Filtering applies to source-generated registrations only — anything you register by hand stays:
+
+```csharp
+using RA.Utilities.Dispatcher.Extensions;
+
+builder.Services.AddDispatcher(options =>
+{
+    // Keep only the order feature in this host...
+    options.IncludeHandlers = [typeof(CreateOrderHandler), typeof(CancelOrderHandler)];
+    // ...minus handlers that need their own deployment.
+    options.ExcludeHandlers = [typeof(LegacyOrderImportHandler)];
+});
+```
+
+Exclusions win over inclusions. When a handler is filtered out, the pipeline behaviors tied to its message are removed with it, while notification behaviors stay as long as any handler for that notification remains. See [Filtering auto-registered handlers](./auto-registration#filtering-auto-registered-handlers).
+
+### Pinning behavior order
+
+Closed behaviors are auto-registered in a deterministic order, but when the order matters you can declare it instead of inferring it from type names:
+
+```csharp
+using RA.Utilities.Core.Results;
+using RA.Utilities.Dispatcher.Abstractions;
+using RA.Utilities.Dispatcher.Attributes;
+using RA.Utilities.Dispatcher.Models;
+
+[PipelineBehaviorOrder(-100)] // outermost: runs first
+public sealed class MetricsBehavior : IPipelineBehavior<CreateOrderCommand, Guid>
+{
+    public ValueTask<Result<Guid>> HandleAsync(
+        CreateOrderCommand request, RequestHandlerDelegate<Guid> next, CancellationToken cancellationToken)
+        => next(); // measure around the call in real code
+}
+
+[PipelineBehaviorOrder(100)] // innermost: closest to the handler
+public sealed class CachingBehavior : IPipelineBehavior<CreateOrderCommand, Guid>
+{
+    public ValueTask<Result<Guid>> HandleAsync(
+        CreateOrderCommand request, RequestHandlerDelegate<Guid> next, CancellationToken cancellationToken)
+        => next(); // check the cache before delegating in real code
+}
+```
+
+For `CreateOrderCommand` the chain becomes **Metrics → Caching → CreateOrderHandler**; behaviors without the attribute sit at order `0`, and equal orders fall back to the type name. The attribute is read at compile time, so it only affects auto-registered behaviors — explicit `AddDecoration` calls keep their call order. See [`PipelineBehaviorOrderAttribute`](./Attributes/PipelineBehaviorOrderAttribute.md).
 
 ## 🚰 Using `IDispatcher`
 
@@ -234,11 +281,11 @@ Result<Guid> created = await dispatcher.Send<CreateOrderCommand, Guid, RequestCo
     command, context, cancellationToken);
 ```
 
-For a void request the shape is `Send<TRequest, TContext>(request, context, cancellationToken)`; for notifications, `Publish<TNotification, TContext>(notification, context, cancellationToken)`. Passing `null` (or omitting the context) makes the mediator create one for the call.
+For a void request the shape is `Send<TRequest, TContext>(request, context, cancellationToken)`; for notifications, `Publish<TNotification, TContext>(notification, context, cancellationToken)`. Passing `null` (or omitting the context) makes the dispatcher create one for the call.
 
-## 🏎️ Using the concrete `Mediator`
+## 🏎️ Using the concrete `Dispatcher`
 
-The source generator emits `Mediator` **into your consuming assembly** and `AddMediator()` registers it as itself, so it can be injected like any other service. Because the class is `internal`, it is available to your own application code but not to other assemblies — expose `IDispatcher` from libraries.
+The source generator emits `Dispatcher` **into your consuming assembly** and `AddDispatcher()` registers it as itself, so it can be injected like any other service. Because the class is `internal`, it is available to your own application code but not to other assemblies — expose `IDispatcher` from libraries. If your code lives under a `RA.Utilities.*` namespace, the simple name `Dispatcher` resolves to the namespace instead of the class (CS0118) — use an alias; see the [name-shadowing note](./generated-dispatcher).
 
 ```csharp
 using RA.Utilities.Core.Results;
@@ -246,24 +293,24 @@ using RA.Utilities.Dispatcher.Generated;
 
 public sealed class OrderService
 {
-    private readonly Mediator _mediator;
+    private readonly Dispatcher _dispatcher;
 
-    public OrderService(Mediator mediator) => _mediator = mediator;
+    public OrderService(Dispatcher dispatcher) => _dispatcher = dispatcher;
 
     // No generic arguments: binds the generated Send(CreateOrderCommand) overload
     public ValueTask<Result<Guid>> CreateAsync(
         CreateOrderCommand command, CancellationToken cancellationToken) =>
-            _mediator.Send(command, cancellationToken);
+            _dispatcher.Send(command, cancellationToken);
 
     // Binds the generated Send(CancelOrderCommand) overload
     public ValueTask<Result> CancelAsync(
         CancelOrderCommand command, CancellationToken cancellationToken) =>
-            _mediator.Send(command, cancellationToken);
+            _dispatcher.Send(command, cancellationToken);
 
     // Binds the generated Publish(OrderCreatedNotification) overload
     public ValueTask<Result> PublishCreatedAsync(
         OrderCreatedNotification notification, CancellationToken cancellationToken) =>
-            _mediator.Publish(notification, cancellationToken);
+            _dispatcher.Publish(notification, cancellationToken);
 }
 ```
 
@@ -277,10 +324,10 @@ using RA.Utilities.Dispatcher.Generated;
 
 app.MapPost("/orders", static async (
     CreateOrderCommand command,
-    Mediator mediator,
+    Dispatcher dispatcher,
     CancellationToken cancellationToken) =>
 {
-    Result<Guid> created = await mediator.Send(command, cancellationToken);
+    Result<Guid> created = await dispatcher.Send(command, cancellationToken);
 
     return created.Match(
         success: id => Results.Created($"/orders/{id}", id),
@@ -295,8 +342,8 @@ The concrete class also exposes `Send(object)` / `Publish(object)` for cases whe
 ```csharp
 object message = ResolveMessage();
 
-Result<object?> result = await mediator.Send(message, cancellationToken);
-Result published = await mediator.Publish((object)new OrderCreatedNotification(orderId, customerName), cancellationToken);
+Result<object?> result = await dispatcher.Send(message, cancellationToken);
+Result published = await dispatcher.Publish((object)new OrderCreatedNotification(orderId, customerName), cancellationToken);
 ```
 
 ### Typed pipeline context
@@ -307,12 +354,12 @@ On the concrete class the generic parameter is only `TContext` — the message t
 var context = new PipelineContext<RequestContext>();
 context.Data.CorrelationId = httpContext.TraceIdentifier;
 
-Result<Guid> created = await mediator.Send<RequestContext>(command, context, cancellationToken);
+Result<Guid> created = await dispatcher.Send<RequestContext>(command, context, cancellationToken);
 ```
 
 ## 🧭 Which one should I use?
 
-| Scenario | `IDispatcher` | `Mediator` |
+| Scenario | `IDispatcher` | `Dispatcher` |
 |---|---|---|
 | Endpoints, application services, libraries | ✅ Recommended | ⚠️ Internal to the consuming assembly |
 | Faking/mocking the dispatcher in tests | ✅ Interface | ❌ Concrete type |
@@ -320,12 +367,12 @@ Result<Guid> created = await mediator.Send<RequestContext>(command, context, can
 | Dispatching when only `object` is known | ❌ Not on the interface | ✅ `Send(object)` / `Publish(object)` |
 | Public API surface of a package | ✅ Stable abstraction | ❌ Generated implementation detail |
 
-Both resolve the same handlers, notification subscribers, and pipeline behaviors — the generated mediator is the single `IDispatcher` implementation.
+Both resolve the same handlers, notification subscribers, and pipeline behaviors — the generated dispatcher is the single `IDispatcher` implementation.
 
 ## 🔗 Related
 
 - [`IDispatcher`](./Abstractions/IDispatcher.md) — the dispatch contract.
-- [Generated Mediator](./generated-mediator) — how the concrete class is generated and why it is faster.
+- [Generated Dispatcher](./generated-dispatcher) — how the concrete class is generated and why it is faster.
 - [`RequestHandler`](./Handlers/RequestHandler.md) — the handler base classes used above.
 - [`PipelineContext<T>`](./Models/PipelineContext.md) — typed context data.
 - [`DispatcherBuilder`](./Builders/DispatcherBuilder.md) — behaviors and validators.

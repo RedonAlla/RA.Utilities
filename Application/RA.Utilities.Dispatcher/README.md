@@ -8,7 +8,7 @@
 
 
 `RA.Utilities.Dispatcher` provides a foundational toolkit for implementing the **Vertical Slice Architecture** pattern using CQRS (Command Query Responsibility Segregation).
-It includes a custom mediator, base handlers, pipeline behaviors for cross-cutting concerns, and a notification system to streamline feature development and promote clean, maintainable code.
+It includes a custom dispatcher, base handlers, pipeline behaviors for cross-cutting concerns, and a notification system to streamline feature development and promote clean, maintainable code.
 
 Building applications with a traditional layered architecture can lead to wide, coupled classes and scattered logic.
 The Vertical Slice pattern, combined with CQRS, addresses this by organizing code around features.
@@ -37,18 +37,18 @@ dotnet add package RA.Utilities.Dispatcher
 
 ## ✨ Features
 
-### 1. Source-Generated Mediator
+### 1. Source-Generated Dispatcher
 
-The package provides its own lightweight mediator — no external MediatR dependency. The **`IDispatcher` implementation is source-generated** into your assembly by the package's generator and registered by `AddMediator()`. It supports:
+The package provides its own lightweight dispatcher — no external MediatR dependency. The **`IDispatcher` implementation is source-generated** into your assembly by the package's generator and registered by `AddDispatcher()`. It supports:
 
 - **Request/Response** dispatch with a composable pipeline of behaviors
 - **Notification** publishing to zero or more handlers, each wrapped in its own behavior pipeline
-- Behavior ordering: behaviors execute in registration order, outermost first
+- Behavior ordering: behaviors execute in registration order, outermost first; auto-registered behaviors can pin their position with `[PipelineBehaviorOrder]`
 
 `Send` returns `ValueTask<Result<TResponse>>` (`ValueTask<Result>` for void requests). Handlers, behaviors, and the generated dispatcher all speak `Result`; expected failures are returned as `Result.Failure(exception)` instead of being thrown. `Result` comes from `RA.Utilities.Core.Results`.
 
 ```csharp
-Result<Pong> result = await mediator.Send(new Ping("hello"));
+Result<Pong> result = await dispatcher.Send(new Ping("hello"));
 if (result.IsFailure)
 {
     Exception error = result.Exception;
@@ -59,54 +59,94 @@ else
 }
 ```
 
-Register the mediator once at startup:
+Register the dispatcher once at startup:
 
 ```csharp
-builder.Services.AddMediator();
+builder.Services.AddDispatcher();
 ```
 
 ### 2. Zero-Configuration Handler Registration
 
-As of v11, plain handlers register themselves. A **source generator** shipped inside the `RA.Utilities.Dispatcher` NuGet package discovers every non-abstract class implementing `IRequestHandler<TRequest, TResponse>`, `IRequestHandler<TRequest>`, or `INotificationHandler<TNotification>` and emits a module initializer that queues their DI registrations. Calling `AddMediator()` applies the queued registrations:
+As of v11, plain handlers register themselves. A **source generator** shipped inside the `RA.Utilities.Dispatcher` NuGet package discovers every non-abstract class implementing `IRequestHandler<TRequest, TResponse>`, `IRequestHandler<TRequest>`, or `INotificationHandler<TNotification>` and emits a module initializer that queues their DI registrations. Calling `AddDispatcher()` applies the queued registrations:
 
 - Request handlers are registered **scoped** (`IRequestHandler<TRequest, TResponse>` / `IRequestHandler<TRequest>`)
 - Notification handlers are registered **transient** (`INotificationHandler<TNotification>`)
 
 ```csharp
-// No AddDispatcher/AddNotification calls needed for plain handlers —
-// AddMediator() registers every handler in the assembly.
-builder.Services.AddMediator();
+// No per-handler AddDispatcher<TRequest, THandler>/AddNotification calls needed —
+// AddDispatcher() registers every handler in the assembly.
+builder.Services.AddDispatcher();
 ```
 
 **Still registered explicitly** (the generator cannot discover or must not auto-register these):
 
-- **Pipeline behaviors** — `AddDispatcher<TRequest, TResponse, THandler>().AddDecoration<TBehavior>()`
+- **Generic pipeline behaviors** — closed, non-generic behaviors auto-register; generic ones need `AddDispatcher<TRequest, TResponse, THandler>().AddDecoration<TBehavior>()`
 - **Validators** — `.AddValidator<TValidator>()` (which also wires the `ValidationBehavior`)
-- **Notification behaviors** — `.AddNotification<TNotification>().AddDecoration<TBehavior>()`
+- **Generic notification behaviors** — closed ones auto-register; generic ones need `.AddNotification<TNotification>().AddDecoration<TBehavior>()`
 - **Generic handlers** — the generator reports `DSAG002` and skips them
 - Any handler whose registration needs a custom lifetime or setup
 
-**Assembly-loading caveat**: auto-registration covers the assembly that calls `AddMediator()` plus any assembly already loaded before that call (module initializers run when an assembly loads). Referenced class libraries load lazily on the CLR, so a handler in a library whose types are first touched at request time may be registered too late. Keep handlers in the entry/composition assembly, touch the handler assembly at startup (e.g. `typeof(SomeHandler)`), or register those handlers explicitly.
+**Assembly-loading caveat**: auto-registration covers the assembly that calls `AddDispatcher()` plus any assembly already loaded before that call (module initializers run when an assembly loads). Referenced class libraries load lazily on the CLR, so a handler in a library whose types are first touched at request time may be registered too late. Keep handlers in the entry/composition assembly, touch the handler assembly at startup (e.g. `typeof(SomeHandler)`), or register those handlers explicitly.
 
-### 3. Generated Mediator Details
+#### Filtering auto-registered handlers
 
-The generated `Mediator` is the **only** `IDispatcher` implementation in the package:
+`AddDispatcher` accepts an options callback that filters which discovered handlers — and the pipeline/notification behaviors related to the messages they handle — are registered:
+
+```csharp
+builder.Services.AddDispatcher(options =>
+{
+    // If null, ignored. If set, only these handlers are registered.
+    options.IncludeHandlers = [typeof(CreateOrderHandler)];
+
+    // If null, ignored. If set, these handlers are not registered.
+    options.ExcludeHandlers = [typeof(LegacyImportHandler)];
+});
+```
+
+- Both lists take handler types; behavior types are also accepted (a listed behavior is kept or removed directly).
+- Exclusions win over inclusions.
+- A request behavior is removed together with the handler of its request; a notification behavior is removed only once no registered handler for its notification remains.
+- The filter applies to source-generated registrations only — handlers registered explicitly with `AddDispatcher<TRequest, THandler>()` / `AddNotification<TNotification>()` and behaviors added via `AddDecoration<TBehavior>()` are untouched.
+
+#### Ordering auto-registered behaviors
+
+Closed pipeline and notification behaviors are auto-registered in type-name order. Decorate a behavior with `[PipelineBehaviorOrder]` to choose its position instead:
+
+```csharp
+using RA.Utilities.Dispatcher.Attributes;
+
+[PipelineBehaviorOrder(-100)] // outermost: runs first
+public sealed class MetricsBehavior : IPipelineBehavior<CreateOrderCommand, CreateOrderResult>
+{ /* ... */ }
+
+[PipelineBehaviorOrder(100)] // innermost: runs closest to the handler
+public sealed class CachingBehavior : IPipelineBehavior<CreateOrderCommand, CreateOrderResult>
+{ /* ... */ }
+```
+
+- Lower values run closer to the outside of the chain; behaviors with the same order fall back to type-name order, and behaviors without the attribute default to `0`.
+- The attribute is read at compile time by the source generator (no runtime cost) and applies to auto-registered `IPipelineBehavior<>`, `IPipelineBehavior<,>`, and `INotificationBehavior<>` implementations.
+- Explicit registrations keep `AddDecoration` call order: decorations added before `AddDispatcher()` wrap the auto-registered behaviors (outermost), decorations added after run inside them (innermost).
+
+### 3. Generated Dispatcher Details
+
+The generated `Dispatcher` is the **only** `IDispatcher` implementation in the package:
 
 - **Direct handler injection** — the generator knows each message's handler, registers it under its interface and as itself, and the generated `Send` resolves the handler by **concrete type** and calls it directly — no interface resolution, and the call devirtualizes.
 - **No delegate chain without behaviors** — when a request has no pipeline behaviors, the handler is invoked directly. Benchmarks (MediatR handlers registered scoped, matching this package's lifetime) show **14-18% faster sends and 9-14% fewer allocations than MediatR** across the send shapes.
 - **Closed behaviors auto-register** — non-generic `IPipelineBehavior<,>` / `IPipelineBehavior<>` / `INotificationBehavior<>` implementations are auto-registered under their interfaces (transient). Explicitly registered behaviors (`AddDecoration`, including generic closures — `DSAG010` notes the generic ones aren't auto-registered) resolve through the same channel.
 - **Fast dictionary lookups for object dispatch** — `Send(object)` / `Publish(object)` use `typeof` chains in small projects and static dictionaries once the project defines more than 8 messages; unknown types throw `HandlerNotFoundException`.
-- **Both `IDispatcher` and the concrete `Mediator` are usable** — the concrete class is the fastest path.
+- **Both `IDispatcher` and the concrete `Dispatcher` are usable** — the concrete class is the fastest path.
 - **Compile-time message diagnostics** (`DSAG006`–`DSAG010`) — ambiguous message contracts, missing handlers, unsupported message shapes, and generic behaviors are reported at build time.
 
 ```csharp
-// Inject the concrete generated mediator for monomorphized dispatch.
-var mediator = provider.GetRequiredService<RA.Utilities.Dispatcher.Generated.Mediator>();
-Result<Pong> pong = await mediator.Send(new Ping("hello"));
-Result<object?> pongObject = await mediator.Send((object)new Ping("hello"));
+// Inject the concrete generated dispatcher for monomorphized dispatch.
+var dispatcher = provider.GetRequiredService<RA.Utilities.Dispatcher.Generated.Dispatcher>();
+Result<Pong> pong = await dispatcher.Send(new Ping("hello"));
+Result<object?> pongObject = await dispatcher.Send((object)new Ping("hello"));
 ```
 
-See the [generated mediator documentation](https://redonalla.github.io/RA.Utilities/nuget-packages/Application/Dispatcher/generated-mediator/) for the dispatch matrix and diagnostics.
+See the [generated dispatcher documentation](https://redonalla.github.io/RA.Utilities/nuget-packages/Application/Dispatcher/generated-mediator/) for the dispatch matrix and diagnostics.
 
 ### 4. Base Handlers
 
@@ -124,7 +164,7 @@ Namespace: `RA.Utilities.Dispatcher.Handlers`
 
 ### 5. Pipeline Behaviors
 
-Pipeline behaviors wrap request handlers to add cross-cutting concerns. They implement `IPipelineBehavior<TRequest>` or `IPipelineBehavior<TRequest, TResponse>` and are composed into a chain via the mediator.
+Pipeline behaviors wrap request handlers to add cross-cutting concerns. They implement `IPipelineBehavior<TRequest>` or `IPipelineBehavior<TRequest, TResponse>` and are composed into a chain via the dispatcher.
 
 **Built-in request pipeline behaviors:**
 
@@ -223,7 +263,7 @@ public class MyHandler : RequestHandler<MyCommand, Data>
 // Caller provides (or omits) context
 var ctx = new PipelineContext<MyPipelineContext>();
 ctx.Data.UserId = 42;
-Result<Data> result = await mediator.Send<MyCommand, Data, MyPipelineContext>(command, ctx);
+Result<Data> result = await dispatcher.Send<MyCommand, Data, MyPipelineContext>(command, ctx);
 ```
 
 The `IDispatcher` interface has overloads that accept a context type parameter:
@@ -306,7 +346,7 @@ using RA.Utilities.Dispatcher.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddMediator(); // registers IDispatcher + all auto-discovered handlers
+builder.Services.AddDispatcher(); // registers IDispatcher + all auto-discovered handlers
 
 builder.Services
     .AddDispatcher<CreateProductCommand, int, CreateProductHandler>()
@@ -388,7 +428,7 @@ builder.Services
     .AddDecoration<NotificationLoggingBehavior<OrderPlaced>>();
 
 // Inside a request handler or endpoint — publishing
-Result publishResult = await mediator.Publish(new OrderPlaced(orderId, customerEmail), cancellationToken);
+Result publishResult = await dispatcher.Publish(new OrderPlaced(orderId, customerEmail), cancellationToken);
 ```
 
 ---
@@ -401,7 +441,7 @@ A complete `Program.cs` might look like:
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. Register the dispatcher — also applies all compile-time handler registrations
-builder.Services.AddMediator();
+builder.Services.AddDispatcher();
 
 // 2. Wire validators and behaviors per feature (handlers themselves need no registration)
 builder.Services

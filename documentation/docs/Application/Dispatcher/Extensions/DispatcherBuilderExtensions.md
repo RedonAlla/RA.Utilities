@@ -71,10 +71,10 @@ builder.Services
 ```
 
 :::note
-Plain (non-generic) handlers are auto-registered by the package's source generator when `AddMediator()` is called — `AddDispatcher` re-registers the handler (harmless, same scoped registration), so you only need it when the feature also has behaviors or validators to add, or for generic handlers / lazily-loaded assemblies.
+Plain (non-generic) handlers are auto-registered by the package's source generator when `AddDispatcher()` is called — `AddDispatcher` re-registers the handler (harmless, same scoped registration), so you only need it when the feature also has behaviors or validators to add, or for generic handlers / lazily-loaded assemblies.
 :::
 
 ## 🔗 Related
 
-- [`MediatorServiceCollectionExtensions`](MediatorServiceCollectionExtensions.md) — the `AddMediator()` bootstrap.
+- [`DispatcherServiceCollectionExtensions`](DispatcherServiceCollectionExtensions.md) — the `AddDispatcher()` bootstrap.
 - [`DispatcherBuilder`](../Builders/DispatcherBuilder.md) / [`NotificationDispatcherBuilder`](../Builders/NotificationDispatcherBuilder.md) — the returned builders.

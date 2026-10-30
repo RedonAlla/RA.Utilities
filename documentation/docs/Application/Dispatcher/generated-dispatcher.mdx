@@ -1,0 +1,143 @@
+---
+sidebar_position: 3
+title: Generated Dispatcher
+---
+
+# Generated Dispatcher
+
+The **source generator** in the `RA.Utilities.Dispatcher` package generates the `IDispatcher` implementation itself — the generated `Dispatcher` is the **only** dispatcher in the package.
+Every assembly referencing the package gets its own `Dispatcher` class — a complete, compile-time implementation of `IDispatcher` with **zero runtime reflection** — and the parameterless `services.AddDispatcher()` registers it as the `IDispatcher` implementation automatically.
+
+The generated implementation covers every message type visible to the compilation, including messages declared in **referenced class libraries**.
+
+## 🚀 Why It Is Faster
+
+- **Direct handler injection.** The generator knows each message's handler: it registers handlers under their interfaces **and as themselves**, and the generated `Send` resolves the known handler by its **concrete type** and calls `HandleAsync` directly — no interface resolution, and the call devirtualizes.
+- **Monomorphized `Send` methods.** One typed `Send` overload per message (`Send(Ping)`) — calls bind directly with no interface or generic dispatch, and the generic `IDispatcher` methods carry the same bodies, monomorphized by the JIT.
+- **No delegate chain without behaviors.** When a request has no pipeline behaviors, the handler is invoked directly instead of building a delegate chain. Benchmarks: **12–39% faster sends and 11–31% fewer allocations than MediatR** (with MediatR handlers registered scoped, matching this package's lifetime) across the send and publish shapes — see the [Benchmarks](./benchmarks) page for the full comparison, methodology, and how to run them.
+- **Fast dictionary lookups for object dispatch.** `Send(object)` / `Publish(object)` — where the static type is erased — use a chain of `typeof` comparisons in small projects and switch to static `Dictionary<Type, Delegate>` lookups once the project defines **more than 8 messages**, a threshold above which a dictionary pays for itself. Unknown message types throw `HandlerNotFoundException`.
+- **Both `IDispatcher` and the concrete class are available.** Inject `IDispatcher` or the concrete `Dispatcher` for the best performance:
+
+```csharp
+using RA.Utilities.Dispatcher.Generated;
+
+public class OrdersService
+{
+    private readonly Dispatcher _dispatcher;
+
+    public OrdersService(Dispatcher dispatcher) => _dispatcher = dispatcher;
+
+    public ValueTask<Result<CreateOrderResponse>> CreateAsync(CreateOrderCommand command, CancellationToken ct) =>
+        _dispatcher.Send(command, ct); // binds the monomorphized Send(CreateOrderCommand) overload
+}
+```
+
+:::warning Name shadowing
+The generated concrete type `RA.Utilities.Dispatcher.Generated.Dispatcher` has the same simple name as the `RA.Utilities.Dispatcher` **namespace**. Inside a namespace under `RA.Utilities.*`, the simple name `Dispatcher` resolves to the namespace and the compiler reports **CS0118** (`'Dispatcher' is a namespace but is used like a type`). Alias the generated type in that case:
+
+```csharp
+using GeneratedDispatcher = RA.Utilities.Dispatcher.Generated.Dispatcher;
+
+public class OrdersService
+{
+    private readonly GeneratedDispatcher _dispatcher;
+
+    public OrdersService(GeneratedDispatcher dispatcher) => _dispatcher = dispatcher;
+}
+```
+:::
+
+See [Examples](./examples) for side-by-side `IDispatcher` and concrete `Dispatcher` walkthroughs, including object-based dispatch and typed contexts.
+
+See the [Benchmarks](./benchmarks) page for the full side-by-side comparison with MediatR (equal scoped lifetimes), the interface-typed and concrete-dispatch shapes, and the benchmark harness.
+
+## 📦 How It Is Registered
+
+The generator emits a module initializer (per assembly) that queues the registration of that assembly's `Dispatcher` on `RA.Utilities.Dispatcher.Generated.DispatcherRegistrations`.
+`services.AddDispatcher()` applies the queued handler, behavior, and dispatcher registrations in one pass:
+
+- `IDispatcher` resolves to the generated `Dispatcher`.
+- `Dispatcher` is registered as itself, so it can be injected directly.
+
+```csharp
+builder.Services.AddDispatcher();
+```
+
+:::note Assembly loading
+The same assembly-loading guarantee as [auto registration](./auto-registration) applies: the `IDispatcher` registration is queued by each assembly's module initializer, so the generated dispatcher of the **last loaded** assembly wins. Every assembly's generated dispatcher covers the messages visible to that assembly's compilation, including its referenced libraries.
+:::
+
+## 🧭 Dispatch Matrix
+
+| Call | How it dispatches |
+|---|---|
+| `Dispatcher.Send(ping)` (concrete, statically typed message) | Monomorphized overload — concrete handler injection + DI behavior resolution, direct calls |
+| `IDispatcher.Send<Ping, Pong>(ping)` | Generated generic body — handler and behaviors resolved from DI (the JIT monomorphizes the instantiation) |
+| `Dispatcher.Send((object)ping)` | `GetType()` chain (≤ 8 messages) or static dictionary lookup, then the monomorphized overload |
+| `IDispatcher.Send<TRequest, TContext>(...)` / `Publish` context variants | Generated generic bodies with the same fast paths |
+| Unknown object message | `RA.Utilities.Dispatcher.Exceptions.HandlerNotFoundException` |
+
+Every `Send` returns `ValueTask<Result<TResponse>>` (`ValueTask<Result>` for void requests) — expected failures come back as `Result.Failure`, never as exceptions.
+
+## 🧳 Typed Pipeline Context
+
+The generated dispatcher carries the typed [`PipelineContext<T>`](./Models/PipelineContext.md) through the pipeline exactly like `Send`/`Publish` without a context do — every message gets a generated context overload:
+
+```csharp
+// Send with a typed context:
+Result<string> greeting = await dispatcher.Send<GreetingContext>(new ContextGreetingRequest("context"));
+
+// Publish with a typed context:
+Result publishResult = await dispatcher.Publish<GreetingContext>(new OrderPlacedNotification("order-1"));
+```
+
+The generated context overloads create the `PipelineContext<T>` when you don't pass one and hand it to **every pipeline member** — behaviors stamp it (`HandleAsync<TContext>`), handlers read it back. Behaviors and handlers that don't care about the context use the plain overloads; the default interface implementations bridge the two. Calls without a context type parameter allocate no context at all.
+
+## ⚙️ Object-Based Dispatch
+
+The concrete class also exposes object-based overloads (they are **not** part of the `IDispatcher` interface, so existing `IDispatcher` implementors are unaffected):
+
+```csharp
+Dispatcher dispatcher = /* ... */;
+Result<object?> pong = await dispatcher.Send((object)new Ping("hello"));
+Result publishResult = await dispatcher.Publish((object)new OrderPlaced("order-1"));
+```
+
+- Dispatch by runtime type with the same chain/dictionary strategy (no reflection).
+- Unknown message types throw `RA.Utilities.Dispatcher.Exceptions.HandlerNotFoundException`.
+
+## 🛠️ Message and Handler Diagnostics {#message-and-handler-diagnostics}
+
+The generator reports problems with messages and message handlers at compile time (category `RA.Utilities.Dispatcher.Generators`):
+
+| ID | Severity | Meaning |
+|---|---|---|
+| `DSAG006` | Error | Message implements **multiple message contracts** (two distinct `IRequest<TResponse>` interfaces, or a request contract together with `INotification`). It is excluded from the generated dispatch. |
+| `DSAG007` | Warning | Request message has **no handler** anywhere in the compilation — sending it would fail at runtime. |
+| `DSAG008` | Warning | Message is **generic or inaccessible** from the generated code — it dispatches through the generic interface methods instead. |
+| `DSAG009` | Warning | Handler implements **both** `IRequestHandler<TRequest>` and `IRequestHandler<TRequest, TResponse>` for the same message — split them into separate classes. |
+| `DSAG010` | Warning | Pipeline behavior is **generic** — it is not auto-registered. Register it explicitly with `AddDecoration`; the generated dispatcher resolves explicitly registered behaviors from DI. |
+
+See [Auto Registration diagnostics](./auto-registration#diagnostics) for `DSAG001`–`DSAG005` and the behavior registration model.
+
+### Behavior registration
+
+Closed (non-generic) pipeline behaviors — `IPipelineBehavior<TRequest>`, `IPipelineBehavior<TRequest, TResponse>`, `INotificationBehavior<TNotification>` — are **auto-registered under their interfaces** (transient) and resolved by the generated dispatcher through DI. Explicitly registered behaviors (`AddDecoration`, including generic behavior closures) resolve through the same channel, so both auto-registered and explicit behaviors compose into the same pipeline.
+
+The generator emits behavior registrations in a deterministic order — by message interface, then by [`PipelineBehaviorOrderAttribute.Order`](./Attributes/PipelineBehaviorOrderAttribute.md), then by type name — and the generated chain wraps behaviors in reverse, so **the first registered behavior is outermost**. Behaviors without the attribute default to order `0`; behaviors with equal order fall back to type-name order.
+
+Explicit `AddDecoration` registrations keep call order relative to the generator's window:
+
+```csharp
+builder.Services
+    .AddDispatcher<MyCommand, int, MyHandler>()
+    .AddDecoration<ExplicitOuterBehavior>(); // registered before AddDispatcher() → outermost
+
+builder.Services.AddDispatcher();            // applies auto-registered behaviors
+
+builder.Services
+    .AddDispatcher<MyCommand, int, MyHandler>()
+    .AddDecoration<ExplicitInnerBehavior>(); // registered after AddDispatcher() → innermost
+```
+
+See [PipelineBehaviorOrderAttribute](./Attributes/PipelineBehaviorOrderAttribute.md) for the ordering model and [Filtering handlers](./auto-registration#filtering-auto-registered-handlers) for the registration filter.

@@ -1,8 +1,38 @@
 ---
 title: RA.Utilities.Dispatcher
 authors: [RedonAlla]
-date: 2026-10-19
+date: 2026-10-31
 ---
+
+## Version 10.1.0
+![Date Badge](https://img.shields.io/badge/Publish-31%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-v10.1.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Dispatcher/10.1.0)
+
+Completes the package rename — the generated implementation is now `Dispatcher` and the bootstrap is `AddDispatcher()` — and adds registration filtering plus deterministic behavior ordering. Most applications change one startup line; handlers, builders, and behaviors keep their names.
+
+<!-- truncate -->
+
+### ⚠️ Breaking Changes
+
+*   **Generated type renamed `Mediator` → `Dispatcher`.** The source generator now emits `RA.Utilities.Dispatcher.Generated.Dispatcher` and registers it as itself for direct injection. Code that injects the concrete class must rename the type. Inside a `RA.Utilities.*` namespace the simple name resolves to the `RA.Utilities.Dispatcher` namespace (`CS0118`), so alias it: `using GeneratedDispatcher = RA.Utilities.Dispatcher.Generated.Dispatcher;`. Injecting [`IDispatcher`](/nuget-packages/Application/Dispatcher/Abstractions/IDispatcher) is unaffected.
+*   **Bootstrap renamed `AddMediator()` → `AddDispatcher()`.** The parameterless overload now carries the package name and replaces `AddMediator()` at startup. Everything else about registration is unchanged — the fluent `AddDispatcher<TRequest, TResponse, THandler>()`, `AddNotification<TNotification>()`, `AddDecoration<TBehavior>()`, and `AddValidator<TValidator>()` APIs keep their names and behavior. The two `AddDispatcher` overloads are distinct methods, so mixing them compiles unchanged. See the [migration guide](/nuget-packages/Application/Dispatcher/migration-guides).
+*   **`MediatorRegistrations` → `DispatcherRegistrations`, `MediatorServiceCollectionExtensions` → `DispatcherServiceCollectionExtensions`.** Internal plumbing behind the generator and the bootstrap; only relevant if you referenced the queues or the extension class by name.
+*   **Documentation page renamed** — *Generated Mediator* is now *Generated Dispatcher*.
+
+### ✨ New Features
+
+*   **Handler filtering in `AddDispatcher`.** The new overload `AddDispatcher(Action<DispatcherOptions> configure)` accepts a [`DispatcherOptions`](/nuget-packages/Application/Dispatcher/Options/DispatcherOptions) instance with two `List<Type>?` properties:
+    *   **`IncludeHandlers`** — when set, only the listed handlers (and the behaviors related to the messages they handle) are registered.
+    *   **`ExcludeHandlers`** — when set, the listed handlers are not registered, nor are the behaviors related to their messages once no registered handler handles them.
+    *   Exclusions win over inclusions, both lists accept behavior types, and the filter applies to **source-generated registrations only** — handlers registered explicitly with the fluent builders or plain DI stay registered. Lifting the filter means passing `null` (the default) or dropping the options overload.
+*   **Deterministic behavior ordering with `[PipelineBehaviorOrder(int)]`.** The new [`PipelineBehaviorOrderAttribute`](/nuget-packages/Application/Dispatcher/Attributes/PipelineBehaviorOrderAttribute) pins the position of an auto-registered closed behavior in its chain. Lower values run closer to the outside (executed earlier), the default is `0`, and ties fall back to the type name. The generator emits behavior registrations sorted by message interface, then order, then type name, and wraps them in reverse — so the first registered behavior remains outermost. The attribute is read at compile time and only affects auto-registered behaviors; generic behaviors (`DSAG010`) and explicit `AddDecoration` calls keep call order.
+
+### 📝 Improvements
+
+*   **Behavior registration order is now explicit and documented.** Closed behaviors still auto-register, but their position no longer depends on the order the generator happens to emit them; `[PipelineBehaviorOrder]` makes the chain independent of type names.
+*   **`HandlerRegistrations.ApplyAll` accepts `DispatcherOptions`.** The internal queue drain applies the filter over the descriptors added in its own pass (`[startIndex, services.Count)`), so registrations made elsewhere in the collection are never touched.
+*   **Documentation reworked** following the project's documentation template: a new landing page with getting started, core concepts, how-to guides, and configuration; new [`Options`](/nuget-packages/Application/Dispatcher/Options) and [`Attributes`](/nuget-packages/Application/Dispatcher/Attributes) namespaces; filtering and ordering guides; a name-shadowing warning for the generated `Dispatcher` type; updated troubleshooting/FAQ entries for filtering, attribute scope, and `CS0118`; and refreshed migration guides covering v10.0.x → v10.1.0 and `RA.Utilities.Feature` → `RA.Utilities.Dispatcher` 10.0.0.
+*   **Test coverage** — ordering tests for send, void send, publish, descriptor order, filter interaction, and explicit decorations before/after `AddDispatcher()`; filtering tests for handler and behavior removal.
 
 ## Version 10.0.1
 ![Date Badge](https://img.shields.io/badge/Publish-19%20October%202026-lightblue?logo=fastly&logoColor=white)

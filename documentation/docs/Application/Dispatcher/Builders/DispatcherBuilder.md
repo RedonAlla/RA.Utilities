@@ -36,7 +36,7 @@ Registers the pipeline behavior **transiently** under its behavior interface:
 services.AddTransient<IPipelineBehavior<TRequest, TResponse>, TBehavior>();
 ```
 
-Behaviors compose in **registration order, outermost first** — the first `AddDecoration` call wraps the rest of the pipeline.
+Behaviors compose in **registration order, outermost first** — the first `AddDecoration` call wraps the rest of the pipeline. Auto-registered closed behaviors compose by message interface, then by [`[PipelineBehaviorOrder]`](../Attributes/PipelineBehaviorOrderAttribute.md), then by type name; explicit decorations keep their position relative to `AddDispatcher()` (before → outside the auto-registered block, after → inside it).
 
 ### `AddValidator<TValidator>()`
 
@@ -64,3 +64,4 @@ builder.Services
 
 - [`NotificationDispatcherBuilder<TNotification>`](NotificationDispatcherBuilder.md) — the notification counterpart.
 - [`DispatcherBuilderExtensions`](../Extensions/DispatcherBuilderExtensions.md) — the extension methods that return these builders.
+- [`PipelineBehaviorOrderAttribute`](../Attributes/PipelineBehaviorOrderAttribute.md) — ordering for auto-registered behaviors.

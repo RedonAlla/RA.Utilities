@@ -52,7 +52,7 @@ public class SendConfirmationEmail : INotificationHandler<OrderPlaced>
 
 ## 🔧 Auto-Registration
 
-Concrete, non-generic `INotificationHandler<TNotification>` implementations are discovered by the package's source generator and registered automatically when `AddMediator()` is called (**transient**) — no explicit `AddNotification().AddHandler<>()` needed for plain handlers.
+Concrete, non-generic `INotificationHandler<TNotification>` implementations are discovered by the package's source generator and registered automatically when `AddDispatcher()` is called (**transient**) — no explicit `AddNotification().AddHandler<>()` needed for plain handlers.
 
 ## 🔗 Related
 

@@ -38,7 +38,7 @@ New to RA.Utilities? Here is the recommended reading order — each layer builds
 | Step | Layer | Start here | What you will learn |
 |------|-------|------------|-------------------|
 | **1. Foundation** | Core | [Core Overview](/nuget-packages/core) | The `Result` monad, exception hierarchy, and HTTP constants — these underpin everything else |
-| **2. Business Logic** | Application | [Feature Mediator](/nuget-packages/Application/Feature) | CQRS handlers, the custom mediator, and pipeline behaviors |
+| **2. Business Logic** | Application | [Dispatcher](/nuget-packages/Application/Dispatcher) | CQRS handlers, the reflection-free dispatcher, handler filtering, and pipeline behaviors |
 | **3. API Layer** | Api | [Api Package](/nuget-packages/api/RA.Utilities.Api) | Endpoint registration, exception handling, validation filters, and standardized responses |
 
 Each package is opt-in — adopt only the layers your project needs.
@@ -50,8 +50,8 @@ Each package is opt-in — adopt only the layers your project needs.
 dotnet add package RA.Utilities.Core.Results
 dotnet add package RA.Utilities.Core.Exceptions
 
-# Add the mediator and CQRS support
-dotnet add package RA.Utilities.Feature
+# Add the dispatcher and CQRS support
+dotnet add package RA.Utilities.Dispatcher
 
 # Wire up your API
 dotnet add package RA.Utilities.Api

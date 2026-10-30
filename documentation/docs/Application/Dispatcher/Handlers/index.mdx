@@ -67,7 +67,7 @@ The base class implements the `IRequestHandler` interface **explicitly**, forwar
 
 There is no try-catch wrapper — exceptions you throw propagate to the caller; expected failures should be returned as `Result.Failure(...)`.
 
-Handlers are auto-registered: the source generator shipped in the package discovers every concrete `IRequestHandler<,>` / `IRequestHandler<>` implementation and `AddMediator()` applies the registrations (scoped). See the [Auto Registration](../auto-registration) guide for details.
+Handlers are auto-registered: the source generator shipped in the package discovers every concrete `IRequestHandler<,>` / `IRequestHandler<>` implementation and `AddDispatcher()` applies the registrations (scoped). See the [Auto Registration](../auto-registration) guide for details.
 
 <br />
 <br />
