@@ -1,0 +1,332 @@
+---
+title: Examples
+sidebar_position: 2
+---
+
+# Examples
+
+The package exposes two ways to dispatch a message, and both are registered by the same `AddMediator()` call:
+
+- **[`IDispatcher`](./Abstractions/IDispatcher.md)** — inject the abstraction. Use it in application services, endpoints, and libraries; it is easy to fake in tests.
+- **[`Mediator`](./generated-mediator)** — inject the generated concrete class. It exposes one monomorphized overload per message plus object-based dispatch, and is the fastest path.
+
+The examples below use the same small set of messages, handlers, and notifications so you can compare the two styles directly.
+
+## 🧱 Messages
+
+```csharp
+using RA.Utilities.Dispatcher.Abstractions;
+
+// Request with a response
+public sealed record CreateOrderCommand(string CustomerName, decimal Total) : IRequest<Guid>;
+
+// Request without a response
+public sealed record CancelOrderCommand(Guid OrderId) : IRequest;
+
+// Notification (zero or more handlers)
+public sealed record OrderCreatedNotification(Guid OrderId, string CustomerName) : INotification;
+```
+
+## ✍️ Handlers
+
+Handlers return [`Result`](../../core/RA.Utilities.Core.Results/index.mdx) values — expected failures are **returned**, not thrown. The [`RequestHandler`](./Handlers/RequestHandler.md) base classes remove the interface plumbing.
+
+```csharp
+using RA.Utilities.Core.Exceptions;
+using RA.Utilities.Core.Results;
+using RA.Utilities.Dispatcher.Handlers;
+
+public sealed class CreateOrderHandler : RequestHandler<CreateOrderCommand, Guid>
+{
+    private readonly IOrderRepository _repository;
+
+    public CreateOrderHandler(IOrderRepository repository) => _repository = repository;
+
+    public override async ValueTask<Result<Guid>> HandleAsync(
+        CreateOrderCommand request, CancellationToken cancellationToken)
+    {
+        if (request.Total <= 0)
+        {
+            return Result.Failure<Guid>(
+                new BadRequestException(new ValidationError("Total must be greater than zero.")));
+        }
+
+        Guid orderId = await _repository.CreateAsync(request, cancellationToken);
+        return Result.Success(orderId);
+    }
+}
+
+public sealed class CancelOrderHandler : RequestHandler<CancelOrderCommand>
+{
+    private readonly IOrderRepository _repository;
+
+    public CancelOrderHandler(IOrderRepository repository) => _repository = repository;
+
+    public override async ValueTask<Result> HandleAsync(
+        CancelOrderCommand request, CancellationToken cancellationToken)
+    {
+        Order? order = await _repository.FindAsync(request.OrderId, cancellationToken);
+        if (order is null)
+        {
+            // Implicit conversion from Exception to a failed Result
+            return new NotFoundException("Order", request.OrderId);
+        }
+
+        await _repository.CancelAsync(order, cancellationToken);
+        return Result.Success();
+    }
+}
+```
+
+Notification handlers implement [`INotificationHandler<TNotification>`](./Abstractions/INotificationHandler.md) directly — every registered handler runs, and failures are aggregated:
+
+```csharp
+using RA.Utilities.Core.Results;
+using RA.Utilities.Dispatcher.Abstractions;
+
+public sealed class InvalidateOrderCacheHandler : INotificationHandler<OrderCreatedNotification>
+{
+    private readonly IOrderCache _cache;
+
+    public InvalidateOrderCacheHandler(IOrderCache cache) => _cache = cache;
+
+    public ValueTask<Result> HandleAsync(
+        OrderCreatedNotification notification, CancellationToken cancellationToken)
+    {
+        _cache.Invalidate(notification.OrderId);
+        return ValueTask.FromResult(Result.Success());
+    }
+}
+
+public sealed class SendOrderConfirmationHandler : INotificationHandler<OrderCreatedNotification>
+{
+    private readonly IEmailSender _email;
+
+    public SendOrderConfirmationHandler(IEmailSender email) => _email = email;
+
+    public async ValueTask<Result> HandleAsync(
+        OrderCreatedNotification notification, CancellationToken cancellationToken)
+    {
+        Result sent = await _email.SendAsync(
+            notification.CustomerName,
+            $"Order {notification.OrderId} created",
+            cancellationToken);
+
+        return sent;
+    }
+}
+```
+
+## ⚙️ Registration
+
+One call registers the generated mediator, every request handler, every notification handler, and every closed pipeline behavior:
+
+```csharp
+using RA.Utilities.Dispatcher.Extensions;
+
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddMediator();
+```
+
+If the feature also has validators or generic behaviors, add them through the builder:
+
+```csharp
+builder.Services
+    .AddDispatcher<CreateOrderCommand, Guid, CreateOrderHandler>()
+    .AddDecoration<LoggingBehavior<CreateOrderCommand, Guid>>()   // outermost
+    .AddValidator<CreateOrderCommandValidator>();                 // innermost
+
+// Execution order: Logging → Validation → CreateOrderHandler
+```
+
+See [Auto Registration](./auto-registration) and [`DispatcherBuilder`](./Builders/DispatcherBuilder.md) for the full registration model.
+
+## 🚰 Using `IDispatcher`
+
+Inject the interface wherever you want to dispatch a message. The type parameters on `Send<TRequest, TResponse>` are explicit — `TResponse` cannot be inferred from the request argument.
+
+```csharp
+using RA.Utilities.Core.Results;
+using RA.Utilities.Dispatcher.Abstractions;
+
+public sealed class OrderApplicationService
+{
+    private readonly IDispatcher _dispatcher;
+
+    public OrderApplicationService(IDispatcher dispatcher) => _dispatcher = dispatcher;
+
+    // Request with a response (TRequest and TResponse are explicit)
+    public ValueTask<Result<Guid>> CreateAsync(
+        CreateOrderCommand command, CancellationToken cancellationToken) =>
+            _dispatcher.Send<CreateOrderCommand, Guid>(command, cancellationToken);
+
+    // Request without a response (TRequest is inferred)
+    public ValueTask<Result> CancelAsync(
+        Guid orderId, CancellationToken cancellationToken) =>
+            _dispatcher.Send(new CancelOrderCommand(orderId), cancellationToken);
+
+    // Notification fan-out
+    public ValueTask<Result> PublishCreatedAsync(
+        Guid orderId, string customerName, CancellationToken cancellationToken) =>
+            _dispatcher.Publish(new OrderCreatedNotification(orderId, customerName), cancellationToken);
+}
+```
+
+### Minimal API endpoint
+
+```csharp
+using RA.Utilities.Core.Exceptions;
+using RA.Utilities.Core.Results;
+using RA.Utilities.Dispatcher.Abstractions;
+
+app.MapPost("/orders", static async (
+    CreateOrderCommand command,
+    IDispatcher dispatcher,
+    CancellationToken cancellationToken) =>
+{
+    Result<Guid> created = await dispatcher.Send<CreateOrderCommand, Guid>(command, cancellationToken);
+
+    return created.Match(
+        success: id => Results.Created($"/orders/{id}", id),
+        failure: exception => exception switch
+        {
+            BadRequestException badRequest => Results.BadRequest(badRequest.Message),
+            ConflictException conflict => Results.Conflict(conflict.Message),
+            _ => Results.Problem(exception.Message)
+        });
+});
+```
+
+### Handling the returned `Result`
+
+`Send` returns `Result<TResponse>` (`Result` for void requests); `Publish` returns one `Result` for the whole fan-out. Expected failures arrive as `Result.Failure`, so check `IsFailure` or use `Match` / `OnSuccess` / `OnFailure`:
+
+```csharp
+using RA.Utilities.Core.Results.Extensions;
+
+Result<Guid> created = await dispatcher.Send<CreateOrderCommand, Guid>(command, cancellationToken);
+
+created
+    .OnSuccess(id => logger.LogInformation("Created order {OrderId}", id))
+    .OnFailure(exception => logger.LogError(exception, "Order creation failed"));
+```
+
+For notifications, a publish with **no handlers** succeeds. If handlers fail, the result carries the single exception, or an `AggregateException` when more than one handler failed — every handler still runs.
+
+### Typed pipeline context
+
+The context overloads add a `PipelineContext<TContext>?` parameter. Generic arguments become `<TRequest, TResponse, TContext>`:
+
+```csharp
+using RA.Utilities.Core.Results;
+using RA.Utilities.Dispatcher.Models;
+
+public sealed class RequestContext
+{
+    public string? CorrelationId { get; set; }
+}
+
+var context = new PipelineContext<RequestContext>();
+context.Data.CorrelationId = httpContext.TraceIdentifier;
+
+Result<Guid> created = await dispatcher.Send<CreateOrderCommand, Guid, RequestContext>(
+    command, context, cancellationToken);
+```
+
+For a void request the shape is `Send<TRequest, TContext>(request, context, cancellationToken)`; for notifications, `Publish<TNotification, TContext>(notification, context, cancellationToken)`. Passing `null` (or omitting the context) makes the mediator create one for the call.
+
+## 🏎️ Using the concrete `Mediator`
+
+The source generator emits `Mediator` **into your consuming assembly** and `AddMediator()` registers it as itself, so it can be injected like any other service. Because the class is `internal`, it is available to your own application code but not to other assemblies — expose `IDispatcher` from libraries.
+
+```csharp
+using RA.Utilities.Core.Results;
+using RA.Utilities.Dispatcher.Generated;
+
+public sealed class OrderService
+{
+    private readonly Mediator _mediator;
+
+    public OrderService(Mediator mediator) => _mediator = mediator;
+
+    // No generic arguments: binds the generated Send(CreateOrderCommand) overload
+    public ValueTask<Result<Guid>> CreateAsync(
+        CreateOrderCommand command, CancellationToken cancellationToken) =>
+            _mediator.Send(command, cancellationToken);
+
+    // Binds the generated Send(CancelOrderCommand) overload
+    public ValueTask<Result> CancelAsync(
+        CancelOrderCommand command, CancellationToken cancellationToken) =>
+            _mediator.Send(command, cancellationToken);
+
+    // Binds the generated Publish(OrderCreatedNotification) overload
+    public ValueTask<Result> PublishCreatedAsync(
+        OrderCreatedNotification notification, CancellationToken cancellationToken) =>
+            _mediator.Publish(notification, cancellationToken);
+}
+```
+
+Each message gets a **monomorphized overload** that resolves the known handler by its concrete type and calls `HandleAsync` directly. The compiler picks the right overload — no type parameters, no dictionary lookup.
+
+### Minimal API endpoint
+
+```csharp
+using RA.Utilities.Core.Results;
+using RA.Utilities.Dispatcher.Generated;
+
+app.MapPost("/orders", static async (
+    CreateOrderCommand command,
+    Mediator mediator,
+    CancellationToken cancellationToken) =>
+{
+    Result<Guid> created = await mediator.Send(command, cancellationToken);
+
+    return created.Match(
+        success: id => Results.Created($"/orders/{id}", id),
+        failure: exception => Results.BadRequest(exception.Message));
+});
+```
+
+### Object-based dispatch
+
+The concrete class also exposes `Send(object)` / `Publish(object)` for cases where the static type was erased — they are **not** part of `IDispatcher`. Dispatch is by runtime type (no reflection); unknown message types throw [`HandlerNotFoundException`](./Exceptions/HandlerNotFoundException.md).
+
+```csharp
+object message = ResolveMessage();
+
+Result<object?> result = await mediator.Send(message, cancellationToken);
+Result published = await mediator.Publish((object)new OrderCreatedNotification(orderId, customerName), cancellationToken);
+```
+
+### Typed pipeline context
+
+On the concrete class the generic parameter is only `TContext` — the message type is already known:
+
+```csharp
+var context = new PipelineContext<RequestContext>();
+context.Data.CorrelationId = httpContext.TraceIdentifier;
+
+Result<Guid> created = await mediator.Send<RequestContext>(command, context, cancellationToken);
+```
+
+## 🧭 Which one should I use?
+
+| Scenario | `IDispatcher` | `Mediator` |
+|---|---|---|
+| Endpoints, application services, libraries | ✅ Recommended | ⚠️ Internal to the consuming assembly |
+| Faking/mocking the dispatcher in tests | ✅ Interface | ❌ Concrete type |
+| Fastest request path | ✅ JIT-monomorphized generic body | ✅ Monomorphized overload with direct handler injection |
+| Dispatching when only `object` is known | ❌ Not on the interface | ✅ `Send(object)` / `Publish(object)` |
+| Public API surface of a package | ✅ Stable abstraction | ❌ Generated implementation detail |
+
+Both resolve the same handlers, notification subscribers, and pipeline behaviors — the generated mediator is the single `IDispatcher` implementation.
+
+## 🔗 Related
+
+- [`IDispatcher`](./Abstractions/IDispatcher.md) — the dispatch contract.
+- [Generated Mediator](./generated-mediator) — how the concrete class is generated and why it is faster.
+- [`RequestHandler`](./Handlers/RequestHandler.md) — the handler base classes used above.
+- [`PipelineContext<T>`](./Models/PipelineContext.md) — typed context data.
+- [`DispatcherBuilder`](./Builders/DispatcherBuilder.md) — behaviors and validators.
+- [Troubleshooting](./troubleshooting) — failures that are returned instead of thrown.

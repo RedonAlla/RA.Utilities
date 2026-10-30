@@ -53,3 +53,8 @@ app.MapPost("todos", static async (
   return publishResult.IsSuccess ? Results.Ok() : Results.Accepted();
 })
 ```
+
+## 🔗 Related
+
+- [Examples](../examples) — complete end-to-end usage of `IDispatcher` and the concrete `Mediator`.
+- [Generated Mediator](../generated-mediator) — how the `IDispatcher` implementation is generated and registered.
