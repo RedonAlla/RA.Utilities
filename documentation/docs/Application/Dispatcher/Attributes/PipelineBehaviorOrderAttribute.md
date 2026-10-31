@@ -25,8 +25,8 @@ public sealed class PipelineBehaviorOrderAttribute : Attribute
 | Default | Behaviors without the attribute use order `0`. |
 | Ties | Behaviors with the same order are registered by **type name** (ordinal), keeping output deterministic. |
 | Scope | Applies to `IPipelineBehavior<TRequest>`, `IPipelineBehavior<TRequest, TResponse>`, and `INotificationBehavior<TNotification>` implementations that the generator auto-registers. |
-| Generic behaviors | Not auto-registered (`DSAG010`), so the attribute has no effect on them — order them with `AddDecoration` call order. |
-| Explicit decorations | `AddDecoration<TBehavior>()` registrations keep **call order**: added before `AddDispatcher()` they wrap the auto-registered behaviors (outermost); added after, they run inside them (innermost). |
+| Generic behaviors | Not auto-registered (`DSAG010`), so the attribute has no effect on them — order them with [`DispatcherOptions.Behaviors`](../Options/DispatcherOptions.md) list order or `AddDecoration` call order. |
+| Explicit decorations | `AddDecoration<TBehavior>()` registrations keep **call order**: added before `AddDispatcher()` they wrap the auto-registered behaviors (outermost); added after, they run inside them (innermost). Behaviors listed in `DispatcherOptions.Behaviors` also keep list order and wrap the auto-registered block. |
 | Inheritance | `Inherited = false`: a derived behavior must declare the attribute itself. |
 
 The generator sorts each message's behaviors by interface, then `Order`, then type name, and the generated dispatcher wraps the chain in reverse — that is why the first registered behavior is outermost.

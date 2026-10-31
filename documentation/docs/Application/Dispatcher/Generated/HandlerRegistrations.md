@@ -44,5 +44,5 @@ The queue is thread-safe (a lock guards a snapshot on apply).
 
 - [Auto Registration](../auto-registration) — the discovery rules, diagnostics (`DSAG001`–`DSAG005`, `DSAG010`), and the assembly-loading guarantee.
 - [Filtering auto-registered handlers](../auto-registration#filtering-auto-registered-handlers) — how `IncludeHandlers` / `ExcludeHandlers` are applied.
-- [`DispatcherOptions`](../Options/DispatcherOptions.md) — the filter options type.
+- [`DispatcherOptions`](../Options/DispatcherOptions.md) — the options type: filtering plus explicit behavior registration.
 - [`DispatcherRegistrations`](DispatcherRegistrations.md) — the sibling queue for the generated `Dispatcher`.

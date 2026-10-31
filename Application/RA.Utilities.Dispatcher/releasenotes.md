@@ -1,5 +1,26 @@
 # Release Notes for RA.Utilities.Dispatcher
 
+## Version 10.2.0
+
+![Date Badge](https://img.shields.io/badge/Publish-31%20October%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-v10.2.0-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.Dispatcher/10.2.0)
+
+Adds bulk pipeline behavior registration to `AddDispatcher`. Open generic behaviors such as logging, metrics, or caching can now be registered once for every message through `DispatcherOptions`, instead of one `AddDecoration` call per request. No breaking changes.
+
+### ✨ New Features
+
+*   **Bulk pipeline behavior registration.** `DispatcherOptions` gains two members:
+    *   **`Behaviors`** — a `List<Type>` (empty by default) that registers pipeline behaviors explicitly. It accepts closed and open generic implementations of `IPipelineBehavior<TRequest>`, `IPipelineBehavior<TRequest, TResponse>`, and `INotificationBehavior<TNotification>`; open generic types are registered once under the open interface (`typeof(LoggingBehavior<,>)`) and apply to every matching message.
+    *   **`BehaviorLifetime`** — the `ServiceLifetime` used for those behaviors. Defaults to `Transient`.
+*   **Startup validation.** Entries in `Behaviors` must be non-abstract classes implementing a behavior interface; an open generic behavior must pass its own type parameters, in order, to the behavior interface. Invalid entries (null, abstract, non-class, non-behavior, or partially closed generic mappings) throw `ArgumentException` when `AddDispatcher` runs.
+*   **Deterministic placement.** Configured behaviors are registered before the generated registrations, so they form the outer layer of every chain they participate in. The list order is the chain order (first entry is outermost), and `[PipelineBehaviorOrder]` is not read for them — exactly like `AddDecoration`. A closed behavior that is also auto-discovered registers **once** at its configured position; the generated duplicate is removed.
+*   **Idempotent registration.** Configured behaviors use `TryAddEnumerable`, so listing the same type twice or calling `AddDispatcher` more than once does not duplicate the pipeline. `IncludeHandlers` / `ExcludeHandlers` never remove configured behaviors — they remain explicit registrations.
+
+### 📝 Improvements
+
+*   Documentation and the package README now describe bulk registration, ordering, lifetime, and filter interaction across the options, auto-registration, extensions, builder, abstraction, and troubleshooting pages.
+*   Test coverage for open generic request, void-request, and notification behaviors; closed-behavior deduplication and outer placement; configured lifetime; repeated-call idempotency; filter interaction; and invalid-entry validation.
+
 ## Version 10.1.0
 
 ![Date Badge](https://img.shields.io/badge/Publish-31%20October%202026-lightblue?logo=fastly&logoColor=white)

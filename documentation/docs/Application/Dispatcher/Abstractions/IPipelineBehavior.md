@@ -63,12 +63,17 @@ public class TimingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, T
 
 ## 🔧 Registration
 
-Closed (non-generic) behaviors are **auto-registered** by the source generator under their interface. Generic behaviors (like the one above) must be registered explicitly:
+Closed (non-generic) behaviors are **auto-registered** by the source generator under their interface. Generic behaviors (like the one above) must be registered explicitly — for one request with `AddDecoration`, or once for every request with [`DispatcherOptions.Behaviors`](../Options/DispatcherOptions.md):
 
 ```csharp
+// One request
 builder.Services
     .AddDispatcher<MyCommand, int, MyCommandHandler>()
     .AddDecoration<TimingBehavior<MyCommand, int>>();
+
+// Every request
+builder.Services.AddDispatcher(options =>
+    options.Behaviors.Add(typeof(TimingBehavior<,>)));
 ```
 
 See [Auto Registration](../auto-registration) for the discovery rules and the `DSAG010` diagnostic.

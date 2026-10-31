@@ -55,12 +55,17 @@ public class AuditBehavior<TNotification> : INotificationBehavior<TNotification>
 
 ## 🔧 Registration
 
-Closed (non-generic) behaviors are **auto-registered** by the source generator under their interface. Generic behaviors must be registered explicitly:
+Closed (non-generic) behaviors are **auto-registered** by the source generator under their interface. Generic behaviors must be registered explicitly — for one notification with `AddDecoration`, or once for every notification with [`DispatcherOptions.Behaviors`](../Options/DispatcherOptions.md):
 
 ```csharp
+// One notification
 builder.Services
     .AddNotification<OrderPlaced>()
     .AddDecoration<AuditBehavior<OrderPlaced>>();
+
+// Every notification
+builder.Services.AddDispatcher(options =>
+    options.Behaviors.Add(typeof(AuditBehavior<>)));
 ```
 
 ## 🔗 Related

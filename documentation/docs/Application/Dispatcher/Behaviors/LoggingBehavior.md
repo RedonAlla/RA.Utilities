@@ -43,7 +43,7 @@ builder.Services
     .AddDecoration<LoggingBehavior<CreateProductCommand, int>>();
 ```
 
-Because `LoggingBehavior` is generic, the auto-registration generator reports `DSAG010` and skips it — register it explicitly with `AddDecoration`, as above.
+Because `LoggingBehavior` is generic, the auto-registration generator reports `DSAG010` and skips it — register it explicitly with `AddDecoration`, as above, or once for every request with `options.Behaviors.Add(typeof(LoggingBehavior<,>))` (see [`DispatcherOptions`](../Options/DispatcherOptions.md)).
 
 ## 🧠 Notes
 

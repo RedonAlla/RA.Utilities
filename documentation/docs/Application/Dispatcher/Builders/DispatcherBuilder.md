@@ -38,6 +38,10 @@ services.AddTransient<IPipelineBehavior<TRequest, TResponse>, TBehavior>();
 
 Behaviors compose in **registration order, outermost first** — the first `AddDecoration` call wraps the rest of the pipeline. Auto-registered closed behaviors compose by message interface, then by [`[PipelineBehaviorOrder]`](../Attributes/PipelineBehaviorOrderAttribute.md), then by type name; explicit decorations keep their position relative to `AddDispatcher()` (before → outside the auto-registered block, after → inside it).
 
+:::tip
+To register a *generic* behavior once for every request instead of decorating a single request, add it to [`DispatcherOptions.Behaviors`](../Options/DispatcherOptions.md): `options.Behaviors.Add(typeof(LoggingBehavior<,>))`. Those registrations behave like decorations added before `AddDispatcher()` — they wrap the auto-registered block and keep list order.
+:::
+
 ### `AddValidator<TValidator>()`
 
 Two registrations in one call:

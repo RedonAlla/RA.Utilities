@@ -43,11 +43,11 @@ This solves a common problem with traditional layered architectures where classe
 
 3. **Zero-Configuration Handler Registration ([`Auto Registration`](./auto-registration))**:
   * **Purpose**: A source generator shipped in the package discovers all `IRequestHandler<,>` / `IRequestHandler<>` / `INotificationHandler<>` implementations **and closed pipeline behaviors**, and registers them when `AddDispatcher()` is called.
-  * **Benefit**: Plain handlers and closed behaviors need no explicit `AddDispatcher<...>` / `AddNotification<...>` / `AddDecoration<...>` calls — only validators and generic behaviors still require explicit registration.
+  * **Benefit**: Plain handlers and closed behaviors need no explicit `AddDispatcher<...>` / `AddNotification<...>` / `AddDecoration<...>` calls — validators still use `AddValidator`, and generic behaviors can be registered in bulk through [`DispatcherOptions.Behaviors`](./Options/DispatcherOptions.md).
 
-4. **Handler Filtering ([`DispatcherOptions`](./Options/DispatcherOptions.md))**:
-  * **Purpose**: `AddDispatcher(options => ...)` accepts `IncludeHandlers` / `ExcludeHandlers` lists that filter the auto-registered handlers and the behaviors related to their messages.
-  * **Benefit**: Ship one assembly full of slices but expose only the handlers a host should register — exclusions win, and explicit registrations are never touched.
+4. **Registration Options ([`DispatcherOptions`](./Options/DispatcherOptions.md))**:
+  * **Purpose**: `AddDispatcher(options => ...)` accepts `IncludeHandlers` / `ExcludeHandlers` lists that filter the auto-registered handlers and the behaviors related to their messages, plus a `Behaviors` list that registers additional pipeline behaviors — including open generic ones — in bulk.
+  * **Benefit**: Ship one assembly full of slices but expose only the handlers a host should register — exclusions win, explicit registrations are never touched, and shared behaviors such as metrics or logging need no per-request builder calls.
 
 5. **Deterministic Behavior Ordering ([`PipelineBehaviorOrderAttribute`](./Attributes/PipelineBehaviorOrderAttribute.md))**:
   * **Purpose**: Decorate a closed behavior with `[PipelineBehaviorOrder(int)]` and the generator emits its registration at that position — read at compile time, zero runtime cost.
@@ -85,6 +85,7 @@ The package has been fully rewritten to avoid reflection; handlers are discovere
   * ✅ Purely generic and compile-time safe
   * ✅ Zero-config handler registration via the in-package source generator — plain handlers need no registration code
   * ✅ Optional include/exclude filtering of auto-registered handlers and their behaviors
+  * ✅ Bulk pipeline behavior registration through `DispatcherOptions.Behaviors` — open generic and closed types, idempotent
   * ✅ Compile-time behavior ordering via `[PipelineBehaviorOrder]`
   * ✅ Result-based dispatch — expected failures are returned as `Result.Failure`, never thrown
   * ✅ Simplified DI registration via fluent builders ([`DispatcherBuilderExtensions`](./Extensions/DispatcherBuilderExtensions.md)) for behaviors and validators
@@ -149,7 +150,7 @@ app.MapGet("/ping", static async (IDispatcher dispatcher, CancellationToken ct) 
 });
 ```
 
-No handler registration is needed — the in-package source generator discovered `PingHandler` and `AddDispatcher()` applied it. Only validators and generic behaviors need explicit registration.
+No handler registration is needed — the in-package source generator discovered `PingHandler` and `AddDispatcher()` applied it. Validators still use `AddValidator`, and generic behaviors can be registered in bulk through [`DispatcherOptions.Behaviors`](./Options/DispatcherOptions.md).
 
 ## 🧠 Core Concepts
 

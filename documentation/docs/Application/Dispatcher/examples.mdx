@@ -129,7 +129,7 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDispatcher();
 ```
 
-If the feature also has validators or generic behaviors, add them through the builder:
+If the feature also has validators or request-specific behaviors, add them through the builder:
 
 ```csharp
 builder.Services
@@ -141,6 +141,22 @@ builder.Services
 ```
 
 See [Auto Registration](./auto-registration) and [`DispatcherBuilder`](./Builders/DispatcherBuilder.md) for the full registration model.
+
+### Registering shared behaviors in bulk
+
+A generic behavior that should wrap every request does not need a builder call per request — list it on [`DispatcherOptions.Behaviors`](./Options/DispatcherOptions.md):
+
+```csharp
+using RA.Utilities.Dispatcher.Extensions;
+
+builder.Services.AddDispatcher(options =>
+{
+    options.Behaviors.Add(typeof(MetricsBehavior<,>)); // outermost
+    options.Behaviors.Add(typeof(LoggingBehavior<,>)); // inside metrics
+});
+```
+
+List order is chain order; configured behaviors wrap the auto-registered block and are registered with `TryAddEnumerable`, so repeated `AddDispatcher` calls do not duplicate them.
 
 ### Filtering auto-registered handlers
 

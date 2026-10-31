@@ -36,4 +36,4 @@ builder.Services
     .AddDecoration<NotificationMetricsBehavior<OrderPlaced>>();
 ```
 
-Because the behavior is generic, the auto-registration generator reports `DSAG010` and skips it — register it explicitly with `AddDecoration`, as above.
+Because the behavior is generic, the auto-registration generator reports `DSAG010` and skips it — register it explicitly with `AddDecoration`, as above, or once for every notification with `options.Behaviors.Add(typeof(NotificationMetricsBehavior<>))` (see [`DispatcherOptions`](../Options/DispatcherOptions.md)).

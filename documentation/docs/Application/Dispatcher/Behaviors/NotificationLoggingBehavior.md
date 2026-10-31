@@ -36,7 +36,7 @@ builder.Services
     .AddDecoration<NotificationLoggingBehavior<OrderPlaced>>();
 ```
 
-Because the behavior is generic, the auto-registration generator reports `DSAG010` and skips it — register it explicitly with `AddDecoration`, as above. Behaviors compose in registration order, outermost first — for the logging to see retries, register it **inside** the retry behavior:
+Because the behavior is generic, the auto-registration generator reports `DSAG010` and skips it — register it explicitly with `AddDecoration`, as above, or once for every notification with `options.Behaviors.Add(typeof(NotificationLoggingBehavior<>))` (see [`DispatcherOptions`](../Options/DispatcherOptions.md)). Behaviors compose in registration order, outermost first — for the logging to see retries, register it **inside** the retry behavior:
 
 ```csharp
 builder.Services

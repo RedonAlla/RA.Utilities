@@ -51,7 +51,7 @@ The generator inspects the whole class hierarchy: matching interfaces are detect
 | Two handlers for the same request pair in one assembly | `DSAG005` error |
 | Multiple notification handlers for the same notification | Allowed — fan-out is their purpose |
 | Closed (non-generic) behavior class | Auto-registered under its behavior interface (transient) — resolved by the generated dispatcher through DI |
-| Generic behavior class (`MyBehavior<TRequest, TResponse>`) | `DSAG010` warning — skipped; register explicitly with `AddDecoration` |
+| Generic behavior class (`MyBehavior<TRequest, TResponse>`) | `DSAG010` warning — skipped; register it with [`DispatcherOptions.Behaviors`](./Options/DispatcherOptions.md) or `AddDecoration` |
 | Multiple behaviors for the same message | Allowed — composed in registration order; use [`[PipelineBehaviorOrder]`](./Attributes/PipelineBehaviorOrderAttribute.md) to pin the position |
 
 ## 🛠️ Diagnostics {#diagnostics}
@@ -65,7 +65,7 @@ All diagnostics use the category `RA.Utilities.Dispatcher.Generators`:
 | `DSAG003` | Error | Handler (or one of its containing types) is **private or file-local**, so the generated code cannot reference it. Make it `internal`/`public` (or register explicitly). |
 | `DSAG004` | Error | Handler is a **struct**. Handlers are registered and resolved as class services. |
 | `DSAG005` | Error | **Two or more handlers** implement the same request handler pair (`IRequestHandler<TRequest, TResponse>` or `IRequestHandler<TRequest>`) in one assembly — the winning registration would be load-order dependent. A request may have exactly one handler; remove one of the implementations. |
-| `DSAG010` | Warning | Pipeline behavior is **generic** — it is not auto-registered. Register it explicitly with `AddDecoration`; the generated dispatcher resolves explicitly registered behaviors from DI. |
+| `DSAG010` | Warning | Pipeline behavior is **generic** — it is not auto-registered. Register it with [`DispatcherOptions.Behaviors`](./Options/DispatcherOptions.md) (open generic, once for every message) or `AddDecoration` (per request); the generated dispatcher resolves explicitly registered behaviors from DI. |
 
 The generator reports additional message and handler diagnostics — `DSAG006`–`DSAG009` — see [Generated Dispatcher diagnostics](./generated-dispatcher#message-and-handler-diagnostics).
 
@@ -108,9 +108,24 @@ builder.Services.AddDispatcher(options =>
 | Precedence | Exclusions win over inclusions. |
 | Request behaviors | Removed together with the handler of their request (a behavior whose request has no handler at all is left alone unless `IncludeHandlers` is set). |
 | Notification behaviors | Kept while at least one handler for the notification remains. |
-| Scope | Filters the **source-generated** registrations only. Explicit `AddDispatcher<TRequest, TResponse, THandler>()` / `AddNotification<TNotification>()` / `AddDecoration<TBehavior>()` registrations are untouched. |
+| Scope | Filters the **source-generated** registrations only. Explicit `AddDispatcher<TRequest, TResponse, THandler>()` / `AddNotification<TNotification>()` / `AddDecoration<TBehavior>()` registrations and behaviors listed in [`DispatcherOptions.Behaviors`](./Options/DispatcherOptions.md) are untouched. |
 
 The filter runs at startup, right after the queued registrations are applied: the descriptors added by `HandlerRegistrations.ApplyAll` are examined, and the ones that belong to filtered-out handlers (and their behaviors) are removed from the service collection. See [`DispatcherOptions`](./Options/DispatcherOptions.md) for the property reference.
+
+## 🧩 Registering Generic Behaviors in Bulk
+
+Generic behaviors are not auto-registered, but the options overload can register them once for the whole application. Use `Behaviors` for open generic types (and for closed behaviors you want to place outside the generated block); use `AddDecoration` when only one request should be decorated:
+
+```csharp
+builder.Services.AddDispatcher(options =>
+{
+    options.Behaviors.Add(typeof(MetricsBehavior<,>)); // open generic — every request
+    options.Behaviors.Add(typeof(LoggingBehavior<,>)); // runs inside metrics
+});
+```
+
+The list order is the chain order (first = outermost), the types are registered before the generated block, duplicates are suppressed with `TryAddEnumerable`, and a closed behavior that is also auto-discovered runs exactly once at its configured position. See [`DispatcherOptions`](./Options/DispatcherOptions.md) for the full rules.
+
 
 ## 📥 Assembly-Loading Guarantee
 
@@ -156,7 +171,7 @@ The generator discovers **handlers and closed behaviors**. Everything else is re
 | Notification handlers (plain, non-generic, in an early-loaded assembly) | Automatic |
 | Closed pipeline behaviors (`IPipelineBehavior<,>` / `IPipelineBehavior<>` / `INotificationBehavior<>`) | Automatic — under their interfaces, resolved by the generated dispatcher through DI |
 | Generic handlers | `AddDispatcher<TRequest, TResponse, THandler>()` / `AddNotification<TNotification>().AddHandler<THandler>()` (generator emits `DSAG002`) |
-| Generic behaviors | `.AddDecoration<TBehavior>()` (generator emits `DSAG010`) |
+| Generic behaviors | [`DispatcherOptions.Behaviors`](./Options/DispatcherOptions.md) for bulk/open generic registration, or `.AddDecoration<TBehavior>()` for one request (generator emits `DSAG010`) |
 | Validators (`IValidator<T>`) | `.AddValidator<TValidator>()` (also wires the `ValidationBehavior`) |
 | Handlers with custom lifetimes or setup | Manual DI registration |
 

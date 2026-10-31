@@ -118,11 +118,11 @@ Filtering applies to source-generated registrations only — a handler you regis
 
 **Cause**: There are three likely reasons:
 
-1. The behavior is **generic** (`IPipelineBehavior<TRequest, TResponse>` without concrete type arguments) — generic behaviors are not auto-registered (`DSAG010`), so the attribute is never read. Register it with `AddDecoration`; explicit behaviors ignore the attribute and keep call order.
+1. The behavior is **generic** (`IPipelineBehavior<TRequest, TResponse>` without concrete type arguments) — generic behaviors are not auto-registered (`DSAG010`), so the attribute is never read. Register it with [`DispatcherOptions.Behaviors`](./Options/DispatcherOptions.md) or `AddDecoration`; explicit behaviors ignore the attribute and keep registration (list) order.
 2. The behavior was registered **explicitly** with `AddDecoration` — the attribute is read at compile time by the generator and only orders auto-registered behaviors.
 3. The attribute sits on a **base class** — it is declared with `Inherited = false`, so it must be applied to the concrete behavior type.
 
-**Fix**: Put the attribute on the concrete, closed behavior class, or control the position with the order of `AddDecoration` calls if the behavior is generic.
+**Fix**: Put the attribute on the concrete, closed behavior class, or control the position with the order of `AddDecoration` calls — or the order of the [`DispatcherOptions.Behaviors`](./Options/DispatcherOptions.md) entries — if the behavior is generic.
 
 ### `CS0118: 'Dispatcher' is a namespace but is used like a type`
 
@@ -436,7 +436,7 @@ If the handler returns a failed result, `NotificationLoggingBehavior` sees it (i
 - **No built-in request timeout or cancellation token modification**: Pipeline behaviors receive the original `CancellationToken`. Behaviors cannot create linked tokens with timeouts without custom code.
 - **No built-in transaction behavior**: There is no `TransactionBehavior` in the box. Implement `IPipelineBehavior<TRequest, TResponse>` to wrap handlers in a transaction.
 - **Notification handler ordering**: Handlers are invoked in the order they appear in `GetServices<T>()` (registration order). There is no priority or ordering mechanism — [`[PipelineBehaviorOrder]`](./Attributes/PipelineBehaviorOrderAttribute.md) orders behaviors, not notification handlers.
-- **Behavior order attribute scope**: `[PipelineBehaviorOrder]` only affects **auto-registered closed behaviors**. Generic behaviors (registered with `AddDecoration`) and explicit registrations keep call order.
+- **Behavior order attribute scope**: `[PipelineBehaviorOrder]` only affects **auto-registered closed behaviors**. Generic behaviors (registered with `DispatcherOptions.Behaviors` or `AddDecoration`) and other explicit registrations keep registration order.
 
 ---
 

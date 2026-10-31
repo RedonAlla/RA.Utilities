@@ -116,13 +116,13 @@ The generator reports problems with messages and message handlers at compile tim
 | `DSAG007` | Warning | Request message has **no handler** anywhere in the compilation — sending it would fail at runtime. |
 | `DSAG008` | Warning | Message is **generic or inaccessible** from the generated code — it dispatches through the generic interface methods instead. |
 | `DSAG009` | Warning | Handler implements **both** `IRequestHandler<TRequest>` and `IRequestHandler<TRequest, TResponse>` for the same message — split them into separate classes. |
-| `DSAG010` | Warning | Pipeline behavior is **generic** — it is not auto-registered. Register it explicitly with `AddDecoration`; the generated dispatcher resolves explicitly registered behaviors from DI. |
+| `DSAG010` | Warning | Pipeline behavior is **generic** — it is not auto-registered. Register it with [`DispatcherOptions.Behaviors`](./Options/DispatcherOptions.md) or `AddDecoration`; the generated dispatcher resolves explicitly registered behaviors from DI. |
 
 See [Auto Registration diagnostics](./auto-registration#diagnostics) for `DSAG001`–`DSAG005` and the behavior registration model.
 
 ### Behavior registration
 
-Closed (non-generic) pipeline behaviors — `IPipelineBehavior<TRequest>`, `IPipelineBehavior<TRequest, TResponse>`, `INotificationBehavior<TNotification>` — are **auto-registered under their interfaces** (transient) and resolved by the generated dispatcher through DI. Explicitly registered behaviors (`AddDecoration`, including generic behavior closures) resolve through the same channel, so both auto-registered and explicit behaviors compose into the same pipeline.
+Closed (non-generic) pipeline behaviors — `IPipelineBehavior<TRequest>`, `IPipelineBehavior<TRequest, TResponse>`, `INotificationBehavior<TNotification>` — are **auto-registered under their interfaces** (transient) and resolved by the generated dispatcher through DI. Explicitly registered behaviors ([`DispatcherOptions.Behaviors`](./Options/DispatcherOptions.md) or `AddDecoration`, including generic behavior closures) resolve through the same channel, so both auto-registered and explicit behaviors compose into the same pipeline.
 
 The generator emits behavior registrations in a deterministic order — by message interface, then by [`PipelineBehaviorOrderAttribute.Order`](./Attributes/PipelineBehaviorOrderAttribute.md), then by type name — and the generated chain wraps behaviors in reverse, so **the first registered behavior is outermost**. Behaviors without the attribute default to order `0`; behaviors with equal order fall back to type-name order.
 
