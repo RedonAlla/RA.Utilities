@@ -8,7 +8,7 @@ Namespace: RA.Utilities.Dispatcher.Extensions
 
 The `DispatcherServiceCollectionExtensions` class registers the core `IDispatcher` **service with the .NET dependency injection container** and **applies the compile-time handler registrations** produced by the package's source generator.
 
-It provides two `AddDispatcher` extension methods — a parameterless one that applies every auto-registration, and one that takes [`DispatcherOptions`](../Options/DispatcherOptions.md) to filter which handlers are registered and to register additional pipeline behaviors. Both are written with a **C# 14 extension block** — they live inside `extension(IServiceCollection services)` rather than using the classic `this` parameter.
+It provides two `AddDispatcher` extension methods — a parameterless one that applies every auto-registration, and one that takes [`DispatcherOptions`](../Options/DispatcherOptions.md) to filter which handlers are registered and to register additional pipeline behaviors and validators. Both are written with a **C# 14 extension block** — they live inside `extension(IServiceCollection services)` rather than using the classic `this` parameter.
 
 ```csharp showLineNumbers
 // From: /RA.Utilities/Application/RA.Utilities.Dispatcher/Extensions/DispatcherServiceCollectionExtensions.cs
@@ -43,6 +43,7 @@ public static class DispatcherServiceCollectionExtensions
         if (options is not null)
         {
             AddConfiguredBehaviors(services, options, configuredBehaviors);
+            AddConfiguredValidators(services, options, configuredBehaviors);
         }
 
         int generatedStartIndex = services.Count;
@@ -72,7 +73,7 @@ builder.Services.AddDispatcher();
 
 ## `AddDispatcher(Action<DispatcherOptions> configure)`
 
-Applies the queued registrations **filtered by the supplied options**, and registers the behaviors listed in `options.Behaviors` explicitly. Filtering affects source-generated registrations only — handlers registered explicitly, through the fluent builders, through plain DI calls, or through `options.Behaviors` are untouched.
+Applies the queued registrations **filtered by the supplied options**, and registers the behaviors listed in `options.Behaviors` and the validators in `options.Validators` explicitly. Filtering affects source-generated registrations only — handlers registered explicitly, through the fluent builders, through plain DI calls, or through `options.Behaviors` / `options.Validators` are untouched.
 
 ```csharp
 using RA.Utilities.Dispatcher.Extensions;
@@ -85,17 +86,20 @@ builder.Services.AddDispatcher(options =>
     // Open generic behaviors, registered once for every matching message.
     options.Behaviors.Add(typeof(MetricsBehavior<,>));
     options.Behaviors.Add(typeof(LoggingBehavior<,>));
+
+    // Validator + its ValidationBehavior, registered together.
+    options.Validators.Add(typeof(CreateOrderCommandValidator), ServiceLifetime.Transient);
 });
 ```
 
-Internally, configured behaviors are registered **first** with `TryAddEnumerable` (so repeated `AddDispatcher` calls do not duplicate them and they wrap the generated block); `HandlerRegistrations.ApplyAll(services, options)` then drains and filters the queue in one pass; `DispatcherRegistrations.ApplyAll(services)` registers the generated `Dispatcher` itself, which is never filtered. Finally, a generated descriptor for a behavior that was also configured explicitly is removed, so the behavior runs once at its configured (outer) position. See [Filtering auto-registered handlers](../auto-registration#filtering-auto-registered-handlers) for the inclusion/exclusion rules and [`DispatcherOptions`](../Options/DispatcherOptions.md) for the behavior registration rules.
+Internally, configured behaviors and validators are registered **first** with `TryAddEnumerable` (so repeated `AddDispatcher` calls do not duplicate them and they wrap the generated block); `HandlerRegistrations.ApplyAll(services, options)` then drains and filters the queue in one pass; `DispatcherRegistrations.ApplyAll(services)` registers the generated `Dispatcher` itself, which is never filtered. Finally, a generated descriptor for a behavior that was also configured explicitly is removed, so the behavior runs once at its configured (outer) position. See [Filtering auto-registered handlers](../auto-registration#filtering-auto-registered-handlers) for the inclusion/exclusion rules and [`DispatcherOptions`](../Options/DispatcherOptions.md) for the behavior and validator registration rules.
 
 ## Parameters
 
 | Method | Parameter | Description |
 |---|---|---|
 | `AddDispatcher()` | — | No parameters. Applies all auto-registrations. |
-| `AddDispatcher(Action<DispatcherOptions>)` | `configure` | Receives a [`DispatcherOptions`](../Options/DispatcherOptions.md) instance whose `IncludeHandlers` / `ExcludeHandlers` lists decide which auto-registered handlers — and the behaviors related to their messages — are kept, and whose `Behaviors` list registers additional pipeline behaviors explicitly. |
+| `AddDispatcher(Action<DispatcherOptions>)` | `configure` | Receives a [`DispatcherOptions`](../Options/DispatcherOptions.md) instance whose `IncludeHandlers` / `ExcludeHandlers` lists decide which auto-registered handlers — and the behaviors related to their messages — are kept, whose `Behaviors` list registers additional pipeline behaviors explicitly, and whose `Validators` dictionary registers validators together with their validation behavior. |
 
 Both overloads return the same `IServiceCollection`, so calls chain. The parameterless overload and the fluent `AddDispatcher<TRequest, TResponse, THandler>()` builder are distinct methods, so both styles can be mixed in one startup sequence.
 
@@ -119,6 +123,6 @@ In short, this class is the essential bootstrapping step required to use the CQR
 
 - [Auto Registration](../auto-registration) — how handlers and behaviors reach the queue.
 - [Filtering auto-registered handlers](../auto-registration#filtering-auto-registered-handlers) — the inclusion/exclusion rules.
-- [`DispatcherOptions`](../Options/DispatcherOptions.md) — the options type: filtering plus explicit behavior registration.
+- [`DispatcherOptions`](../Options/DispatcherOptions.md) — the options type: filtering plus explicit behavior and validator registration.
 - [`DispatcherBuilder`](../Builders/DispatcherBuilder.md) — the fluent registration API for behaviors and validators.
 - [Generated Dispatcher](../generated-dispatcher) — the `IDispatcher` implementation registered here.

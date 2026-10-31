@@ -108,7 +108,7 @@ builder.Services.AddDispatcher(options =>
 | Precedence | Exclusions win over inclusions. |
 | Request behaviors | Removed together with the handler of their request (a behavior whose request has no handler at all is left alone unless `IncludeHandlers` is set). |
 | Notification behaviors | Kept while at least one handler for the notification remains. |
-| Scope | Filters the **source-generated** registrations only. Explicit `AddDispatcher<TRequest, TResponse, THandler>()` / `AddNotification<TNotification>()` / `AddDecoration<TBehavior>()` registrations and behaviors listed in [`DispatcherOptions.Behaviors`](./Options/DispatcherOptions.md) are untouched. |
+| Scope | Filters the **source-generated** registrations only. Explicit `AddDispatcher<TRequest, TResponse, THandler>()` / `AddNotification<TNotification>()` / `AddDecoration<TBehavior>()` registrations, behaviors listed in [`DispatcherOptions.Behaviors`](./Options/DispatcherOptions.md), and validators registered through [`DispatcherOptions.Validators`](./Options/DispatcherOptions.md) are untouched. |
 
 The filter runs at startup, right after the queued registrations are applied: the descriptors added by `HandlerRegistrations.ApplyAll` are examined, and the ones that belong to filtered-out handlers (and their behaviors) are removed from the service collection. See [`DispatcherOptions`](./Options/DispatcherOptions.md) for the property reference.
 
@@ -172,7 +172,7 @@ The generator discovers **handlers and closed behaviors**. Everything else is re
 | Closed pipeline behaviors (`IPipelineBehavior<,>` / `IPipelineBehavior<>` / `INotificationBehavior<>`) | Automatic — under their interfaces, resolved by the generated dispatcher through DI |
 | Generic handlers | `AddDispatcher<TRequest, TResponse, THandler>()` / `AddNotification<TNotification>().AddHandler<THandler>()` (generator emits `DSAG002`) |
 | Generic behaviors | [`DispatcherOptions.Behaviors`](./Options/DispatcherOptions.md) for bulk/open generic registration, or `.AddDecoration<TBehavior>()` for one request (generator emits `DSAG010`) |
-| Validators (`IValidator<T>`) | `.AddValidator<TValidator>()` (also wires the `ValidationBehavior`) |
+| Validators (`IValidator<T>`) | [`DispatcherOptions.Validators`](./Options/DispatcherOptions.md) for bulk registration with the inferred `ValidationBehavior`, or `.AddValidator<TValidator>()` per request |
 | Handlers with custom lifetimes or setup | Manual DI registration |
 
 If a request handler is registered **both** automatically and explicitly, the registrations simply stack; keep only the explicit one when you need a custom setup.

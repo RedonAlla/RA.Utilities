@@ -50,6 +50,15 @@ builder.Services
     .AddValidator<CreateProductCommandValidator>(); // registers validator + ValidationBehavior
 ```
 
+For the generated dispatcher, [`DispatcherOptions.Validators`](../Options/DispatcherOptions.md) does the same in bulk — it registers every listed validator as `IValidator<TRequest>` together with the matching `ValidationBehavior<TRequest, TResponse>` (or `ValidationBehavior<TRequest>` for a request without a response):
+
+```csharp
+builder.Services.AddDispatcher(options =>
+{
+    options.Validators.Add(typeof(CreateProductCommandValidator), ServiceLifetime.Transient);
+});
+```
+
 Handling the failure at the call site:
 
 ```csharp

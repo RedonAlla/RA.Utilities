@@ -45,6 +45,7 @@ The package provides its own lightweight dispatcher — no external MediatR depe
 - **Notification** publishing to zero or more handlers, each wrapped in its own behavior pipeline
 - Behavior ordering: behaviors execute in registration order, outermost first; auto-registered behaviors can pin their position with `[PipelineBehaviorOrder]`
 - Bulk behavior registration: `AddDispatcher(options => options.Behaviors.Add(...))` registers open generic and closed behaviors without per-request builder calls
+- Bulk validator registration: `AddDispatcher(options => options.Validators.Add(typeof(TValidator), ServiceLifetime.Transient))` registers the validator and its `ValidationBehavior` together
 
 `Send` returns `ValueTask<Result<TResponse>>` (`ValueTask<Result>` for void requests). Handlers, behaviors, and the generated dispatcher all speak `Result`; expected failures are returned as `Result.Failure(exception)` instead of being thrown. `Result` comes from `RA.Utilities.Core.Results`.
 
@@ -82,7 +83,7 @@ builder.Services.AddDispatcher();
 **Still registered explicitly** (the generator cannot discover or must not auto-register these):
 
 - **Generic pipeline behaviors** — closed, non-generic behaviors auto-register; generic ones register with `options.Behaviors.Add(typeof(LoggingBehavior<,>))` (see [Registering behaviors in bulk](#registering-behaviors-in-bulk)) or per request with `AddDispatcher<TRequest, TResponse, THandler>().AddDecoration<TBehavior>()`
-- **Validators** — `.AddValidator<TValidator>()` (which also wires the `ValidationBehavior`)
+- **Validators** — `.AddValidator<TValidator>()` (which also wires the `ValidationBehavior`), or `options.Validators.Add(typeof(TValidator), lifetime)` to register the validator and its behavior in bulk
 - **Generic notification behaviors** — closed ones auto-register; generic ones register with `options.Behaviors.Add(typeof(NotificationLoggingBehavior<>))` or per notification with `.AddNotification<TNotification>().AddDecoration<TBehavior>()`
 - **Generic handlers** — the generator reports `DSAG002` and skips them
 - Any handler whose registration needs a custom lifetime or setup
@@ -107,7 +108,7 @@ builder.Services.AddDispatcher(options =>
 - Both lists take handler types; behavior types are also accepted (a listed behavior is kept or removed directly).
 - Exclusions win over inclusions.
 - A request behavior is removed together with the handler of its request; a notification behavior is removed only once no registered handler for its notification remains.
-- The filter applies to source-generated registrations only — handlers registered explicitly with `AddDispatcher<TRequest, THandler>()` / `AddNotification<TNotification>()`, behaviors added via `AddDecoration<TBehavior>()`, and behaviors listed in `options.Behaviors` are untouched.
+- The filter applies to source-generated registrations only — handlers registered explicitly with `AddDispatcher<TRequest, THandler>()` / `AddNotification<TNotification>()`, behaviors added via `AddDecoration<TBehavior>()`, and behaviors listed in `options.Behaviors` or registered through `options.Validators` are untouched.
 
 #### Registering behaviors in bulk
 
@@ -132,6 +133,29 @@ builder.Services.AddDispatcher(options =>
 - Configured behaviors are registered **before** the generated block, so they wrap auto-registered closed behaviors; `[PipelineBehaviorOrder]` is not read for them — the list order decides.
 - Registrations use `TryAddEnumerable`: repeated calls and duplicate entries do not stack, and a closed behavior that is also auto-discovered runs once at its configured (outer) position.
 - Invalid types (non-class, abstract, or not a behavior) throw `ArgumentException` at startup.
+
+#### Registering validators in bulk
+
+`DispatcherOptions.Validators` maps each validator type to its `ServiceLifetime`. One entry registers the validator **and** its `ValidationBehavior` — the request type comes from `IValidator<TRequest>`, and the response type from `IRequest<TResponse>` when the request declares one:
+
+```csharp
+builder.Services.AddDispatcher(options =>
+{
+    options.Validators.Add(typeof(CreateOrderCommandValidator), ServiceLifetime.Transient);
+});
+```
+
+That single entry is equivalent to:
+
+```csharp
+builder.Services.AddTransient<IValidator<CreateOrderCommand>, CreateOrderCommandValidator>();
+builder.Services.AddTransient<IPipelineBehavior<CreateOrderCommand, CreateOrderResult>, ValidationBehavior<CreateOrderCommand, CreateOrderResult>>();
+```
+
+- Validators must be non-abstract, closed classes implementing `IValidator<TRequest>`; the request must implement `IRequest` or `IRequest<TResponse>`.
+- Several validators for one request are supported — they share the single validation behavior for that request.
+- Registrations use `TryAddEnumerable`: manual registrations, listing the same `ValidationBehavior` in `options.Behaviors`, or calling `AddDispatcher` twice does not duplicate anything.
+- Validation behaviors are registered after `options.Behaviors`, so they run inside explicitly configured behaviors. List `ValidationBehavior` in `options.Behaviors` to control its position.
 
 #### Ordering auto-registered behaviors
 
@@ -159,7 +183,7 @@ The generated `Dispatcher` is the **only** `IDispatcher` implementation in the p
 
 - **Direct handler injection** — the generator knows each message's handler, registers it under its interface and as itself, and the generated `Send` resolves the handler by **concrete type** and calls it directly — no interface resolution, and the call devirtualizes.
 - **No delegate chain without behaviors** — when a request has no pipeline behaviors, the handler is invoked directly. Benchmarks (MediatR handlers registered scoped, matching this package's lifetime) show **14-18% faster sends and 9-14% fewer allocations than MediatR** across the send shapes.
-- **Closed behaviors auto-register** — non-generic `IPipelineBehavior<,>` / `IPipelineBehavior<>` / `INotificationBehavior<>` implementations are auto-registered under their interfaces (transient). Explicitly registered behaviors (`DispatcherOptions.Behaviors` or `AddDecoration`, including generic closures — `DSAG010` notes the generic ones aren't auto-registered) resolve through the same channel.
+- **Closed behaviors auto-register** — non-generic `IPipelineBehavior<,>` / `IPipelineBehavior<>` / `INotificationBehavior<>` implementations are auto-registered under their interfaces (transient). Explicitly registered behaviors (`DispatcherOptions.Behaviors`, `DispatcherOptions.Validators`, or `AddDecoration`, including generic closures — `DSAG010` notes the generic ones aren't auto-registered) resolve through the same channel.
 - **Fast dictionary lookups for object dispatch** — `Send(object)` / `Publish(object)` use `typeof` chains in small projects and static dictionaries once the project defines more than 8 messages; unknown types throw `HandlerNotFoundException`.
 - **Both `IDispatcher` and the concrete `Dispatcher` are usable** — the concrete class is the fastest path.
 - **Compile-time message diagnostics** (`DSAG006`–`DSAG010`) — ambiguous message contracts, missing handlers, unsupported message shapes, and generic behaviors are reported at build time.
@@ -205,6 +229,16 @@ builder.Services
     .AddDispatcher<MyCommand, int, MyCommandHandler>()
     .AddDecoration<LoggingBehavior<MyCommand, int>>()
     .AddValidator<MyCommandValidator>();
+```
+
+With the generated dispatcher, register validators in bulk instead — each entry wires the validator and its `ValidationBehavior`:
+
+```csharp
+builder.Services.AddDispatcher(options =>
+{
+    options.Validators.Add(typeof(MyCommandValidator), ServiceLifetime.Transient);
+    options.Validators.Add(typeof(MyQueryValidator), ServiceLifetime.Transient);
+});
 ```
 
 ### 6. Notification System

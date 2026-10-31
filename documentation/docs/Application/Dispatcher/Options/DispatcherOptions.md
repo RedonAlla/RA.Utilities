@@ -6,12 +6,13 @@ sidebar_position: 1
 Namespace: RA.Utilities.Dispatcher.Options
 ```
 
-`DispatcherOptions` configures the [`AddDispatcher(Action<DispatcherOptions>)`](../Extensions/DispatcherServiceCollectionExtensions.md) overload. It does two things:
+`DispatcherOptions` configures the [`AddDispatcher(Action<DispatcherOptions>)`](../Extensions/DispatcherServiceCollectionExtensions.md) overload. It does three things:
 
 - **Filters** the registrations produced by the source generator **before they take effect** — the generated module initializer still queues everything, and the filter removes the descriptors that belong to excluded handlers (and to the pipeline/notification behaviors related to their messages).
 - **Registers additional pipeline behaviors explicitly** — including open generic behaviors, which the generator cannot auto-register.
+- **Registers validators and their validation behavior together** — one entry replaces the explicit `IValidator<TRequest>` and `ValidationBehavior` registrations.
 
-Nothing is filtered by default: when both filter properties are `null`, every discovered handler and closed behavior registers exactly as described in [Auto Registration](../auto-registration). `Behaviors` is empty by default, so no extra behavior is registered.
+Nothing is filtered by default: when both filter properties are `null`, every discovered handler and closed behavior registers exactly as described in [Auto Registration](../auto-registration). `Behaviors` and `Validators` are empty by default, so no extra behavior or validator is registered.
 
 ## 📦 Type Definition
 
@@ -22,6 +23,7 @@ public sealed class DispatcherOptions
     public List<Type>? ExcludeHandlers { get; set; }
     public List<Type> Behaviors { get; }
     public ServiceLifetime BehaviorLifetime { get; set; }
+    public Dictionary<Type, ServiceLifetime> Validators { get; }
 }
 ```
 
@@ -33,6 +35,7 @@ public sealed class DispatcherOptions
 | `ExcludeHandlers` | `List<Type>?` | `null` (ignored) | When set, the listed handlers are not registered, and neither are the behaviors related to a message once no other registered handler handles it. |
 | `Behaviors` | `List<Type>` | empty list | Pipeline behaviors to register explicitly, in chain order: the first entry is the outermost behavior. Accepts `IPipelineBehavior<>`, `IPipelineBehavior<,>`, and `INotificationBehavior<>` implementations, closed or open generic. |
 | `BehaviorLifetime` | `ServiceLifetime` | `Transient` | The lifetime used for every type in `Behaviors`. |
+| `Validators` | `Dictionary<Type, ServiceLifetime>` | empty dictionary | Validator types mapped to their lifetime. Each entry registers `IValidator<TRequest>` **and** the matching `ValidationBehavior`, so validation works without per-request `AddValidator` or explicit behavior registrations. |
 
 ### Filtering rules
 
@@ -74,6 +77,47 @@ Rules for the list:
 - **Validated at startup** — a non-class, abstract, or non-behavior type throws `ArgumentException` when `AddDispatcher` runs.
 - **Transient is recommended** for behaviors because they should not hold request-scoped state. The lifetime is configurable for advanced scenarios.
 
+## 🧪 Registering validators in bulk
+
+`Validators` replaces the three registrations a validated request normally needs — the validator, the validation behavior, and (for the behavior) its position in the pipeline:
+
+```csharp title="Before"
+services.AddTransient<IValidator<TodoCreateInput>, TodoCreateValidator>();
+services.AddTransient<IPipelineBehavior<TodoCreateInput, TodoCreateOutput>, ValidationBehavior<TodoCreateInput, TodoCreateOutput>>();
+services.AddDispatcher(options =>
+{
+    options.Behaviors.Add(typeof(ValidationBehavior<TodoCreateInput, TodoCreateOutput>));
+});
+```
+
+```csharp title="After" showLineNumbers
+using Microsoft.Extensions.DependencyInjection;
+using RA.Utilities.Dispatcher.Extensions;
+
+services.AddDispatcher(options =>
+{
+    options.Validators.Add(typeof(TodoCreateValidator), ServiceLifetime.Transient);
+});
+```
+
+`AddDispatcher` infers the message types from the validator:
+
+- `IValidator<TRequest>` gives the request type.
+- If the request implements `IRequest<TResponse>`, the response type comes from there and `ValidationBehavior<TRequest, TResponse>` is registered.
+- If the request implements only `IRequest`, `ValidationBehavior<TRequest>` is registered.
+- A request type that implements neither cannot be validated in the pipeline; `AddDispatcher` throws `ArgumentException`.
+
+Each entry registers **both** the validator and its validation behavior with the configured lifetime. The request must be sent through the generated [`IDispatcher`](../Abstractions/IDispatcher.md) — that is the code path that resolves behaviors.
+
+Rules for the dictionary:
+
+- **The key is the validator implementation type**, and the value is its `ServiceLifetime`. The same lifetime is used for the validation behavior.
+- **Validators must be non-abstract, closed classes** implementing `IValidator<TRequest>`. Abstract and open generic validator types throw `ArgumentException`.
+- **Several validators for one request are supported** — each entry registers its validator, and they share the single validation behavior for that request.
+- **Registered with `TryAddEnumerable`** — a validator or behavior already registered manually, listed in `Behaviors`, or added by an earlier `AddDispatcher` call is not duplicated. To position the validation behavior explicitly, list it in `Behaviors`; the entry from `Validators` then only contributes the validator.
+- **Validation runs inside the behaviors from `Behaviors`** — validator behaviors are registered after that list, so they sit closer to the handler. With the default configuration, validation is the outermost behavior.
+- **`IncludeHandlers` / `ExcludeHandlers` do not remove configured validators or their behaviors** — they are explicit registrations.
+
 ## 🚀 Complete Example
 
 ```csharp showLineNumbers
@@ -82,7 +126,8 @@ using RA.Utilities.Dispatcher.Extensions;
 using RA.Utilities.Dispatcher.Options;
 
 // Register every discovered handler except the legacy importer, only the
-// order slice in a trimmed-down worker host, plus two generic behaviors:
+// order slice in a trimmed-down worker host, plus two generic behaviors
+// and the create-order validator:
 builder.Services.AddDispatcher(options =>
 {
     options.IncludeHandlers = [typeof(CreateOrderHandler), typeof(GetOrderQueryHandler)];
@@ -90,6 +135,8 @@ builder.Services.AddDispatcher(options =>
 
     options.Behaviors.Add(typeof(MetricsBehavior<,>));
     options.Behaviors.Add(typeof(LoggingBehavior<,>));
+
+    options.Validators.Add(typeof(CreateOrderCommandValidator), ServiceLifetime.Transient);
 });
 
 // Default: register everything the generator discovered, no extra behaviors.
@@ -103,4 +150,5 @@ With the configuration above, `CreateOrderHandler` and `GetOrderQueryHandler` (p
 - [Auto Registration](../auto-registration) — discovery rules, lifetimes, and the assembly-loading guarantee.
 - [Filtering auto-registered handlers](../auto-registration#filtering-auto-registered-handlers) — the same rules in guide form.
 - [`DispatcherBuilder.AddDecoration`](../Builders/DispatcherBuilder.md) — attach a behavior to a single request.
+- [`ValidationBehavior`](../Behaviors/ValidationBehavior.md) — how validation runs and what a failed result contains.
 - [`DispatcherServiceCollectionExtensions`](../Extensions/DispatcherServiceCollectionExtensions.md) — the `AddDispatcher` overloads that accept these options.

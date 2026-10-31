@@ -128,23 +128,35 @@ Filtering applies to source-generated registrations only — a handler you regis
 
 **Cause**: There are three possibilities, in order of likelihood:
 
-1. **No `IValidator<TRequest>` is registered.** `ValidationBehavior` resolves `IEnumerable<IValidator<TRequest>>`; when the collection is empty it does **not** fail — it calls `next()` and the request reaches the handler unvalidated. Registering the behavior does not register the validator.
+1. **No `IValidator<TRequest>` is registered.** `ValidationBehavior` resolves `IEnumerable<IValidator<TRequest>>`; when the collection is empty it does **not** fail — it calls `next()` and the request reaches the handler unvalidated. Registering the behavior does not register the validator; [`DispatcherOptions.Validators`](./Options/DispatcherOptions.md) registers both. When the validator is registered but validation still doesn't run, compare `provider.GetServices<IValidator<TodoCreateInput>>()` with the `TRequest` type the behavior was resolved for — a validator for a different (or base) request type is not picked up.
 2. **The request doesn't go through the generated `IDispatcher`.** The behavior runs only inside `Send`/`Publish` on the generated dispatcher. Resolving `IRequestHandler<TRequest, TResponse>` from DI and calling `HandleAsync` directly bypasses every behavior. A custom `IDispatcher`/mediator registered after `AddDispatcher()` also replaces the generated one (the generated `Dispatcher` is registered with `AddScoped`, so the last registration wins).
 3. **The behavior isn't in DI at all.** Closed behaviors are auto-registered; generic behaviors are not (`DSAG010`) and need [`DispatcherOptions.Behaviors`](./Options/DispatcherOptions.md) or `AddDecoration`.
 
-**Fix**: Register the validator, then confirm both halves from the built provider:
+**Fix**: Register the validator and its validation behavior together with [`DispatcherOptions.Validators`](./Options/DispatcherOptions.md) — `AddDispatcher` infers the request and response types, so no manual behavior registration is needed:
+
+```csharp
+builder.Services.AddDispatcher(options =>
+{
+    options.Validators.Add(typeof(TodoCreateInputValidator), ServiceLifetime.Transient);
+});
+```
+
+Alternatively, register both halves by hand (or with `AddValidatorsFromAssemblyContaining<T>()` plus an explicit behavior):
 
 ```csharp
 builder.Services.AddTransient<IValidator<TodoCreateInput>, TodoCreateInputValidator>();
-// or: builder.Services.AddValidatorsFromAssemblyContaining<TodoCreateInputValidator>();
+builder.Services.AddTransient<IPipelineBehavior<TodoCreateInput, TodoCreateOutput>, ValidationBehavior<TodoCreateInput, TodoCreateOutput>>();
+```
 
-// Verify:
+Then confirm both halves from the built provider:
+
+```csharp
 provider.GetServices<IValidator<TodoCreateInput>>();                          // must be non-empty
 provider.GetServices<IPipelineBehavior<TodoCreateInput, TodoCreateOutput>>(); // must contain ValidationBehavior once
 provider.GetService<IDispatcher>()?.GetType();                               // must be the generated Dispatcher
 ```
 
-Registering the behavior explicitly **and** through `DispatcherOptions.Behaviors` is harmless — `TryAddEnumerable` keeps a single descriptor, and the configured (outer) position wins.
+Registering the behavior explicitly, through `DispatcherOptions.Behaviors`, and through `DispatcherOptions.Validators` is harmless — `TryAddEnumerable` keeps a single descriptor, and the configured position wins.
 
 ### `CS0118: 'Dispatcher' is a namespace but is used like a type`
 

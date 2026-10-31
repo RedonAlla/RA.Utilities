@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using RA.Utilities.Dispatcher.Abstractions;
+using RA.Utilities.Dispatcher.Behaviors;
 using RA.Utilities.Dispatcher.Generated;
 using RA.Utilities.Dispatcher.Options;
 
@@ -58,6 +60,7 @@ public static class DispatcherServiceCollectionExtensions
         if (options is not null)
         {
             AddConfiguredBehaviors(services, options, configuredBehaviors);
+            AddConfiguredValidators(services, options, configuredBehaviors);
         }
 
         int generatedStartIndex = services.Count;
@@ -102,6 +105,99 @@ public static class DispatcherServiceCollectionExtensions
                 registered.Add((serviceType, behaviorType));
             }
         }
+    }
+
+    /// <summary>
+    /// Registers the validators listed in <see cref="DispatcherOptions.Validators"/> as
+    /// <c>IValidator&lt;TRequest&gt;</c> together with their matching validation behavior.
+    /// </summary>
+    private static void AddConfiguredValidators(
+        IServiceCollection services,
+        DispatcherOptions options,
+        List<(Type ServiceType, Type ImplementationType)> registered)
+    {
+        foreach (KeyValuePair<Type, ServiceLifetime> registration in options.Validators)
+        {
+            Type validatorType = registration.Key;
+
+            if (!validatorType.IsClass || validatorType.IsAbstract || validatorType.IsGenericTypeDefinition)
+            {
+                throw new ArgumentException(
+                    $"Validator '{validatorType}' must be a non-abstract, closed class.", nameof(options));
+            }
+
+            int validatorInterfaces = 0;
+            foreach (Type implementedInterface in validatorType.GetInterfaces())
+            {
+                if (!implementedInterface.IsGenericType
+                    || implementedInterface.GetGenericTypeDefinition() != typeof(IValidator<>))
+                {
+                    continue;
+                }
+
+                services.TryAddEnumerable(ServiceDescriptor.Describe(
+                    implementedInterface, validatorType, registration.Value));
+
+                Type requestType = implementedInterface.GetGenericArguments()[0];
+                foreach ((Type ServiceType, Type ImplementationType) behavior in GetValidationBehaviorTypes(requestType, validatorType))
+                {
+                    services.TryAddEnumerable(ServiceDescriptor.Describe(
+                        behavior.ServiceType, behavior.ImplementationType, registration.Value));
+                    registered.Add(behavior);
+                }
+
+                validatorInterfaces++;
+            }
+
+            if (validatorInterfaces == 0)
+            {
+                throw new ArgumentException(
+                    $"Type '{validatorType}' does not implement IValidator<TRequest>.", nameof(options));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Returns the validation behavior service and implementation types for a request handled by
+    /// <paramref name="validatorType"/>, using the response type when the request declares one.
+    /// </summary>
+    private static List<(Type ServiceType, Type ImplementationType)> GetValidationBehaviorTypes(
+        Type requestType,
+        Type validatorType)
+    {
+        List<(Type ServiceType, Type ImplementationType)> behaviorTypes = [];
+
+        foreach (Type implementedInterface in requestType.GetInterfaces())
+        {
+            if (!implementedInterface.IsGenericType
+                || implementedInterface.GetGenericTypeDefinition() != typeof(IRequest<>))
+            {
+                continue;
+            }
+
+            Type responseType = implementedInterface.GetGenericArguments()[0];
+            behaviorTypes.Add((
+                typeof(IPipelineBehavior<,>).MakeGenericType(requestType, responseType),
+                typeof(ValidationBehavior<,>).MakeGenericType(requestType, responseType)));
+        }
+
+        if (behaviorTypes.Count > 0)
+        {
+            return behaviorTypes;
+        }
+
+        if (!typeof(IRequest).IsAssignableFrom(requestType))
+        {
+            throw new ArgumentException(
+                $"Validator '{validatorType}' validates '{requestType}', which implements neither IRequest nor IRequest<TResponse>.",
+                nameof(validatorType));
+        }
+
+        behaviorTypes.Add((
+            typeof(IPipelineBehavior<>).MakeGenericType(requestType),
+            typeof(ValidationBehavior<>).MakeGenericType(requestType)));
+
+        return behaviorTypes;
     }
 
     /// <summary>

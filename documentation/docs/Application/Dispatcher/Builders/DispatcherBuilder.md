@@ -49,6 +49,10 @@ Two registrations in one call:
 1. The validator itself: `services.AddTransient<IValidator<TRequest>, TValidator>()`
 2. The [`ValidationBehavior`](../Behaviors/ValidationBehavior.md): `services.AddTransient<IPipelineBehavior<TRequest[, TResponse]>, ValidationBehavior<TRequest[, TResponse]>>()`
 
+:::tip
+When using the generated dispatcher, [`DispatcherOptions.Validators`](../Options/DispatcherOptions.md) performs the same two registrations in bulk — `options.Validators.Add(typeof(TValidator), lifetime)` infers the request and response types.
+:::
+
 ## 🚀 Usage
 
 ```csharp
@@ -68,4 +72,5 @@ builder.Services
 
 - [`NotificationDispatcherBuilder<TNotification>`](NotificationDispatcherBuilder.md) — the notification counterpart.
 - [`DispatcherBuilderExtensions`](../Extensions/DispatcherBuilderExtensions.md) — the extension methods that return these builders.
+- [`DispatcherOptions`](../Options/DispatcherOptions.md) — bulk behavior and validator registration for the generated dispatcher.
 - [`PipelineBehaviorOrderAttribute`](../Attributes/PipelineBehaviorOrderAttribute.md) — ordering for auto-registered behaviors.
