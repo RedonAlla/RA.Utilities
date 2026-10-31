@@ -124,6 +124,28 @@ Filtering applies to source-generated registrations only — a handler you regis
 
 **Fix**: Put the attribute on the concrete, closed behavior class, or control the position with the order of `AddDecoration` calls — or the order of the [`DispatcherOptions.Behaviors`](./Options/DispatcherOptions.md) entries — if the behavior is generic.
 
+### My validator is never called — `ValidationBehavior` passes every request through
+
+**Cause**: There are three possibilities, in order of likelihood:
+
+1. **No `IValidator<TRequest>` is registered.** `ValidationBehavior` resolves `IEnumerable<IValidator<TRequest>>`; when the collection is empty it does **not** fail — it calls `next()` and the request reaches the handler unvalidated. Registering the behavior does not register the validator.
+2. **The request doesn't go through the generated `IDispatcher`.** The behavior runs only inside `Send`/`Publish` on the generated dispatcher. Resolving `IRequestHandler<TRequest, TResponse>` from DI and calling `HandleAsync` directly bypasses every behavior. A custom `IDispatcher`/mediator registered after `AddDispatcher()` also replaces the generated one (the generated `Dispatcher` is registered with `AddScoped`, so the last registration wins).
+3. **The behavior isn't in DI at all.** Closed behaviors are auto-registered; generic behaviors are not (`DSAG010`) and need [`DispatcherOptions.Behaviors`](./Options/DispatcherOptions.md) or `AddDecoration`.
+
+**Fix**: Register the validator, then confirm both halves from the built provider:
+
+```csharp
+builder.Services.AddTransient<IValidator<TodoCreateInput>, TodoCreateInputValidator>();
+// or: builder.Services.AddValidatorsFromAssemblyContaining<TodoCreateInputValidator>();
+
+// Verify:
+provider.GetServices<IValidator<TodoCreateInput>>();                          // must be non-empty
+provider.GetServices<IPipelineBehavior<TodoCreateInput, TodoCreateOutput>>(); // must contain ValidationBehavior once
+provider.GetService<IDispatcher>()?.GetType();                               // must be the generated Dispatcher
+```
+
+Registering the behavior explicitly **and** through `DispatcherOptions.Behaviors` is harmless — `TryAddEnumerable` keeps a single descriptor, and the configured (outer) position wins.
+
 ### `CS0118: 'Dispatcher' is a namespace but is used like a type`
 
 **Cause**: The generated class `RA.Utilities.Dispatcher.Generated.Dispatcher` shares its simple name with the `RA.Utilities.Dispatcher` namespace. Inside any `RA.Utilities.*` namespace — for example when your own utilities live under the same root — `Dispatcher` binds to the namespace.

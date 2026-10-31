@@ -108,6 +108,57 @@ public class ValidationBehaviorTests
         exception.Errors.Should().ContainSingle().Which.PropertyName.Should().Be("Name");
     }
 
+    [Fact]
+    public async Task Behavior_RegisteredExplicitlyAndThroughOptions_RunsExactlyOnce()
+    {
+        TodoCreateHandler.Reset();
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddTransient<IValidator<TodoCreateInput>, TodoCreateValidator>();
+        services.AddTransient<IPipelineBehavior<TodoCreateInput, TodoCreateOutput>, ValidationBehavior<TodoCreateInput, TodoCreateOutput>>();
+        services.AddDispatcher(options =>
+        {
+            options.Behaviors.Add(typeof(ValidationBehavior<TodoCreateInput, TodoCreateOutput>));
+            options.BehaviorLifetime = ServiceLifetime.Transient;
+        });
+        using ServiceProvider provider = services.BuildServiceProvider();
+        IDispatcher dispatcher = provider.GetRequiredService<IDispatcher>();
+
+        provider.GetServices<IPipelineBehavior<TodoCreateInput, TodoCreateOutput>>()
+            .Should().ContainSingle();
+
+        Result<TodoCreateOutput> result = await dispatcher.Send<TodoCreateInput, TodoCreateOutput>(
+            new TodoCreateInput(""));
+
+        result.IsFailure.Should().BeTrue();
+        result.Exception.Should().BeOfType<BadRequestException>();
+        TodoCreateHandler.InvocationCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task Behavior_RegisteredExplicitlyAndThroughOptions_WithoutValidators_PassesThrough()
+    {
+        TodoCreateHandler.Reset();
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddTransient<IPipelineBehavior<TodoCreateInput, TodoCreateOutput>, ValidationBehavior<TodoCreateInput, TodoCreateOutput>>();
+        services.AddDispatcher(options =>
+        {
+            options.Behaviors.Add(typeof(ValidationBehavior<TodoCreateInput, TodoCreateOutput>));
+            options.BehaviorLifetime = ServiceLifetime.Transient;
+        });
+        using ServiceProvider provider = services.BuildServiceProvider();
+        IDispatcher dispatcher = provider.GetRequiredService<IDispatcher>();
+
+        provider.GetServices<IValidator<TodoCreateInput>>().Should().BeEmpty();
+
+        Result<TodoCreateOutput> result = await dispatcher.Send<TodoCreateInput, TodoCreateOutput>(
+            new TodoCreateInput(""));
+
+        result.IsSuccess.Should().BeTrue();
+        TodoCreateHandler.InvocationCount.Should().Be(1);
+    }
+
     private static ServiceProvider CreateProvider()
     {
         var services = new ServiceCollection();
@@ -192,5 +243,32 @@ public class MultiValidatedSecondValidator : AbstractValidator<MultiValidatedCom
     public MultiValidatedSecondValidator()
     {
         RuleFor(command => command.Name).MaximumLength(5);
+    }
+}
+
+public record TodoCreateInput(string Title) : IRequest<TodoCreateOutput>;
+
+public record TodoCreateOutput(string Title);
+
+public class TodoCreateHandler : IRequestHandler<TodoCreateInput, TodoCreateOutput>
+{
+    private static int _invocationCount;
+
+    public static int InvocationCount => _invocationCount;
+
+    public static void Reset() => _invocationCount = 0;
+
+    public ValueTask<Result<TodoCreateOutput>> HandleAsync(TodoCreateInput request, CancellationToken cancellationToken)
+    {
+        System.Threading.Interlocked.Increment(ref _invocationCount);
+        return ValueTask.FromResult(Result.Success(new TodoCreateOutput(request.Title)));
+    }
+}
+
+public class TodoCreateValidator : AbstractValidator<TodoCreateInput>
+{
+    public TodoCreateValidator()
+    {
+        RuleFor(input => input.Title).NotEmpty();
     }
 }
