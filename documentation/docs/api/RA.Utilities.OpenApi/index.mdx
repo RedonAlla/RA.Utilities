@@ -77,7 +77,7 @@ Install-Package RA.Utilities.OpenApi
 **PackageReference (csproj)**
 
 ```xml
-<PackageReference Include="RA.Utilities.OpenApi" Version="10.3.0" />
+<PackageReference Include="RA.Utilities.OpenApi" Version="10.3.1" />
 ```
 
 ### Hello World
@@ -178,7 +178,7 @@ This release adds a dependency on `RA.Utilities.Core.ValueObjects` 10.2.0 for th
 | `AddHealthChecksDocumentTransformer(tags)` | ⚠️ Currently registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer` — see the caution below |
 | `AddGroupTagsDocumentTransformer(tags)` | `GroupTagsDocumentTransformer`; the `tags` argument is currently ignored — see the caution below |
 
-:::caution[v10.1.0, still present in v10.3.0]
+:::caution[v10.1.0, still present in v10.3.1]
 `AddHealthChecksDocumentTransformer(tags)` currently registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and the `tags` argument is ignored. Use `AddDefaultsDocumentTransformer()` to document health check endpoints until this is corrected.
 :::
 
@@ -384,6 +384,8 @@ OpenApiOperationUtilities.AddResponseExample(operation, 200, "Success",
         Value = JsonSerializer.SerializeToNode(new { Id = 1, Name = "Widget" })
     });
 ```
+
+Since v10.3.1, both methods create the media type's `Examples` dictionary when it is empty, so examples are no longer dropped for operations that had none. `AddResponseExample` requires the operation's `Responses` collection and the target response's `Content` entry to exist — otherwise it throws `NullReferenceException`. See [`OpenApiOperationUtilities`](./Utilities/OpenApiOperationUtilities.md#addresponseexample) for the exact conditions.
 
 ---
 

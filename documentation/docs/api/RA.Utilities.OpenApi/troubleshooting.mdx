@@ -50,7 +50,7 @@ using RA.Utilities.Api.Response;
 
 ### `AddHealthChecksDocumentTransformer(tags)` doesn't add the health check endpoints
 
-**Cause**: Known bug in v10.1.0 through v10.3.0 — the method registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and ignores `tags`.
+**Cause**: Known bug in v10.1.0 through v10.3.1 — the method registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and ignores `tags`.
 
 **Fix**: Register the default pipeline instead:
 
@@ -104,6 +104,24 @@ OpenApiOperationUtilities.AddResponseExample(
     // highlight-next-line
     mediaType: "application/problem+json");
 ```
+
+### `AddResponseExample` throws `NullReferenceException`
+
+**Cause**: `AddResponseExample` dereferences `operation.Responses` and the target response's `Content`. It throws when the operation has no `Responses` collection, or when the response for the requested status code has no `Content` entry for the media type. `AddResponseExamples()` and `AddGeneralErrorResponse()` call it and can throw for the same reasons.
+
+**Fix**: Declare the response before adding the example — for example with `Produces` on the endpoint, or let `DefaultResponsesOperationTransformer` add the `500` response:
+
+```csharp
+app.MapPost("/products", static (CreateProductRequest request) => /* ... */)
+    // highlight-next-line
+    .Produces<ProductResponse>(StatusCodes.Status200OK);
+```
+
+### My example isn't in the generated document (before v10.3.1)
+
+**Cause**: Before v10.3.1, `AddRequestExample` and `AddResponseExample` only wrote the example when the media type already had an `Examples` dictionary. On a freshly generated operation that dictionary is `null`, so the example was silently dropped.
+
+**Fix**: Upgrade to v10.3.1 or later — the dictionary is now created on demand.
 
 ### Swagger UI doesn't show the Authorize button
 
@@ -254,10 +272,11 @@ Document transformers apply globally. To exclude specific endpoints, use a custo
 
 ## Known Limitations
 
-- **`AddHealthChecksDocumentTransformer(tags)` is broken in v10.1.0 through v10.3.0**: it registers `HeadersParameterTransformer` and ignores `tags`. Use `AddDefaultsDocumentTransformer()`.
+- **`AddHealthChecksDocumentTransformer(tags)` is broken in v10.1.0 through v10.3.1**: it registers `HeadersParameterTransformer` and ignores `tags`. Use `AddDefaultsDocumentTransformer()`.
 - **`AddGroupTagsDocumentTransformer(tags)` ignores `tags`**: the argument is required by the current signature but unused; group text comes from `WithGroupSummary()` / `WithGroupDescription()`. Use `AddDefaultsDocumentTransformer()`, which registers the transformer automatically.
 - **Group documentation requires tags**: `WithGroupSummary()` / `WithGroupDescription()` write to the tags the group's endpoints carry; without `.WithTags(...)` there is no tag to describe. Existing tag descriptions are never overwritten.
 - **`AddResponseExamples` ignores per-item `MediaType`**: batched response examples always use `application/json`; use `AddResponseExample` for custom media types.
+- **Response examples require an existing response and media type**: `AddResponseExample` (and therefore `AddResponseExamples` / `AddGeneralErrorResponse`) throws `NullReferenceException` when `operation.Responses` is null or the target response has no `Content` entry for the media type. Declare the response first.
 - **No endpoint exclusion**: Document transformers apply to all operations. Use custom transformers for per-endpoint behavior.
 - **Single XML file**: `EnumXmlSchemaTransformer` currently supports only one XML documentation file.
 - **FluentValidation scope**: Only validators registered in the DI container are discovered. Attributes-based validation (DataAnnotations) is not supported.

@@ -36,6 +36,8 @@ In short, this class provides the building blocks for creating richer, more illu
 
 Adds a named example to the request body of an operation for a given media type (defaults to `application/json`).
 
+The example is added even when the media type has no examples yet — `Examples` is created on demand (since v10.3.1). If the operation has no request body, or the media type is not present in its `Content`, the call returns without adding anything.
+
 ```csharp
 using RA.Utilities.OpenApi.Utilities;
 
@@ -129,6 +131,14 @@ app.MapPost("todos", static async (
 ### AddResponseExample()
 
 Adds a named example to a specific status code response of an operation.
+
+As with `AddRequestExample`, the `Examples` dictionary is created on demand (since v10.3.1). Unlike it, the method dereferences `operation.Responses` and the response's `Content` directly:
+
+:::caution[The target response must exist and declare the media type]
+
+`AddResponseExample` throws `NullReferenceException` when `operation.Responses` is `null` or when the response for `statusCode` has no `Content` entry for the requested media type. Add the response to the operation before attaching an example to it (for example with `Produces`, `DefaultResponsesOperationTransformer`, or a transformer that runs first). If `Responses` exists but has no entry for the status code, the method returns without adding anything.
+
+:::
 
 ```csharp
 using RA.Utilities.Api.Response;

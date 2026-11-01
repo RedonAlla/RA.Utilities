@@ -4,6 +4,27 @@ title: Migration Guides
 
 # Migration Guides
 
+## v10.3.0 → v10.3.1
+
+### No breaking changes
+
+This release fixes how `OpenApiOperationUtilities` adds examples:
+
+- **Examples are no longer dropped**: `AddRequestExample()` and `AddResponseExample()` now create the media type's `Examples` dictionary when it is empty. Before v10.3.1, adding an example to a media type without existing examples was silently ignored — the normal state of a freshly generated document.
+- **`AddResponseExample()` is no longer null-safe on responses**: the method dereferences `operation.Responses` and the response's `Content` directly and throws `NullReferenceException` when either is missing for the requested status code and media type. When `Responses` exists but has no entry for the status code, the call still returns without adding anything.
+
+No source changes are required. If your custom transformers add a response example before the response is declared, declare the response first:
+
+```csharp
+app.MapPost("/products", static (CreateProductRequest request) => /* ... */)
+    // highlight-next-line
+    .Produces<ProductResponse>(StatusCodes.Status200OK);
+```
+
+`AddRequestExample()` keeps its null-safe navigation: a missing request body, media type, or content entry is skipped silently.
+
+---
+
 ## v10.2.1 → v10.3.0
 
 ### No breaking changes
@@ -127,7 +148,7 @@ example.StatusCode = 200;
 
 - **`AddDefaultsDocumentTransformer` now throws on null**: Previously, passing `null` options silently skipped all transformers. Now throws `ArgumentNullException`.
 - **`DefaultResponsesOperationTransformer` dedup fixed**: The 500 response is no longer added multiple times to the same operation.
-- **`OpenApiOperationUtilities.AddResponseExample` null-safe**: No longer throws `NullReferenceException` when `operation.Responses` is null.
+- **`OpenApiOperationUtilities.AddResponseExample` null-safe**: No longer throws `NullReferenceException` when `operation.Responses` is null. *(Reverted in v10.3.1 — see the v10.3.0 → v10.3.1 section above.)*
 - **`FluentValidationSchemaTransformer` boolean format**: `ExclusiveMinimum`/`ExclusiveMaximum` now produce lowercase `"true"`/`"false"` instead of culture-dependent `"True"`/`"False"`.
 - **`EnumXmlSchemaTransformer` performance**: Fixed a bug where missing XML files caused the lock to be re-entered on every schema transformation call.
 - **`HeadersParameterSettings` deterministic examples**: Example GUID values are now fixed instead of randomized per instantiation.

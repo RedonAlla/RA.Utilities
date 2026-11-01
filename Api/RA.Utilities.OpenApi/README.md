@@ -103,7 +103,7 @@ This document transformer adds your service's health check endpoints to the Open
 
 It is registered automatically by `AddDefaultsDocumentTransformer()`.
 
-> ⚠️ **Known issue (v10.1.0, still present in v10.3.0)**: The standalone `AddHealthChecksDocumentTransformer(IDictionary<string, string> tags)` extension method currently registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and the `tags` argument is ignored. Use `AddDefaultsDocumentTransformer()` until this is corrected.
+> ⚠️ **Known issue (v10.1.0, still present in v10.3.1)**: The standalone `AddHealthChecksDocumentTransformer(IDictionary<string, string> tags)` extension method currently registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and the `tags` argument is ignored. Use `AddDefaultsDocumentTransformer()` until this is corrected.
 
 ---
 
@@ -403,6 +403,8 @@ This is particularly useful when creating custom `IOpenApiOperationTransformer` 
 * **`AddResponseExample(...)`**: Attaches a named example to a specific HTTP status code response for an operation. This is great for showing what a successful response looks like or detailing the structure of a specific error.
 * **`AddGeneralErrorResponse(...)`**: A specialized shortcut method that adds a pre-defined example for a 500 Internal Server Error.
 * **`AddResponseExamples(...)`**: Attaches multiple named response examples, each with its own status code, to an operation.
+
+> **Behavior (v10.3.1)**: `AddRequestExample` and `AddResponseExample` create the media type's `Examples` dictionary when it is empty, so examples are added even when the operation had none. `AddResponseExample` requires the operation to already define the target status code with a `Content` entry for the media type — otherwise it throws `NullReferenceException` (it returns silently when the status code itself is absent). `AddRequestExample` skips silently when the request body or media type is absent.
 
 > **Limitation**: `AddResponseExamples` currently ignores the per-item `OpenApiResponseExample.MediaType` and always uses `application/json`. Use `AddResponseExample` directly for other media types.
 

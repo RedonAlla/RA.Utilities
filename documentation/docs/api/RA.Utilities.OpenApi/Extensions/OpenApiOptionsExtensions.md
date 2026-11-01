@@ -150,7 +150,7 @@ builder.Services.AddOpenApi(options =>
 
 This extension is intended to register the [`HealthChecksDocumentTransformer`](../DocumentTransformers/HealthChecksDocumentTransformer.md), which documents the health check endpoints in the OpenAPI document.
 
-:::caution[v10.1.0, still present in v10.3.0]
+:::caution[v10.1.0, still present in v10.3.1]
 As implemented, this method registers `HeadersParameterTransformer` instead of `HealthChecksDocumentTransformer`, and the `tags` argument is not used. Use [`AddDefaultsDocumentTransformer()`](#adddefaultsdocumenttransformer) to document health check endpoints until this is corrected.
 :::
 

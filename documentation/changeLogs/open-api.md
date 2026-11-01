@@ -1,8 +1,29 @@
 ---
 title: RA.Utilities.OpenApi
 authors: [RedonAlla]
-date: 2026-10-28
+date: 2026-11-01
 ---
+
+## Version 10.3.1
+![Date Badge](https://img.shields.io/badge/Publish-01%20November%202026-lightblue?logo=fastly&logoColor=white)
+[![NuGet version](https://img.shields.io/badge/NuGet-10.3.1-blue?logo=nuget)](https://www.nuget.org/packages/RA.Utilities.OpenApi/10.3.1)
+
+`AddRequestExample()` and `AddResponseExample()` now create the media type's `Examples` dictionary when it is empty, so examples are no longer silently dropped for operations that had none.
+
+<!-- truncate -->
+
+### 🔧 Fixes
+
+* **`AddRequestExample()` / `AddResponseExample()` no longer drop examples**: Both methods previously required `OpenApiMediaType.Examples` to be already initialized, so an example added to a media type without existing examples was silently ignored — the usual state of a freshly generated document. The dictionary is now created on demand and the example is added.
+
+### ⚠️ Behavior Change
+
+* **`AddResponseExample()` throws when the target response is absent**: The method now dereferences `operation.Responses` and `OpenApiResponse.Content` directly. The call throws `NullReferenceException` when `operation.Responses` is `null`, or when the response for the requested status code has no `Content` entry for the media type. When `Responses` exists but has no entry for the status code, the method still returns without adding anything. Add the response to the operation before attaching an example to it.
+
+### 📝 Notes
+
+* No public API changes; behavior only.
+* `AddRequestExample()` keeps its null-safe navigation: a missing request body, media type, or content entry is skipped silently.
 
 ## Version 10.3.0
 ![Date Badge](https://img.shields.io/badge/Publish-28%20October%202026-lightblue?logo=fastly&logoColor=white)
